@@ -61,6 +61,14 @@ These can be run with `npm run ai`, `npm run agent`, `npm run edit-local`, `npm 
 
 edit-local is a good place to start to make changes to the codebase.
 
+You can set the HIL_BUDGET or HIL_COUNT environment variables so the program
+waits for you to press enter before continuing (Human In the Loop).
+
+HIL_BUDGET must be a number, and is valued in $USD.
+
+HIL_COUNT is how many iterations of the main control loop can run before requiring human input to continue.
+
+
 # Design
 
 The framework is designed to support autonomous agents, which can create and execute a plan using
