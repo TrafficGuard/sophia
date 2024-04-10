@@ -1,0 +1,15 @@
+.idea/
+.vscode/
+node_modules/
+dist/
+.env
+**.idea
+**.vscode
+build/
+temp/
+.aider*
+.ignore
+.cache
+.venv/
+ai-in
+ai-out

@@ -1,0 +1,32 @@
+# source this file
+([[ -n $ZSH_EVAL_CONTEXT && $ZSH_EVAL_CONTEXT =~ :file$ ]] ||
+ [[ -n $KSH_VERSION && $(cd "$(dirname -- "$0")" &&
+    printf '%s' "${PWD%/}/")$(basename -- "$0") != "${.sh.file}" ]] ||
+    [[ -n $BASH_VERSION ]] && (return 0 2>/dev/null)) || {
+    echo "Source this script instead of trying to execute it"
+}
+
+echo "Ensure pyenv and nvm are installed"
+# brew pyenv, nvm,
+# Ensure py version in .python-version is installed
+# Ensure node version in .nvmrc is installed
+
+[[ -n $VIRTUAL_ENV ]] || VIRTUAL_ENV="$(pwd)/.venv"
+if [[ -d "$VIRTUAL_ENV" ]]; then
+    echo "Activating python virtual environment"
+    source ./.venv/bin/activate
+else
+    echo "Creating python virtual environment"
+    python3 -m venv .venv
+    source ./.venv/bin/activate
+    python -m pip install --upgrade pip
+    pip install aider
+fi
+
+nvm use
+npm install
+
+if [[ ! -f ./.env ]]; then
+    echo "Creating .env by copying from .env.example"
+    cp ./.env.example ./.env
+fi
