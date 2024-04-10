@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { addCost } from '../../agent/workflows';
 import { BaseLLM } from '../base-llm';
 import { logTextGeneration } from '../llm';
 
@@ -38,6 +39,10 @@ export class GPT extends BaseLLM {
 		for await (const chunk of stream) {
 			response += chunk.choices[0]?.delta?.content || '';
 		}
+		const inputCost = this.getInputCostPerToken() * prompt.length;
+		const outputCost = this.getOutputCostPerToken() * response.length;
+		const totalCost = inputCost + outputCost;
+		addCost(totalCost);
 		return response;
 	}
 }

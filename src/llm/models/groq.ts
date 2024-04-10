@@ -1,4 +1,5 @@
 import { WorkflowLLMs } from '../../agent/workflows';
+import { addCost } from '../../agent/workflows';
 import { RetryableError } from '../../cache/cache';
 import { BaseLLM } from '../base-llm';
 import { combinePrompts, logDuration } from '../llm';
@@ -35,6 +36,10 @@ export class GroqLLM extends BaseLLM {
 				],
 				model: this.model,
 			});
+			const inputCost = this.getInputCostPerToken() * prompt.length;
+			const outputCost = this.getOutputCostPerToken() * (completion.choices[0]?.message?.content || '').length;
+			const totalCost = inputCost + outputCost;
+			addCost(totalCost);
 			return completion.choices[0]?.message?.content || '';
 		} catch (e) {
 			if (e.error?.code === 'rate_limit_exceeded') throw new RetryableError(e);
