@@ -16,6 +16,21 @@ export interface FunctionDefinition {
 // - Utils --------------------------------------------------------------------
 
 /**
+ * Parse a string into an array. Handles JSON array and line seperated formatting.
+ * @param paramValue
+ */
+export function parseArrayParameterValue(paramValue: string): string[] {
+	paramValue = paramValue.trim();
+	if (paramValue.startsWith('[')) {
+		return JSON.parse(paramValue);
+	}
+	return paramValue
+		.split('\n')
+		.map((path) => path.trim())
+		.filter((path) => path.length);
+}
+
+/**
  * Gets all the LLM function definitions on a class
  * @param obj the class instance
  * @returns {FunctionDefinition[]}

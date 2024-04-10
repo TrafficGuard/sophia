@@ -56,6 +56,46 @@ describe('FileSystem', () => {
 		});
 	});
 
+	describe('listFilesInDirectory', () => {
+		const fileSystem = new FileSystem();
+		it('should list files and folders only in the current directory', async () => {
+			const files: string[] = await fileSystem.listFilesInDirectory('./');
+			expect(files).to.include('package.json');
+			expect(files).to.include('node_modules');
+			expect(files).not.to.include('src/index.ts');
+		});
+		it('should list files and folders in the src directory', async () => {
+			let files: string[] = await fileSystem.listFilesInDirectory('./src');
+			expect(files).to.include('src/index.ts');
+			expect(files).not.to.include('package.json');
+
+			files = await fileSystem.listFilesInDirectory('src');
+			expect(files).to.include('src/index.ts');
+			expect(files).not.to.include('package.json');
+		});
+	});
+
+	describe('getMultipleFileContentsAsXml', () => {
+		const fileSystem = new FileSystem();
+		it('should list files and folders only in the current directory', async () => {
+			const paths = ['package.json', '/README.md', '/src/index.ts'];
+			const contents: string = await fileSystem.getMultipleFileContentsAsXml(paths);
+			console.log(contents);
+			expect(contents).to.include('file_content file_path="package.json"');
+			expect(contents).to.include('file_content file_path="README.md"');
+			expect(contents).to.include('file_content file_path="src/index.ts"');
+		});
+		it.skip('should list files and folders in the src directory', async () => {
+			let files: string[] = await fileSystem.listFilesInDirectory('./src');
+			expect(files).to.include('src/index.ts');
+			expect(files).not.to.include('package.json');
+
+			files = await fileSystem.listFilesInDirectory('src');
+			expect(files).to.include('src/index.ts');
+			expect(files).not.to.include('package.json');
+		});
+	});
+
 	describe('', () => {
 		it('should', async () => {
 			// expect().to.equal();

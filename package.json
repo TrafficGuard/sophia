@@ -7,16 +7,13 @@
     "node": ">=20.6.0"
   },
   "scripts": {
-    "ai": "ts-node-dev --env-file=.env -- src/ai.ts",
-    "agent": "ts-node-dev --env-file=.env -- src/agent.ts",
+    "ai": "node --env-file=.env -r ts-node/register src/ai.ts",
+    "agent": "node --env-file=.env -r ts-node/register src/agent.ts",
     "edit-local": "node --env-file=.env -r ts-node/register src/edit-local.ts",
     "research": "node --env-file=.env -r ts-node/register src/researchAgent.ts",
     "util": "node --env-file=.env -r ts-node/register --inspect=0.0.0.0:9229 src/util.ts",
     "build": "tsc",
     "build:dev": "tsc -project tsconfig.swc.json",
-    "clean": "gts clean",
-    "start": "node --env-file=variables/Development dist/index.js",
-    "run": "ts-node src/index.ts",
     "run:dev": "ts-node --project tsconfig.swc.json src/index.ts",
     "watch": "./node_modules/tsc-watch/index.js --onSuccess \"node --env-file=variables/Development dist/index.js\"",
     "test": "npm run test:unit && echo \"No system or integration tests\"",

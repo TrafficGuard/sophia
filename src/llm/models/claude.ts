@@ -5,6 +5,7 @@ import { BaseLLM } from '../base-llm';
 import { MaxTokensError } from '../errors';
 import { logTextGeneration } from '../llm';
 import { MultiLLM } from '../multi-llm';
+import Message = Anthropic.Message;
 
 export function Claude3_Opus() {
 	return new Claude('claude-3-opus-20240229', 15 / 1000000, 75 / 1000000);
@@ -37,13 +38,20 @@ export class Claude extends BaseLLM {
 
 	@logTextGeneration
 	async generateText(prompt: string, systemPrompt?: string): Promise<string> {
-		const message = await this.anthropic.messages.create({
-			max_tokens: 4096,
-			system: systemPrompt,
-			messages: [{ role: 'user', content: prompt }],
-			model: this.model,
-			stop_sequences: ['</response>'], // This is needed otherwise it can hallucinate the function response and continue on
-		});
+		let message: Message;
+		try {
+			message = await this.anthropic.messages.create({
+				max_tokens: 4096,
+				system: systemPrompt,
+				messages: [{ role: 'user', content: prompt }],
+				model: this.model,
+				stop_sequences: ['</response>'], // This is needed otherwise it can hallucinate the function response and continue on
+			});
+		} catch (e) {
+			console.log(e);
+			console.log(Object.keys(e));
+			throw e;
+		}
 
 		const inputTokens = message.usage.input_tokens;
 		const outputTokens = message.usage.output_tokens;

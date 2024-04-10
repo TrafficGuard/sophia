@@ -8,7 +8,7 @@ import { VersionControlSystem } from '../functions/scm/versionControlSystem';
 import { UtilFunctions } from '../functions/util';
 import { CDATA_END, CDATA_START } from '../utils/xml-utils';
 import { needsCDATA } from '../utils/xml-utils';
-import { func } from './functions';
+import { func, parseArrayParameterValue } from './functions';
 import { funcClass } from './metadata';
 const fs = {
 	readFile: promisify(readFile),
@@ -69,14 +69,13 @@ export class FileSystem {
 	 * @param dirPath the directory to return all the files contents under
 	 * @returns the contents of the file(s) as a Map keyed by the file path
 	 */
-	@func
 	async getFileContentsRecursively(dirPath: string): Promise<Map<string, string>> {
 		const filenames = await this.listFilesRecursively(dirPath);
 		return await this.getMultipleFileContents(filenames);
 	}
 
 	/**
-	 * Returns the file contents of all the files under the provided directory path
+	 * Returns the file contents of all the files recursively under the provided directory path
 	 * @param dirPath the directory to return all the files contents under
 	 * @returns the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
 	 */
@@ -87,7 +86,7 @@ export class FileSystem {
 	}
 
 	/**
-	 * Lists the file and folder names in the current directory.
+	 * Lists the file and folder names in a single directory (the current directory.
 	 * Folder names will end with a /
 	 * @param dirPath the folder to list the files in
 	 * @returns the list of file and folder names
@@ -123,11 +122,11 @@ export class FileSystem {
 	}
 
 	/**
-	 * List all the files under the given path, excluding any paths in a .gitignore file if it exists
+	 * List all the files recursively under the given path, excluding any paths in a .gitignore file if it exists
 	 * @param dirPath The directory to search under
-	 * @param filter the filename filter
 	 * @returns the list of files
 	 */
+	@func
 	async listFilesRecursively(dirPath?: string): Promise<string[]> {
 		// dirPath ??= getFileSystem().workingDirectory
 
@@ -196,11 +195,16 @@ export class FileSystem {
 	 */
 	async getMultipleFileContents(filePaths: string[]): Promise<Map<string, string>> {
 		const mapResult = new Map<string, string>();
-		for (const projectFilePath of filePaths) {
+		for (let projectFilePath of filePaths) {
+			if (projectFilePath.startsWith('/')) projectFilePath = projectFilePath.slice(1);
 			const filePath = path.join(this.basePath, projectFilePath);
-			// console.log(filePath);
-			const contents = await fs.readFile(filePath, 'utf8');
-			mapResult.set(projectFilePath, contents);
+			try {
+				const contents = await fs.readFile(filePath, 'utf8');
+				mapResult.set(projectFilePath, contents);
+			} catch (e) {
+				console.error(`Error reading ${filePath} (projectFilePath ${projectFilePath})`);
+				console.error(e);
+			}
 		}
 		return mapResult;
 	}
@@ -210,7 +214,11 @@ export class FileSystem {
 	 * @param filePaths {Array<string>} The files paths to read the contents of
 	 * @returns {Promise<string>} the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
 	 */
-	async getMultipleFileContentsAsXml(filePaths: string[]): Promise<string> {
+	@func
+	async getMultipleFileContentsAsXml(filePaths: string | string[]): Promise<string> {
+		if (!Array.isArray(filePaths)) {
+			filePaths = parseArrayParameterValue(filePaths);
+		}
 		const fileContents: Map<string, string> = await this.getMultipleFileContents(filePaths);
 		return this.formatFileContentsAsXml(fileContents);
 	}
@@ -255,9 +263,9 @@ export class FileSystem {
 	}
 
 	/**
-	 * Makes changes to the contents of a single file
+	 * Makes changes to the contents of a single file (using a LLM)
 	 * @param filePath the file to edit
-	 * @param descriptionOfChanges a description of the changes to make to the text
+	 * @param descriptionOfChanges a natual language description of the changes to make to the file contents
 	 */
 	@func
 	async updateFileContentsAsRequired(filePath: string, descriptionOfChanges: string): Promise<void> {

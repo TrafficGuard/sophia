@@ -19,7 +19,6 @@ export async function runAgent(toolbox: Toolbox, initialPrompt: string, systemPr
 	if (initialPrompt.includes('<initial_prompt>')) {
 		const startIndex = initialPrompt.indexOf('<initial_prompt>') + '<initial_prompt>'.length;
 		const endIndex = initialPrompt.indexOf('</initial_prompt>') - 1;
-		// biome-ignore lint/style/noParameterAssign: reassign on resuming a workflow
 		initialPrompt = initialPrompt.slice(startIndex, endIndex);
 		console.log('Extracted initial prompt');
 		console.log('<initial_prompt>');
@@ -30,9 +29,15 @@ export async function runAgent(toolbox: Toolbox, initialPrompt: string, systemPr
 	const functionDefinitions = getFunctionDefinitions(toolbox.getTools());
 	const systemPromptWithFunctions = updateToolDefinitions(systemPrompt, functionDefinitions);
 
+	const humanInTheLoopRate = 1;
+	let iterations = 0;
 	while (true) {
-		await waitForInput();
-		if (initialPrompt !== currentPrompt) currentPrompt = `<initial_prompt>\n${initialPrompt}\n</initial_prompt>\n${currentPrompt}`;
+		if (humanInTheLoopRate && iterations === humanInTheLoopRate) await waitForInput();
+
+		if (initialPrompt !== currentPrompt) {
+			currentPrompt = `<initial_prompt>\n${initialPrompt}\n</initial_prompt>\n${currentPrompt}`;
+		}
+
 		const result = await llm.generateTextExpectingFunctions(currentPrompt, systemPromptWithFunctions);
 		currentPrompt = result.response;
 		const invokers = result.functions.invoke;
@@ -66,6 +71,7 @@ export async function runAgent(toolbox: Toolbox, initialPrompt: string, systemPr
 			break;
 		}
 		*/
+		iterations++;
 	}
 }
 

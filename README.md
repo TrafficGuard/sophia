@@ -147,8 +147,13 @@ https://github.com/Pythagora-io/gpt-pilot
 
 ### Agents
 
+https://github.com/agi-merge/waggle-dance
 https://zapier.com/blog/introducing-zapier-central-ai-bots/
+https://github.com/OpenBMB/ChatDev
 
+## AI coder posts
+https://blog.pythagora.ai/2024/02/19/gpt-pilot-what-did-we-learn-in-6-months-of-working-on-a-codegen-pair-programmer/
+https://docs.sweep.dev/blogs
 
 ### Code style
 Because of caching, timing, tracing, we want methods to await on returned promises.

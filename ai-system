@@ -114,10 +114,10 @@ Store key details such as identifiers, summarised information etc which will be 
         "issueSummary" : "A concise summary with key information",
     },
     "discovery": {
-        "The code is in the GitLab project waf_infra which is a Terraform project"
+        "The code is in the GitLab project nous_infra which is a Terraform project"
     },
     "verification": {
-        "The tg-portal-stage project has the Cloud Run service named 'dash'",
+        "The nous GCP project should have the Cloud Run service named 'nous'",
     }
 }
 </plan_state>
@@ -138,7 +138,8 @@ As you discover more information you may:
 
 An overview of what plan steps have already been completed will be outlined in the block <completed_plan_steps></completed_plan_steps>
 
-You must respond in the following format:
+You must respond in the format as per in this example:
+<example>
 <response>
 <plan_state>
 {}
@@ -149,10 +150,11 @@ Updated task taking into account any new information retrieved by tools from fun
 <plan_outline>
 </plan_outline>
 <next_step_details>
-    Details of the next step of the plan (function tool call) to take with reasoning
+    Provide a concise details of the most probable next steps of the plan (i.e. function tool call) to take with reasoning.
+    Then applying logic reasoning, taking into account all of the provided context, explain which is the most appropriate choice.
 </next_step_details>
 <function_calls>
 </function_calls>
 </response>
-
+</example>
 Output valid XML in the function_calls element. i.e. Function call invocation values which might contain the < or > characters should be wrapped in a <![CDATA[   ]]>  block, otherwise the <, > and & characters must be encoded.

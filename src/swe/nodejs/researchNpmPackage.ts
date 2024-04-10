@@ -23,7 +23,7 @@ export class NpmPackages {
 
 		await Promise.all(crawls);
 
-		console.log(info)
+		console.log(info);
 		throw new Error('Not implemented');
 	}
 
@@ -36,7 +36,7 @@ export class NpmPackages {
 
 		await Promise.all(crawls);
 
-		console.log(info)
+		console.log(info);
 		throw new Error('Not implemented');
 	}
 

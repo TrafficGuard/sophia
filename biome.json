@@ -18,6 +18,9 @@
 			},
 			"correctness": {
 				"noUnreachable": "off"
+			},
+			"style": {
+				"noParameterAssign": "off"
 			}
 		}
 	},
