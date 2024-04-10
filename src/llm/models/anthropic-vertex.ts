@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { AnthropicVertex } from '@anthropic-ai/vertex-sdk';
-import { WorkflowLLMs } from '../../agent/workflows';
+import { WorkflowLLMs, addCost } from '../../agent/workflows';
 import { BaseLLM } from '../base-llm';
 import { MaxTokensError } from '../errors';
 import { combinePrompts, logTextGeneration } from '../llm';
@@ -55,9 +55,9 @@ class AnthropicVertexLLM extends BaseLLM {
 		const prompt = combinePrompts(userPrompt, systemPrompt);
 		const maxTokens = 4096;
 
-		let result: Message;
+		let message: Message;
 		try {
-			result = await this.client.messages.create({
+			message = await this.client.messages.create({
 				messages: [
 					{
 						role: 'user',
@@ -75,10 +75,17 @@ class AnthropicVertexLLM extends BaseLLM {
 			throw e;
 		}
 
-		if (result.stop_reason === 'max_tokens') {
-			throw new MaxTokensError(maxTokens, result.content[0].text);
+		const inputCost =this.getInputCostPerToken() * message.usage.input_tokens;
+		const outputCost = this.getOutputCostPerToken() * message.usage.output_tokens;
+		const totalCost = inputCost + outputCost;
+		console.log('inputCost', inputCost)
+		console.log('outputCost', outputCost)
+		addCost(totalCost);
+
+		if (message.stop_reason === 'max_tokens') {
+			throw new MaxTokensError(maxTokens, message.content[0].text);
 		}
-		return result.content[0].text;
+		return message.content[0].text;
 	}
 
 	isRetryableError(e: any) {

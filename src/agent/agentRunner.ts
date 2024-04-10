@@ -1,7 +1,7 @@
 import * as readline from 'readline';
 import { getFunctionDefinitions } from './metadata';
 import { Toolbox } from './toolbox';
-import { llms } from './workflows';
+import { llms, workflowContext } from './workflows';
 
 /**
  * Runs an autonomous agent workflow using the tools provided.
@@ -29,10 +29,33 @@ export async function runAgent(toolbox: Toolbox, initialPrompt: string, systemPr
 	const functionDefinitions = getFunctionDefinitions(toolbox.getTools());
 	const systemPromptWithFunctions = updateToolDefinitions(systemPrompt, functionDefinitions);
 
-	const humanInTheLoopRate = 1;
-	let iterations = 0;
+	// Human in the loop settings
+	// How often do we require human input to avoid looping or misguided actions
+	const hilBudgetRaw = process.env.HIL_BUDGET;
+	const hilCountRaw = process.env.HIL_COUNT;
+	const hilBudget = hilBudgetRaw ? parseFloat(hilBudgetRaw) : 0;
+	const hilCount = hilCountRaw ? parseInt(hilCountRaw) : 0;
+
+	let countSinceHil = 0;
+	let costSinceHil = 0;
+	let previousCost = 0;
 	while (true) {
-		if (humanInTheLoopRate && iterations === humanInTheLoopRate) await waitForInput();
+		if (hilCount && countSinceHil === hilCount) {
+			await waitForInput();
+			countSinceHil = 0;
+		}
+		countSinceHil++;
+
+		const newCosts = workflowContext.getStore().cost - previousCost;
+		if (newCosts) console.log('');
+		previousCost = workflowContext.getStore().cost;
+		costSinceHil += newCosts;
+		console.log(`Spent $${costSinceHil.toFixed(2)} since last input. Total cost $${workflowContext.getStore().cost.toFixed(2)}`);
+		if (hilBudget && costSinceHil > hilBudget) {
+			// format costSinceHil to 2 decimal places
+			await waitForInput();
+			costSinceHil = 0;
+		}
 
 		if (initialPrompt !== currentPrompt) {
 			currentPrompt = `<initial_prompt>\n${initialPrompt}\n</initial_prompt>\n${currentPrompt}`;
@@ -71,12 +94,11 @@ export async function runAgent(toolbox: Toolbox, initialPrompt: string, systemPr
 			break;
 		}
 		*/
-		iterations++;
 	}
 }
 
 /**
- * Adding a human in the loop so it doens't consume all of your budget
+ * Adding a human in the loop, so it doesn't consume all of your budget
  */
 async function waitForInput() {
 	const rl = readline.createInterface({

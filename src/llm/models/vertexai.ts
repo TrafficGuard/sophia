@@ -1,5 +1,5 @@
 import { HarmBlockThreshold, HarmCategory, SafetySetting, VertexAI } from '@google-cloud/vertexai';
-import { WorkflowLLMs } from '../../agent/workflows';
+import { WorkflowLLMs, addCost } from '../../agent/workflows';
 import { projectId, region } from '../../config';
 import { BaseLLM } from '../base-llm';
 import { combinePrompts, logTextGeneration } from '../llm';
@@ -65,6 +65,12 @@ class VertexLLM extends BaseLLM {
 		for await (const item of streamingResp.stream) {
 			result += item.candidates[0].content.parts[0].text;
 		}
+
+		const inputCost = prompt.length * this.getInputCostPerToken();
+		const outputCost = result.length * this.getOutputCostPerToken();
+		const cost = inputCost + outputCost;
+		console.log(this.model, 'input', prompt.length, 'output', result.length);
+		addCost(cost);
 
 		return result;
 	}

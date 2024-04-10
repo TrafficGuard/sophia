@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { WorkflowLLMs } from '../../agent/workflows';
+import { WorkflowLLMs, addCost, workflowContext } from '../../agent/workflows';
 import { envVar } from '../../utils/env-var';
 import { BaseLLM } from '../base-llm';
 import { MaxTokensError } from '../errors';
@@ -8,15 +8,15 @@ import { MultiLLM } from '../multi-llm';
 import Message = Anthropic.Message;
 
 export function Claude3_Opus() {
-	return new Claude('claude-3-opus-20240229', 15 / 1000000, 75 / 1000000);
+	return new Claude('claude-3-opus-20240229', 15 / 1_000_000, 75 / 1_000_000);
 }
 
 export function Claude3_Sonnet() {
-	return new Claude('claude-3-sonnet-20240229', 3 / 1000000, 15 / 1000000);
+	return new Claude('claude-3-sonnet-20240229', 3 / 1_000_000, 15 / 1_000_000);
 }
 
 export function Claude3_Haiku() {
-	return new Claude('claude-3-haiku-20240307', 0.25 / 1000000, 1.25 / 1000000);
+	return new Claude('claude-3-haiku-20240307', 0.25 / 1_000_000, 1.25 / 1_000_000);
 }
 
 export function ClaudeLLMs(): WorkflowLLMs {
@@ -56,6 +56,13 @@ export class Claude extends BaseLLM {
 		const inputTokens = message.usage.input_tokens;
 		const outputTokens = message.usage.output_tokens;
 		const stopReason = message.stop_reason;
+
+		const inputCost =this.getInputCostPerToken() * inputTokens;
+		const outputCost = this.getOutputCostPerToken() * outputTokens;
+		const totalCost = inputCost + outputCost;
+		console.log('inputCost', inputCost)
+		console.log('outputCost', outputCost)
+		addCost(totalCost);
 
 		// TODO handle if there is a type != text
 		const response = message.content.map((content) => content.text).join();

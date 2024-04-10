@@ -72,10 +72,13 @@ export function logTextGeneration(originalMethod: any, context: ClassMethodDecor
 		// system prompt
 		// if (args.length > 1) console.log(args[1]);
 		// prompt
+		const start = Date.now()
 		console.log(args[0]);
 		const result = await originalMethod.call(this, ...args);
 		console.log(`= RESPONSE ${this.model} =========================================================================================`);
 		console.log(result);
+		const duration = ((Date.now() - start)/1000).toFixed(1) + 's'
+		console.log(`${duration}  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<`);
 		return result;
 	};
 }

@@ -36,6 +36,18 @@ export function llms(): WorkflowLLMs {
 	return workflowContext.getStore().llms;
 }
 
+/**
+ * Adds LLM costs to the workflow context
+ * @param cost the cost spent in $USD
+ */
+export function addCost(cost: number) {
+	const store = workflowContext.getStore();
+	console.log(`Adding cost $${cost}`);
+	store.cost += cost;
+	store.budgetRemaining -= cost;
+	if (store.budgetRemaining < 0) store.budgetRemaining = 0;
+}
+
 export function getFileSystem(): FileSystem {
 	const filesystem = workflowContext.getStore().fileSystem;
 	if (!filesystem) throw new Error('No file system available in the workflow context');

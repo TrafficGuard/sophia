@@ -123,6 +123,7 @@ You MUST respond in the following format:
 </research_plan>
 <next_step_details>
     A very brief description (one to two sentences) of the next step of the research plan (function tool call) to take with reasoning.
+    If the knowledge base has sufficiently provided the details to completely answer the question then complete the workflow.
 </next_step_details>
 <function_calls>
 </function_calls>

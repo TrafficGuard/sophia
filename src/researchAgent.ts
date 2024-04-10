@@ -22,7 +22,7 @@ import { TypescriptTools } from './swe/nodejs/typescriptTools';
 
 export async function main() {
 	let llms: WorkflowLLMs = ClaudeVertexLLMs();
-	llms = ClaudeLLMs();
+	llms = WORKFLOW_LLMS;
 
 	enterWithContext(llms);
 
