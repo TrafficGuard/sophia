@@ -65,7 +65,6 @@ export async function execCommand(command: string, workingDirectory?: string): P
 		const { stdout, stderr } = await exec2(command, options);
 		return { stdout, stderr, exitCode: 0 };
 	} catch (error) {
-		console.error(error);
 		return { stdout: error.stdout, stderr: error.stderr, exitCode: error.code };
 	}
 }

@@ -75,11 +75,11 @@ class AnthropicVertexLLM extends BaseLLM {
 			throw e;
 		}
 
-		const inputCost =this.getInputCostPerToken() * message.usage.input_tokens;
+		const inputCost = this.getInputCostPerToken() * message.usage.input_tokens;
 		const outputCost = this.getOutputCostPerToken() * message.usage.output_tokens;
 		const totalCost = inputCost + outputCost;
-		console.log('inputCost', inputCost)
-		console.log('outputCost', outputCost)
+		console.log('inputCost', inputCost);
+		console.log('outputCost', outputCost);
 		addCost(totalCost);
 
 		if (message.stop_reason === 'max_tokens') {

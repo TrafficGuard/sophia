@@ -57,11 +57,11 @@ export class Claude extends BaseLLM {
 		const outputTokens = message.usage.output_tokens;
 		const stopReason = message.stop_reason;
 
-		const inputCost =this.getInputCostPerToken() * inputTokens;
+		const inputCost = this.getInputCostPerToken() * inputTokens;
 		const outputCost = this.getOutputCostPerToken() * outputTokens;
 		const totalCost = inputCost + outputCost;
-		console.log('inputCost', inputCost)
-		console.log('outputCost', outputCost)
+		console.log('inputCost', inputCost);
+		console.log('outputCost', outputCost);
 		addCost(totalCost);
 
 		// TODO handle if there is a type != text
