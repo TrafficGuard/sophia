@@ -13,7 +13,7 @@ class WebResearcher {
 	async generateSearchQueryFromTaskRequirements(task: string) {
 		const prompt = `<research_topic>\n${task}\n</research_topic>\n<task>Your task is to research the web to for information to assisst with completing the research topic.\nFirst rephrase the topic into a search query which is most suitable for getting the most relevant results when searching Google.\nOutput your response in the following format:\n<response><reasoning>Explaing reasoning of the rephrasing of the search query</reasoning><result>The search query</result></response></task>`;
 
-		const query: string = await llms().hard.generateTextWithResult(prompt);
+		const query: string = await llms().medium.generateTextWithResult(prompt);
 		console.log(`Search query: ${query}`);
 		return query;
 	}
@@ -28,17 +28,16 @@ class WebResearcher {
 		// const query = await this.generateSearchQueryFromTaskRequirements(issue);
 		// const googleResults: string[] = await PUBLIC_WEB.googleSearch(query);
 
-		const serpResults = await PUBLIC_WEB.serpApiSearch(query);
-		const sortedResults = await this.sortSearchResults(serpResults, query);
-
-		let searchResults: string[] = [];
+		let serpResults: OrganicSearchResult[] = await PUBLIC_WEB.serpApiSearch(query);
+		const sortedResults: OrganicSearchResult[] = await this.sortSearchResults(serpResults, query);
 
 		for (const result of sortedResults) {
 			try {
 				const pageContent = await PUBLIC_WEB.getWebPage(result.url);
-				const xml = `<web_page url="${result}">\n${pageContent}\n</web_page>`;
-				searchResults.push(xml);
-			} catch (e) {}
+				result.content = `<web_page url="${result.url}">\n${pageContent}\n</web_page>`;
+			} catch (e) {
+				console.log(`Couldn\'t get ${result.url}. ${e.message}`);
+			}
 		}
 
 		// const kagiResults: Map<string, string> = await WEB_RESEARCH.kagiSearch(query)
@@ -48,7 +47,7 @@ class WebResearcher {
 
 		let knowledgeBase = '';
 
-		while (searchResults.length) {
+		while (serpResults.length) {
 			let content = '';
 
 			// console.log('');
@@ -57,28 +56,28 @@ class WebResearcher {
 			const maxContentSize = summariseLLM.getMaxInputTokens() - (knowledgeBase.length + query.length + 500);
 			// console.log('maxContentSize', maxContentSize);
 
-			searchResults = searchResults.filter((content) => content.length < maxContentSize);
-			if (!searchResults.length) break;
+			serpResults = serpResults.filter((serp) => serp.content?.length < maxContentSize);
+			if (!serpResults.length) break;
 
 			// content =searchResults.pop()
 
-			content += `\n${searchResults.pop()}`;
+			content += `\n${serpResults.pop().content}`;
 			let pagesAdded = 1;
-			let nextSearchResult = searchResults.length ? searchResults[searchResults.length - 1] : null;
-			while (nextSearchResult && content.length + nextSearchResult.length < maxContentSize && pagesAdded <= 2) {
-				console.log('Adding search result', nextSearchResult.length);
-				content += `\n${searchResults.pop()}`;
+			let nextSearchResult: OrganicSearchResult = serpResults.length ? serpResults[serpResults.length - 1] : null;
+			while (nextSearchResult && content.length + nextSearchResult.content.length < maxContentSize && pagesAdded <= 2) {
+				console.log('Adding search result', nextSearchResult.content.length);
+				content += `\n${serpResults.pop().content}`;
 				pagesAdded++;
-				nextSearchResult = searchResults.length ? searchResults[searchResults.length - 1] : null;
+				nextSearchResult = serpResults.length ? serpResults[serpResults.length - 1] : null;
 			}
 
 			const summarisePrompt = `<new_content>\n${content}\n</new_content>\n<knowledgebase>\n${knowledgeBase}\n</knowledgebase>\n<query>\n${query}\n</query>\n<task>Your task is to develop a knowledgebase on the search query.\nYou have been provided new content to update the knowlegebase with.\nOnly update the knowledgebase with content that is directly relevant to the query.  Ignore irrelevant content.\nYou will responed with an updated knowledgebase synthesised from the existing one and the new content that is directly relevant to the query in the following format:\n<response><reasoning>Provide a brief summary of reasoning behind the knowledge base updates from the new content</reasoning><result>The updated knowledgebase contents, or the current knowledgebase contents if no changes are to be made. Limit to under 3000 characters.</result></response></task>`;
 
 			knowledgeBase = await summariseLLM.generateTextWithResult(summarisePrompt);
 
-			if (searchResults.length) {
+			if (serpResults.length) {
 				let continuePrompt = `<knowledgebase>\n${knowledgeBase}\n</knowledgebase>\n<search_query>${query}</search_query><remaining_pages>${JSON.stringify(
-					searchResults,
+					serpResults.map((serp) => serp.url),
 				)}</remaining_pages>`;
 				continuePrompt +=
 					'Your task to to determine the status of the search query research. You will need to determine whether to 1) Continue reading the remaining web pages to build the knowledge base to answer the search query, or 2) The knowledgebase is sufficient to answer the query (completed).\n';
@@ -95,7 +94,9 @@ class WebResearcher {
 
 	@cacheRetry()
 	async sortSearchResults(searchResults: OrganicSearchResult[], query: string): Promise<OrganicSearchResult[]> {
-		const sortedResults = await llms().hard.generateTextAsJson(
+		// The web researcher will load and process pages until the knowledgebase is sufficient to answer the query
+		// This additional sorting aims to reduce the number of web pages processed
+		const sortedResults = await llms().medium.generateTextAsJson(
 			`<json>\n${JSON.stringify(
 				searchResults,
 			)}\n</json>\nSort this array of URL/titles in the order that would be most likely to have the answer for the query "${query}" with the most likely first. Output your answer in JSON only.`,
