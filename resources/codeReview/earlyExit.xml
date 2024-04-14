@@ -1,0 +1,72 @@
+<code_review xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:noNamespaceSchemaLocation="schema.xsd">
+    <description>
+        Prefer returning/throwing early.
+        If an else block throws or returns, switch the ordering of the if/else blocks, which will result in not having an else block.
+        The one exception to the rule is for lazy initialization.
+    </description>
+    <file_extensions>
+        <include>.ts</include>
+    </file_extensions>
+    <requires>
+        <text>else</text>
+    </requires>
+    <examples>
+        <example>
+            <invalid><![CDATA[
+                async sendBirthdayGreeting(user: User | null): Promise<void> {
+                    if (user) {
+                        if(user.dateOfBirth > Date.now()) {
+                            if (dayOfYear(user.dateOfBirth) === dayOfYear(Date.now())) {
+                                await this.emailService.sendEmail(this.createBdayEmail(user));
+                            }
+                        } else { // should handle this case first
+                            throw new Error(`dateOfBirth in the future for user ${user.id}`);
+                        }
+                    } else { // should handle this case first
+                        throw new Error('User was null');
+                    }
+                }
+            ]]></invalid>
+            <valid><![CDATA[
+                async sendBirthdayGreeting(user: User | null): Promise<void> {
+                    if (!user) throw new Error('User was null');
+                    if (user.dateOfBirth < Date.now()) throw new Error(`dateOfBirth in the future for user ${user.id}`);
+
+                    if (dayOfYear(user.dateOfBirth) === dayOfYear(Date.now())) {
+                        await this.emailService.sendEmail(this.createBdayEmail(user));
+                    }
+                }
+            ]]></valid>
+        </example>
+        <example>
+            <invalid><![CDATA[
+                async function deleteReservation(): Promise<boolean> {
+                    const reservations = this.getReservations();
+                    if (reservations.length) {
+                        await this.reservationsClient.deleteReservation({
+                            name: reservations[0].name,
+                        });
+                        return true;
+                    } else { // should handle this case first
+                        logger.info("No BigQuery reservation found.");
+                        return false;
+                    }
+                }
+            ]]></invalid>
+            <valid><![CDATA[
+                async function deleteReservation(): Promise<boolean> {
+                    const reservations = this.getReservations();
+
+                    if (!reservations.length) {
+                        logger.info("No BigQuery reservation found.");
+                        return false;
+                    }
+
+                    await this.reservationsClient.deleteReservation({ name: reservations[0].name });
+                    return true;
+                }
+            ]]></valid>
+        </example>
+    </examples>
+</code_review>

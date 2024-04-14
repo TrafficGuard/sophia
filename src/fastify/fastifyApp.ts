@@ -1,0 +1,172 @@
+import * as http from 'http';
+import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
+import fastify, { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest, RawReplyDefaultExpression, RawRequestDefaultExpression } from 'fastify';
+import fastifyPlugin from 'fastify-plugin';
+import * as HttpStatus from 'http-status-codes';
+import { logger } from '#o11y/logger';
+import { loadOnRequestHooks } from './hooks';
+
+const NODE_ENV = process.env.NODE_ENV ?? 'local';
+
+export type TypeBoxFastifyInstance = FastifyInstance<
+	http.Server,
+	RawRequestDefaultExpression<http.Server>,
+	RawReplyDefaultExpression<http.Server>,
+	FastifyBaseLogger,
+	TypeBoxTypeProvider
+>;
+
+export type RouteDefinition = (fastify: TypeBoxFastifyInstance) => Promise<void>;
+
+export const fastifyInstance: TypeBoxFastifyInstance = fastify({
+	maxParamLength: 256,
+}).withTypeProvider<TypeBoxTypeProvider>();
+
+export interface FastifyConfig {
+	/** The port to listen on. If not provided looks up from process.env.PORT or else process.env.SERVER_PORT */
+	port?: number;
+	routes: RouteDefinition[];
+	instanceDecorators?: { [key: string]: any };
+	requestDecorators?: { [key: string]: any };
+	/** Overrides the default url of /health-check */
+	healthcheckUrl?: string;
+}
+
+export async function initFastify(config: FastifyConfig) {
+	/*
+   	 To guarantee a consistent and predictable behaviour of your application, we highly recommend to always load your code as shown below:
+      └── plugins (from the Fastify ecosystem)
+      └── your plugins (your custom plugins)
+      └── decorators
+      └── hooks and middlewares
+      └── your services
+ 	*/
+	await loadPlugins(config);
+	loadHooks();
+	if (config.instanceDecorators) registerInstanceDecorators(config.instanceDecorators);
+	if (config.requestDecorators) registerRequestDecorators(config.requestDecorators);
+	registerRoutes(config.routes);
+	setErrorHandler();
+	let port = config.port;
+	// If not provided autodetect from PORT or SERVER_PORT
+	// https://cloud.google.com/run/docs/container-contract#port
+	if (!port) {
+		const envVars = ['PORT', 'SERVER_PORT'];
+		for (const envVar of envVars) {
+			try {
+				port = parseInt(process.env[envVar] ?? '');
+				break;
+			} catch (e) {}
+		}
+		if (!port) throw new Error('Could not autodetect the server port to use from either the PORT or SERVER_PORT environment variables');
+	}
+	listen(port);
+}
+
+function listen(port: number): void {
+	fastifyInstance.listen(
+		{
+			host: '0.0.0.0',
+			port,
+		},
+		(err: any) => {
+			if (err) {
+				throw err;
+			}
+			logger.debug(`Listening on ${port}`);
+		},
+	);
+}
+
+async function loadPlugins(config: FastifyConfig) {
+	fastifyInstance.register(require('fastify-healthcheck'), {
+		healthcheckUrl: config.healthcheckUrl ?? '/health-check',
+	});
+	await fastifyInstance.register(import('fastify-raw-body'), {
+		field: 'rawBody',
+		global: false,
+		encoding: 'utf8',
+		runFirst: true,
+		routes: [],
+	});
+}
+
+function loadHooks() {
+	loadOnRequestHooks(fastifyInstance);
+	// loadPreHandlerHooks(this.app);
+
+	// this.app.after(() => {
+	//   this.app.addHook(
+	//     'preHandler',
+	//     this.app.auth(
+	//       [
+	//         // this.app.facebookAdAuthentication,
+	//         this.app.staticTokenAuthentication,
+	//         this.app.jwtTokenAuthentication,
+	//         this.app.roleBasedRoutePermissionAuthentication,
+	//       ],
+	//       { relation: 'and' }
+	//     )
+	//   );
+	// });
+}
+
+function registerInstanceDecorators(decorators: { [key: string]: any }) {
+	fastifyInstance.register(
+		fastifyPlugin(async (instance: FastifyInstance) => {
+			for (const [key, value] of Object.entries(decorators)) {
+				instance.decorate(key, value);
+			}
+		}),
+	);
+}
+
+function registerRequestDecorators(decorators: { [key: string]: any }) {
+	fastifyInstance.register(
+		fastifyPlugin(async (instance: FastifyInstance) => {
+			for (const [key, value] of Object.entries(decorators)) {
+				instance.decorateReply(key, value);
+			}
+		}),
+	);
+}
+
+function registerRoutes(routes: RouteDefinition[]) {
+	for (const route of routes) {
+		fastifyInstance.register(route);
+	}
+}
+
+function setErrorHandler() {
+	fastifyInstance.setErrorHandler((error: any, req: FastifyRequest, reply: FastifyReply) => {
+		logger.error({
+			message: `Error handler: ${error.message}`,
+			error,
+			request: req.query,
+		});
+		reply.header('Content-Type', 'application/json; charset=utf-8');
+
+		if (error.validation) {
+			reply.status(HttpStatus.BAD_REQUEST).send({
+				statusCode: HttpStatus.BAD_REQUEST,
+				message: error.message,
+			});
+			return;
+		}
+
+		if (error.code === 'FST_ERR_CTP_INVALID_MEDIA_TYPE') {
+			reply.status(HttpStatus.BAD_REQUEST).send({
+				statusCode: HttpStatus.BAD_REQUEST,
+				message: 'Invalid media type',
+			});
+			return;
+		}
+
+		reportError(error);
+
+		reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
+			statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+			message: NODE_ENV === 'production' ? 'An internal server error occurred. Please try again later.' : error.message,
+		});
+	});
+}

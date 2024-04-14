@@ -54,7 +54,8 @@ function selectBestResponsePrompt(responses: string[], userPrompt: string, syste
 	prompt += '</responses>\n';
 	prompt += `<input>\n${systemPrompt}${userPrompt}\n</input>\n`;
 	prompt += '<task>Your task is to analyze multiple responses to an input prompt, and select the best response.\n';
-	prompt += 'Provide a detailed analysis of each of the responses for correctness in facts, reasoning, and also for insightfullness to the <input/> block.\n';
+	prompt +=
+		'Provide a detailed analysis of each of the responses for correctness in facts, reasoning, adherence to formatting requirements, focus on completing the input request and also for insight to the <input/> block.\n';
 	prompt += 'Then decide which response is the best, giving reasoning. The finally provide the number of the response. \n';
 	prompt += 'The format of your answer MUST be as the following example within the formatting_example element:\n';
 	prompt +=

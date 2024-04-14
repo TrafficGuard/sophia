@@ -1,4 +1,4 @@
-import { func } from './functions';
+import { func } from '#agent/functions';
 import { funcClass } from './metadata';
 
 export const WORKFLOW_COMPLETED_NAME = 'Workflow.completed';

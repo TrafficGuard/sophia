@@ -1,6 +1,7 @@
 import * as readline from 'readline';
 import { getFunctionDefinitions } from './metadata';
 import { Toolbox } from './toolbox';
+import { WORKFLOW_COMPLETED_NAME, WORKFLOW_REQUEST_FEEDBACK } from './workflowFunctions';
 import { llms, workflowContext } from './workflows';
 
 /**
@@ -72,7 +73,20 @@ export async function runAgent(toolbox: Toolbox, initialPrompt: string, systemPr
 			// if its not sure what to do next.
 		}
 
+		let completed = false;
+		let requestFeedback = false;
 		for (const invoker of invokers) {
+			if (invoker.tool_name === WORKFLOW_COMPLETED_NAME) {
+				console.log('Task completed');
+				completed = true;
+				break;
+			}
+			if (invoker.tool_name === WORKFLOW_REQUEST_FEEDBACK) {
+				console.log('Feedback requested');
+				requestFeedback = true;
+				break;
+			}
+
 			try {
 				const toolResponse = await toolbox.invokeTool(invoker);
 				currentPrompt += `\n${llm.formatFunctionResult(invoker.tool_name, toolResponse)}`;
@@ -83,17 +97,9 @@ export async function runAgent(toolbox: Toolbox, initialPrompt: string, systemPr
 			}
 		}
 
-		/*
-		if (invoker.tool_name === WORKFLOW_COMPLETED_NAME) {
-			console.log('Task completed');
+		if (completed || requestFeedback) {
 			break;
 		}
-		if (invoker.tool_name === WORKFLOW_REQUEST_FEEDBACK) {
-			console.log('Task paused');
-			console.log(invoker.parameters)
-			break;
-		}
-		*/
 	}
 }
 

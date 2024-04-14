@@ -30,6 +30,8 @@ Create an API key at https://platform.openai.com/api-keys and update OPENAI_API_
 
 Create an API key at https://id.atlassian.com/manage-profile/security/api-tokens and update JIRA_API_TOKEN in `.env`
 
+Note you will need to add a \ before the = in the token value to escape it.
+
 ### GitLab
 
 Create an API key at https://gitlab.synrgy.mobi/-/user_settings/personal_access_tokens with the api, read_repo and write_repo roles, and update GITLAB_TOKEN in `.env`. You will need to also set GITLAB_HOST (e.g. gitlab.selfhost.com) and GITLAB_GROUPS (JSON array containing the top level groups it will search e.g ["group1", "group2"])

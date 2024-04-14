@@ -1,10 +1,11 @@
 import { randomUUID } from 'crypto';
 import { AsyncLocalStorage } from 'async_hooks';
+import { Toolbox } from '#agent/toolbox';
+import { LLM, TaskLevel } from '#llm/llm';
 import { FunctionCacheService } from '../cache/cache';
 import { FileCacheService } from '../cache/fileCacheService';
 import { SourceControlManagement } from '../functions/scm/sourceControlManagement';
 import { UtilFunctions } from '../functions/util';
-import { LLM, TaskLevel } from '../llm/llm';
 import { FileSystem } from './filesystem';
 
 /**
@@ -13,6 +14,8 @@ import { FileSystem } from './filesystem';
 export type WorkflowLLMs = Record<TaskLevel, LLM>;
 
 export interface WorkflowContext {
+	/** Empty string in single-user mode */
+	userId: string;
 	budget: number;
 	budgetRemaining: number;
 	cost: number;
@@ -25,9 +28,9 @@ export interface WorkflowContext {
 	fileSystem?: FileSystem | null;
 	scm: SourceControlManagement | null;
 	llms: Record<TaskLevel, LLM>;
-	utils: UtilFunctions;
 	/** Directory for cloning repositories etc */
 	tempDir: string;
+	toolbox: Toolbox;
 }
 
 export const workflowContext = new AsyncLocalStorage<WorkflowContext>();
@@ -57,6 +60,7 @@ export function getFileSystem(): FileSystem {
 export function runWithContext(context: { llms: WorkflowLLMs; retryExecutionId?: string }, func: () => any) {
 	const isRetry = !!context.retryExecutionId;
 	const store: WorkflowContext = {
+		userId: '',
 		systemPrompt: '',
 		userEmail: process.env.USER_EMAIL,
 		executionId: context.retryExecutionId || randomUUID(),
@@ -67,9 +71,9 @@ export function runWithContext(context: { llms: WorkflowLLMs; retryExecutionId?:
 		cost: 0,
 		llms: context.llms,
 		scm: null,
-		utils: new UtilFunctions(),
 		tempDir: './temp',
 		fileSystem: new FileSystem(),
+		toolbox: new Toolbox(),
 	};
 	workflowContext.run(store, func);
 }
@@ -82,6 +86,7 @@ export function runWithContext(context: { llms: WorkflowLLMs; retryExecutionId?:
 export function enterWithContext(llms: WorkflowLLMs, retryExecutionId?: string) {
 	const isRetry = !!retryExecutionId;
 	workflowContext.enterWith({
+		userId: '',
 		systemPrompt: '',
 		executionId: retryExecutionId || randomUUID(),
 		isRetry,
@@ -91,9 +96,9 @@ export function enterWithContext(llms: WorkflowLLMs, retryExecutionId?: string) 
 		cost: 0,
 		llms,
 		scm: null,
-		utils: new UtilFunctions(),
 		tempDir: './temp',
 		fileSystem: new FileSystem(),
+		toolbox: new Toolbox(),
 	});
 }
 

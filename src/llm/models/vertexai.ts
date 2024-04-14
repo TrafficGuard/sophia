@@ -1,5 +1,6 @@
 import { HarmBlockThreshold, HarmCategory, SafetySetting, VertexAI } from '@google-cloud/vertexai';
-import { WorkflowLLMs, addCost } from '../../agent/workflows';
+import { WorkflowLLMs, addCost } from '#agent/workflows';
+import { withActiveSpan } from '#o11y/trace';
 import { projectId, region } from '../../config';
 import { BaseLLM } from '../base-llm';
 import { combinePrompts, logTextGeneration } from '../llm';
@@ -42,37 +43,54 @@ export function Gemini_1_5_Pro() {
 class VertexLLM extends BaseLLM {
 	@logTextGeneration
 	async generateText(userPrompt: string, systemPrompt: string): Promise<string> {
-		const prompt = combinePrompts(userPrompt, systemPrompt);
-		const generativeModel = vertexAI.preview.getGenerativeModel({
-			model: this.model,
-			generationConfig: {
-				maxOutputTokens: this.model.includes('1.5-pro') ? 8192 : 4096,
-				temperature: 1,
-				topP: 0.95,
-				stopSequences: ['</response>'],
-			},
-			safetySettings: SAFETY_SETTINGS,
+		return withActiveSpan('generateText', async (span) => {
+			const prompt = combinePrompts(userPrompt, systemPrompt);
+
+			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
+			span.setAttributes({
+				userPrompt,
+				inputChars: prompt.length,
+				model: this.model,
+			})
+
+			const generativeModel = vertexAI.preview.getGenerativeModel({
+				model: this.model,
+				generationConfig: {
+					maxOutputTokens: this.model.includes('1.5-pro') ? 8192 : 4096,
+					temperature: 1,
+					topP: 0.95,
+					stopSequences: ['</response>'],
+				},
+				safetySettings: SAFETY_SETTINGS,
+			});
+
+			const request = {
+				contents: [{ role: 'user', parts: [{ text: prompt }] }],
+			};
+
+			// const inputTokens = await generativeModel.countTokens(request);
+
+			const streamingResp = await generativeModel.generateContentStream(request);
+			let response = '';
+			for await (const item of streamingResp.stream) {
+				response += item.candidates[0].content.parts[0].text;
+			}
+
+			const inputCost = prompt.length * this.getInputCostPerToken();
+			const outputCost = response.length * this.getOutputCostPerToken();
+			const cost = inputCost + outputCost;
+			console.log(this.model, 'input', prompt.length, 'output', response.length);
+			span.setAttributes({
+				response,
+				inputCost,
+				outputCost,
+				cost,
+				outputChars: response.length,
+			});
+			addCost(cost);
+
+			return response;
 		});
-
-		const request = {
-			contents: [{ role: 'user', parts: [{ text: prompt }] }],
-		};
-
-		// const inputTokens = await generativeModel.countTokens(request);
-
-		const streamingResp = await generativeModel.generateContentStream(request);
-		let result = '';
-		for await (const item of streamingResp.stream) {
-			result += item.candidates[0].content.parts[0].text;
-		}
-
-		const inputCost = prompt.length * this.getInputCostPerToken();
-		const outputCost = result.length * this.getOutputCostPerToken();
-		const cost = inputCost + outputCost;
-		console.log(this.model, 'input', prompt.length, 'output', result.length);
-		addCost(cost);
-
-		return result;
 	}
 }
 

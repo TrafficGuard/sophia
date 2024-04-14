@@ -13,3 +13,4 @@ temp/
 .venv/
 ai-in
 ai-out
+.npmrc

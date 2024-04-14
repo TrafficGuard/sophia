@@ -1,12 +1,13 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { AnthropicVertex } from '@anthropic-ai/vertex-sdk';
-import { WorkflowLLMs, addCost } from '../../agent/workflows';
+import { WorkflowLLMs, addCost } from '#agent/workflows';
 import { BaseLLM } from '../base-llm';
 import { MaxTokensError } from '../errors';
 import { combinePrompts, logTextGeneration } from '../llm';
 import Message = Anthropic.Message;
+import { withActiveSpan } from '#o11y/trace';
+import { envVar } from '#utils/env-var';
 import { RetryableError } from '../../cache/cache';
-import { envVar } from '../../utils/env-var';
 import { MultiLLM } from '../multi-llm';
 
 export function Claude3_Sonnet_Vertex() {
@@ -52,40 +53,58 @@ class AnthropicVertexLLM extends BaseLLM {
 	// {"error":{"code":400,"message":"Project `1234567890` is not allowed to use Publisher Model `projects/project-id/locations/us-central1/publishers/anthropic/models/claude-3-haiku@20240307`","status":"FAILED_PRECONDITION"}}
 	@logTextGeneration
 	async generateText(userPrompt: string, systemPrompt?: string): Promise<string> {
-		const prompt = combinePrompts(userPrompt, systemPrompt);
-		const maxTokens = 4096;
+		return withActiveSpan('generateText', async (span) => {
+			const prompt = combinePrompts(userPrompt, systemPrompt);
+			const maxTokens = 4096;
 
-		let message: Message;
-		try {
-			message = await this.client.messages.create({
-				messages: [
-					{
-						role: 'user',
-						content: prompt,
-					},
-				],
+			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
+			span.setAttributes({
+				userPrompt,
+				inputChars: prompt.length,
 				model: this.model,
-				max_tokens: maxTokens,
-				stop_sequences: ['</response>'], // This is needed otherwise it can hallucinate the function response and continue on
-			});
-		} catch (e) {
-			if (this.isRetryableError(e)) {
-				throw new RetryableError(e);
+			})
+
+			let message: Message;
+			try {
+				message = await this.client.messages.create({
+					messages: [
+						{
+							role: 'user',
+							content: prompt,
+						},
+					],
+					model: this.model,
+					max_tokens: maxTokens,
+					stop_sequences: ['</response>'], // This is needed otherwise it can hallucinate the function response and continue on
+				});
+			} catch (e) {
+				if (this.isRetryableError(e)) {
+					throw new RetryableError(e);
+				}
+				throw e;
 			}
-			throw e;
-		}
 
-		const inputCost = this.getInputCostPerToken() * message.usage.input_tokens;
-		const outputCost = this.getOutputCostPerToken() * message.usage.output_tokens;
-		const totalCost = inputCost + outputCost;
-		console.log('inputCost', inputCost);
-		console.log('outputCost', outputCost);
-		addCost(totalCost);
+			const response = message.content[0].text;
+			const inputCost = this.getInputCostPerToken() * message.usage.input_tokens;
+			const outputCost = this.getOutputCostPerToken() * message.usage.output_tokens;
+			const cost = inputCost + outputCost;
+			console.log('inputCost', inputCost);
+			console.log('outputCost', outputCost);
+			addCost(cost);
 
-		if (message.stop_reason === 'max_tokens') {
-			throw new MaxTokensError(maxTokens, message.content[0].text);
-		}
-		return message.content[0].text;
+			span.setAttributes({
+				response,
+				inputCost,
+				outputCost,
+				cost,
+				outputChars: response.length,
+			});
+
+			if (message.stop_reason === 'max_tokens') {
+				throw new MaxTokensError(maxTokens, message.content[0].text);
+			}
+			return message.content[0].text;
+		});
 	}
 
 	isRetryableError(e: any) {

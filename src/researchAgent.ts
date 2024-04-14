@@ -8,7 +8,6 @@ import { GitLabServer } from './functions/scm/gitlab';
 import { UtilFunctions } from './functions/util';
 import { PUBLIC_WEB } from './functions/web/web';
 import { WEB_RESEARCH } from './functions/web/webResearch';
-import { WORKFLOW_LLMS } from './index';
 import { ClaudeVertexLLMs } from './llm/models/anthropic-vertex';
 import { ClaudeLLMs } from './llm/models/claude';
 import { GroqLLM, grokWorkflowLLMs } from './llm/models/groq';
@@ -16,6 +15,7 @@ import { GEMINI_1_0_PRO_LLMS } from './llm/models/vertexai';
 import { CodeEditor } from './swe/codeEditor';
 import { NpmPackages } from './swe/nodejs/researchNpmPackage';
 import { TypescriptTools } from './swe/nodejs/typescriptTools';
+import { WORKFLOW_LLMS } from './workflowLLMs';
 
 // Usage:
 // npm run research

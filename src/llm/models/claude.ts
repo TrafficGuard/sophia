@@ -1,11 +1,12 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { WorkflowLLMs, addCost, workflowContext } from '../../agent/workflows';
-import { envVar } from '../../utils/env-var';
+import { WorkflowLLMs, addCost } from '#agent/workflows';
+import { envVar } from '#utils/env-var';
 import { BaseLLM } from '../base-llm';
 import { MaxTokensError } from '../errors';
-import { logTextGeneration } from '../llm';
+import {combinePrompts, logTextGeneration} from '../llm';
 import { MultiLLM } from '../multi-llm';
 import Message = Anthropic.Message;
+import { withActiveSpan } from '#o11y/trace';
 
 export function Claude3_Opus() {
 	return new Claude('claude-3-opus-20240229', 15 / 1_000_000, 75 / 1_000_000);
@@ -37,40 +38,59 @@ export class Claude extends BaseLLM {
 	}
 
 	@logTextGeneration
-	async generateText(prompt: string, systemPrompt?: string): Promise<string> {
-		let message: Message;
-		try {
-			message = await this.anthropic.messages.create({
-				max_tokens: 4096,
-				system: systemPrompt,
-				messages: [{ role: 'user', content: prompt }],
+	async generateText(userPrompt: string, systemPrompt?: string): Promise<string> {
+		return withActiveSpan('generateText', async (span) => {
+			const prompt = combinePrompts(userPrompt, systemPrompt);
+
+			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
+			span.setAttributes({
+				userPrompt,
+				inputChars: prompt.length,
 				model: this.model,
-				stop_sequences: ['</response>'], // This is needed otherwise it can hallucinate the function response and continue on
+			})
+
+			let message: Message;
+			try {
+				message = await this.anthropic.messages.create({
+					max_tokens: 4096,
+					system: systemPrompt,
+					messages: [{ role: 'user', content: prompt }],
+					model: this.model,
+					stop_sequences: ['</response>'], // This is needed otherwise it can hallucinate the function response and continue on
+				});
+			} catch (e) {
+				console.log(e);
+				console.log(Object.keys(e));
+				throw e;
+			}
+
+			// TODO handle if there is a type != text
+			const response = message.content.map((content) => content.text).join();
+
+			const inputTokens = message.usage.input_tokens;
+			const outputTokens = message.usage.output_tokens;
+			const stopReason = message.stop_reason;
+
+			const inputCost = this.getInputCostPerToken() * inputTokens;
+			const outputCost = this.getOutputCostPerToken() * outputTokens;
+			const cost = inputCost + outputCost;
+			console.log('inputCost', inputCost);
+			console.log('outputCost', outputCost);
+			span.setAttributes({
+				response,
+				inputCost,
+				outputCost,
+				cost,
+				outputChars: response.length,
 			});
-		} catch (e) {
-			console.log(e);
-			console.log(Object.keys(e));
-			throw e;
-		}
 
-		const inputTokens = message.usage.input_tokens;
-		const outputTokens = message.usage.output_tokens;
-		const stopReason = message.stop_reason;
+			addCost(cost);
 
-		const inputCost = this.getInputCostPerToken() * inputTokens;
-		const outputCost = this.getOutputCostPerToken() * outputTokens;
-		const totalCost = inputCost + outputCost;
-		console.log('inputCost', inputCost);
-		console.log('outputCost', outputCost);
-		addCost(totalCost);
+			if (stopReason === 'max_tokens') {
+				throw new MaxTokensError(this.getMaxInputTokens(), response);
+			}
 
-		// TODO handle if there is a type != text
-		const response = message.content.map((content) => content.text).join();
-
-		if (stopReason === 'max_tokens') {
-			throw new MaxTokensError(this.getMaxInputTokens(), response);
-		}
-
-		return response;
+			return response;
+		});
 	}
 }

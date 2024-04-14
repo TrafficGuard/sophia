@@ -4,6 +4,10 @@ export async function sleep(millis: number) {
 	});
 }
 
+export function getFulfilled<T>(settledResults: PromiseSettledResult<T>[]) {
+	return settledResults.filter((result) => result.status === 'fulfilled').map((result) => (result as PromiseFulfilledResult<T>).value);
+}
+
 export interface ResolvablePromise<T> extends Promise<T> {
 	resolveValue: (value: T) => void;
 }
@@ -38,7 +42,6 @@ export class Mutex {
 
 export function mutex(originalMethod: any, context: ClassMethodDecoratorContext): any {
 	context.addInitializer(function () {
-		console.log(`initialiser ${context.name.toString()} ${this.toString()}`);
 		this[context.name] = this[context.name].bind(this);
 	});
 	return function replacementMethod(this: any, ...args: any[]) {

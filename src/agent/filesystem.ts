@@ -177,8 +177,8 @@ export class FileSystem {
 	}
 
 	/**
-	 * Gets the contents of a file
-	 * @param filePath The files path to read the contents of
+	 * Gets the contents of a local file on the file system.
+	 * @param filePath The file path to read the contents of (e.g. src/index.ts)
 	 * @returns the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
 	 */
 	@func
@@ -189,7 +189,7 @@ export class FileSystem {
 	}
 
 	/**
-	 * Gets the contents of a list of files.
+	 * Gets the contents of a list of local files.
 	 * @param filePaths {Array<string>} The files paths to read the contents of
 	 * @returns {Promise<Map<string, string>>} the contents of the files in a Map object keyed by the file path
 	 */
@@ -273,4 +273,6 @@ export class FileSystem {
 		const updatedContent = await new UtilFunctions().processText(contents, descriptionOfChanges);
 		await this.writeFile(filePath, updatedContent);
 	}
+
+	// https://github.com/BurntSushi/ripgrep
 }

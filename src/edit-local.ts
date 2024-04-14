@@ -1,10 +1,10 @@
 import { readFileSync } from 'fs';
 import { FileSystem } from './agent/filesystem';
 import { enterWithContext, workflowContext } from './agent/workflows';
-import { WORKFLOW_LLMS } from './index';
 import { DevEditWorkflow } from './swe/devEditWorkflow';
 import { TypescriptTools } from './swe/nodejs/typescriptTools';
 import { ProjectInfo } from './swe/projectDetection';
+import { WORKFLOW_LLMS } from './workflowLLMs';
 
 // Used to test the local repo editing workflow in DevEditWorkflow
 

@@ -6,11 +6,13 @@ import { GoogleCloud } from './functions/google-cloud';
 import { Jira } from './functions/jira';
 import { GitLabServer } from './functions/scm/gitlab';
 import { UtilFunctions } from './functions/util';
-import { WORKFLOW_LLMS } from './index';
+import { PUBLIC_WEB } from './functions/web/web';
+import { WEB_RESEARCH } from './functions/web/webResearch';
 import { ClaudeLLMs } from './llm/models/claude';
 import { GEMINI_1_0_PRO_LLMS, GEMINI_1_5_PRO_LLMS } from './llm/models/vertexai';
 import { CodeEditor } from './swe/codeEditor';
 import { TypescriptTools } from './swe/nodejs/typescriptTools';
+import { WORKFLOW_LLMS } from './workflowLLMs';
 
 // let workflowLLMs: WorkflowLLMs;
 // llms = GEMINI_1_0_PRO();
@@ -30,6 +32,8 @@ export async function main() {
 	tools.addTool('FileSystem', getFileSystem());
 	tools.addTool('GitLabServer', new GitLabServer());
 	tools.addTool('CodeEditor', new CodeEditor());
+	tools.addTool('PublicWeb', PUBLIC_WEB);
+	tools.addTool('WebResearcher', WEB_RESEARCH);
 	tools.addTool('TypescriptTools', new TypescriptTools());
 
 	await runAgent(tools, userPrompt, systemPrompt);

@@ -9,9 +9,10 @@ import { envVar } from '../../utils/env-var';
 import { execCommand } from '../../utils/exec';
 const { getJson } = require('serpapi');
 import { readFileSync } from 'fs';
-import axios, { AxiosInstance } from 'axios';
 import { fileExistsAsync, fileExistsSync } from 'tsconfig-paths/lib/filesystem';
 import { sleep } from '../../utils/async-utils';
+const puppeteer = require('puppeteer');
+import { Browser } from 'puppeteer';
 
 // For Node.js
 const TurndownService = require('turndown');
@@ -22,8 +23,10 @@ const turndownService = new TurndownService();
 export interface OrganicSearchResult {
 	url: string;
 	title: string;
+	content?: string;
 }
 
+let browser: Browser;
 /**
  * Functions for reading web pages on the public internet
  */
@@ -31,7 +34,7 @@ export interface OrganicSearchResult {
 export class PublicWeb {
 	/**
 	 * Downloads the pages under the url 1 level deep to the .wget folder
-	 * @param url The URL to crawl
+	 * @param url The URL to crawl (https://...)
 	 * @returns the A map of the website contents, keyed by filenames of the scraped web pages
 	 */
 	// @func
@@ -49,7 +52,7 @@ export class PublicWeb {
 
 	/**
 	 * Get the contents of a web page on the public open internet at the provided URL. NOTE: Do NOT use this for URLs websites which would require authentication.
-	 * @param url {string} The web page URL
+	 * @param url {string} The web page URL (https://...)
 	 * @returns the web page contents in Markdown format
 	 */
 	@func
@@ -68,15 +71,23 @@ export class PublicWeb {
 				return '';
 			}
 
-			const { stdout, stderr, exitCode } = await execCommand(`wget -q -p ${url}`, wgetBasePath);
-			if (exitCode > 0) await sleep(1000);
-			{
-				const { stdout, stderr, exitCode } = await execCommand(`wget -p ${url}`, wgetBasePath);
-				if (exitCode > 0) throw new Error(`${stdout} ${stderr}`);
-			}
+			// const { stdout, stderr, exitCode } = await execCommand(`wget -q -p ${url}`, wgetBasePath);
+			// if (exitCode > 0) await sleep(1000);
+			// {
+			// 	const { stdout, stderr, exitCode } = await execCommand(`wget -p ${url}`, wgetBasePath);
+			// 	if (exitCode > 0) throw new Error(`${stdout} ${stderr}`);
+			// }
 		}
+		// const htmlContents: string = readFileSync(wgetCachedPath).toString();
 
-		const htmlContents: string = readFileSync(wgetCachedPath).toString();
+		if (!browser) browser = await puppeteer.launch({ headless: true });
+		const page = await browser.newPage();
+		await page.goto(url);
+		await sleep(1000);
+		const htmlContents = await page.content();
+		// await browser.close();
+
+		// const htmlContents: string = readFileSync(wgetCachedPath).toString();
 		const readableHtml = this.readableVersionFromHtml(htmlContents, url);
 		const markdown = this.htmlToMarkdown(readableHtml, url);
 		// const newSizePercent = Number((markdown.length / htmlContents.length) * 100).toFixed(1);
@@ -129,6 +140,7 @@ export class PublicWeb {
 	async googleSearch(searchTerm: string): Promise<string[]> {
 		// console.log('Google search', searchTerm)
 		// // https://programmablesearchengine.google.com/controlpanel/create
+		// https://programmablesearchengine.google.com/controlpanel/all
 		// // Select "Search the entire web"
 		// const searchEngineId = envVar('GOOGLE_CUSTOM_SEARCH_ENGINE_ID')
 		// const searchKey = envVar('GOOGLE_CUSTOM_SEARCH_KEY')

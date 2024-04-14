@@ -1,4 +1,4 @@
-import { CDATA_END, CDATA_START } from '../utils/xml-utils';
+import { CDATA_END, CDATA_START } from '#utils/xml-utils';
 import { FunctionResponse, LLM } from './llm';
 import { extractJsonResult, extractStringResult, parseFunctionCallsXml } from './responseParsers';
 
@@ -10,8 +10,8 @@ export abstract class BaseLLM implements LLM {
 		private outputCostPerToken: number,
 	) {}
 
-	async generateTextExpectingFunctions(prompt: string, systemPromt?: string): Promise<FunctionResponse> {
-		const response = await this.generateText(prompt, systemPromt);
+	async generateTextExpectingFunctions(prompt: string, systemPrompt?: string): Promise<FunctionResponse> {
+		const response = await this.generateText(prompt, systemPrompt);
 		return {
 			response: response,
 			functions: parseFunctionCallsXml(response),

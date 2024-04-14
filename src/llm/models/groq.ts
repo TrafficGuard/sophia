@@ -1,9 +1,10 @@
-import { WorkflowLLMs } from '../../agent/workflows';
-import { addCost } from '../../agent/workflows';
+import { WorkflowLLMs } from '#agent/workflows';
+import { addCost } from '#agent/workflows';
 import { RetryableError } from '../../cache/cache';
 import { BaseLLM } from '../base-llm';
 import { combinePrompts, logDuration } from '../llm';
 import { MultiLLM } from '../multi-llm';
+import {withActiveSpan} from "#o11y/trace";
 
 const Groq = require('groq-sdk');
 const groq = new Groq({
@@ -25,26 +26,48 @@ export function grokWorkflowLLMs(): WorkflowLLMs {
 export class GroqLLM extends BaseLLM {
 	@logDuration
 	async generateText(userPrompt: string, systemPrompt = ''): Promise<string> {
-		const prompt = combinePrompts(userPrompt, systemPrompt);
-		try {
-			const completion = await groq.chat.completions.create({
-				messages: [
-					{
-						role: 'user',
-						content: prompt,
-					},
-				],
+		return withActiveSpan('generateText', async (span) => {
+			const prompt = combinePrompts(userPrompt, systemPrompt);
+			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
+			span.setAttributes({
+				userPrompt,
+				inputChars: prompt.length,
 				model: this.model,
-			});
-			const inputCost = this.getInputCostPerToken() * prompt.length;
-			const outputCost = this.getOutputCostPerToken() * (completion.choices[0]?.message?.content || '').length;
-			const totalCost = inputCost + outputCost;
-			addCost(totalCost);
-			return completion.choices[0]?.message?.content || '';
-		} catch (e) {
-			if (e.error?.code === 'rate_limit_exceeded') throw new RetryableError(e);
-			throw e;
-		}
+			})
+			span.setAttribute('userPrompt', userPrompt);
+			span.setAttribute('inputChars', prompt.length);
+
+			try {
+				const completion = await groq.chat.completions.create({
+					messages: [
+						{
+							role: 'user',
+							content: prompt,
+						},
+					],
+					model: this.model,
+				});
+				const response = completion.choices[0]?.message?.content || '';
+
+				const inputCost = this.getInputCostPerToken() * prompt.length;
+				const outputCost = this.getOutputCostPerToken() * (completion.choices[0]?.message?.content || '').length;
+				const cost = inputCost + outputCost;
+
+				span.setAttributes({
+					response,
+					inputCost,
+					outputCost,
+					cost,
+					outputChars: response.length,
+				});
+				addCost(cost);
+
+				return response;
+			} catch (e) {
+				if (e.error?.code === 'rate_limit_exceeded') throw new RetryableError(e);
+				throw e;
+			}
+		});
 	}
 }
 

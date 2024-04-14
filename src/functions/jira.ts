@@ -1,8 +1,8 @@
 import axios, { AxiosInstance } from 'axios';
-import { func } from '../agent/functions';
-import { funcClass } from '../agent/metadata';
+import { func } from '#agent/functions';
+import { funcClass } from '#agent/metadata';
+import { envVar } from '#utils/env-var';
 import { cacheRetry } from '../cache/cache';
-import { envVar } from '../utils/env-var';
 
 @funcClass(__filename)
 export class Jira {
@@ -24,7 +24,7 @@ export class Jira {
 	 * @returns {Promise<string>} the issue description
 	 */
 	@func
-	@cacheRetry({ scope: 'global', ttlSeconds: 60 * 10 })
+	// @cacheRetry({ scope: 'global', ttlSeconds: 60 * 10 })
 	async getJiraDescription(issueId: string): Promise<string> {
 		try {
 			const response = await this.instance.get(`/issue/${issueId}`);

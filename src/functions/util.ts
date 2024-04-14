@@ -1,6 +1,6 @@
-import { func } from '../agent/functions';
-import { funcClass } from '../agent/metadata';
-import { llms } from '../agent/workflows';
+import { func } from '#agent/functions';
+import { funcClass } from '#agent/metadata';
+import { llms } from '#agent/workflows';
 
 @funcClass(__filename)
 export class UtilFunctions {

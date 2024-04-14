@@ -14,6 +14,14 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "moduleResolution": "node16"
+    "moduleResolution": "node16",
+    "baseUrl": "./",
+    "paths": {
+      "#agent/*": ["./src/agent/*"],
+      "#fastify/*": ["./src/fastify/*"],
+      "#llm/*": ["./src/llm/*"],
+      "#o11y/*": ["./src/o11y/*"],
+      "#utils/*": ["./src/utils/*"]
+    }
   }
 }
