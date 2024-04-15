@@ -1,5 +1,6 @@
 /* eslint-disable semi */
-import { Span, SpanStatusCode, Tracer } from '@opentelemetry/api';
+import { Span, Tracer } from '@opentelemetry/api';
+import opentelemetry from '@opentelemetry/api';
 import { SugaredTracer, wrapTracer } from './trace/SugaredTracer';
 
 /**
@@ -7,9 +8,11 @@ import { SugaredTracer, wrapTracer } from './trace/SugaredTracer';
  */
 const dummyTracer = {
 	startSpan: () => {
-		return {
-			end: () => {},
-		};
+		const span: Partial<Span> = {};
+		span.end = () => {};
+		span.setAttribute = () => span as Span;
+		span.setAttributes = () => span as Span;
+		return span;
 	},
 };
 
@@ -41,6 +44,10 @@ export function startSpan(spanName: string): Span {
 	return tracer?.startSpan(spanName) ?? <Span>(<unknown>dummyTracer.startSpan());
 }
 
+export function getActiveSpan(): Span | null {
+	return opentelemetry.trace.getActiveSpan();
+}
+
 /**
  * Convenience wrapper which uses the appropriate tracer and always ends the parent span.
  * @see https://opentelemetry.io/docs/instrumentation/js/instrumentation/#create-spans
@@ -49,26 +56,9 @@ export function startSpan(spanName: string): Span {
  * @returns the value from work function
  */
 export function withActiveSpan<T>(spanName: string, func: (span: Span) => T): T {
-	if (!tracer) {
-		return func(fakeSpan);
-	}
+	if (!tracer) return func(fakeSpan);
+
 	return tracer.withActiveSpan(spanName, func);
-	// return tracer.startActiveSpan(spanName, async (span: Span) => {
-	//   try {
-	//     const result = await work();
-	//     span.setStatus({ code: SpanStatusCode.OK });
-	//     return result;
-	//   } catch (e: any) {
-	//     span.recordException(e);
-	//     span.setStatus({
-	//       code: SpanStatusCode.ERROR,
-	//       message: e.message,
-	//     });
-	//     throw e;
-	//   } finally {
-	//     span.end();
-	//   }
-	// });
 }
 
 /**
@@ -77,22 +67,63 @@ export function withActiveSpan<T>(spanName: string, func: (span: Span) => T): T 
  * @param func
  */
 export function withSpan<T>(spanName: string, func: (span: Span) => T): T {
-	if (!tracer) {
-		return func(fakeSpan);
-	}
+	if (!tracer) return func(fakeSpan);
+
 	return tracer.withSpan(spanName, func);
 }
 
-export function span(originalMethod: any, context: ClassMethodDecoratorContext): any {
-	const functionName = String(context.name);
-	return function replacementMethod(this: any, ...args: any[]) {
-		if (!tracer) {
-			return originalMethod.call(this, ...args);
-		}
-		return tracer.withActiveSpan(functionName, () => {
-			return originalMethod.call(this, ...args);
-		});
+type SpanAttributeExtractor = number | ((...args: any) => string);
+type SpanAttributeExtractors = Record<string, SpanAttributeExtractor>;
+
+/**
+ * Decorator for creating a span around a function, which can add the function arguments as
+ * attributes to the span. The decorator argument object has the keys as the attribute names
+ * and the values as either 1) the function args array index 2) a function which takes the args array as its one argument
+ * e.g.
+ * @spanWithArgAttributes({ bar: 0, baz: (args) => args[1].toSpanAttributeValue() })
+ * public foo(bar: string, baz: ComplexType) {}
+ *
+ *
+ * @param attributeExtractors
+ * @returns
+ */
+export function span(attributeExtractors: SpanAttributeExtractors = {}) {
+	// NOTE this has been copied to func() in functions.ts and modified
+	// Any changes should be kept in sync
+	return function spanDecorator(originalMethod: any, context: ClassMethodDecoratorContext): any {
+		const functionName = String(context.name);
+		return function replacementMethod(this: any, ...args: any[]) {
+			if (!tracer) {
+				return originalMethod.call(this, ...args);
+			}
+			return tracer.withSpan(functionName, (span: Span) => {
+				setFunctionSpanAttributes(span, functionName, attributeExtractors, args);
+				return originalMethod.call(this, ...args);
+			});
+		};
 	};
+}
+
+export function setFunctionSpanAttributes(span: Span, functionName: string, attributeExtractors, args) {
+	for (const [attribute, extractor] of Object.entries(attributeExtractors)) {
+		if (typeof extractor === 'number') {
+			const value = args[extractor] ?? '';
+			// If value is an object type, then iterate over the entries and set the attributes for primitive types
+			if (typeof value === 'object') {
+				for (const [key, val] of Object.entries(value)) {
+					if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {
+						span.setAttribute(`${attribute}.${key} ${val}`, val);
+					}
+				}
+			} else {
+				span.setAttribute(attribute, value);
+			}
+		} else if (typeof extractor === 'function') {
+			span.setAttribute(attribute, extractor(...args));
+		} else {
+			console.warn(`Invalid attribute extractor for ${functionName}() attribute[${attribute}], must be a number or function`);
+		}
+	}
 }
 
 /**
@@ -107,49 +138,18 @@ export function span(originalMethod: any, context: ClassMethodDecoratorContext):
  * @param attributeExtractors
  * @returns
  */
-export function spanWithArgAttributes(attributeExtractors: any = {}) {
+export function activeSpan(attributeExtractors: Record<string, number | ((...args: any) => string)> = {}) {
 	// NOTE this has been copied to func() in functions.ts and modified
 	// Any changes should be kept in sync
 	return function spanDecorator(originalMethod: any, context: ClassMethodDecoratorContext): any {
 		const functionName = String(context.name);
 		return function replacementMethod(this: any, ...args: any[]) {
-			if (!tracer) {
-				return originalMethod.call(this, ...args);
-			}
+			if (!tracer) return originalMethod.call(this, ...args);
+
 			return tracer.withActiveSpan(functionName, (span: Span) => {
-				for (const [attribute, extractor] of Object.entries(attributeExtractors)) {
-					if (typeof extractor === 'number') {
-						const value = args[extractor] ?? '';
-						// If value is an object type, then iterate over the entries and set the attributes for primitive types
-						if (typeof value === 'object') {
-							for (const [key, val] of Object.entries(value)) {
-								if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {
-									span.setAttribute(`${attribute}.${key} ${val}`, val);
-								}
-							}
-						} else {
-							span.setAttribute(attribute, value);
-						}
-					} else if (typeof extractor === 'function') {
-						span.setAttribute(attribute, extractor(...args));
-					} else {
-						console.warn(`Invalid attribute extractor for ${functionName}() attribute[${attribute}], must be a number or function`);
-					}
-				}
+				setFunctionSpanAttributes(span, functionName, attributeExtractors, args);
 				return originalMethod.call(this, ...args);
 			});
 		};
 	};
 }
-
-// export function span<This, Args extends any[], Return extends Promise<Return>>(targetFunction: (this: This, ...args: Args) => Return, context: ClassMethodDecoratorContext<This, (this: This, ...args: Args) => Return>) {
-//   const functionName = String(context.name);
-
-//   function replacementMethod(this: This, ...args: Args): Return {
-//     return withSpan<Return>(functionName, () => {
-//       return targetFunction.call(this, ...args);
-//     }) as Return;
-//   }
-
-//   return replacementMethod;
-// }

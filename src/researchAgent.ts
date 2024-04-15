@@ -1,28 +1,28 @@
 import { readFileSync } from 'fs';
-import { runAgent } from './agent/agentRunner';
-import { Toolbox } from './agent/toolbox';
-import { WorkflowLLMs, enterWithContext, getFileSystem, llms, workflowContext } from './agent/workflows';
+import { AgentLLMs, agentContext, enterWithContext, getFileSystem, llms } from '#agent/agentContext';
+import { runAgent } from '#agent/agentRunner';
+import { Toolbox } from '#agent/toolbox';
+import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
+import { ClaudeLLMs } from '#llm/models/claude';
+import { GroqLLM, grokLLMs } from '#llm/models/groq';
+import { GEMINI_1_0_PRO_LLMS } from '#llm/models/vertexai';
+import { AGENT_LLMS } from './agentLLMs';
 import { GoogleCloud } from './functions/google-cloud';
 import { Jira } from './functions/jira';
 import { GitLabServer } from './functions/scm/gitlab';
 import { UtilFunctions } from './functions/util';
 import { PUBLIC_WEB } from './functions/web/web';
 import { WEB_RESEARCH } from './functions/web/webResearch';
-import { ClaudeVertexLLMs } from './llm/models/anthropic-vertex';
-import { ClaudeLLMs } from './llm/models/claude';
-import { GroqLLM, grokWorkflowLLMs } from './llm/models/groq';
-import { GEMINI_1_0_PRO_LLMS } from './llm/models/vertexai';
 import { CodeEditor } from './swe/codeEditor';
 import { NpmPackages } from './swe/nodejs/researchNpmPackage';
 import { TypescriptTools } from './swe/nodejs/typescriptTools';
-import { WORKFLOW_LLMS } from './workflowLLMs';
 
 // Usage:
 // npm run research
 
 export async function main() {
-	let llms: WorkflowLLMs = ClaudeVertexLLMs();
-	llms = WORKFLOW_LLMS;
+	let llms: AgentLLMs = ClaudeVertexLLMs();
+	llms = AGENT_LLMS;
 
 	enterWithContext(llms);
 
@@ -38,7 +38,7 @@ export async function main() {
 	tools.addTool('PublicWeb', PUBLIC_WEB);
 	tools.addTool('WebResearcher', WEB_RESEARCH);
 
-	await runAgent(tools, currentPrompt, system);
+	await runAgent('researcher', tools, currentPrompt, system);
 }
 
 main()

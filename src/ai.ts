@@ -1,26 +1,30 @@
 import { readFileSync, writeFileSync } from 'fs';
-import { LLM } from './llm/llm';
-import { Claude3_Sonnet_Vertex } from './llm/models/anthropic-vertex';
-import { Claude3_Opus, Claude3_Sonnet } from './llm/models/claude';
-import { GroqLLM } from './llm/models/groq';
-import { GPT } from './llm/models/openai';
-import { Gemini_1_0_Pro, Gemini_1_5_Pro } from './llm/models/vertexai';
+import { enterWithContext } from '#agent/agentContext';
+import '#fastify/trace-init/trace-init';
+import { LLM } from '#llm/llm';
+import { Claude3_Sonnet_Vertex } from '#llm/models/anthropic-vertex';
+import { Claude3_Opus, Claude3_Sonnet } from '#llm/models/claude';
+import { GroqLLM } from '#llm/models/groq';
+import { GPT } from '#llm/models/openai';
+import { Gemini_1_0_Pro, Gemini_1_5_Pro } from '#llm/models/vertexai';
+import { AGENT_LLMS } from './agentLLMs';
 
 // Usage:
 // npm run ai
 
 let llm: LLM = Claude3_Sonnet_Vertex();
-// llm = Claude3_Opus()
+llm = Claude3_Opus();
 // llm = Claude3_Sonnet()
 // llm = new GroqLLM()
 // llm = Gemini_1_0_Pro()
-llm = Gemini_1_5_Pro();
+// llm = Gemini_1_5_Pro();
 
 async function main() {
 	const system = readFileSync('ai-system', 'utf-8');
 	const prompt = readFileSync('ai-in', 'utf-8');
+	enterWithContext(AGENT_LLMS);
 	// console.log(prompt)
-	const text = await llm.generateText(prompt, system);
+	const text = await llm.generateText(prompt);
 	// console.log(text)
 	try {
 		writeFileSync('ai-out.json', JSON.parse(text));
@@ -53,14 +57,14 @@ An example pseudocode for the task "Increment the version of the waf node.js pro
 <task_tool_plan_pseudocode>
     # Discovery
     project = GitLabServer.selectProject(requirements)
-    project = 
+    project =
 </task_tool_plan_pseudocode>
 
 An example pseudocode for the task "Increment the version of the waf node.js project"
 <task_tool_plan_pseudocode>
     # Discovery
     project = GitLabServer.selectProject(requirements)
-    project = 
+    project =
 </task_tool_plan_pseudocode>
 
 

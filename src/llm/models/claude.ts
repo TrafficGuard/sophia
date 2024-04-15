@@ -1,12 +1,12 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { WorkflowLLMs, addCost } from '#agent/workflows';
+import { AgentLLMs, addCost } from '#agent/agentContext';
 import { envVar } from '#utils/env-var';
 import { BaseLLM } from '../base-llm';
 import { MaxTokensError } from '../errors';
 import { combinePrompts, logTextGeneration } from '../llm';
 import { MultiLLM } from '../multi-llm';
 import Message = Anthropic.Message;
-import { withActiveSpan } from '#o11y/trace';
+import { withSpan } from '#o11y/trace';
 
 export function Claude3_Opus() {
 	return new Claude('claude-3-opus-20240229', 15 / 1_000_000, 75 / 1_000_000);
@@ -20,7 +20,7 @@ export function Claude3_Haiku() {
 	return new Claude('claude-3-haiku-20240307', 0.25 / 1_000_000, 1.25 / 1_000_000);
 }
 
-export function ClaudeLLMs(): WorkflowLLMs {
+export function ClaudeLLMs(): AgentLLMs {
 	const opus = Claude3_Opus();
 	return {
 		easy: Claude3_Haiku(),
@@ -39,7 +39,7 @@ export class Claude extends BaseLLM {
 
 	@logTextGeneration
 	async generateText(userPrompt: string, systemPrompt?: string): Promise<string> {
-		return withActiveSpan('generateText', async (span) => {
+		return withSpan('generateText', async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);

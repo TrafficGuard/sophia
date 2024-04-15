@@ -3,8 +3,8 @@ import { logger } from '#o11y/logger';
 const sdk = require('api')('@pplx/v0#29jnn2rlt35the2');
 
 import { func } from '#agent/functions';
+import { funcClass } from '#agent/metadata';
 import { cacheRetry } from '../../cache/cache';
-import {funcClass} from "#agent/metadata";
 
 const log = logger.child({ class: 'Perplexity' });
 

@@ -1,7 +1,7 @@
-import { workflowContext } from '../agent/workflows';
+import { agentContext } from '#agent/agentContext';
 
 /**
- * Interface for storing and retriving cached function call results
+ * Interface for storing and retrieving cached function call results
  */
 export interface FunctionCacheService {
 	get(className: string, method: string, params: any[]): Promise<any>;
@@ -14,18 +14,23 @@ interface CacheRetryOptions {
 	ttlSeconds?: number;
 	/** Version of type of the data returned/cached. If you modify the method so that the cached values are incompatible, then increment the version.  */
 	version: number;
-	/** Cache scope */
-	scope: 'global' | 'workflow';
+	/** Cache scope. If no value is provided then the function call results won't be cached. */
+	scope?: 'global' | 'agent' | 'execution' | 'user';
 }
 
 const DEFAULTS = { retries: 5, backOffMs: 250, version: 1 };
 
 function cacheOpts(opts: Partial<CacheRetryOptions>): CacheRetryOptions {
-	return { retries: 5, backOffMs: 250, version: 1, scope: 'workflow', ...opts };
+	return { retries: 5, backOffMs: 250, version: 1, scope: 'execution', ...opts };
 }
 
-export class RetryableError {
-	constructor(private originalError: any) {}
+export class RetryableError extends Error {
+	constructor(originalError: Error) {
+		super();
+		this.name = originalError.name;
+		this.message = originalError.message;
+		this.stack = originalError.stack;
+	}
 }
 
 /**
@@ -37,7 +42,7 @@ export function cacheRetry(options: Partial<CacheRetryOptions> = DEFAULTS) {
 		const methodName = String(context.name);
 
 		async function replacementMethod(this: any, ...args: any[]) {
-			const cacheService = workflowContext.getStore().cacheService;
+			const cacheService = agentContext.getStore().cacheService;
 			// console.log(this.constructor.name, methodName, args)
 			const cachedValue = await cacheService.get(this.constructor.name, methodName, args);
 
@@ -56,7 +61,7 @@ export function cacheRetry(options: Partial<CacheRetryOptions> = DEFAULTS) {
 					await cacheService.set(this.constructor.name, methodName, args, result);
 					return result;
 				} catch (error) {
-					// TODO determine if error is re-tryable
+					// TODO determine if error can be retried
 					// NOT retryable ===============
 					if (error.message?.includes('Cannot read properties of undefined')) {
 						throw error;

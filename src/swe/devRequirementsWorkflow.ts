@@ -1,5 +1,5 @@
+import { agentContext, getFileSystem, llms } from '#agent/agentContext';
 import { func } from '#agent/functions';
-import { getFileSystem, llms, workflowContext } from '#agent/workflows';
 import { cacheRetry } from '../cache/cache';
 import { GitLabProject } from '../functions/scm/gitlab';
 import { UtilFunctions } from '../functions/util';
@@ -29,7 +29,7 @@ export class DevRequirementsWorkflow {
 		// console.log('Summary: ' + summary);
 		const gitLabProject = await this.selectProject(requirements);
 
-		let repoPath = await workflowContext.getStore().scm.cloneProject(gitLabProject.path_with_namespace);
+		let repoPath = await agentContext.getStore().scm.cloneProject(gitLabProject.path_with_namespace);
 		// ensure we're setting a relative path
 		if (repoPath.startsWith('/')) repoPath = repoPath.slice(1);
 		getFileSystem().setWorkingDirectory(repoPath);
@@ -56,7 +56,7 @@ export class DevRequirementsWorkflow {
 			`<requirement>\n${requirements}\n</requirement><mr_description>\n${mrDescription}\n</mr_description>`,
 			'From this Merge Request description, generate a title for the Merge Request',
 		);
-		await workflowContext.getStore().scm?.createMergeRequest(mrTitle, mrDescription);
+		await agentContext.getStore().scm?.createMergeRequest(mrTitle, mrDescription);
 
 		// TODO notify who started the workflow
 	}
@@ -81,7 +81,7 @@ export class DevRequirementsWorkflow {
 
 	@cacheRetry()
 	async selectProject(requirements: string): Promise<GitLabProject> {
-		const projects = await workflowContext.getStore().scm.getProjects();
+		const projects = await agentContext.getStore().scm.getProjects();
 		const prompt = buildPrompt({
 			information: `The following is a list of our projects:\n${JSON.stringify(projects)}`,
 			requirements,

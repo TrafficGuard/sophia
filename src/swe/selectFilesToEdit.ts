@@ -1,4 +1,4 @@
-import { getFileSystem, llms } from '../agent/workflows';
+import { getFileSystem, llms } from '#agent/agentContext';
 import { TypescriptTools } from './nodejs/typescriptTools';
 
 export interface SelectFilesResponse {

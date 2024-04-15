@@ -1,6 +1,6 @@
+import { getFileSystem } from '#agent/agentContext';
 import { func } from '#agent/functions';
 import { funcClass } from '#agent/metadata';
-import { getFileSystem } from '#agent/workflows';
 import { execCommand } from '#utils/exec';
 import { LanguageTools } from '../lang/languageTools';
 

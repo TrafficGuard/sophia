@@ -1,7 +1,7 @@
 // - Types --------------------------------------------------------------------
 
 import { Span } from '@opentelemetry/api';
-import { getTracer } from '#o11y/trace';
+import { getTracer, setFunctionSpanAttributes } from '#o11y/trace';
 
 interface FunctionParameter {
 	index: number;
@@ -74,7 +74,7 @@ export function funcDef(functionDefinition: Omit<FunctionDefinition, 'class'>) {
  * Decorator which flags a class method to be exposed as a tool for the agent control loop.
  */
 export function func() {
-	// NOTE - this is copied from spanWithArgAttributes() in trace.ts and modified to trace all arguments
+	// NOTE - this is similar to activeSpan() in trace.ts and modified to trace all arguments
 	// Any changes should be kept in sync
 	return function spanDecorator(originalMethod: any, context: ClassMethodDecoratorContext): any {
 		const functionName = String(context.name);
@@ -92,25 +92,7 @@ export function func() {
 			}
 
 			return tracer.withActiveSpan(functionName, (span: Span) => {
-				for (const [attribute, extractor] of Object.entries(attributeExtractors)) {
-					if (typeof extractor === 'number') {
-						const value = args[extractor] ?? '';
-						// If value is an object type, then iterate over the entries and set the attributes for primitive types
-						if (typeof value === 'object') {
-							for (const [key, val] of Object.entries(value)) {
-								if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {
-									span.setAttribute(`${attribute}.${key} ${val}`, val);
-								}
-							}
-						} else {
-							span.setAttribute(attribute, value);
-						}
-					} else if (typeof extractor === 'function') {
-						span.setAttribute(attribute, extractor(...args));
-					} else {
-						console.warn(`Invalid attribute extractor for ${functionName}() attribute[${attribute}], must be a number or function`);
-					}
-				}
+				setFunctionSpanAttributes(span, functionName, attributeExtractors, args);
 				return originalMethod.call(this, ...args);
 			});
 		};

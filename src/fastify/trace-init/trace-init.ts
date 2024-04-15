@@ -9,7 +9,7 @@ import { TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
 import { PinoInstrumentation } from './instrumentation';
 
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import {setTracer} from "#o11y/trace";
+import { setTracer } from '#o11y/trace';
 
 let initialized = false;
 
@@ -99,13 +99,6 @@ function initTrace(): void {
 
 		const tracer = trace.getTracer(traceServiceName);
 		setTracer(tracer);
-		// import('../../o11y/trace.ts')
-		// 	.then((module) => {
-		// 		module.setTracer(tracer);
-		// 	})
-		// 	.catch((err) => {
-		// 		console.error('Error importing #o11y in trace-init.ts', err);
-		// 	});
 	}
 }
 

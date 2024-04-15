@@ -1,14 +1,21 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { AnthropicVertex } from '@anthropic-ai/vertex-sdk';
-import { WorkflowLLMs, addCost } from '#agent/workflows';
+import { AgentLLMs, addCost } from '#agent/agentContext';
 import { BaseLLM } from '../base-llm';
 import { MaxTokensError } from '../errors';
-import { combinePrompts, logTextGeneration } from '../llm';
+import { LLM, combinePrompts, logTextGeneration } from '../llm';
 import Message = Anthropic.Message;
-import { withActiveSpan } from '#o11y/trace';
+import { withSpan } from '#o11y/trace';
 import { envVar } from '#utils/env-var';
 import { RetryableError } from '../../cache/cache';
 import { MultiLLM } from '../multi-llm';
+
+export function vertexLLmFromModel(model: string): LLM | null {
+	if (model.startsWith('claude-3-sonnet')) return Claude3_Sonnet_Vertex();
+	if (model.startsWith('claude-3-haiku')) return Claude3_Haiku_Vertex();
+	if (model.startsWith('claude-3-opus')) return Claude3_Opus_Vertex();
+	return null;
+}
 
 export function Claude3_Sonnet_Vertex() {
 	return new AnthropicVertexLLM('claude-3-sonnet@20240229', 3 / 1000000, 15 / 1000000);
@@ -24,7 +31,7 @@ export function Claude3_Opus_Vertex() {
 	return new AnthropicVertexLLM('claude-3-opus@20240229', 15 / 1000000, 75 / 1000000);
 }
 
-export function ClaudeVertexLLMs(): WorkflowLLMs {
+export function ClaudeVertexLLMs(): AgentLLMs {
 	const hard = Claude3_Sonnet_Vertex();
 	return {
 		easy: Claude3_Haiku_Vertex(),
@@ -34,26 +41,35 @@ export function ClaudeVertexLLMs(): WorkflowLLMs {
 	};
 }
 
+let client: AnthropicVertex;
+function getClient() {
+	if (!client) {
+		// Reads from the `CLOUD_ML_REGION` & `ANTHROPIC_VERTEX_PROJECT_ID` environment variables.
+		// Additionally goes through the standard `google-auth-library` flow.
+		client = new AnthropicVertex({
+			projectId: envVar('VERTEX_PROJECT_ID'),
+			region: envVar('VERTEX_REGION'),
+		});
+	}
+	return client;
+}
+
 /**
  * Anthropic Claude 3 through Google Cloud Vertex
  * @see https://github.com/anthropics/anthropic-sdk-typescript/tree/main/packages/vertex-sdk
  */
 class AnthropicVertexLLM extends BaseLLM {
-	// Reads from the `CLOUD_ML_REGION` & `ANTHROPIC_VERTEX_PROJECT_ID` environment variables.
-	// Additionally goes through the standard `google-auth-library` flow.
-	client = new AnthropicVertex({
-		projectId: envVar('VERTEX_PROJECT_ID'),
-		region: envVar('VERTEX_REGION'),
-	});
+	client: AnthropicVertex;
 
 	constructor(model: string, inputCostPerToken = 0, outputCostPerToken = 0) {
 		super(model, 200_000, inputCostPerToken, outputCostPerToken);
+		this.client = getClient();
 	}
 	// Error when
 	// {"error":{"code":400,"message":"Project `1234567890` is not allowed to use Publisher Model `projects/project-id/locations/us-central1/publishers/anthropic/models/claude-3-haiku@20240307`","status":"FAILED_PRECONDITION"}}
 	@logTextGeneration
 	async generateText(userPrompt: string, systemPrompt?: string): Promise<string> {
-		return withActiveSpan('generateText', async (span) => {
+		return withSpan('generateText', async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 			const maxTokens = 4096;
 
@@ -101,9 +117,9 @@ class AnthropicVertexLLM extends BaseLLM {
 			});
 
 			if (message.stop_reason === 'max_tokens') {
-				throw new MaxTokensError(maxTokens, message.content[0].text);
+				throw new MaxTokensError(maxTokens, response);
 			}
-			return message.content[0].text;
+			return response;
 		});
 	}
 

@@ -1,10 +1,10 @@
 import path from 'path';
+import { getFileSystem, llms } from '#agent/agentContext';
 import { FileSystem } from '#agent/filesystem';
 import { func } from '#agent/functions';
 import { funcClass } from '#agent/metadata';
-import { getFileSystem, llms } from '#agent/workflows';
-import { cacheRetry } from '../cache/cache';
 import { execCommand } from '#utils/exec';
+import { cacheRetry } from '../cache/cache';
 import { CodeEditor } from './codeEditor';
 import { ProjectInfo } from './projectDetection';
 import { basePrompt } from './prompt';

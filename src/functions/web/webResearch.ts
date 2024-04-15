@@ -1,6 +1,6 @@
+import { llms } from '#agent/agentContext';
 import { func } from '#agent/functions';
 import { funcClass } from '#agent/metadata';
-import { llms } from '#agent/workflows';
 import { cacheRetry } from '../../cache/cache';
 import { OrganicSearchResult, PUBLIC_WEB } from './web';
 

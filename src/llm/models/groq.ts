@@ -1,6 +1,6 @@
-import { WorkflowLLMs } from '#agent/workflows';
-import { addCost } from '#agent/workflows';
-import { withActiveSpan } from '#o11y/trace';
+import { AgentLLMs } from '#agent/agentContext';
+import { addCost } from '#agent/agentContext';
+import { withSpan } from '#o11y/trace';
 import { RetryableError } from '../../cache/cache';
 import { BaseLLM } from '../base-llm';
 import { combinePrompts, logDuration } from '../llm';
@@ -11,7 +11,7 @@ const groq = new Groq({
 	apiKey: process.env.GROQ_API_KEY,
 });
 
-export function grokWorkflowLLMs(): WorkflowLLMs {
+export function grokLLMs(): AgentLLMs {
 	const mixtral = new GroqLLM('mixtral-8x7b-32768', 32_768, 0.27, 0.27);
 	return {
 		easy: new GroqLLM('gemma-7b-it', 8_192, 0.1 / 1000000, 0.1 / 1000000),
@@ -26,7 +26,7 @@ export function grokWorkflowLLMs(): WorkflowLLMs {
 export class GroqLLM extends BaseLLM {
 	@logDuration
 	async generateText(userPrompt: string, systemPrompt = ''): Promise<string> {
-		return withActiveSpan('generateText', async (span) => {
+		return withSpan('generateText', async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
 			span.setAttributes({

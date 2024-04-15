@@ -1,23 +1,19 @@
 import { randomUUID } from 'crypto';
-import { existsSync } from 'fs';
+import { existsSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { DiffRefsSchema, MergeRequestDiffSchema, MergeRequestDiscussionNotePositionOptions } from '@gitbeaker/rest';
+import { DOMParser } from 'xmldom';
+import { AgentLLMs, agentContext, enterWithContext, getFileSystem, llms } from '#agent/agentContext';
 import { FileSystem } from './agent/filesystem';
 import { getFunctionDefinitions } from './agent/metadata';
-import { WorkflowLLMs, enterWithContext, getFileSystem, workflowContext } from './agent/workflows';
-import { GoogleCloud } from './functions/google-cloud';
+import { AGENT_LLMS } from './agentLLMs';
 import { GitLabServer } from './functions/scm/gitlab';
-import { UtilFunctions } from './functions/util';
-import { PublicWeb } from './functions/web/web';
-import { WEB_RESEARCH } from './functions/web/webResearch';
-import { WORKFLOW_LLMS } from './index';
 import { Claude3_Haiku_Vertex, Claude3_Sonnet_Vertex, ClaudeVertexLLMs } from './llm/models/anthropic-vertex';
 import { Claude3_Opus, ClaudeLLMs } from './llm/models/claude';
 import { GEMINI_1_0_PRO_LLMS } from './llm/models/vertexai';
-import { CodeEditor } from './swe/codeEditor';
-import { DevEditWorkflow } from './swe/devEditWorkflow';
-import { DevRequirementsWorkflow } from './swe/devRequirementsWorkflow';
-import { NpmPackages } from './swe/nodejs/researchNpmPackage';
-import { TypescriptTools } from './swe/nodejs/typescriptTools';
+import { ICodeReview, loadCodeReviews } from './swe/codeReview/codeReviewParser';
+import { ProjectInfo } from './swe/projectDetection';
+import { sleep } from './utils/async-utils';
 import { checkExecResult, execCmd, execCommand } from './utils/exec';
 // import { UtilFunctions } from "./functions/util"
 
@@ -28,14 +24,48 @@ import { checkExecResult, execCmd, execCommand } from './utils/exec';
 async function main() {
 	// const llms = ClaudeVertexLLMs();
 	// const llms = ClaudeLLMs();
-	enterWithContext(WORKFLOW_LLMS);
+	enterWithContext(AGENT_LLMS);
 
-	workflowContext.getStore().fileSystem = new FileSystem();
+	agentContext.getStore().fileSystem = new FileSystem();
 
 	// const requirements = "Create unit tests using mocha and chai for the functionality in the pgFunctionCache.ts.";
 
 	// await new DevRequirementsWorkflow().runDevRequirementsWorkflow(requirements);
 
+
+	const codeReviews = await loadCodeReviews();
+	const gitlab = new GitLabServer();
+	const diffs = await gitlab.reviewMergeRequest('121', 2633);
+
+	if (console) return;
+
+	// const page = await new PublicWeb().getWebPage('https://about.gitlab.com/blog/2023/07/06/how-to-automate-creation-of-runners/');
+	//
+	// console.log(page);
+	// if (console) return;
+	//
+	// const jira = await new Jira().getJiraDescription('CLD-1282');
+	// console.log(jira);
+
+	// const projectInfo: ProjectInfo = {
+	// 	languageTools: new TypescriptTools(),
+	// 	compile: 'npm run build',
+	// 	baseDir: './',
+	// 	format: 'npm run format',
+	// 	staticAnalysis: 'npm run lint',
+	// 	test: 'npm run test',
+	// 	language: 'nodejs',
+	// 	initialise: 'nvm use && .',
+	// };
+	// console.log('sleeping');
+	// await sleep(2000);
+	// console.log('compiling');
+	// const compiled = await new DevEditWorkflow().compile(projectInfo);
+
+	// const codebase = await getFileSystem().getFileContentsRecursivelyAsXml('./src');
+	// writeFileSync('codebase', codebase);
+
+	return;
 	// const map = await new TypescriptTools().getRepositoryMap();
 	// console.log(map)
 	// console.log(map.length)
@@ -87,11 +117,11 @@ async function main() {
 		}
 		return url;
 	}`;
-	const result = await WEB_RESEARCH.webSearch(
-		`\`\`\`TypeScript\n${code}\`\`\`\nI want to create an integration with GitHub similar to the existing one for GitLab. The key functionality is creating a new merge request in GitHub using node.js, either through git flags as in the current code, or using a module or web API calls.`,
-	);
-	console.log();
-	console.log(result);
+	// const result = await WEB_RESEARCH.webSearch(
+	// 	`\`\`\`TypeScript\n${code}\`\`\`\nI want to create an integration with GitHub similar to the existing one for GitLab. The key functionality is creating a new merge request in GitHub using node.js, either through git flags as in the current code, or using a module or web API calls.`,
+	// );
+	// console.log();
+	// console.log(result);
 	// const filesystem = new FileSystem('./src/')
 	// const editor = new CodeEditor({
 	//     basePath: './',

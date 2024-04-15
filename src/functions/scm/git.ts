@@ -1,7 +1,7 @@
 import * as console from 'console';
+import { getFileSystem } from '#agent/agentContext';
 import { FileSystem } from '../../agent/filesystem';
 import { func } from '../../agent/functions';
-import { getFileSystem } from '../../agent/workflows';
 import { execCmd, execCommand } from '../../utils/exec';
 import { VersionControlSystem } from './versionControlSystem';
 const util = require('util');

@@ -1,10 +1,10 @@
 import { readFileSync } from 'fs';
+import { agentContext, enterWithContext } from '#agent/agentContext';
 import { FileSystem } from './agent/filesystem';
-import { enterWithContext, workflowContext } from './agent/workflows';
+import { AGENT_LLMS } from './agentLLMs';
 import { DevEditWorkflow } from './swe/devEditWorkflow';
 import { TypescriptTools } from './swe/nodejs/typescriptTools';
 import { ProjectInfo } from './swe/projectDetection';
-import { WORKFLOW_LLMS } from './workflowLLMs';
 
 // Used to test the local repo editing workflow in DevEditWorkflow
 
@@ -12,9 +12,8 @@ import { WORKFLOW_LLMS } from './workflowLLMs';
 // npm run edit-local
 
 async function main() {
-	const llms = WORKFLOW_LLMS;
-	enterWithContext(WORKFLOW_LLMS);
-	workflowContext.getStore().fileSystem = new FileSystem();
+	const llms = AGENT_LLMS;
+	enterWithContext(AGENT_LLMS);
 	const system = readFileSync('ai-system', 'utf-8');
 	const prompt = readFileSync('ai-in', 'utf-8');
 

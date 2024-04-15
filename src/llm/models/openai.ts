@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
-import { addCost } from '#agent/workflows';
-import { spanWithArgAttributes, withActiveSpan } from '#o11y/trace';
+import { addCost } from '#agent/agentContext';
+import { withSpan } from '#o11y/trace';
 import { BaseLLM } from '../base-llm';
 import { combinePrompts, logTextGeneration } from '../llm';
 
@@ -30,9 +30,8 @@ export class GPT extends BaseLLM {
 	}
 
 	@logTextGeneration
-	@spanWithArgAttributes({ userPrompt: 0, systemPrompt: 1 })
 	async generateText(userPrompt: string, systemPrompt: string): Promise<string> {
-		return withActiveSpan('generateText', async (span) => {
+		return withSpan('generateText', async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);

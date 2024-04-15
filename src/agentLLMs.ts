@@ -1,4 +1,4 @@
-import { WorkflowLLMs } from '#agent/workflows';
+import { AgentLLMs } from '#agent/agentContext';
 import { Claude3_Haiku_Vertex, Claude3_Sonnet_Vertex } from '#llm/models/anthropic-vertex';
 import { Claude3_Opus } from '#llm/models/claude';
 import { GPT4 } from '#llm/models/openai';
@@ -7,7 +7,7 @@ import { MultiLLM } from '#llm/multi-llm';
 
 const opus = Claude3_Opus();
 const sonnet = Claude3_Sonnet_Vertex();
-// export const WORKFLOW_LLMS: WorkflowLLMs = {
+// export const AGENT_LLMS: AgentLLMs = {
 // 	// easy: Gemini_1_0_Pro(),
 // 	// medium: Gemini_1_0_Pro(),
 // 	easy: Claude3_Haiku_Vertex(),
@@ -16,9 +16,9 @@ const sonnet = Claude3_Sonnet_Vertex();
 // 	xhard: new MultiLLM([sonnet, Gemini_1_5_Pro()], 3),
 // };
 const gemini = Gemini_1_0_Pro();
-export const WORKFLOW_LLMS: WorkflowLLMs = {
+export const AGENT_LLMS: AgentLLMs = {
 	easy: gemini,
 	medium: opus,
 	hard: opus,
-	xhard: new MultiLLM([sonnet, Gemini_1_5_Pro()], 3),
+	xhard: new MultiLLM([opus, GPT4(), Gemini_1_5_Pro()], 3),
 };

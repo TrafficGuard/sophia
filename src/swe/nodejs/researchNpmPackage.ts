@@ -1,6 +1,6 @@
+import { agentContext, getFileSystem } from '#agent/agentContext';
 import { func } from '../../agent/functions';
 import { funcClass } from '../../agent/metadata';
-import { getFileSystem, workflowContext } from '../../agent/workflows';
 import { cacheRetry } from '../../cache/cache';
 import { PublicWeb } from '../../functions/web/web';
 
@@ -48,7 +48,7 @@ export class NpmPackages {
 	@cacheRetry()
 	@func()
 	async getPackageInfo(npmPackageName: string): Promise<NpmPackageInfo> {
-		const llm = workflowContext.getStore().llms.easy;
+		const llm = agentContext.getStore().llms.easy;
 		// fetch the HTML at https://npmjs.com/package/${npmPackageName}
 		const url = `https://npmjs.com/package/${npmPackageName}`;
 		const npmjsFetch = await fetch(url);

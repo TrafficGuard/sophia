@@ -1,11 +1,12 @@
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { Gitlab, MergeRequestDiffSchema, MergeRequestDiscussionNotePositionOptions, ProjectSchema } from '@gitbeaker/rest';
+import { getFileSystem, llms } from '#agent/agentContext';
+import { span } from '#o11y/trace';
 import { getFulfilled } from '#utils/async-utils';
 import { FileSystem } from '../../agent/filesystem';
 import { func } from '../../agent/functions';
 import { funcClass } from '../../agent/metadata';
-import { getFileSystem, llms } from '../../agent/workflows';
 import { cacheRetry } from '../../cache/cache';
 import { ICodeReview, loadCodeReviews } from '../../swe/codeReview/codeReviewParser';
 import { envVar } from '../../utils/env-var';
@@ -176,7 +177,8 @@ export class GitLabServer implements SourceControlManagement {
 	/**
 	 * @returns the diffs for a merge request
 	 */
-	// @cacheRetry({ scope: 'workflow' })
+	// @cacheRetry({ scope: 'execution' })
+	@span()
 	async getMergeRequestDiffs(gitlabProjectId: string | number, mergeRequestIId: number): Promise<string> {
 		const diffs: MergeRequestDiffSchema[] = await this.api.MergeRequests.allDiffs(gitlabProjectId, mergeRequestIId, { perPage: 20 });
 		let result = '<git-diffs>';
@@ -198,10 +200,13 @@ export class GitLabServer implements SourceControlManagement {
 	}
 
 	@cacheRetry()
+	@span()
 	async getDiffs(gitlabProjectId: string | number, mergeRequestIId: number): Promise<MergeRequestDiffSchema[]> {
 		return await this.api.MergeRequests.allDiffs(gitlabProjectId, mergeRequestIId, { perPage: 20 });
 	}
 
+	@cacheRetry()
+	@span()
 	async reviewMergeRequest(gitlabProjectId: string | number, mergeRequestIId: number): Promise<MergeRequestDiffSchema[]> {
 		const diffs: MergeRequestDiffSchema[] = await this.getDiffs(gitlabProjectId, mergeRequestIId);
 

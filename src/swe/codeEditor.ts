@@ -1,10 +1,10 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
+import { agentContext, getFileSystem } from '#agent/agentContext';
 import { func } from '#agent/functions';
 import { funcClass } from '#agent/metadata';
-import { getFileSystem, workflowContext } from '#agent/workflows';
-import { cacheRetry } from '../cache/cache';
 import { execCommand } from '#utils/exec';
+import { cacheRetry } from '../cache/cache';
 
 @funcClass(__filename)
 export class CodeEditor {
@@ -16,7 +16,7 @@ export class CodeEditor {
 	@cacheRetry({ scope: 'global' })
 	@func()
 	async editFilesToMeetRequirements(requirements: string, filesToEdit: string[]): Promise<void> {
-		const messageFilePath = join(getFileSystem().getWorkingDirectory(), workflowContext.getStore().tempDir, 'aider-requirements');
+		const messageFilePath = join(getFileSystem().getWorkingDirectory(), agentContext.getStore().tempDir, 'aider-requirements');
 
 		// TODO insert additional info into the prompt
 		// We could have languageTools.getPrompt()

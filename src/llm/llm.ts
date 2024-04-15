@@ -1,4 +1,4 @@
-import { workflowContext } from '../agent/workflows';
+import { agentContext } from '#agent/agentContext';
 import { BaseLLM } from './base-llm';
 
 export interface LLM {
@@ -107,12 +107,12 @@ export function recordTextGenerationCosts(originalMethod: any, context: ClassMet
 
 		const response = await originalMethod.call(this, ...args);
 
-		const workflowCtx = workflowContext.getStore();
+		const agentCtx = agentContext.getStore();
 		const inputCost = this.getInputCostPerToken() * prompt.length;
 		const outputCost = this.getOutputCostPerToken() * response.length;
 		const totalCost = inputCost + outputCost;
-		workflowCtx.cost += totalCost;
-		workflowCtx.budgetRemaining = Math.max(workflowCtx.budgetRemaining - totalCost, 0);
+		agentCtx.cost += totalCost;
+		agentCtx.budgetRemaining = Math.max(agentCtx.budgetRemaining - totalCost, 0);
 
 		return response;
 	};

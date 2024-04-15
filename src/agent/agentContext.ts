@@ -1,51 +1,55 @@
 import { randomUUID } from 'crypto';
 import { AsyncLocalStorage } from 'async_hooks';
 import { Toolbox } from '#agent/toolbox';
-import { LLM, TaskLevel } from '#llm/llm';
+import { Invoke, LLM, TaskLevel } from '#llm/llm';
 import { FunctionCacheService } from '../cache/cache';
 import { FileCacheService } from '../cache/fileCacheService';
 import { SourceControlManagement } from '../functions/scm/sourceControlManagement';
-import { UtilFunctions } from '../functions/util';
 import { FileSystem } from './filesystem';
 
 /**
  * The LLMs for each Task Level
  */
-export type WorkflowLLMs = Record<TaskLevel, LLM>;
+export type AgentLLMs = Record<TaskLevel, LLM>;
 
-export interface WorkflowContext {
+export interface AgentContext {
 	/** Empty string in single-user mode */
 	userId: string;
+	userEmail?: string;
+	inputPrompt: string;
+	systemPrompt: string;
+	executionId: string;
+	parentExecutionId?: string;
+	isRetry: boolean;
+	functionCallHistory: Invoke[];
+
+	cost: number;
 	budget: number;
 	budgetRemaining: number;
-	functionCallHistory: Invocation
-	cost: number;
-	executionId: string;
-	isRetry: boolean;
-	systemPrompt: string;
-	userEmail?: string;
+
+	llms: Record<TaskLevel, LLM>;
 	cacheService: FunctionCacheService;
 	/** Working filesystem */
 	fileSystem?: FileSystem | null;
-	scm: SourceControlManagement | null;
-	llms: Record<TaskLevel, LLM>;
 	/** Directory for cloning repositories etc */
 	tempDir: string;
 	toolbox: Toolbox;
+
+	scm: SourceControlManagement | null;
 }
 
-export const workflowContext = new AsyncLocalStorage<WorkflowContext>();
+export const agentContext = new AsyncLocalStorage<AgentContext>();
 
-export function llms(): WorkflowLLMs {
-	return workflowContext.getStore().llms;
+export function llms(): AgentLLMs {
+	return agentContext.getStore().llms;
 }
 
 /**
- * Adds LLM costs to the workflow context
+ * Adds LLM costs to the agent context
  * @param cost the cost spent in $USD
  */
 export function addCost(cost: number) {
-	const store = workflowContext.getStore();
+	const store = agentContext.getStore();
 	console.log(`Adding cost $${cost}`);
 	store.cost += cost;
 	store.budgetRemaining -= cost;
@@ -53,16 +57,18 @@ export function addCost(cost: number) {
 }
 
 export function getFileSystem(): FileSystem {
-	const filesystem = workflowContext.getStore().fileSystem;
+	const filesystem = agentContext.getStore().fileSystem;
 	if (!filesystem) throw new Error('No file system available in the workflow context');
 	return filesystem;
 }
 
-export function runWithContext(context: { llms: WorkflowLLMs; retryExecutionId?: string }, func: () => any) {
+export function runWithContext(context: { llms: AgentLLMs; retryExecutionId?: string }, func: () => any) {
 	const isRetry = !!context.retryExecutionId;
-	const store: WorkflowContext = {
+	const store: AgentContext = {
 		userId: '',
 		systemPrompt: '',
+		inputPrompt: '',
+		functionCallHistory: [],
 		userEmail: process.env.USER_EMAIL,
 		executionId: context.retryExecutionId || randomUUID(),
 		isRetry,
@@ -76,18 +82,20 @@ export function runWithContext(context: { llms: WorkflowLLMs; retryExecutionId?:
 		fileSystem: new FileSystem(),
 		toolbox: new Toolbox(),
 	};
-	workflowContext.run(store, func);
+	agentContext.run(store, func);
 }
 
 /**
- * Sets the AsyncLocalStorage workflow context for the remainder of the current synchronous execution and then persists it through any following asynchronous calls.
+ * Sets the AsyncLocalStorage agent context for the remainder of the current synchronous execution and then persists it through any following asynchronous calls.
  * @param llms
  * @param retryExecutionId
  */
-export function enterWithContext(llms: WorkflowLLMs, retryExecutionId?: string) {
+export function enterWithContext(llms: AgentLLMs, retryExecutionId?: string) {
 	const isRetry = !!retryExecutionId;
-	workflowContext.enterWith({
+	agentContext.enterWith({
 		userId: '',
+		inputPrompt: '',
+		functionCallHistory: [],
 		systemPrompt: '',
 		executionId: retryExecutionId || randomUUID(),
 		isRetry,
@@ -103,7 +111,7 @@ export function enterWithContext(llms: WorkflowLLMs, retryExecutionId?: string) 
 	});
 }
 
-export function updateContext(updates: Partial<WorkflowContext>) {
-	const store = workflowContext.getStore();
+export function updateContext(updates: Partial<AgentContext>) {
+	const store = agentContext.getStore();
 	Object.assign(store, updates);
 }

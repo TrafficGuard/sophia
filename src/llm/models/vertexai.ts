@@ -1,6 +1,6 @@
 import { HarmBlockThreshold, HarmCategory, SafetySetting, VertexAI } from '@google-cloud/vertexai';
-import { WorkflowLLMs, addCost } from '#agent/workflows';
-import { withActiveSpan } from '#o11y/trace';
+import { AgentLLMs, addCost } from '#agent/agentContext';
+import { withSpan } from '#o11y/trace';
 import { projectId, region } from '../../config';
 import { BaseLLM } from '../base-llm';
 import { combinePrompts, logTextGeneration } from '../llm';
@@ -8,7 +8,7 @@ import { MultiLLM } from '../multi-llm';
 
 const vertexAI = new VertexAI({ project: projectId, location: region });
 
-export function GEMINI_1_0_PRO_LLMS(): WorkflowLLMs {
+export function GEMINI_1_0_PRO_LLMS(): AgentLLMs {
 	const pro1_0 = Gemini_1_0_Pro();
 	return {
 		easy: pro1_0,
@@ -18,7 +18,7 @@ export function GEMINI_1_0_PRO_LLMS(): WorkflowLLMs {
 	};
 }
 
-export function GEMINI_1_5_PRO_LLMS(): WorkflowLLMs {
+export function GEMINI_1_5_PRO_LLMS(): AgentLLMs {
 	const pro1_5 = Gemini_1_5_Pro();
 	return {
 		easy: pro1_5,
@@ -43,7 +43,7 @@ export function Gemini_1_5_Pro() {
 class VertexLLM extends BaseLLM {
 	@logTextGeneration
 	async generateText(userPrompt: string, systemPrompt: string): Promise<string> {
-		return withActiveSpan('generateText', async (span) => {
+		return withSpan('generateText', async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);

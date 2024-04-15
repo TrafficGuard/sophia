@@ -1,10 +1,10 @@
+import { FunctionDefinition } from '#agent/functions';
 import { Invoke } from '#llm/llm';
-import { Workflow } from './workflowFunctions';
-import {FunctionDefinition} from "#agent/functions";
+import { Agent } from './agentFunctions';
 
 export class Toolbox {
 	tools = {
-		Workflow: new Workflow(),
+		Agent: new Agent(),
 	};
 
 	getTools() {
@@ -34,11 +34,11 @@ export class Toolbox {
 			result = await method.call(tool, args[0]);
 		} else {
 			const funcDef: FunctionDefinition = Object.getPrototypeOf(tool).__functionsObj;
-			const args: any[] = new Array(funcDef.parameters.length)
-			for(const [paramName, paramValue] of Object.entries(invocation.parameters)) {
-				const paramDef = funcDef.parameters.find(paramDef => paramDef.name === paramName)
-				if (paramDef) throw new Error('Invalid parameter name: ' + paramName);
-				args[paramDef.index] = paramValue
+			const args: any[] = new Array(funcDef.parameters.length);
+			for (const [paramName, paramValue] of Object.entries(invocation.parameters)) {
+				const paramDef = funcDef.parameters.find((paramDef) => paramDef.name === paramName);
+				if (paramDef) throw new Error(`Invalid parameter name: ${paramName}`);
+				args[paramDef.index] = paramValue;
 			}
 			result = await method.call(tool, ...args);
 		}

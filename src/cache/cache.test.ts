@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { workflowContext } from '../agent/workflows'; // Path to your decorator file
+import { agentContext } from '#agent/agentContext'; // Path to your decorator file
 import { cacheRetry } from './cache';
 
 describe.skip('@cache decorator', () => {

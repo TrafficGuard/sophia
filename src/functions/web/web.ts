@@ -1,9 +1,9 @@
 import path from 'path';
 import { Readability } from '@mozilla/readability';
 import { JSDOM } from 'jsdom';
+import { getFileSystem } from '#agent/agentContext';
 import { func } from '../../agent/functions';
 import { funcClass } from '../../agent/metadata';
-import { getFileSystem } from '../../agent/workflows';
 import { cacheRetry } from '../../cache/cache';
 import { envVar } from '../../utils/env-var';
 import { execCommand } from '../../utils/exec';
