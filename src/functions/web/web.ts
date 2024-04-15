@@ -55,7 +55,7 @@ export class PublicWeb {
 	 * @param url {string} The web page URL (https://...)
 	 * @returns the web page contents in Markdown format
 	 */
-	@func
+	@func()
 	// @cacheRetry({scope: 'global' })
 	async getWebPage(url: string): Promise<string> {
 		// console.log(`Crawling ${url}`);
@@ -88,6 +88,7 @@ export class PublicWeb {
 		// await browser.close();
 
 		// const htmlContents: string = readFileSync(wgetCachedPath).toString();
+		// Some more options at https://news.ycombinator.com/item?id=40033490  Pandoc etc
 		const readableHtml = this.readableVersionFromHtml(htmlContents, url);
 		const markdown = this.htmlToMarkdown(readableHtml, url);
 		// const newSizePercent = Number((markdown.length / htmlContents.length) * 100).toFixed(1);
@@ -173,7 +174,7 @@ export class PublicWeb {
 	 * Performs a Google search and returns the URL and title of the search results
 	 * @param searchTerm
 	 */
-	@func
+	@func()
 	@cacheRetry()
 	async serpApiSearch(searchTerm: string): Promise<OrganicSearchResult[]> {
 		// https://serpapi.com/search-api

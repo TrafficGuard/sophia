@@ -54,7 +54,7 @@ export class Git implements VersionControlSystem {
 		return stdout;
 	}
 
-	@func
+	@func()
 	async getDiff(): Promise<string> {
 		const cwd = this.fileSystem.getWorkingDirectory();
 		try {
@@ -71,7 +71,7 @@ export class Git implements VersionControlSystem {
 		}
 	}
 
-	@func
+	@func()
 	async createBranch(branchName: string): Promise<void> {
 		this.baseBranch = await this.getBranchName();
 		const cwd = this.fileSystem.getWorkingDirectory();
@@ -85,7 +85,7 @@ export class Git implements VersionControlSystem {
 			throw error;
 		}
 	}
-	@func
+	@func()
 	async cloneBranch(repoUrl: string, branchName: string): Promise<void> {
 		const cwd = this.fileSystem.getWorkingDirectory();
 		try {
@@ -100,7 +100,7 @@ export class Git implements VersionControlSystem {
 			throw error;
 		}
 	}
-	@func
+	@func()
 	async commit(commitMessage: string): Promise<void> {
 		const cwd = this.fileSystem.getWorkingDirectory();
 		try {

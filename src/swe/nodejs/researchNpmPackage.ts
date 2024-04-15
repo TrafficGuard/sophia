@@ -46,7 +46,7 @@ export class NpmPackages {
 	 * @returns Promise<{docUrl: string; gitHubUrl: string;}>
 	 */
 	@cacheRetry()
-	@func
+	@func()
 	async getPackageInfo(npmPackageName: string): Promise<NpmPackageInfo> {
 		const llm = workflowContext.getStore().llms.easy;
 		// fetch the HTML at https://npmjs.com/package/${npmPackageName}

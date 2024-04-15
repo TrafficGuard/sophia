@@ -1,14 +1,18 @@
 import { readFileSync } from 'fs';
 import { ClassDeclaration, Decorator, JSDoc, JSDocTag, MethodDeclaration, ParameterDeclaration, Project } from 'ts-morph';
+import { FunctionDefinition } from '#agent/functions';
 
-export function generateDefinition(sourceFilePath: string): string {
+export function generateDefinition(sourceFilePath: string): [string, any] {
 	console.log(`Generating definition for ${sourceFilePath}`);
 	const project = new Project();
 	const sourceFile = project.createSourceFile('temp.ts', readFileSync(sourceFilePath, 'utf8'));
 
 	const classes = sourceFile.getClasses();
 
+	// The function definitions as an XML string
 	let definition = '';
+	// The function definitions as an object, keyed by the method name
+	const objDefinition: Record<string, FunctionDefinition> = {};
 
 	classes.forEach((cls: ClassDeclaration) => {
 		const className = cls.getName();
@@ -36,7 +40,9 @@ export function generateDefinition(sourceFilePath: string): string {
 				if (tag.getTagName() === 'returns') {
 					returns = tag.getText().replace('@returns', '').trim();
 					// Convert first char to upper case
-					if (returns.length) returns = returns.charAt(0).toUpperCase() + returns.slice(1);
+					if (returns.length) {
+						returns = returns.charAt(0).toUpperCase() + returns.slice(1);
+					}
 				}
 				if (tag.getTagName() === 'param') {
 					const text = tag.getText();
@@ -57,6 +63,7 @@ export function generateDefinition(sourceFilePath: string): string {
 			});
 
 			const parameterDeclarations: ParameterDeclaration[] = method.getParameters();
+			let index = 0;
 			const paramText = parameterDeclarations
 				.map((param) => {
 					const name = param.getName();
@@ -64,30 +71,49 @@ export function generateDefinition(sourceFilePath: string): string {
 					const description = paramDescriptions[name]; // param.getJsDocs()[0]?.getComment()?.trim();
 					return `
                     <parameter>
+                    	<index>${index++}</index>
                         <name>${name}</name>
                         <type>${type}</type>
                         <description>${description || ''}</description>   
                     </parameter>`;
 				})
 				.join('');
+			index = 0;
+			const params = [];
+			parameterDeclarations.map((param) => {
+				params.push({
+					index: index++,
+					name: param.getName(),
+					type: param.getType().getText(),
+					description: paramDescriptions[param.getName()] || '',
+				});
+			});
 
 			const parameters = paramText.trim().length
 				? `
                 <parameters>${paramText}
                 </parameters>`
 				: '';
-			returns = returns.length
+			const returnsXml = returns.length
 				? `
                 <returns>${returns}</returns>`
 				: '';
 			const toolDescription = `
             <tool_description>
                 <tool_name>${className}.${methodName}</tool_name>
-                <description>${classDescription || ''}${methodDescription || ''}</description>${parameters}${returns}
+                <description>${classDescription || ''}${methodDescription || ''}</description>${parameters}${returnsXml}
             </tool_description>`;
+			const tool = {
+				class: className,
+				name: methodName,
+				description: `${classDescription || ''}${methodDescription || ''}`,
+				parameters: params,
+				returns,
+			};
+			objDefinition[methodName] = tool;
 
 			definition += `${toolDescription}\n`;
 		});
 	});
-	return definition;
+	return [definition, objDefinition];
 }

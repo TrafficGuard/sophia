@@ -3,7 +3,7 @@ import { WorkflowLLMs, addCost } from '#agent/workflows';
 import { envVar } from '#utils/env-var';
 import { BaseLLM } from '../base-llm';
 import { MaxTokensError } from '../errors';
-import {combinePrompts, logTextGeneration} from '../llm';
+import { combinePrompts, logTextGeneration } from '../llm';
 import { MultiLLM } from '../multi-llm';
 import Message = Anthropic.Message;
 import { withActiveSpan } from '#o11y/trace';
@@ -47,7 +47,7 @@ export class Claude extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
-			})
+			});
 
 			let message: Message;
 			try {

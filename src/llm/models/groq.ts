@@ -1,10 +1,10 @@
 import { WorkflowLLMs } from '#agent/workflows';
 import { addCost } from '#agent/workflows';
+import { withActiveSpan } from '#o11y/trace';
 import { RetryableError } from '../../cache/cache';
 import { BaseLLM } from '../base-llm';
 import { combinePrompts, logDuration } from '../llm';
 import { MultiLLM } from '../multi-llm';
-import {withActiveSpan} from "#o11y/trace";
 
 const Groq = require('groq-sdk');
 const groq = new Groq({
@@ -33,7 +33,7 @@ export class GroqLLM extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
-			})
+			});
 			span.setAttribute('userPrompt', userPrompt);
 			span.setAttribute('inputChars', prompt.length);
 

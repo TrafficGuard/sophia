@@ -79,7 +79,7 @@ export class FileSystem {
 	 * @param dirPath the directory to return all the files contents under
 	 * @returns the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
 	 */
-	@func
+	@func()
 	async getFileContentsRecursivelyAsXml(dirPath: string): Promise<string> {
 		const filenames = await this.listFilesRecursively(dirPath);
 		return await this.getMultipleFileContentsAsXml(filenames);
@@ -91,7 +91,7 @@ export class FileSystem {
 	 * @param dirPath the folder to list the files in
 	 * @returns the list of file and folder names
 	 */
-	@func
+	@func()
 	async listFilesInDirectory(dirPath: string): Promise<string[]> {
 		const rootPath = path.join(this.basePath, dirPath);
 		const filter: FileFilter = (name) => true;
@@ -126,7 +126,7 @@ export class FileSystem {
 	 * @param dirPath The directory to search under
 	 * @returns the list of files
 	 */
-	@func
+	@func()
 	async listFilesRecursively(dirPath?: string): Promise<string[]> {
 		// dirPath ??= getFileSystem().workingDirectory
 
@@ -181,7 +181,7 @@ export class FileSystem {
 	 * @param filePath The file path to read the contents of (e.g. src/index.ts)
 	 * @returns the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
 	 */
-	@func
+	@func()
 	async getFileContents(filePath: string): Promise<string> {
 		const fullPath = path.join(this.basePath, filePath);
 		const contents = await fs.readFile(fullPath, 'utf8');
@@ -214,7 +214,7 @@ export class FileSystem {
 	 * @param filePaths {Array<string>} The files paths to read the contents of
 	 * @returns {Promise<string>} the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
 	 */
-	@func
+	@func()
 	async getMultipleFileContentsAsXml(filePaths: string | string[]): Promise<string> {
 		if (!Array.isArray(filePaths)) {
 			filePaths = parseArrayParameterValue(filePaths);
@@ -240,7 +240,7 @@ export class FileSystem {
 	 * @param filePath The file path to check
 	 * @returns true if the file exists, else false
 	 */
-	@func
+	@func()
 	async fileExists(filePath: string): Promise<boolean> {
 		const path = filePath.startsWith('/') ? resolve(this.basePath, filePath.slice(1)) : resolve(this.basePath, this.workingDirectory, filePath);
 		try {
@@ -256,7 +256,7 @@ export class FileSystem {
 	 * @param filePath The file path
 	 * @param contents The contents to write to the file
 	 */
-	@func
+	@func()
 	async writeFile(filePath: string, contents: string): Promise<void> {
 		// TODO check filePath is not relative above basePath
 		writeFileSync(join(this.basePath, filePath), contents);
@@ -267,7 +267,7 @@ export class FileSystem {
 	 * @param filePath the file to edit
 	 * @param descriptionOfChanges a natual language description of the changes to make to the file contents
 	 */
-	@func
+	@func()
 	async updateFileContentsAsRequired(filePath: string, descriptionOfChanges: string): Promise<void> {
 		const contents = await this.getFileContents(filePath);
 		const updatedContent = await new UtilFunctions().processText(contents, descriptionOfChanges);

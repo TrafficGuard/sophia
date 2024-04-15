@@ -1,10 +1,10 @@
 import path from 'path';
-import { FileSystem } from '../agent/filesystem';
-import { func } from '../agent/functions';
-import { funcClass } from '../agent/metadata';
-import { getFileSystem, llms } from '../agent/workflows';
+import { FileSystem } from '#agent/filesystem';
+import { func } from '#agent/functions';
+import { funcClass } from '#agent/metadata';
+import { getFileSystem, llms } from '#agent/workflows';
 import { cacheRetry } from '../cache/cache';
-import { execCommand } from '../utils/exec';
+import { execCommand } from '#utils/exec';
 import { CodeEditor } from './codeEditor';
 import { ProjectInfo } from './projectDetection';
 import { basePrompt } from './prompt';
@@ -200,8 +200,8 @@ Respond ONLY as JSON that MUST be in the format of this example:
 		}
 	}
 
-	@func
 	@cacheRetry()
+	@func()
 	async summariseRequirements(requirements: string): Promise<string> {
 		return summariseRequirements(requirements);
 	}

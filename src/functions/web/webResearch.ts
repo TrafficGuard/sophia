@@ -22,8 +22,8 @@ class WebResearcher {
 	 * Performs a web search and summarises the top results
 	 * @param query The search engine query
 	 */
-	@func
 	@cacheRetry({ scope: 'global' })
+	@func()
 	async webSearch(query: string): Promise<string> {
 		// const query = await this.generateSearchQueryFromTaskRequirements(issue);
 		// const googleResults: string[] = await PUBLIC_WEB.googleSearch(query);

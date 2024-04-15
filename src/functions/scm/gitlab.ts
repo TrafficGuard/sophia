@@ -137,7 +137,7 @@ export class GitLabServer implements SourceControlManagement {
 	 * @param projectPathWithNamespace the full project path in GitLab
 	 * @returns the path in the FileSystem containing the repository files
 	 */
-	@func
+	@func()
 	async cloneProject(projectPathWithNamespace: string): Promise<string> {
 		const path = join(getFileSystem().getWorkingDirectory(), 'gitlab', projectPathWithNamespace);
 
@@ -154,7 +154,7 @@ export class GitLabServer implements SourceControlManagement {
 		return path;
 	}
 
-	@func
+	@func()
 	async createMergeRequest(title: string, description: string): Promise<string> {
 		// TODO lookup project details from project list
 		// get main branch. If starts with feature and dev develop exists, then that

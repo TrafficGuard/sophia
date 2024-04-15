@@ -1,5 +1,5 @@
-import { func } from '../agent/functions';
-import { getFileSystem, llms, workflowContext } from '../agent/workflows';
+import { func } from '#agent/functions';
+import { getFileSystem, llms, workflowContext } from '#agent/workflows';
 import { cacheRetry } from '../cache/cache';
 import { GitLabProject } from '../functions/scm/gitlab';
 import { UtilFunctions } from '../functions/util';
@@ -61,8 +61,8 @@ export class DevRequirementsWorkflow {
 		// TODO notify who started the workflow
 	}
 
-	@func
 	@cacheRetry()
+	@func()
 	async summariseRequirements(requirements: string): Promise<string> {
 		const prompt = buildPrompt({
 			information: '',

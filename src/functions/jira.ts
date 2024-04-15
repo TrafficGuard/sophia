@@ -23,7 +23,7 @@ export class Jira {
 	 * @param {string} issueId the issue id (e.g XYZ-123)
 	 * @returns {Promise<string>} the issue description
 	 */
-	@func
+	@func()
 	// @cacheRetry({ scope: 'global', ttlSeconds: 60 * 10 })
 	async getJiraDescription(issueId: string): Promise<string> {
 		try {

@@ -9,7 +9,7 @@ export class GoogleCloud {
 	 * @param dateFromIso The date/time to get the logs from
 	 * @param dateToIso The date/time to get the logs to, or empty if upto now.
 	 */
-	@func
+	@func()
 	getCloudLoggingLogs(gcpProjectId: string, filter: string, dateFromIso: string, dateToIso: string): Promise<string> {
 		return Promise.resolve('');
 	}
@@ -19,7 +19,7 @@ export class GoogleCloud {
 	 * @param gcloudCommand The gcloud query command to execute (
 	 * @returns the console output if the exit code is 0, else throws the console output
 	 */
-	@func
+	@func()
 	executeGcloudCommandQuery(gcloudQueryCommand: string): Promise<string> {
 		return Promise.resolve('');
 	}
@@ -29,7 +29,7 @@ export class GoogleCloud {
 	 * @param gcloudCommand The gcloud command to execute
 	 * @returns the console output if the exit code is 0, else throws the console output or human review rejection reason
 	 */
-	@func
+	@func()
 	executeGcloudCommandModification(gcloudQueryCommand: string): Promise<string> {
 		return Promise.resolve('');
 	}
@@ -38,7 +38,7 @@ export class GoogleCloud {
 	 * Returns the open alert incidents across all the production projects
 	 * @returns {string[]} the open alert incidents
 	 */
-	@func
+	@func()
 	getOpenProductionIncidents(gcpProjectId: string): Promise<string[]> {
 		return Promise.resolve([]);
 	}

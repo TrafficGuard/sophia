@@ -51,7 +51,7 @@ class VertexLLM extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
-			})
+			});
 
 			const generativeModel = vertexAI.preview.getGenerativeModel({
 				model: this.model,

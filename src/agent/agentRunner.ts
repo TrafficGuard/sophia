@@ -3,6 +3,7 @@ import { getFunctionDefinitions } from './metadata';
 import { Toolbox } from './toolbox';
 import { WORKFLOW_COMPLETED_NAME, WORKFLOW_REQUEST_FEEDBACK } from './workflowFunctions';
 import { llms, workflowContext } from './workflows';
+import {FunctionResponse} from "#llm/llm";
 
 /**
  * Runs an autonomous agent workflow using the tools provided.
@@ -48,7 +49,7 @@ export async function runAgent(toolbox: Toolbox, initialPrompt: string, systemPr
 		countSinceHil++;
 
 		const newCosts = workflowContext.getStore().cost - previousCost;
-		if (newCosts) console.log('');
+		if (newCosts) console.log(`New costs $${newCosts.toFixed(2)}`);
 		previousCost = workflowContext.getStore().cost;
 		costSinceHil += newCosts;
 		console.log(`Spent $${costSinceHil.toFixed(2)} since last input. Total cost $${workflowContext.getStore().cost.toFixed(2)}`);
@@ -62,7 +63,7 @@ export async function runAgent(toolbox: Toolbox, initialPrompt: string, systemPr
 			currentPrompt = `<initial_prompt>\n${initialPrompt}\n</initial_prompt>\n${currentPrompt}`;
 		}
 
-		const result = await llm.generateTextExpectingFunctions(currentPrompt, systemPromptWithFunctions);
+		const result: FunctionResponse = await llm.generateTextExpectingFunctions(currentPrompt, systemPromptWithFunctions);
 		currentPrompt = result.response;
 		const invokers = result.functions.invoke;
 

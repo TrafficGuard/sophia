@@ -1,7 +1,7 @@
-import { func } from '../../agent/functions';
-import { funcClass } from '../../agent/metadata';
-import { getFileSystem } from '../../agent/workflows';
-import { execCommand } from '../../utils/exec';
+import { func } from '#agent/functions';
+import { funcClass } from '#agent/metadata';
+import { getFileSystem } from '#agent/workflows';
+import { execCommand } from '#utils/exec';
 import { LanguageTools } from '../lang/languageTools';
 
 @funcClass(__filename)
@@ -10,7 +10,7 @@ export class TypescriptTools implements LanguageTools {
 	 * Generates an outline of a TypeScript repository by running the tsc command with the emitDeclarationOnly flag
 	 * and returning the contents of all the type definition files.
 	 */
-	@func
+	@func()
 	async generateProjectMap(): Promise<string> {
 		console.log('Generating TypeScript project map');
 		const tempFolder = 'temp/dts';

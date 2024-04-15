@@ -1,5 +1,6 @@
-import { Invoke } from '../llm/llm';
+import { Invoke } from '#llm/llm';
 import { Workflow } from './workflowFunctions';
+import {FunctionDefinition} from "#agent/functions";
 
 export class Toolbox {
 	tools = {
@@ -32,8 +33,14 @@ export class Toolbox {
 		} else if (args.length === 1) {
 			result = await method.call(tool, args[0]);
 		} else {
-			console.error(`Need to handle multiple params for ${invocation.tool_name}`);
-			process.exit(1);
+			const funcDef: FunctionDefinition = Object.getPrototypeOf(tool).__functionsObj;
+			const args: any[] = new Array(funcDef.parameters.length)
+			for(const [paramName, paramValue] of Object.entries(invocation.parameters)) {
+				const paramDef = funcDef.parameters.find(paramDef => paramDef.name === paramName)
+				if (paramDef) throw new Error('Invalid parameter name: ' + paramName);
+				args[paramDef.index] = paramValue
+			}
+			result = await method.call(tool, ...args);
 		}
 		return result;
 	}

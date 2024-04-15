@@ -62,7 +62,7 @@ class AnthropicVertexLLM extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
-			})
+			});
 
 			let message: Message;
 			try {

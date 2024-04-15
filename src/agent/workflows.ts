@@ -18,6 +18,7 @@ export interface WorkflowContext {
 	userId: string;
 	budget: number;
 	budgetRemaining: number;
+	functionCallHistory: Invocation
 	cost: number;
 	executionId: string;
 	isRetry: boolean;

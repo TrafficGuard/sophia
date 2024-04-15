@@ -6,8 +6,10 @@ import { generateDefinition } from './generateDefinition';
  * @param filename Must be __filename
  */
 export function funcClass(filename: string) {
-	return function ClassDecorator<C extends new (...args: any[]) => any>(target: C, ctx: ClassDecoratorContext) {
-		target.prototype.__functions = generateDefinition(filename);
+	return function ClassDecorator<C extends new (...args: any[]) => any>(target: C, _ctx: ClassDecoratorContext) {
+		const [xml, obj] = generateDefinition(filename);
+		target.prototype.__functions = xml;
+		target.prototype.__functionsObj = obj;
 		return target;
 	};
 }

@@ -1,6 +1,10 @@
 // - Types --------------------------------------------------------------------
 
+import { Span } from '@opentelemetry/api';
+import { getTracer } from '#o11y/trace';
+
 interface FunctionParameter {
+	index: number;
 	name: string;
 	type: string;
 	description: string;
@@ -11,6 +15,7 @@ export interface FunctionDefinition {
 	name: string;
 	description: string;
 	parameters: FunctionParameter[];
+	returns: string;
 }
 
 // - Utils --------------------------------------------------------------------
@@ -22,7 +27,9 @@ export interface FunctionDefinition {
 export function parseArrayParameterValue(paramValue: string): string[] {
 	paramValue = paramValue.trim();
 	if (paramValue.startsWith('[')) {
-		return JSON.parse(paramValue);
+		try {
+			return JSON.parse(paramValue);
+		} catch (e) {}
 	}
 	return paramValue
 		.split('\n')
@@ -66,6 +73,46 @@ export function funcDef(functionDefinition: Omit<FunctionDefinition, 'class'>) {
 /**
  * Decorator which flags a class method to be exposed as a tool for the agent control loop.
  */
-export function func(originalMethod: any, context: ClassMethodDecoratorContext) {
-	return originalMethod;
+export function func() {
+	// NOTE - this is copied from spanWithArgAttributes() in trace.ts and modified to trace all arguments
+	// Any changes should be kept in sync
+	return function spanDecorator(originalMethod: any, context: ClassMethodDecoratorContext): any {
+		const functionName = String(context.name);
+		return function replacementMethod(this: any, ...args: any[]) {
+			const tracer = getTracer();
+			if (!tracer) {
+				return originalMethod.call(this, ...args);
+			}
+
+			// NOTE - modification, build attributeExtractors from all the arguments
+			const funcDef: FunctionDefinition = this.__functionsObj[functionName];
+			const attributeExtractors = {};
+			for (const param of funcDef.parameters) {
+				attributeExtractors[param.name] = param.index;
+			}
+
+			return tracer.withActiveSpan(functionName, (span: Span) => {
+				for (const [attribute, extractor] of Object.entries(attributeExtractors)) {
+					if (typeof extractor === 'number') {
+						const value = args[extractor] ?? '';
+						// If value is an object type, then iterate over the entries and set the attributes for primitive types
+						if (typeof value === 'object') {
+							for (const [key, val] of Object.entries(value)) {
+								if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {
+									span.setAttribute(`${attribute}.${key} ${val}`, val);
+								}
+							}
+						} else {
+							span.setAttribute(attribute, value);
+						}
+					} else if (typeof extractor === 'function') {
+						span.setAttribute(attribute, extractor(...args));
+					} else {
+						console.warn(`Invalid attribute extractor for ${functionName}() attribute[${attribute}], must be a number or function`);
+					}
+				}
+				return originalMethod.call(this, ...args);
+			});
+		};
+	};
 }

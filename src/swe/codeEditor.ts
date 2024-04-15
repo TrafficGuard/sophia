@@ -1,9 +1,10 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
-import { func } from '../agent/functions';
-import { funcClass } from '../agent/metadata';
-import { getFileSystem, workflowContext } from '../agent/workflows';
-import { execCommand } from '../utils/exec';
+import { func } from '#agent/functions';
+import { funcClass } from '#agent/metadata';
+import { getFileSystem, workflowContext } from '#agent/workflows';
+import { cacheRetry } from '../cache/cache';
+import { execCommand } from '#utils/exec';
 
 @funcClass(__filename)
 export class CodeEditor {
@@ -12,7 +13,8 @@ export class CodeEditor {
 	 * @param requirements the task requirements
 	 * @param filesToEdit the names of the relevant files to edit
 	 */
-	@func
+	@cacheRetry({ scope: 'global' })
+	@func()
 	async editFilesToMeetRequirements(requirements: string, filesToEdit: string[]): Promise<void> {
 		const messageFilePath = join(getFileSystem().getWorkingDirectory(), workflowContext.getStore().tempDir, 'aider-requirements');
 

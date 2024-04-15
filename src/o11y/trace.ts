@@ -1,7 +1,6 @@
 /* eslint-disable semi */
 import { Span, SpanStatusCode, Tracer } from '@opentelemetry/api';
 import { SugaredTracer, wrapTracer } from './trace/SugaredTracer';
-// import { logger } from './logger';
 
 /**
  * Dummy tracer for when tracing is not enabled. As we use more trace methods we will need to fill out this stub further.
@@ -27,8 +26,13 @@ export function setTracer(theTracer: Tracer): void {
 	tracer = wrapTracer(theTracer);
 }
 
+export function getTracer(): SugaredTracer | null {
+	return tracer;
+}
+
 /**
  * Starts a new independent span. The returned span must have end() called on it.
+ * Only use this if your work won’t create any sub-spans.
  * @see https://opentelemetry.io/docs/instrumentation/js/instrumentation/#create-independent-spans
  * @param spanName - The name of the span
  * @returns a new span
@@ -67,6 +71,11 @@ export function withActiveSpan<T>(spanName: string, func: (span: Span) => T): T 
 	// });
 }
 
+/**
+ * Only use it if your function won’t create any sub-spans.
+ * @param spanName
+ * @param func
+ */
 export function withSpan<T>(spanName: string, func: (span: Span) => T): T {
 	if (!tracer) {
 		return func(fakeSpan);
@@ -89,16 +98,18 @@ export function span(originalMethod: any, context: ClassMethodDecoratorContext):
 /**
  * Decorator for creating a span around a function, which can add the function arguments as
  * attributes to the span. The decorator argument object has the keys as the attribute names
- * and the values as the function args array index.
+ * and the values as either 1) the function args array index 2) a function which takes the args array as its one argument
  * e.g.
- * @spanWithArgAttributes({ bar: 0, baz: 1 })
- * public foo(bar: string, baz: string) {}
+ * @spanWithArgAttributes({ bar: 0, baz: (args) => args[1].toSpanAttributeValue() })
+ * public foo(bar: string, baz: ComplexType) {}
  *
  *
  * @param attributeExtractors
  * @returns
  */
 export function spanWithArgAttributes(attributeExtractors: any = {}) {
+	// NOTE this has been copied to func() in functions.ts and modified
+	// Any changes should be kept in sync
 	return function spanDecorator(originalMethod: any, context: ClassMethodDecoratorContext): any {
 		const functionName = String(context.name);
 		return function replacementMethod(this: any, ...args: any[]) {
