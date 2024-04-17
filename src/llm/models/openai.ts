@@ -20,7 +20,7 @@ export const OPENAI_SERVICE = 'openai';
 
 export function openaiLLmFromModel(model: string): LLM {
 	if (model.startsWith('gpt-4-turbo')) return GPT4();
-	throw new Error(`Unsupported ${OPENAI_SERVICE} model: ${model}`)
+	throw new Error(`Unsupported ${OPENAI_SERVICE} model: ${model}`);
 }
 
 export function GPT4() {

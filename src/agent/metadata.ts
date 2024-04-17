@@ -1,7 +1,6 @@
 import { generateDefinition } from './generateDefinition';
 
-
-export const toolFactory = {}
+export const toolFactory = {};
 /**
  * Decorator for classes which contain functions to make available to the LLMs.
  * This is required so ts-morph can read the source code to dynamically generate the definitions.

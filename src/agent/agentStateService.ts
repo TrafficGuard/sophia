@@ -6,8 +6,8 @@ export interface AgentStateService {
 	load(executionId: string): Promise<AgentContext | null>;
 }
 
+// https://orm.drizzle.team/docs/column-types/pg
 export class DrizzleAgentStateService implements AgentStateService {
-
 	updateState(ctx: AgentContext, state: AgentRunningState): Promise<void> {
 		ctx.state = state;
 		return this.save(ctx);

@@ -2,12 +2,12 @@ import { randomUUID } from 'crypto';
 import { AsyncLocalStorage } from 'async_hooks';
 import { Toolbox } from '#agent/toolbox';
 import { Invoke, Invoked, LLM, TaskLevel } from '#llm/llm';
+import { deserializeLLMs } from '#llm/llmFactory';
 import { FunctionCacheService } from '../cache/cache';
 import { FileCacheService } from '../cache/fileCacheService';
+import { GitLabServer } from '../functions/scm/gitlab';
 import { SourceControlManagement } from '../functions/scm/sourceControlManagement';
 import { FileSystem } from './filesystem';
-import {deserializeLLMs} from "#llm/llmFactory";
-import {GitLabServer} from "../functions/scm/gitlab";
 
 /**
  * The LLMs for each Task Level
@@ -22,7 +22,7 @@ export type AgentLLMs = Record<TaskLevel, LLM>;
  * feedback - the agent is waiting human feedback for a decision
  * completed - the agent has completed
  */
-export type AgentRunningState = 'agent' | 'functions' | 'error' | 'hil' | 'feedback' | 'completed'
+export type AgentRunningState = 'agent' | 'functions' | 'error' | 'hil' | 'feedback' | 'completed';
 
 export interface AgentContext {
 	/** Empty string in single-user mode */
@@ -113,9 +113,8 @@ export function createContext(llms: AgentLLMs, retryExecutionId?: string): Agent
 		fileSystem: new FileSystem(),
 		toolbox: new Toolbox(),
 		memory: new Map(),
-	}
+	};
 }
-
 
 export function updateContext(updates: Partial<AgentContext>) {
 	const store = agentContext.getStore();
@@ -123,13 +122,12 @@ export function updateContext(updates: Partial<AgentContext>) {
 }
 
 export function serializeContext(context: AgentContext): string {
-	const serialized = {}
+	const serialized = {};
 
 	for (const key of Object.keys(context)) {
-		if(context[key] === undefined) {
+		if (context[key] === undefined) {
 			// do nothing
-		}
-		else if(context[key] === null) {
+		} else if (context[key] === null) {
 			serialized[key] = null;
 		}
 		// Copy primitive properties across
@@ -147,18 +145,17 @@ export function serializeContext(context: AgentContext): string {
 		// Handle Maps (must only contain primitive/simple object values)
 		else if (key === 'memory') {
 			serialized[key] = JSON.stringify(Array.from(context[key].entries()));
-		}
-		else if (key === 'llms') {
+		} else if (key === 'llms') {
 			serialized[key] = {
 				easy: context.llms.easy.toJSON(),
 				medium: context.llms.medium.toJSON(),
 				hard: context.llms.hard.toJSON(),
 				xhard: context.llms.xhard.toJSON(),
-			}
+			};
 		}
 		// otherwise throw error
 		else {
-			throw new Error('Cant serialize context property ' + key);
+			throw new Error(`Cant serialize context property ${key}`);
 		}
 	}
 	return JSON.stringify(serialized);
@@ -166,20 +163,20 @@ export function serializeContext(context: AgentContext): string {
 
 export function deserializeContext(json: string): AgentContext {
 	const serialised = JSON.parse(json);
-	const context: Partial<AgentContext> = {}
+	const context: Partial<AgentContext> = {};
 
 	for (const key of Object.keys(serialised)) {
 		// copy Array and primitive properties across
-		if (Array.isArray(serialised[key]) ||  typeof serialised[key] === 'string' || typeof serialised[key] === 'number' || typeof serialised[key] === 'boolean') {
-			context[key] = serialised[key]
+		if (Array.isArray(serialised[key]) || typeof serialised[key] === 'string' || typeof serialised[key] === 'number' || typeof serialised[key] === 'boolean') {
+			context[key] = serialised[key];
 		}
 	}
 	context.cacheService = new FileCacheService('').fromJSON(serialised.cacheService);
 	context.fileSystem = new FileSystem().fromJSON(serialised.fileSystem);
 	context.toolbox = new Toolbox().fromJSON(serialised.toolbox);
 	context.memory = new Map(JSON.parse(serialised.memory));
-	console.log('TODO deserialize context.scm') // TODO deserialize context.scm
+	console.log('TODO deserialize context.scm'); // TODO deserialize context.scm
 	context.scm = serialised.scm ? new GitLabServer() : null;
-	context.llms = deserializeLLMs(serialised.llms)
-	return context as AgentContext
+	context.llms = deserializeLLMs(serialised.llms);
+	return context as AgentContext;
 }

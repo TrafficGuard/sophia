@@ -15,12 +15,15 @@ const PinoLevelToSeverityLookup: any = {
 const reportErrors = process.env.REPORT_ERROR_LOGS?.toLowerCase() === 'true';
 
 // When running locally log in a human-readable format and not JSON
-const transport = process.env.LOG_PRETTY === 'true' ? {
-	target: 'pino-pretty',
-	options: {
-		colorize: true,
-	},
-} : undefined;
+const transport =
+	process.env.LOG_PRETTY === 'true'
+		? {
+				target: 'pino-pretty',
+				options: {
+					colorize: true,
+				},
+		  }
+		: undefined;
 
 /**
  * Pino logger configured for a Google Cloud environment.

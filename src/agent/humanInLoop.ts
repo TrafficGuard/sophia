@@ -1,8 +1,7 @@
-
 export interface HumanInLoop {
 	getHumanInLoopSettings();
 
-	waitForInput(): Promise<void>
+	waitForInput(): Promise<void>;
 }
 
 export function getHumanInLoopSettings() {

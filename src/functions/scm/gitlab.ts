@@ -53,7 +53,7 @@ export class GitLabServer implements SourceControlManagement {
 	config: GitLabConfig;
 
 	constructor(config?: GitLabConfig) {
-		this.host = envVar('GITLAB_HOST')
+		this.host = envVar('GITLAB_HOST');
 		this.config = config ?? {
 			host: `https://${this.host}`,
 			token: envVar('GITLAB_TOKEN'),
@@ -67,8 +67,8 @@ export class GitLabServer implements SourceControlManagement {
 
 	toJSON() {
 		return {
-			host: this.host
-		}
+			host: this.host,
+		};
 	}
 
 	// /**

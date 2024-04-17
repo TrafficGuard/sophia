@@ -1,6 +1,6 @@
-import {agentContext} from '#agent/agentContext';
-import {CDATA_END, CDATA_START} from '#utils/xml-utils';
-import {BaseLLM} from './base-llm';
+import { agentContext } from '#agent/agentContext';
+import { CDATA_END, CDATA_START } from '#utils/xml-utils';
+import { BaseLLM } from './base-llm';
 
 export interface LLM {
 	generateText(prompt: string, systemPrompt?: string, type?: 'text' | 'json' | 'result' | 'function'): Promise<string>;
@@ -38,7 +38,7 @@ export interface LLM {
 	getMaxInputTokens(): number;
 
 	/** Convert to a serializable form */
-	toJSON(): any
+	toJSON(): any;
 }
 
 /**
@@ -137,4 +137,3 @@ export function recordTextGenerationCosts(originalMethod: any, context: ClassMet
 		return response;
 	};
 }
-

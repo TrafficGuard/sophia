@@ -11,12 +11,12 @@ export class Toolbox {
 	toJSON() {
 		return {
 			tools: Object.keys(this.tools),
-		}
+		};
 	}
 
 	fromJSON(obj: any): this {
-		const toolNames = obj.tools as string[]
-		for(const toolName of toolNames) {
+		const toolNames = obj.tools as string[];
+		for (const toolName of toolNames) {
 			this.tools[toolName] = new toolFactory[toolName]();
 		}
 		return this;

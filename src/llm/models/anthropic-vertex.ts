@@ -16,7 +16,7 @@ export function anthropicVertexLLmFromModel(model: string): LLM {
 	if (model.startsWith('claude-3-sonnet@')) return Claude3_Sonnet_Vertex();
 	if (model.startsWith('claude-3-haiku@')) return Claude3_Haiku_Vertex();
 	if (model.startsWith('claude-3-opus@')) return Claude3_Opus_Vertex();
-	throw new Error(`Unsupported ${ANTHROPIC_VERTEX_SERVICE} model: ${model}`)
+	throw new Error(`Unsupported ${ANTHROPIC_VERTEX_SERVICE} model: ${model}`);
 }
 
 export function Claude3_Sonnet_Vertex() {
