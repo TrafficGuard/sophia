@@ -3,14 +3,18 @@ import { existsSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { DiffRefsSchema, MergeRequestDiffSchema, MergeRequestDiscussionNotePositionOptions } from '@gitbeaker/rest';
 import { DOMParser } from 'xmldom';
-import { AgentLLMs, agentContext, enterWithContext, getFileSystem, llms } from '#agent/agentContext';
-import { FileSystem } from './agent/filesystem';
+import { AgentContext, AgentLLMs, agentContext, createContext, enterWithContext, getFileSystem, llms } from '#agent/agentContext';
+import { FileSystem } from '#agent/filesystem';
+import '#fastify/trace-init/trace-init';
+import { Claude3_Haiku_Vertex, Claude3_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
+import { Claude3_Opus, ClaudeLLMs } from '#llm/models/claude';
+import { GPT4 } from '#llm/models/openai';
+import { GEMINI_1_0_PRO_LLMS, Gemini_1_5_Pro } from '#llm/models/vertexai';
+import { MultiLLM } from '#llm/multi-llm';
 import { getFunctionDefinitions } from './agent/metadata';
 import { AGENT_LLMS } from './agentLLMs';
 import { GitLabServer } from './functions/scm/gitlab';
-import { Claude3_Haiku_Vertex, Claude3_Sonnet_Vertex, ClaudeVertexLLMs } from './llm/models/anthropic-vertex';
-import { Claude3_Opus, ClaudeLLMs } from './llm/models/claude';
-import { GEMINI_1_0_PRO_LLMS } from './llm/models/vertexai';
+import { PublicWeb } from './functions/web/web';
 import { ICodeReview, loadCodeReviews } from './swe/codeReview/codeReviewParser';
 import { ProjectInfo } from './swe/projectDetection';
 import { sleep } from './utils/async-utils';
@@ -21,10 +25,20 @@ import { checkExecResult, execCmd, execCommand } from './utils/exec';
 // Usage:
 // npm run util
 
+const opus = Claude3_Opus();
+const sonnet = Claude3_Sonnet_Vertex();
+const gemini = Gemini_1_5_Pro();
+export const utilLLMs: AgentLLMs = {
+	easy: gemini,
+	medium: sonnet,
+	hard: sonnet,
+	xhard: new MultiLLM([opus, GPT4(), Gemini_1_5_Pro()], 3),
+};
+
 async function main() {
-	// const llms = ClaudeVertexLLMs();
-	// const llms = ClaudeLLMs();
-	enterWithContext(AGENT_LLMS);
+	const context: AgentContext = createContext('util', utilLLMs);
+	agentContext.enterWith(context);
+	context.toolbox.addTool(context.fileSystem, 'FileSystem');
 
 	agentContext.getStore().fileSystem = new FileSystem();
 

@@ -9,7 +9,7 @@ export class MockLLM extends BaseLLM {
 	 * @param maxInputTokens defaults to 100
 	 */
 	constructor(
-		private response: string,
+		private response?: string,
 		maxInputTokens = 100,
 	) {
 		super('mock', 'mock', maxInputTokens, 1, 1);
@@ -29,6 +29,8 @@ export class MockLLM extends BaseLLM {
 				inputChars: prompt.length,
 				model: this.model,
 			});
+
+			if (this.response === undefined) throw new Error('Need to call setResponse on MockLLM before calling generateText');
 
 			const response = this.response;
 

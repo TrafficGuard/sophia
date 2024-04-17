@@ -26,19 +26,19 @@ import { TypescriptTools } from './swe/nodejs/typescriptTools';
 // npm run research
 const gemini = Gemini_1_5_Pro();
 
-const opus = Claude3_Opus();
+// const opus = Claude3_Opus();
 const sonnet = Claude3_Sonnet_Vertex();
 
 export const llms: AgentLLMs = {
 	easy: sonnet,
 	medium: sonnet,
-	hard: opus,
-	xhard: new MultiLLM([opus, GPT4(), Gemini_1_5_Pro()], 3),
+	hard: sonnet,
+	xhard: new MultiLLM([/*opus,*/ GPT4(), Gemini_1_5_Pro()], 3),
 };
 
 export async function main() {
 	const systemPrompt = readFileSync('ai-system-research', 'utf-8');
-	const initialPrompt = readFileSync('ai-in2', 'utf-8'); //'Complete the JIRA issue: ABC-123'
+	const initialPrompt = readFileSync('ai-in-research', 'utf-8'); //'Complete the JIRA issue: ABC-123'
 
 	const toolbox = new Toolbox();
 	// toolbox.addTool('Jira', new Jira());

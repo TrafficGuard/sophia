@@ -42,7 +42,7 @@ export function cacheRetry(options: Partial<CacheRetryOptions> = DEFAULTS) {
 		const methodName = String(context.name);
 
 		async function replacementMethod(this: any, ...args: any[]) {
-			const cacheService = agentContext.getStore().cacheService;
+			const cacheService = agentContext.getStore().functionCacheService;
 			// console.log(this.constructor.name, methodName, args)
 			const cachedValue = await cacheService.get(this.constructor.name, methodName, args);
 

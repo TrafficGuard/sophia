@@ -20,7 +20,7 @@ describe('agentContext', () => {
 				hard: GPT4(),
 				xhard: Claude3_Opus(),
 			};
-			const agentContext = createContext(llms, 'guid123');
+			const agentContext = createContext('test', llms, 'guid123');
 			agentContext.fileSystem.setWorkingDirectory('./workingDir');
 			agentContext.toolbox.addToolType(UtilFunctions);
 			agentContext.memory.set('memory_key', 'memory_value');

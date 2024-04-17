@@ -57,7 +57,7 @@ export interface FunctionCalls {
 
 export interface Invoke {
 	tool_name: string;
-	parameters: { [key: string]: string };
+	parameters: { [key: string]: any };
 }
 
 export interface Invoked extends Invoke {

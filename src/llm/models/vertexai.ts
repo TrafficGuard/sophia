@@ -1,9 +1,9 @@
-import { HarmBlockThreshold, HarmCategory, SafetySetting, VertexAI } from '@google-cloud/vertexai';
-import { AgentLLMs, addCost } from '#agent/agentContext';
+import { FunctionCall, GenerateContentRequest, HarmBlockThreshold, HarmCategory, SafetySetting, Tool, VertexAI } from '@google-cloud/vertexai';
+import { AgentLLMs, addCost, agentContext } from '#agent/agentContext';
 import { withSpan } from '#o11y/trace';
 import { projectId, region } from '../../config';
 import { BaseLLM } from '../base-llm';
-import { LLM, combinePrompts, logTextGeneration } from '../llm';
+import { FunctionResponse, Invoke, LLM, combinePrompts, logTextGeneration } from '../llm';
 import { MultiLLM } from '../multi-llm';
 
 const vertexAI = new VertexAI({ project: projectId, location: region });
@@ -101,6 +101,78 @@ class VertexLLM extends BaseLLM {
 			return response;
 		});
 	}
+
+	/*
+	generateTextExpectingFunctions(userPrompt: string, systemPrompt?: string): Promise<FunctionResponse> {
+		console.log(this.model, 'generateTextExpectingFunctions ========================')
+		return withSpan('generateText', async (span) => {
+			const prompt = combinePrompts(userPrompt, systemPrompt);
+
+			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
+			span.setAttributes({
+				userPrompt,
+				inputChars: prompt.length,
+				model: this.model,
+			});
+
+			const funcDefinitions = agentContext.getStore().toolbox.getToolDefinitions();
+			const tools: Tool[] = [convertFunctionDefinitionsToTool(funcDefinitions)];
+			const generativeModel = vertexAI.preview.getGenerativeModel({
+				model: this.model,
+				generationConfig: {
+					maxOutputTokens: this.model.includes('1.5-pro') ? 8192 : 4096,
+					temperature: 1,
+					topP: 0.95,
+					stopSequences: ['</response>'],
+				},
+				safetySettings: SAFETY_SETTINGS,
+			});
+
+			const request: GenerateContentRequest = {
+				contents: [{ role: 'user', parts: [{ text: prompt }] }],
+				tools,
+				generationConfig: {},
+				// TODO when supported in nodejs library - tool_config mode ANY	The model must predict only function calls. To limit the model to a subset of functions, define the allowed function names in allowed_function_names.
+			};
+
+			const resp = await generativeModel.generateContent(request);
+			const textResponse = '';
+			const funcCall: FunctionCall | undefined = resp.response.candidates[0].content.parts[0].functionCall;
+
+			// check for text part
+
+			const inputCost = prompt.length * this.getInputCostPerToken();
+			const outputCost = 0; //response.length * this.getOutputCostPerToken();
+			const cost = inputCost + outputCost;
+			const outputChars = 0;
+			console.log(this.model, 'input', prompt.length, 'output', textResponse.length);
+			span.setAttributes({
+				inputChars: prompt.length,
+				outputChars,
+				response: textResponse,
+				inputCost,
+				outputCost,
+				cost,
+			});
+			addCost(cost);
+
+			if (!funcCall) throw new Error('No function call found in response'); // TODO make into FunctionCallMissingError
+
+			const invoke: Invoke = {
+				tool_name: funcCall.name,
+				parameters: funcCall.args,
+			};
+			const funcResponse: FunctionResponse = {
+				response: '',
+				functions: {
+					invoke: [invoke],
+				},
+			};
+
+			return funcResponse;
+		});
+	}
+	*/
 }
 
 const SAFETY_SETTINGS: SafetySetting[] = [

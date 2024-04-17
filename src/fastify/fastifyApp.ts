@@ -32,7 +32,7 @@ export interface FastifyConfig {
 	healthcheckUrl?: string;
 }
 
-export async function initFastify(config: FastifyConfig) {
+export async function initFastify(config: FastifyConfig): Promise<void> {
 	/*
    	 To guarantee a consistent and predictable behaviour of your application, we highly recommend to always load your code as shown below:
       └── plugins (from the Fastify ecosystem)

@@ -2,6 +2,8 @@ import { llms } from '#agent/agentContext';
 import { func } from '#agent/functions';
 import { funcClass } from '#agent/metadata';
 
+export const THROW_ERROR_TEXT = 'FunctionErrorText';
+
 /**
  * Mainly used for testing
  */
@@ -25,5 +27,13 @@ export class TestFunctions {
 	async skyColour(): Promise<string> {
 		const response = await llms().easy.generateText('What colour is the clear daytime sky? Respond with a single word.');
 		return response.trim().toLowerCase();
+	}
+
+	/**
+	 * This function always throws an error
+	 */
+	@func()
+	async throwError(): Promise<void> {
+		throw new Error(THROW_ERROR_TEXT);
 	}
 }

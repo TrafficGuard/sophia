@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { Span } from '@opentelemetry/api';
-import { AgentLLMs, enterWithContext } from '#agent/agentContext';
+import { AgentContext, AgentLLMs, agentContext, createContext, enterWithContext } from '#agent/agentContext';
 import '#fastify/trace-init/trace-init';
 import { LLM } from '#llm/llm';
 import { Claude3_Sonnet_Vertex } from '#llm/models/anthropic-vertex';
@@ -16,6 +16,7 @@ import { AGENT_LLMS } from './agentLLMs';
 
 let llm: LLM = Claude3_Sonnet_Vertex();
 llm = Claude3_Opus();
+llm = Gemini_1_5_Pro();
 
 const llms: AgentLLMs = {
 	easy: llm,
@@ -27,7 +28,11 @@ const llms: AgentLLMs = {
 async function main() {
 	const system = readFileSync('ai-system', 'utf-8');
 	const prompt = readFileSync('ai-in', 'utf-8');
-	enterWithContext(llms);
+
+	const context: AgentContext = createContext('ai', llms);
+	agentContext.enterWith(context);
+	context.toolbox.addTool(context.fileSystem, 'FileSystem');
+
 	// console.log(prompt)
 	const text = await withActiveSpan('ai', async (span: Span) => {
 		return await llm.generateText(prompt);

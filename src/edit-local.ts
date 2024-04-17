@@ -1,8 +1,9 @@
 import { readFileSync } from 'fs';
 import { Span } from '@opentelemetry/api';
-import { agentContext, enterWithContext } from '#agent/agentContext';
+import { AgentContext, AgentLLMs, agentContext, createContext, enterWithContext } from '#agent/agentContext';
 import { FileSystem } from '#agent/filesystem';
 import '#fastify/trace-init/trace-init';
+import { GEMINI_1_5_PRO_LLMS, Gemini_1_5_Pro } from '#llm/models/vertexai';
 import { withActiveSpan } from '#o11y/trace';
 import { AGENT_LLMS } from './agentLLMs';
 import { DevEditWorkflow } from './swe/devEditWorkflow';
@@ -15,8 +16,13 @@ import { ProjectInfo } from './swe/projectDetection';
 // npm run edit-local
 
 async function main() {
-	const llms = AGENT_LLMS;
-	enterWithContext(AGENT_LLMS);
+	const gemini = Gemini_1_5_Pro();
+	const llms: AgentLLMs = GEMINI_1_5_PRO_LLMS();
+
+	const context: AgentContext = createContext('edit-local', llms);
+	agentContext.enterWith(context);
+	context.toolbox.addTool(context.fileSystem, 'FileSystem');
+
 	const system = readFileSync('ai-system', 'utf-8');
 	const initialPrompt = readFileSync('ai-in', 'utf-8');
 

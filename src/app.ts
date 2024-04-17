@@ -1,32 +1,38 @@
-import { AgentStateService, DrizzleAgentStateService } from '#agent/agentStateService';
+import { AgentStateService, AgentStateServiceFile } from '#agent/agentStateService';
+import { RouteDefinition } from '#fastify/fastifyApp';
 import { logger } from '#o11y/logger';
 import { TypeBoxFastifyInstance, initFastify } from './fastify';
 import { gitlabRoutesV1 } from './routes/gitlab/gitlabRoutes-v1';
 
-export type ApplicationContext = {
+export interface ApplicationContext {
 	agentStateService: AgentStateService;
-};
-
-export interface AppFastifyInstance extends TypeBoxFastifyInstance {} // , ApplicationContext
-
-async function createApplicationContext(): Promise<ApplicationContext> {
-	return {
-		agentStateService: new DrizzleAgentStateService(),
-	};
 }
+
+export interface AppFastifyInstance extends TypeBoxFastifyInstance, ApplicationContext {}
 
 let appContext: ApplicationContext;
 
+function createApplicationContext(): ApplicationContext {
+	return {
+		agentStateService: new AgentStateServiceFile(),
+	};
+}
+
+/** For setting in tests with mock/in-memory service implementations */
+export function setApplicationContext(testAppContext: ApplicationContext): void {
+	appContext = testAppContext;
+}
+
 export function appCtx(): ApplicationContext {
-	if (!appContext) throw new Error('ApplicationContext not initialized');
+	appContext ??= createApplicationContext();
 	return appContext;
 }
 
 export async function initApp(): Promise<void> {
-	appContext = await createApplicationContext();
+	appContext = createApplicationContext();
 	try {
 		await initFastify({
-			routes: [gitlabRoutesV1],
+			routes: [gitlabRoutesV1 as RouteDefinition],
 			instanceDecorators: appContext,
 			requestDecorators: {},
 		});

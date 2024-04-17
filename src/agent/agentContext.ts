@@ -25,31 +25,44 @@ export type AgentLLMs = Record<TaskLevel, LLM>;
 export type AgentRunningState = 'agent' | 'functions' | 'error' | 'hil' | 'feedback' | 'completed';
 
 export interface AgentContext {
+	/** Agent instance id - allocated when the agent is first starts */
+	agentId: string;
+	/** Id of the running execution. This changes after the control loop restarts after an exit due to pausing, human in loop etc */
+	executionId: string;
+	name: string;
+	parentAgentId?: string;
+	isRetry: boolean;
 	/** Empty string in single-user mode */
 	userId: string;
 	userEmail?: string;
+
 	state: AgentRunningState;
 	inputPrompt: string;
 	systemPrompt: string;
-	planningResponse?: string;
-	executionId: string;
-	parentExecutionId?: string;
-	isRetry: boolean;
 	functionCallHistory: Invoked[];
 
+	// These three fields are mutable for when saving state as the agent does work
+	error?: string;
+	planningResponse?: string;
+	invoking: Invoke[];
+	/** Total cost of running this agent */
 	cost: number;
+	/** Budget allocated until human intervention is required. This may be increased when the agent is running */
 	budget: number;
+	/** Budget remaining until human intervention is required */
 	budgetRemaining: number;
 
 	llms: AgentLLMs;
-	cacheService: FunctionCacheService;
+	functionCacheService: FunctionCacheService;
 	/** Working filesystem */
 	fileSystem?: FileSystem | null;
 	/** Directory for cloning repositories etc */
 	tempDir: string;
+	/** The tools/functions available to the agent */
 	toolbox: Toolbox;
+	/** Memory persisted over the agent's control loop iterations */
 	memory: Map<string, string>;
-
+	/** GitLab/GitHub/BitBucket when the working directory is a Git repo */
 	scm: SourceControlManagement | null;
 }
 
@@ -77,8 +90,8 @@ export function getFileSystem(): FileSystem {
 	return filesystem;
 }
 
-export function runWithContext(config: { llms: AgentLLMs; retryExecutionId?: string }, func: () => any) {
-	const store: AgentContext = createContext(config.llms, config.retryExecutionId);
+export function runWithContext(config: { name: string; llms: AgentLLMs; retryExecutionId?: string }, func: () => any) {
+	const store: AgentContext = createContext(config.name, config.llms, config.retryExecutionId);
 	agentContext.run(store, func);
 }
 
@@ -87,23 +100,26 @@ export function runWithContext(config: { llms: AgentLLMs; retryExecutionId?: str
  * @param llms
  * @param retryExecutionId
  */
-export function enterWithContext(llms: AgentLLMs, retryExecutionId?: string) {
-	const context: AgentContext = createContext(llms, retryExecutionId);
+export function enterWithContext(name: string, llms: AgentLLMs, retryExecutionId?: string) {
+	const context: AgentContext = createContext(name, llms, retryExecutionId);
 	agentContext.enterWith(context);
 	context.toolbox.addTool(context.fileSystem, 'FileSystem');
 }
 
-export function createContext(llms: AgentLLMs, retryExecutionId?: string): AgentContext {
+export function createContext(name: string, llms: AgentLLMs, resumeAgentId?: string): AgentContext {
 	return {
+		agentId: resumeAgentId || randomUUID(),
+		executionId: randomUUID(),
+		name,
 		userId: '',
 		systemPrompt: '',
 		inputPrompt: '',
 		state: 'agent',
 		functionCallHistory: [],
+		invoking: [],
 		userEmail: process.env.USER_EMAIL,
-		executionId: retryExecutionId || randomUUID(),
-		isRetry: !!retryExecutionId,
-		cacheService: new FileCacheService('./.cache/tools'),
+		isRetry: !!resumeAgentId,
+		functionCacheService: new FileCacheService('./.cache/tools'),
 		budget: 0,
 		budgetRemaining: 0,
 		cost: 0,
@@ -171,7 +187,7 @@ export function deserializeContext(json: string): AgentContext {
 			context[key] = serialised[key];
 		}
 	}
-	context.cacheService = new FileCacheService('').fromJSON(serialised.cacheService);
+	context.functionCacheService = new FileCacheService('').fromJSON(serialised.cacheService);
 	context.fileSystem = new FileSystem().fromJSON(serialised.fileSystem);
 	context.toolbox = new Toolbox().fromJSON(serialised.toolbox);
 	context.memory = new Map(JSON.parse(serialised.memory));

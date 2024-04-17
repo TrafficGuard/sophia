@@ -22,8 +22,12 @@ export class Toolbox {
 		return this;
 	}
 
-	getTools() {
+	getTools(): Array<any> {
 		return Object.values(this.tools);
+	}
+
+	getToolDefinitions(): Array<FunctionDefinition> {
+		return this.getTools().map((tool) => Object.getPrototypeOf(tool).__functionsObj);
 	}
 
 	addTool(tool: any, name: string): void {
@@ -53,6 +57,10 @@ export class Toolbox {
 			result = await method.call(tool, args[0]);
 		} else {
 			const funcDef: FunctionDefinition = Object.getPrototypeOf(tool).__functionsObj;
+			if (!funcDef) throw new Error(`__functionsObj not found on prototype for ${toolName}.${methodName}`);
+			if (!funcDef.parameters) {
+				console.error(`${toolName}.${methodName} definition doesnt have any parameters`);
+			}
 			const args: any[] = new Array(funcDef.parameters.length);
 			for (const [paramName, paramValue] of Object.entries(invocation.parameters)) {
 				const paramDef = funcDef.parameters.find((paramDef) => paramDef.name === paramName);

@@ -4,7 +4,7 @@ import { Span } from '@opentelemetry/api';
 import { logger } from '#o11y/logger';
 import { getTracer, setFunctionSpanAttributes } from '#o11y/trace';
 
-interface FunctionParameter {
+export interface FunctionParameter {
 	index: number;
 	name: string;
 	type: string;

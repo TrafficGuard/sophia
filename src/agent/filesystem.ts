@@ -39,7 +39,7 @@ export class FileSystem {
 	toJSON() {
 		return {
 			basePath: this.basePath,
-			workingDirectory: this.workingDirectory
+			workingDirectory: this.workingDirectory,
 		};
 	}
 	fromJSON(obj: any): this {
