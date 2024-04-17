@@ -1,7 +1,10 @@
 import { ExecException, exec } from 'child_process';
 import os from 'os';
 import { promisify } from 'util';
+import { SpanStatusCode } from '@opentelemetry/api';
 import { getFileSystem } from '#agent/agentContext';
+import { logger } from '#o11y/logger';
+import { withSpan } from '#o11y/trace';
 
 const exec2 = promisify(exec);
 /**
@@ -32,7 +35,7 @@ export interface ExecResults {
  */
 export async function execCmd(command: string, cwd?: string): Promise<ExecResults> {
 	const home = process.env.HOME;
-	console.log(`${home ? command.replace(home, '~') : command} ${cwd ?? ''}`);
+	console.log(`execCmd ${home ? command.replace(home, '~') : command} ${cwd ?? ''}`);
 	// return {
 	//     stdout: '', stderr: '', error: null
 	// }
@@ -59,12 +62,39 @@ export async function execCmd(command: string, cwd?: string): Promise<ExecResult
 	throw new Error('Should never happen');
 }
 
-export async function execCommand(command: string, workingDirectory?: string): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-	const options = { cwd: workingDirectory ?? getFileSystem().getWorkingDirectory() };
-	try {
-		const { stdout, stderr } = await exec2(command, options);
-		return { stdout, stderr, exitCode: 0 };
-	} catch (error) {
-		return { stdout: error.stdout, stderr: error.stderr, exitCode: error.code };
-	}
+export interface ExecResult {
+	stdout: string;
+	stderr: string;
+	exitCode: number;
+}
+
+export async function execCommand(command: string, workingDirectory?: string): Promise<ExecResult> {
+	return withSpan('execCommand', async (span) => {
+		const options = { cwd: workingDirectory ?? getFileSystem().getWorkingDirectory() };
+		try {
+			logger.info(`${options.cwd} % ${command}`);
+			const { stdout, stderr } = await exec2(command, options);
+
+			span.setAttributes({
+				cwd: options.cwd,
+				command,
+				stdout,
+				stderr,
+				exitCode: 0,
+			});
+			span.setStatus({ code: SpanStatusCode.OK });
+			return { stdout, stderr, exitCode: 0 };
+		} catch (error) {
+			span.setAttributes({
+				cwd: options.cwd,
+				command,
+				stdout: error.stdout,
+				stderr: error.stderr,
+				exitCode: error.code,
+			});
+			span.recordException(error);
+			span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
+			return { stdout: error.stdout, stderr: error.stderr, exitCode: error.code };
+		}
+	});
 }

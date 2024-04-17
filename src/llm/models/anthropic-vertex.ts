@@ -10,11 +10,13 @@ import { envVar } from '#utils/env-var';
 import { RetryableError } from '../../cache/cache';
 import { MultiLLM } from '../multi-llm';
 
-export function vertexLLmFromModel(model: string): LLM | null {
-	if (model.startsWith('claude-3-sonnet')) return Claude3_Sonnet_Vertex();
-	if (model.startsWith('claude-3-haiku')) return Claude3_Haiku_Vertex();
-	if (model.startsWith('claude-3-opus')) return Claude3_Opus_Vertex();
-	return null;
+export const ANTHROPIC_VERTEX_SERVICE = 'anthropic-vertex';
+
+export function anthropicVertexLLmFromModel(model: string): LLM {
+	if (model.startsWith('claude-3-sonnet@')) return Claude3_Sonnet_Vertex();
+	if (model.startsWith('claude-3-haiku@')) return Claude3_Haiku_Vertex();
+	if (model.startsWith('claude-3-opus@')) return Claude3_Opus_Vertex();
+	throw new Error(`Unsupported ${ANTHROPIC_VERTEX_SERVICE} model: ${model}`)
 }
 
 export function Claude3_Sonnet_Vertex() {
@@ -62,7 +64,7 @@ class AnthropicVertexLLM extends BaseLLM {
 	client: AnthropicVertex;
 
 	constructor(model: string, inputCostPerToken = 0, outputCostPerToken = 0) {
-		super(model, 200_000, inputCostPerToken, outputCostPerToken);
+		super(ANTHROPIC_VERTEX_SERVICE, model, 200_000, inputCostPerToken, outputCostPerToken);
 		this.client = getClient();
 	}
 	// Error when
@@ -101,6 +103,8 @@ class AnthropicVertexLLM extends BaseLLM {
 			}
 
 			const response = message.content[0].text;
+			const inputTokens = message.usage.input_tokens;
+			const outputTokens = message.usage.output_tokens;
 			const inputCost = this.getInputCostPerToken() * message.usage.input_tokens;
 			const outputCost = this.getOutputCostPerToken() * message.usage.output_tokens;
 			const cost = inputCost + outputCost;
@@ -109,6 +113,8 @@ class AnthropicVertexLLM extends BaseLLM {
 			addCost(cost);
 
 			span.setAttributes({
+				inputTokens,
+				outputTokens,
 				response,
 				inputCost,
 				outputCost,

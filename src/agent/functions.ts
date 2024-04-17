@@ -1,6 +1,7 @@
 // - Types --------------------------------------------------------------------
 
 import { Span } from '@opentelemetry/api';
+import { logger } from '#o11y/logger';
 import { getTracer, setFunctionSpanAttributes } from '#o11y/trace';
 
 interface FunctionParameter {
@@ -91,9 +92,15 @@ export function func() {
 				attributeExtractors[param.name] = param.index;
 			}
 
-			return tracer.withActiveSpan(functionName, (span: Span) => {
+			return tracer.withActiveSpan(functionName, async (span: Span) => {
 				setFunctionSpanAttributes(span, functionName, attributeExtractors, args);
-				return originalMethod.call(this, ...args);
+				const result = await originalMethod.call(this, ...args);
+				try {
+					span.setAttribute('result', JSON.stringify(result));
+				} catch (e) {
+					logger.info(`Could not serialize result from function ${functionName}: ${e.message}`);
+				}
+				return result;
 			});
 		};
 	};

@@ -3,7 +3,7 @@ import { AgentLLMs, addCost } from '#agent/agentContext';
 import { withSpan } from '#o11y/trace';
 import { projectId, region } from '../../config';
 import { BaseLLM } from '../base-llm';
-import { combinePrompts, logTextGeneration } from '../llm';
+import { LLM, combinePrompts, logTextGeneration } from '../llm';
 import { MultiLLM } from '../multi-llm';
 
 const vertexAI = new VertexAI({ project: projectId, location: region });
@@ -29,12 +29,20 @@ export function GEMINI_1_5_PRO_LLMS(): AgentLLMs {
 }
 
 export function Gemini_1_0_Pro() {
-	return new VertexLLM('gemini-1.0-pro-001', 32_000, 0.0036 / 1000, 0.018 / 1000);
+	return new VertexLLM(VERTEX_SERVICE, 'gemini-1.0-pro-001', 32_000, 0.0036 / 1000, 0.018 / 1000);
 }
 
 // gemini-1.5-pro-latest
 export function Gemini_1_5_Pro() {
-	return new VertexLLM('gemini-1.5-pro-preview-0409', 1_000_000, 0.0036 / 1000, 0.018 / 1000);
+	return new VertexLLM(VERTEX_SERVICE, 'gemini-1.5-pro-preview-0409', 1_000_000, 0.0036 / 1000, 0.018 / 1000);
+}
+
+export const VERTEX_SERVICE = 'vertex';
+
+export function vertexLLmFromModel(model: string): LLM | null {
+	if (model.startsWith('gemini-1.0-pro')) return Gemini_1_0_Pro();
+	if (model.startsWith('gemini-1.5-pro')) return Gemini_1_5_Pro();
+	return null;
 }
 
 /**
@@ -81,11 +89,12 @@ class VertexLLM extends BaseLLM {
 			const cost = inputCost + outputCost;
 			console.log(this.model, 'input', prompt.length, 'output', response.length);
 			span.setAttributes({
+				inputChars: prompt.length,
+				outputChars: response.length,
 				response,
 				inputCost,
 				outputCost,
 				cost,
-				outputChars: response.length,
 			});
 			addCost(cost);
 

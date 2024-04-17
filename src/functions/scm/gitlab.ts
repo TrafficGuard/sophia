@@ -49,11 +49,13 @@ export type GitLabProject = Pick<
 @funcClass(__filename)
 export class GitLabServer implements SourceControlManagement {
 	api;
+	host;
 	config: GitLabConfig;
 
 	constructor(config?: GitLabConfig) {
+		this.host = envVar('GITLAB_HOST')
 		this.config = config ?? {
-			host: `https://${envVar('GITLAB_HOST')}`,
+			host: `https://${this.host}`,
 			token: envVar('GITLAB_TOKEN'),
 			topLevelGroups: JSON.parse(envVar('GITLAB_GROUPS')),
 		};
@@ -61,6 +63,12 @@ export class GitLabServer implements SourceControlManagement {
 			host: this.config.host,
 			token: this.config.token,
 		});
+	}
+
+	toJSON() {
+		return {
+			host: this.host
+		}
 	}
 
 	// /**
@@ -312,6 +320,7 @@ export class GitLabServer implements SourceControlManagement {
 			const newLineNumber = startingLineNumber + lineNumber - 1;
 
 			/*
+			https://archives.docs.gitlab.com/16.4/ee/api/discussions.html#create-a-new-thread-in-the-merge-request-diff
             Both position[old_path] and position[new_path] are required and must refer to the file path before and after the change.
             To create a thread on an added line (highlighted in green in the merge request diff), use position[new_line] and don’t include position[old_line].
             To create a thread on a removed line (highlighted in red in the merge request diff), use position[old_line] and don’t include position[new_line].

@@ -7,7 +7,7 @@ import { OrganicSearchResult, PUBLIC_WEB } from './web';
 // https://github.com/searxng/searxng
 
 @funcClass(__filename)
-class WebResearcher {
+export class WebResearcher {
 	@cacheRetry()
 	// @func
 	async generateSearchQueryFromTaskRequirements(task: string) {
@@ -109,5 +109,3 @@ function summarisePrompt(content: string, knowledgeBase: string, query: string):
 	// biome-ignore format: readability
 	return `<new_content>\n${content}\n</new_content>\n<knowledgebase>\n${knowledgeBase}\n</knowledgebase>\n<query>\n${query}\n</query>\n<task>Your task is to develop a knowledgebase on the search query.\nYou have been provided new content to update the knowlegebase with.\nOnly update the knowledgebase with content that is directly relevant to the query.  Ignore irrelevant content.\nYou will responed with an updated knowledgebase synthesised from the existing one and the new content that is directly relevant to the query in the following format:\n<response><reasoning>Provide a brief summary of reasoning behind the knowledge base updates from the new content</reasoning><result>The updated knowledgebase contents, or the current knowledgebase contents if no changes are to be made. Limit to under 3000 characters.</result></response></task>`;
 }
-
-export const WEB_RESEARCH = new WebResearcher();

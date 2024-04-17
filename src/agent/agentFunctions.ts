@@ -1,11 +1,15 @@
 import { func } from '#agent/functions';
 import { logger } from '#o11y/logger';
+import { agentContext } from './agentContext';
 import { funcClass } from './metadata';
 
 export const AGENT_COMPLETED_NAME = 'Agent.completed';
 
 export const AGENT_REQUEST_FEEDBACK = 'Agent.requestFeedback';
 
+/**
+ * Functions for the agent to manage its memory and execution
+ */
 @funcClass(__filename)
 export class Agent {
 	/**
@@ -25,5 +29,29 @@ export class Agent {
 	async completed(note: string): Promise<void> {
 		logger.info('Agent completed');
 		logger.info(note);
+	}
+
+	/**
+	 * Stores content to your working memory, and continues on with the plan.
+	 * @param key {string} A short descriptive identifier (alphanumeric and underscores allowed, under 30 characters) for the new memory contents. This must not exist in the current memory.
+	 * @param content {string} The contents to store in the working memory
+	 */
+	@func()
+	async addNewMemory(key: string, content: string): Promise<void> {
+		const memory = agentContext.getStore().memory;
+		if (memory.has(key)) throw new Error(`Memory key ${key} already exists. Did you mean to update or use a different key?`);
+		memory.set(key, content);
+	}
+
+	/**
+	 * Updates existing content in your working memory, and continues on with the plan.
+	 * @param key {string} An existing key in the memory contents to update the contents of.
+	 * @param content {string} The updated contents to store in the working memory under the key
+	 */
+	@func()
+	async updateMemory(key: string, content: string): Promise<void> {
+		const memory = agentContext.getStore().memory;
+		if (!memory.has(key)) throw new Error(`Memory key ${key} does not exist. Did you mean to create a new memory key or use a different existing key?`);
+		memory.set(key, content);
 	}
 }

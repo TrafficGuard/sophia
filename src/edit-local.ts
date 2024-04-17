@@ -1,6 +1,9 @@
 import { readFileSync } from 'fs';
+import { Span } from '@opentelemetry/api';
 import { agentContext, enterWithContext } from '#agent/agentContext';
-import { FileSystem } from './agent/filesystem';
+import { FileSystem } from '#agent/filesystem';
+import '#fastify/trace-init/trace-init';
+import { withActiveSpan } from '#o11y/trace';
 import { AGENT_LLMS } from './agentLLMs';
 import { DevEditWorkflow } from './swe/devEditWorkflow';
 import { TypescriptTools } from './swe/nodejs/typescriptTools';
@@ -15,7 +18,7 @@ async function main() {
 	const llms = AGENT_LLMS;
 	enterWithContext(AGENT_LLMS);
 	const system = readFileSync('ai-system', 'utf-8');
-	const prompt = readFileSync('ai-in', 'utf-8');
+	const initialPrompt = readFileSync('ai-in', 'utf-8');
 
 	// const info = await new DevRequirementsWorkflow().detectProjectInfo();
 
@@ -29,8 +32,12 @@ async function main() {
 		test: 'npm run test:unit',
 		languageTools: new TypescriptTools(),
 	};
-
-	await new DevEditWorkflow().runDevEditWorkflow(prompt, projectInfo);
+	await withActiveSpan('edit-local', async (span: Span) => {
+		span.setAttributes({
+			initialPrompt,
+		});
+		await new DevEditWorkflow().runDevEditWorkflow(initialPrompt, projectInfo);
+	});
 }
 
 main().then(

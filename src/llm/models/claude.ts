@@ -3,10 +3,12 @@ import { AgentLLMs, addCost } from '#agent/agentContext';
 import { envVar } from '#utils/env-var';
 import { BaseLLM } from '../base-llm';
 import { MaxTokensError } from '../errors';
-import { combinePrompts, logTextGeneration } from '../llm';
+import { LLM, combinePrompts, logTextGeneration } from '../llm';
 import { MultiLLM } from '../multi-llm';
 import Message = Anthropic.Message;
 import { withSpan } from '#o11y/trace';
+
+export const ANTHROPIC_SERVICE = 'anthropic';
 
 export function Claude3_Opus() {
 	return new Claude('claude-3-opus-20240229', 15 / 1_000_000, 75 / 1_000_000);
@@ -18,6 +20,13 @@ export function Claude3_Sonnet() {
 
 export function Claude3_Haiku() {
 	return new Claude('claude-3-haiku-20240307', 0.25 / 1_000_000, 1.25 / 1_000_000);
+}
+
+export function anthropicLLmFromModel(model: string): LLM | null {
+	if (model.startsWith('claude-3-sonnet-')) return Claude3_Sonnet();
+	if (model.startsWith('claude-3-haiku-')) return Claude3_Haiku();
+	if (model.startsWith('claude-3-opus-')) return Claude3_Opus();
+	return null;
 }
 
 export function ClaudeLLMs(): AgentLLMs {
@@ -33,7 +42,7 @@ export function ClaudeLLMs(): AgentLLMs {
 export class Claude extends BaseLLM {
 	anthropic: Anthropic;
 	constructor(model: string, inputCostPerToken = 0, outputCostPerToken = 0) {
-		super(model, 200_000, inputCostPerToken, outputCostPerToken);
+		super(ANTHROPIC_SERVICE, model, 200_000, inputCostPerToken, outputCostPerToken);
 		this.anthropic = new Anthropic({ apiKey: envVar('ANTHROPIC_API_KEY') });
 	}
 
@@ -77,6 +86,8 @@ export class Claude extends BaseLLM {
 			console.log('inputCost', inputCost);
 			console.log('outputCost', outputCost);
 			span.setAttributes({
+				inputTokens,
+				outputTokens,
 				response,
 				inputCost,
 				outputCost,
@@ -94,3 +105,11 @@ export class Claude extends BaseLLM {
 		});
 	}
 }
+
+// error: {
+// 	type: 'error',
+// 		error: {
+// 		type: 'invalid_request_error',
+// 			message: 'Your credit balance is too low to access the Claude API. Please go to Plans & Billing to upgrade or purchase credits.'
+// 	}
+// }

@@ -1,8 +1,9 @@
-import { agentContext } from '#agent/agentContext';
-import { BaseLLM } from './base-llm';
+import {agentContext} from '#agent/agentContext';
+import {CDATA_END, CDATA_START} from '#utils/xml-utils';
+import {BaseLLM} from './base-llm';
 
 export interface LLM {
-	generateText(prompt: string, systemPrompt?: string): Promise<string>;
+	generateText(prompt: string, systemPrompt?: string, type?: 'text' | 'json' | 'result' | 'function'): Promise<string>;
 	/* Generates a response that is expected to be in JSON format, and returns the object */
 	generateTextAsJson(prompt: string): Promise<any>;
 	/**
@@ -35,6 +36,9 @@ export interface LLM {
 	formatFunctionError(toolName: string, error: any): string;
 	/** The maximum number of input tokens */
 	getMaxInputTokens(): number;
+
+	/** Convert to a serializable form */
+	toJSON(): any
 }
 
 /**
@@ -56,8 +60,24 @@ export interface Invoke {
 	parameters: { [key: string]: string };
 }
 
+export interface Invoked extends Invoke {
+	stdout?: string;
+	stderr?: string;
+}
+
 export function combinePrompts(userPrompt: string, systemPrompt?: string): string {
-	return systemPrompt ? `${systemPrompt}/n${userPrompt}` : userPrompt;
+	systemPrompt = systemPrompt ? `${systemPrompt}\n` : '';
+	return `${systemPrompt}${buildMemoryPrompt()}${userPrompt}`;
+}
+
+function buildMemoryPrompt(): string {
+	const memory = agentContext.getStore().memory;
+	let result = '<memory>\n';
+	for (const mem of memory.entries()) {
+		result += `<${mem[0]}>${CDATA_START}\n${mem[1]}\n${CDATA_END}</${mem[0]}>`;
+	}
+	result += '\n</memory>\n';
+	return result;
 }
 
 /**
@@ -117,3 +137,4 @@ export function recordTextGenerationCosts(originalMethod: any, context: ClassMet
 		return response;
 	};
 }
+

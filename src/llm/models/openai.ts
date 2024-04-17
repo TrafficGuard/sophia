@@ -2,7 +2,7 @@ import OpenAI from 'openai';
 import { addCost } from '#agent/agentContext';
 import { withSpan } from '#o11y/trace';
 import { BaseLLM } from '../base-llm';
-import { combinePrompts, logTextGeneration } from '../llm';
+import { LLM, combinePrompts, logTextGeneration } from '../llm';
 
 type Model = 'gpt-4-turbo-preview' | 'gpt-4-vision-preview' | 'gpt-4' | 'gpt-4-32k' | 'gpt-3.5-turbo' | 'gpt-3.5-turbo-16k';
 
@@ -16,6 +16,13 @@ function maxTokens(model: Model) {
 	}
 }
 
+export const OPENAI_SERVICE = 'openai';
+
+export function openaiLLmFromModel(model: string): LLM {
+	if (model.startsWith('gpt-4-turbo')) return GPT4();
+	throw new Error(`Unsupported ${OPENAI_SERVICE} model: ${model}`)
+}
+
 export function GPT4() {
 	return new GPT('gpt-4-turbo-preview', 0.03 / 1000, 0.06 / 1000);
 }
@@ -26,7 +33,7 @@ export class GPT extends BaseLLM {
 	});
 
 	constructor(model: Model, inputCostPerToken: number, outputCostPerToken: number) {
-		super(model, maxTokens(model), inputCostPerToken, outputCostPerToken);
+		super(OPENAI_SERVICE, model, maxTokens(model), inputCostPerToken, outputCostPerToken);
 	}
 
 	@logTextGeneration
@@ -54,11 +61,12 @@ export class GPT extends BaseLLM {
 			const outputCost = this.getOutputCostPerToken() * response.length;
 			const cost = inputCost + outputCost;
 			span.setAttributes({
+				inputChars: prompt.length,
+				outputChars: response.length,
 				response,
 				inputCost,
 				outputCost,
 				cost,
-				outputChars: response.length,
 			});
 
 			addCost(cost);

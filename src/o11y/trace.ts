@@ -9,15 +9,23 @@ import { SugaredTracer, wrapTracer } from './trace/SugaredTracer';
 const dummyTracer = {
 	startSpan: () => {
 		const span: Partial<Span> = {};
-		span.end = () => {};
+		span.end = () => undefined;
 		span.setAttribute = () => span as Span;
 		span.setAttributes = () => span as Span;
+		span.recordException = () => undefined;
+		span.setStatus = () => span as Span;
+		span.addEvent = () => span as Span;
 		return span;
 	},
 };
 
 const fakeSpan = {
-	setAttribute: () => {},
+	end: () => {},
+	setAttribute: () => fakeSpan,
+	setAttributes: () => fakeSpan,
+	recordException: () => undefined,
+	setStatus: () => fakeSpan,
+	addEvent: () => fakeSpan,
 } as unknown as Span;
 
 let tracer: SugaredTracer | null = null;

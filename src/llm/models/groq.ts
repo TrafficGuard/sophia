@@ -3,7 +3,7 @@ import { addCost } from '#agent/agentContext';
 import { withSpan } from '#o11y/trace';
 import { RetryableError } from '../../cache/cache';
 import { BaseLLM } from '../base-llm';
-import { combinePrompts, logDuration } from '../llm';
+import { LLM, combinePrompts, logDuration } from '../llm';
 import { MultiLLM } from '../multi-llm';
 
 const Groq = require('groq-sdk');
@@ -12,14 +12,25 @@ const groq = new Groq({
 });
 
 export function grokLLMs(): AgentLLMs {
-	const mixtral = new GroqLLM('mixtral-8x7b-32768', 32_768, 0.27, 0.27);
+	const mixtral = new GroqLLM('groq', 'mixtral-8x7b-32768', 32_768, 0.27, 0.27);
 	return {
-		easy: new GroqLLM('gemma-7b-it', 8_192, 0.1 / 1000000, 0.1 / 1000000),
+		easy: new GroqLLM('groq', 'gemma-7b-it', 8_192, 0.1 / 1000000, 0.1 / 1000000),
 		medium: mixtral,
 		hard: mixtral,
 		xhard: new MultiLLM([mixtral], 5),
 	};
 }
+
+export const GROQ_SERVICE = 'groq';
+
+export function groqLLmFromModel(model: string): LLM | null {
+	// TODO groqLLmFromModel()
+	// if (model.startsWith('claude-3-sonnet-')) return Claude3_Sonnet();
+	// if (model.startsWith('claude-3-haiku-')) return Claude3_Haiku();
+	// if (model.startsWith('claude-3-opus-')) return Claude3_Opus();
+	return null;
+}
+
 /**
  * https://wow.groq.com/
  */

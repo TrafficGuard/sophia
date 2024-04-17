@@ -4,11 +4,19 @@ import { extractJsonResult, extractStringResult, parseFunctionCallsXml } from '.
 
 export abstract class BaseLLM implements LLM {
 	constructor(
+		protected readonly service: string,
 		protected readonly model: string,
 		private maxInputTokens: number,
 		private inputCostPerToken: number,
 		private outputCostPerToken: number,
 	) {}
+
+	toJSON(): any {
+		return {
+			service: this.service,
+			model: this.model,
+		};
+	}
 
 	async generateTextExpectingFunctions(prompt: string, systemPrompt?: string): Promise<FunctionResponse> {
 		const response = await this.generateText(prompt, systemPrompt);

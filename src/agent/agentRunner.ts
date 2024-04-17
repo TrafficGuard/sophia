@@ -1,41 +1,57 @@
 import * as readline from 'readline';
 import { Span } from '@opentelemetry/api';
 import { FunctionResponse } from '#llm/llm';
+import { logger } from '#o11y/logger';
 import { startSpan, withActiveSpan } from '#o11y/trace';
-import { agentContext, llms } from './agentContext';
+import { appCtx } from '../app';
+import { AgentContext, AgentLLMs, agentContext, enterWithContext, llms } from './agentContext';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from './agentFunctions';
 import { getFunctionDefinitions } from './metadata';
 import { Toolbox } from './toolbox';
 
+export interface RunAgentConfig {
+	/** The name of this agent */
+	agentName: string;
+	/** The tools the agent has available to call */
+	toolbox: Toolbox;
+	/** The initial user prompt */
+	initialPrompt: string;
+	/** The agent system prompt */
+	systemPrompt: string;
+	/** Settings for requiring a human in the loop */
+	humanInLoop?: { budget?: number; count?: number };
+	/** The LLMs available to use */
+	llms: AgentLLMs;
+}
+
 /**
  * Runs an autonomous agent using the tools provided.
- * @param agentName The name of this agent
- * @param toolbox The tools the agent has available to call
- * @param initialPrompt The initial user prompt
- * @param systemPrompt The system prompt for the planning and function calling agent control loop
+ * @param config {RunAgentConfig} The agent configuration
  */
+export async function runAgent(config: RunAgentConfig) {
+	enterWithContext(config.llms);
 
-export async function runAgent(agentName: string, toolbox: Toolbox, initialPrompt: string, systemPrompt: string) {
 	const llm = llms().hard;
 
-	let currentPrompt = initialPrompt;
+	let currentPrompt = config.initialPrompt;
+	let initialPrompt = config.initialPrompt;
+	const toolbox = config.toolbox;
+	const agentName = config.agentName;
 
+	const systemPrompt = updateToolDefinitions(config.systemPrompt, getFunctionDefinitions(toolbox.getTools()));
 	// If we've pasted in a prompt to resume then extract out the initial prompt
 	if (initialPrompt.includes('<initial_prompt>')) {
 		const startIndex = initialPrompt.indexOf('<initial_prompt>') + '<initial_prompt>'.length;
 		const endIndex = initialPrompt.indexOf('</initial_prompt>') - 1;
 		initialPrompt = initialPrompt.slice(startIndex, endIndex);
-		console.log('Extracted initial prompt');
-		console.log('<initial_prompt>');
-		console.log(initialPrompt);
-		console.log('</initial_prompt>');
+		logger.info('Extracted initial prompt');
+		logger.debug(`<initial_prompt>${initialPrompt}</initial_prompt>`);
 	}
-
 	const functionDefinitions = getFunctionDefinitions(toolbox.getTools());
 	const systemPromptWithFunctions = updateToolDefinitions(systemPrompt, functionDefinitions);
 
 	// Human in the loop settings
-	// How often do we require human input to avoid looping or misguided actions
+	// How often do we require human input to avoid misguided actions and wasting money
 	const hilBudgetRaw = process.env.HIL_BUDGET;
 	const hilCountRaw = process.env.HIL_COUNT;
 	const hilBudget = hilBudgetRaw ? parseFloat(hilBudgetRaw) : 0;
@@ -44,6 +60,10 @@ export async function runAgent(agentName: string, toolbox: Toolbox, initialPromp
 	let countSinceHil = 0;
 	let costSinceHil = 0;
 	let previousCost = 0;
+
+	const ctx: AgentContext = agentContext.getStore();
+	ctx.state = 'agent';
+	await appCtx().agentStateService.save(ctx);
 
 	await withActiveSpan(agentName, async (span: Span) => {
 		span.setAttributes({
@@ -121,6 +141,9 @@ export async function runAgent(agentName: string, toolbox: Toolbox, initialPromp
 
 async function waitForInput() {
 	const span = startSpan('humanInLoop');
+
+	await appCtx().agentStateService.updateState(agentContext.getStore(), 'hil');
+
 	const rl = readline.createInterface({
 		input: process.stdin,
 		output: process.stdout,

@@ -5,7 +5,6 @@ import { LLM } from './llm';
 /*
 https://news.ycombinator.com/item?id=39955725
 https://arxiv.org/html/2402.05120v1
-
 */
 
 /**
@@ -19,7 +18,7 @@ export class MultiLLM extends BaseLLM {
 		private llms: LLM[],
 		private callsPerLLM = 1,
 	) {
-		super('multi', Math.min(...llms.map((llm) => llm.getMaxInputTokens())), 0, 0);
+		super('multi', 'multi', Math.min(...llms.map((llm) => llm.getMaxInputTokens())), 0, 0);
 		this.maxTokens = Math.min(...llms.map((llm) => llm.getMaxInputTokens()));
 	}
 

@@ -6,6 +6,7 @@ import { funcClass } from '#agent/metadata';
 import { execCommand } from '#utils/exec';
 import { cacheRetry } from '../cache/cache';
 import { CodeEditor } from './codeEditor';
+import { TypescriptTools } from './nodejs/typescriptTools';
 import { ProjectInfo } from './projectDetection';
 import { basePrompt } from './prompt';
 import { selectFilesToEdit } from './selectFilesToEdit';
@@ -27,18 +28,29 @@ interface ErrorAnalysis {
 
 @funcClass(__filename)
 export class DevEditWorkflow {
+	//* @param projectInfo details of the project, lang/runtime etc
 	/**
 	 * Runs a workflow which edits the code repository to implement the requirements, and committing changes to version control.
 	 * It also compiles, formats, lints, and runs tests where applicable.
-	 * @param requirements The requirements to implement.
-	 * @param projectInfo details of the project, lang/runtime etc
+	 * @param requirements The requirements to implement including support documentation and code samples.
 	 */
-	async runDevEditWorkflow(requirements: string, projectInfo: ProjectInfo) {
+	@func()
+	async runDevEditWorkflow(requirements: string, projectInfo?: ProjectInfo) {
+		projectInfo ??= {
+			baseDir: process.cwd(),
+			language: 'nodejs',
+			initialise: 'npm install',
+			compile: 'npm run build',
+			format: 'npm run lint && npm run fix',
+			staticAnalysis: null,
+			test: 'npm run test:unit',
+			languageTools: new TypescriptTools(),
+		};
 		const fileSystem: FileSystem = getFileSystem();
 		const projectPath = path.join(fileSystem.getWorkingDirectory(), projectInfo.baseDir);
 		fileSystem.setWorkingDirectory(projectInfo.baseDir);
 
-		const initialSelectedFiles: string[] = await selectFilesToEdit(requirements);
+		const initialSelectedFiles: string[] = await this.selectFilesToEdit(requirements);
 
 		const updatedRequirements = `${requirements}\nSome of the requirements may have already been implemented, so don't duplicate any existing implementation meeting the requirements.`;
 
@@ -149,13 +161,26 @@ Respond ONLY as JSON that MUST be in the format of this example:
 		// }
 		console.log(getFileSystem().getWorkingDirectory(), projectInfo.compile);
 		const { exitCode, stdout, stderr } = await execCommand(projectInfo.compile, getFileSystem().getWorkingDirectory());
-		const result = `<compile_output><command>${projectInfo.compile}</command><stdout></stdout>${stdout}<stderr>${stderr}</stderr></compile_output>`;
-		console.log('exit code', exitCode);
-		console.log(stdout);
-		console.error(result);
+		const result = `<compile_output>
+	<command>${projectInfo.compile}</command>
+	<stdout>
+	${stdout}
+	</stdout>
+	<stderr>
+	${stderr}
+	</stderr>
+</compile_output>`;
+		// console.log('exit code', exitCode);
 		if (exitCode > 0) {
+			console.log(stdout);
+			console.error(stderr);
 			throw new Error(result);
 		}
+	}
+
+	@cacheRetry()
+	async selectFilesToEdit(requirements: string): Promise<string[]> {
+		return await selectFilesToEdit(requirements);
 	}
 
 	async runStaticAnalysis(projectInfo: ProjectInfo): Promise<void> {
@@ -201,7 +226,7 @@ Respond ONLY as JSON that MUST be in the format of this example:
 	}
 
 	@cacheRetry()
-	@func()
+	// @func()
 	async summariseRequirements(requirements: string): Promise<string> {
 		return summariseRequirements(requirements);
 	}

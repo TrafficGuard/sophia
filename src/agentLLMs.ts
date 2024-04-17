@@ -15,7 +15,7 @@ const sonnet = Claude3_Sonnet_Vertex();
 // 	hard: sonnet,
 // 	xhard: new MultiLLM([sonnet, Gemini_1_5_Pro()], 3),
 // };
-const gemini = Gemini_1_0_Pro();
+const gemini = Gemini_1_5_Pro();
 export const AGENT_LLMS: AgentLLMs = {
 	easy: gemini,
 	medium: opus,

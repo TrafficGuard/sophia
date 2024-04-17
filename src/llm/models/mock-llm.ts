@@ -12,7 +12,11 @@ export class MockLLM extends BaseLLM {
 		private response: string,
 		maxInputTokens = 100,
 	) {
-		super('mock', maxInputTokens, 1, 1);
+		super('mock', 'mock', maxInputTokens, 1, 1);
+	}
+
+	setResponse(response: string) {
+		this.response = response;
 	}
 
 	async generateText(userPrompt: string, systemPrompt: string): Promise<string> {

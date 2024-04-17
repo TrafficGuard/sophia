@@ -10,7 +10,7 @@ This will:
 which is used for code editing.
 - Set the node version using nvm, and run `npm install`
 
-- brew install gh
+- brew install gh ripgrep <!-- gh GitHub CLI -->
 
 ## API KEYS
 
@@ -69,6 +69,10 @@ waits for you to press enter before continuing (Human In the Loop).
 HIL_BUDGET must be a number, and is valued in $USD.
 
 HIL_COUNT is how many iterations of the main control loop can run before requiring human input to continue.
+
+# Tracing
+
+Any entrypoint file should start with `import '#fastify/trace-init/trace-init';` to ensure the logger is instrumented
 
 
 # Design

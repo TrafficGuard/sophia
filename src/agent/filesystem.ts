@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import path, { join } from 'path';
 import { promisify } from 'util';
 import ignore from 'ignore';
+import { execCommand } from '#utils/exec';
 import { Git } from '../functions/scm/git';
 import { VersionControlSystem } from '../functions/scm/versionControlSystem';
 import { UtilFunctions } from '../functions/util';
@@ -28,11 +29,23 @@ export class FileSystem {
 	 * @param basePath The root folder allowed to be accessed by this file system instance. This should only be accessed by system level
 	 * functions. Generally getWorkingDirectory() should be used
 	 */
-	constructor(public readonly basePath: string = process.cwd()) {
+	constructor(public basePath: string = process.cwd()) {
 		// We will want to re-visit this, the .git folder can be in a parent directory
 		if (existsSync(path.join(basePath, '.git'))) {
 			this.vcs = new Git(this);
 		}
+	}
+
+	toJSON() {
+		return {
+			basePath: this.basePath,
+			workingDirectory: this.workingDirectory
+		};
+	}
+	fromJSON(obj: any): this {
+		this.basePath = obj.basePath;
+		this.workingDirectory = obj.workingDirectory;
+		return this;
 	}
 
 	/**
@@ -83,6 +96,19 @@ export class FileSystem {
 	async getFileContentsRecursivelyAsXml(dirPath: string): Promise<string> {
 		const filenames = await this.listFilesRecursively(dirPath);
 		return await this.getMultipleFileContentsAsXml(filenames);
+	}
+
+	/**
+	 * Searches for files on the filesystem (using ripgrep) with contents matching the search regex.
+	 * @param regex the regular expression to search in all the files recursively for
+	 * @returns the list of filenames (with postfix :<match_count>) which have contents matching the regular expression.
+	 */
+	@func()
+	async searchFiles(regex: string): Promise<string> {
+		// --count Only show count of line matches for each file
+		const { stdout, stderr, exitCode } = await execCommand(`ripgrep --count ${regex}`);
+		if (exitCode > 0) throw new Error(`${stdout}\n${stderr}`);
+		return stdout;
 	}
 
 	/**

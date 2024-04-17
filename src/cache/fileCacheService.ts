@@ -14,6 +14,16 @@ export class FileCacheService implements FunctionCacheService {
 		this.baseFolderPath = baseFolderPath;
 	}
 
+	toJSON() {
+		return {
+			baseFolderPath: this.baseFolderPath,
+		};
+	}
+	fromJSON(obj: any): this {
+		this.baseFolderPath = obj.baseFolderPath;
+		return this;
+	}
+
 	toStringArg(arg: any): string {
 		if (arg === undefined) return 'undefined';
 		if (arg === null) return 'null';

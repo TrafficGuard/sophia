@@ -1,18 +1,37 @@
 import { FunctionDefinition } from '#agent/functions';
 import { Invoke } from '#llm/llm';
 import { Agent } from './agentFunctions';
+import { toolFactory } from './metadata';
 
 export class Toolbox {
-	tools = {
+	tools: { [toolName: string]: any } = {
 		Agent: new Agent(),
 	};
+
+	toJSON() {
+		return {
+			tools: Object.keys(this.tools),
+		}
+	}
+
+	fromJSON(obj: any): this {
+		const toolNames = obj.tools as string[]
+		for(const toolName of toolNames) {
+			this.tools[toolName] = new toolFactory[toolName]();
+		}
+		return this;
+	}
 
 	getTools() {
 		return Object.values(this.tools);
 	}
 
-	addTool(name: string, tool: any): void {
+	addTool(tool: any, name: string): void {
 		this.tools[name] = tool;
+	}
+
+	addToolType(...toolTypes: any): void {
+		for (const toolType of toolTypes) this.tools[toolType.name] = new toolType();
 	}
 
 	async invokeTool(invocation: Invoke): Promise<any> {
