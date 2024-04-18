@@ -37,4 +37,28 @@ export async function agentRoutesV1(fastify: AppFastifyInstance) {
 			// }
 		},
 	);
+
+
+	fastify.get(
+		`${basePath}/list`,
+		{
+			schema: {
+				body: Type.Object({
+					executionId: Type.String(),
+				}),
+			},
+		},
+		async (req, reply) => {
+			// const ctxs: AgentContext[] = await fastify.agentStateService.list();
+
+			send(reply, 200);
+			// try {
+			//     send(reply, 200, reservation);
+			//     sendSuccess(reply, "No reservation found.");
+			// } catch (e: any) {
+			//     logger.error(e);
+			//     sendBadRequest(reply, e);
+			// }
+		},
+	);
 }

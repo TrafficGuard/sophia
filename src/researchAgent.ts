@@ -21,6 +21,7 @@ import { WebResearcher } from './functions/web/webResearch';
 import { CodeEditor } from './swe/codeEditor';
 import { NpmPackages } from './swe/nodejs/researchNpmPackage';
 import { TypescriptTools } from './swe/nodejs/typescriptTools';
+import { GroqLLM, grokLLMs, groqMixtral8x7b } from '#llm/models/groq';
 
 // Usage:
 // npm run research
@@ -28,6 +29,7 @@ const gemini = Gemini_1_5_Pro();
 
 // const opus = Claude3_Opus();
 const sonnet = Claude3_Sonnet_Vertex();
+const groqMixtral = groqMixtral8x7b()
 
 export const llms: AgentLLMs = {
 	easy: sonnet,

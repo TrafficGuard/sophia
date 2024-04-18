@@ -1,16 +1,15 @@
 import path from 'path';
 import { Readability } from '@mozilla/readability';
 import { JSDOM } from 'jsdom';
-import { getFileSystem } from '#agent/agentContext';
-import { func } from '../../agent/functions';
-import { funcClass } from '../../agent/metadata';
+import {agentContext, getFileSystem, llms} from '#agent/agentContext';
+import { func } from '#agent/functions';
+import { funcClass } from '#agent/metadata';
 import { cacheRetry } from '../../cache/cache';
-import { envVar } from '../../utils/env-var';
-import { execCommand } from '../../utils/exec';
+import { execCommand } from '#utils/exec';
 const { getJson } = require('serpapi');
 import { readFileSync } from 'fs';
 import { fileExistsAsync, fileExistsSync } from 'tsconfig-paths/lib/filesystem';
-import { sleep } from '../../utils/async-utils';
+import { sleep } from '#utils/async-utils';
 const puppeteer = require('puppeteer');
 import { Browser } from 'puppeteer';
 
@@ -27,6 +26,9 @@ export interface OrganicSearchResult {
 }
 
 let browser: Browser;
+
+export const gitHubRepoHomepageRegex = /https:\/\/github.com\/([\w^\\-])*\/([\w^\\-])*\/?$/;
+
 /**
  * Functions for reading web pages on the public internet
  */
@@ -50,15 +52,34 @@ export class PublicWeb {
 		return new Map();
 	}
 
+
+	/**
+	 * Get the contents of a web page on the public internet and extract data using the provided instructions, and optionally store it in memory with a new unique key.
+	 * @param url {string} The web page URL (https://...)
+	 * @param dataExtractionInstructions {string} Detailed natural language instructions of what data and in what format should be extracted from the web page's contents.
+	 * @param memoryKey {string} The key to update the memory with, storing the data extracted from the web page. This key must NOT already exist in the memory block.
+	 * @returns the extracted data
+	 */
+	@func()
+	@cacheRetry({ scope: 'global' })
+	async getWebPageExtract(url: string, dataExtractionInstructions: string, memoryKey?: string): Promise<string> {
+		const contents = await this.getWebPage(url);
+		const extracted = await llms().medium.generateText(`<page_contents>${contents}</page_contents>\n\n${dataExtractionInstructions}`)
+		if(memoryKey) {
+			agentContext.getStore().memory.set(memoryKey, extracted)
+		}
+		return extracted
+	}
+
 	/**
 	 * Get the contents of a web page on the public open internet at the provided URL. NOTE: Do NOT use this for URLs websites which would require authentication.
 	 * @param url {string} The web page URL (https://...)
 	 * @returns the web page contents in Markdown format
 	 */
 	@func()
-	// @cacheRetry({scope: 'global' })
+	@cacheRetry({ scope: 'global' })
 	async getWebPage(url: string): Promise<string> {
-		// console.log(`Crawling ${url}`);
+		console.log(`PublicWeb.getWebPage ${url}`);
 		const wgetBasePath = path.join(getFileSystem().basePath, '.cache', 'wget');
 		// Remove https:// or http://
 		const urlPath = url.slice(url.indexOf('/') + 2);
@@ -80,17 +101,29 @@ export class PublicWeb {
 		}
 		// const htmlContents: string = readFileSync(wgetCachedPath).toString();
 
+		const isGitHubHomepage = url.match(gitHubRepoHomepageRegex);
+		// if (isGitHubHomepage) url += '/blob/master/README.md';
+
 		if (!browser) browser = await puppeteer.launch({ headless: true });
 		const page = await browser.newPage();
-		await page.goto(url);
+		const httpResponse = await page.goto(url);
+		if (isGitHubHomepage && httpResponse.status() === 404) {
+			url = url.replace('/master/', '/main/');
+			await page.goto(url);
+		}
 		await sleep(1000);
 		const htmlContents = await page.content();
-		// await browser.close();
+		await browser.close(); // can this handle concurrent requests?
 
 		// const htmlContents: string = readFileSync(wgetCachedPath).toString();
 		// Some more options at https://news.ycombinator.com/item?id=40033490  Pandoc etc
 		const readableHtml = this.readableVersionFromHtml(htmlContents, url);
 		const markdown = this.htmlToMarkdown(readableHtml, url);
+
+		console.log(url);
+		console.log('MARKDOWN =======================================');
+		console.log(markdown);
+		console.log('================================================');
 		// const newSizePercent = Number((markdown.length / htmlContents.length) * 100).toFixed(1);
 		// console.log(`Readable and markdown conversion compressed to ${newSizePercent}%${url ? ` for ${url}` : ''}`);
 		return markdown;

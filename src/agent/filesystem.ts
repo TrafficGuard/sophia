@@ -278,13 +278,15 @@ export class FileSystem {
 	}
 
 	/**
-	 * Writes to a file
+	 * Writes to a file. If the file exists it will overwrite the contents.
 	 * @param filePath The file path
 	 * @param contents The contents to write to the file
 	 */
 	@func()
 	async writeFile(filePath: string, contents: string): Promise<void> {
 		// TODO check filePath is not relative above basePath
+		// TODO writeFile: ensure directory exists
+		// await fs.mkdir(dir, { recursive: true });
 		writeFileSync(join(this.basePath, filePath), contents);
 	}
 

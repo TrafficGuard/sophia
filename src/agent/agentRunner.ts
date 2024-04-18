@@ -1,13 +1,14 @@
 import * as readline from 'readline';
-import { Span } from '@opentelemetry/api';
-import { FunctionResponse } from '#llm/llm';
-import { logger } from '#o11y/logger';
-import { startSpan, withActiveSpan } from '#o11y/trace';
-import { appCtx } from '../app';
-import { AgentContext, AgentLLMs, AgentRunningState, agentContext, createContext, enterWithContext, llms } from './agentContext';
-import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from './agentFunctions';
-import { getFunctionDefinitions } from './metadata';
-import { Toolbox } from './toolbox';
+import {Span} from '@opentelemetry/api';
+import {FunctionResponse, Invoked} from '#llm/llm';
+import {logger} from '#o11y/logger';
+import {startSpan, withActiveSpan} from '#o11y/trace';
+import {appCtx} from '../app';
+import {AgentContext, agentContext, AgentLLMs, AgentRunningState, createContext, llms} from './agentContext';
+import {AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK} from './agentFunctions';
+import {getFunctionDefinitions} from './metadata';
+import {Toolbox} from './toolbox';
+import {CDATA_END, CDATA_START} from "#utils/xml-utils";
 
 export interface RunAgentConfig {
 	/** The name of this agent */
@@ -24,6 +25,37 @@ export interface RunAgentConfig {
 	llms: AgentLLMs;
 	/** The agent to resume */
 	resumeAgentId?: string;
+}
+
+export function buildMemoryPrompt(): string {
+	const memory = agentContext.getStore().memory;
+	let result = '<memory>\n';
+	for (const mem of memory.entries()) {
+		result += `<${mem[0]}>${CDATA_START}\n${mem[1]}\n${CDATA_END}</${mem[0]}>\n`;
+	}
+	result += '</memory>\n';
+	return result;
+}
+
+export function buildFunctionCallHistoryPrompt(): string {
+	const functionCalls = agentContext.getStore().functionCallHistory;
+	let result = '<function_call_history>\n';
+	for (const call of functionCalls) {
+		let params = ''
+		for (let [name, value] of Object.entries(call.parameters)) {
+			if (Array.isArray(value))
+				value = JSON.stringify(value, null, ' ')
+			if (typeof value === 'string' && value.length > 50)
+				value = value.slice(0, 50) + '...'
+			if (typeof value === 'string')
+				value = value.replace('"', '\\"')
+			params += `${params.length ? ' ,' : ''}"${name}": "${value}"\n`
+		}
+		const output = call.stdout ? `<output>${call.stdout}</output>` : `<error>${call.stderr}</error>`
+		result += `<function_call>\n ${call.tool_name}({${params}})\n ${output}</function_call>\n`;
+	}
+	result += '</function_call_history>\n';
+	return result;
 }
 
 /**
@@ -67,8 +99,12 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 	// How often do we require human input to avoid misguided actions and wasting money
 	const hilBudgetRaw = process.env.HIL_BUDGET;
 	const hilCountRaw = process.env.HIL_COUNT;
-	const hilBudget = hilBudgetRaw ? parseFloat(hilBudgetRaw) : 0;
+	let hilBudget = hilBudgetRaw ? parseFloat(hilBudgetRaw) : 0;
 	const hilCount = hilCountRaw ? parseInt(hilCountRaw) : 0;
+	// Default to $1 budget to avoid accidents
+	if(!hilCount && !hilBudget) {
+		hilBudget = 1
+	}
 
 	let countSinceHil = 0;
 	let costSinceHil = 0;
@@ -107,12 +143,15 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 						costSinceHil = 0;
 					}
 
-					if (initialPrompt !== currentPrompt) {
+					// If it's not the first control loop run, and not resuming the agent, then pre-pend the initial prompt
+					if (initialPrompt !== currentPrompt && !currentPrompt.includes('<initial_prompt>')) {
 						currentPrompt = `<initial_prompt>\n${initialPrompt}\n</initial_prompt>\n${currentPrompt}`;
 					}
+					const currentPromptWithHistoryAndMemory = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + currentPrompt
 
-					const result: FunctionResponse = await llm.generateTextExpectingFunctions(currentPrompt, systemPromptWithFunctions);
-					currentPrompt = result.response;
+					const result: FunctionResponse = await llm.generateTextExpectingFunctions(currentPromptWithHistoryAndMemory, systemPromptWithFunctions);
+
+					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + result.response;
 					const invokers = result.functions.invoke;
 
 					if (!invokers.length) {
@@ -122,12 +161,16 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 						// if its not sure what to do next.
 					}
 					ctx.state = 'functions';
+					ctx.inputPrompt = currentPrompt
 					ctx.invoking.push(...invokers);
 					await agentStateService.save(ctx);
 
 					for (const invoker of invokers) {
 						try {
 							const toolResponse = await toolbox.invokeTool(invoker);
+							let functionResult = llm.formatFunctionResult(invoker.tool_name, toolResponse);
+							if(functionResult.startsWith('<response>')) functionResult = functionResult.slice(10);
+							// The trailing </response> will be removed as it's a stop word for the LLMs
 							currentPrompt += `\n${llm.formatFunctionResult(invoker.tool_name, toolResponse)}`;
 
 							ctx.functionCallHistory.push({
@@ -162,16 +205,18 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 								parameters: invoker.parameters,
 								stdout: ctx.error,
 							});
-							// How to handle tool invovation errors? Give the agent a chance to re-try or try something different, or always human in loop?
+							// How to handle tool invocation errors? Give the agent a chance to re-try or try something different, or always human in loop?
 						}
 					}
 					// Function invocations are complete
 					ctx.invoking = [];
 					if (!anyInvokeErrors && !completed && !requestFeedback) ctx.state = 'agent';
+					ctx.inputPrompt = currentPrompt
 					await agentStateService.save(ctx);
 				} catch (e) {
 					ctx.state = 'error';
 					ctx.error = stringifyError(e);
+					ctx.inputPrompt = currentPrompt
 					await agentStateService.save(ctx);
 				}
 				// return if the control loop should continue

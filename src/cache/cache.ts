@@ -48,7 +48,6 @@ export function cacheRetry(options: Partial<CacheRetryOptions> = DEFAULTS) {
 
 			if (cachedValue !== undefined) {
 				console.debug(`Cached return for ${this.constructor.name}.${methodName}`);
-				console.log(cachedValue);
 				return cachedValue;
 			}
 			const cacheOptions = cacheOpts(options);
@@ -56,6 +55,8 @@ export function cacheRetry(options: Partial<CacheRetryOptions> = DEFAULTS) {
 				console.debug(`${this.constructor.name}.${methodName} retry ${attempt - 1}`);
 				try {
 					let result = await originalMethod.apply(this, args);
+					if(typeof result?.then === 'function')
+						result = await result
 					// convert undefined to null as we use undefined to indicate there's no cached value
 					if (result === undefined) result = null;
 					await cacheService.set(this.constructor.name, methodName, args, result);

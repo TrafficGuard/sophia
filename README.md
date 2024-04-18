@@ -168,10 +168,3 @@ https://github.com/OpenBMB/ChatDev
 ## AI coder posts
 https://blog.pythagora.ai/2024/02/19/gpt-pilot-what-did-we-learn-in-6-months-of-working-on-a-codegen-pair-programmer/
 https://docs.sweep.dev/blogs
-
-### Code style
-Because of caching, timing, tracing, we want methods to await on returned promises.
-Sometimes this is configured in lint rules to not do this as it can be unnecessary, but in our case we often want to do.
-```
-return await llms().hard.generateText(prompt);
-```

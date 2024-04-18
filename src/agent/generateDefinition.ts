@@ -1,8 +1,35 @@
-import { readFileSync } from 'fs';
+import {readFileSync, writeFileSync} from 'fs';
 import { ClassDeclaration, Decorator, JSDoc, JSDocTag, MethodDeclaration, ParameterDeclaration, Project } from 'ts-morph';
-import { FunctionDefinition } from '#agent/functions';
+import {FunctionDefinition, FunctionParameter} from '#agent/functions';
+import path from "path";
+import fs from "fs";
+import {logger} from "#o11y/logger";
+
+const CACHED_BASE_PATH = '.nous/functions/'
 
 export function generateDefinition(sourceFilePath: string): [string, any] {
+
+	const cwd = process.cwd()
+	let cachedPath = path.relative(cwd, sourceFilePath)
+	// trim the .ts file extension
+	cachedPath = cachedPath.slice(0, cachedPath.length - 3)
+	cachedPath = path.join(CACHED_BASE_PATH,cachedPath)
+
+	const sourceUpdatedTimestamp = getFileUpdatedTimestamp(sourceFilePath)
+	const xmlUpdatedTimestamp = getFileUpdatedTimestamp(cachedPath + '.xml')
+
+	// If the cached definitions are newer than the source file, then we can use them
+	if(xmlUpdatedTimestamp && xmlUpdatedTimestamp > sourceUpdatedTimestamp) {
+		try {
+			const xml = readFileSync(cachedPath + '.xml').toString()
+			const json = readFileSync(cachedPath + '.json').toString()
+			logger.debug(`Loading cached definitions from ${cachedPath}.xml and ${cachedPath}.json`)
+			return [xml, JSON.parse(json)]
+		} catch(e) {
+			logger.info('Error loading cached definitions: ', e.medium)
+		}
+	}
+
 	console.log(`Generating definition for ${sourceFilePath}`);
 	const project = new Project();
 	const sourceFile = project.createSourceFile('temp.ts', readFileSync(sourceFilePath, 'utf8'));
@@ -19,9 +46,17 @@ export function generateDefinition(sourceFilePath: string): [string, any] {
 		const classDescription = cls.getJsDocs()[0]?.getDescription().trim();
 		// console.log(cls.getName())
 		cls.getMethods().forEach((method: MethodDeclaration) => {
+			// This can be tidied up. Create the object definition first, then create the XML formatted version
 			const methodName = method.getName();
 			const methodDescription = method.getJsDocs()[0]?.getDescription().trim();
 			// console.log(methodName)
+
+			const optionalParams = []
+			for (const parameter of method.getParameters()) {
+				if(parameter.isOptional() || parameter.hasInitializer()) {
+					optionalParams.push(parameter.getName())
+				}
+			}
 
 			const hasFuncDecorator = method.getDecorators().some((decorator: Decorator) => decorator.getName() === 'func' || decorator.getName() === 'funcDef');
 			if (!hasFuncDecorator) return;
@@ -73,7 +108,7 @@ export function generateDefinition(sourceFilePath: string): [string, any] {
                     <parameter>
                     	<index>${index++}</index>
                         <name>${name}</name>
-                        <type>${type}</type>
+                        <type>${type}</type>${optionalParams[name] ? `\n<optional>true</optional>\n` : ''}
                         <description>${description || ''}</description>   
                     </parameter>`;
 				})
@@ -81,12 +116,15 @@ export function generateDefinition(sourceFilePath: string): [string, any] {
 			index = 0;
 			const params = [];
 			parameterDeclarations.map((param) => {
-				params.push({
+				const paramDef: FunctionParameter = {
 					index: index++,
 					name: param.getName(),
 					type: param.getType().getText(),
 					description: paramDescriptions[param.getName()] || '',
-				});
+				}
+				if(optionalParams[param.getName()])
+					paramDef.optional = true;
+				params.push(paramDef);
 			});
 
 			const parameters = paramText.trim().length
@@ -103,17 +141,30 @@ export function generateDefinition(sourceFilePath: string): [string, any] {
                 <tool_name>${className}.${methodName}</tool_name>
                 <description>${classDescription || ''}${methodDescription || ''}</description>${parameters}${returnsXml}
             </tool_description>`;
-			const tool = {
+			objDefinition[methodName] = {
 				class: className,
 				name: methodName,
 				description: `${classDescription || ''}${methodDescription || ''}`,
 				parameters: params,
 				returns,
 			};
-			objDefinition[methodName] = tool;
 
 			definition += `${toolDescription}\n`;
 		});
 	});
+
+	fs.mkdirSync(path.join(cachedPath, '..'), { recursive: true });
+	writeFileSync(cachedPath + '.xml', definition)
+	writeFileSync(cachedPath + '.json', JSON.stringify(objDefinition, null, 2))
 	return [definition, objDefinition];
+}
+
+
+function getFileUpdatedTimestamp(filePath: string): Date | null {
+	try {
+		const stats = fs.statSync(filePath); // Get the stats object
+		return stats.mtime; // mtime is the "modified time"
+	} catch (error) {
+		return null;
+	}
 }

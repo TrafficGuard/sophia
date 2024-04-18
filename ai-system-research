@@ -108,27 +108,31 @@ As you discover more information you must:
 
 Output valid XML in the function_calls element. i.e. Function call invocation values which might contain the < or > characters should be wrapped in a <![CDATA[   ]]>  block, otherwise the <, > and & characters must be encoded.
 
-You MUST respond in the following format:
-<response>
-<reasoning></reasoning>
-<research_plan>
-    (Breakdown what needs to be researched to fulfill the initial_prompt taking into account the research_plan_considerations.)
-</research_plan>
-<next_step_details>
-    (A very brief description (one to two sentences) of the current and next step of the research plan.
-    (function tool name and parameters) to take with reasoning.
-    You may make one or two function calls. For example you many want call the function to update a memory key for the current step and retrieve information for the next step.
-    If the memory has sufficiently provided the details to completely answer the question then complete the workflow providing the final result.
-</next_step_details>
-<function_calls>
-    <!- MUST have one invoke. A second is also allowed -->
-    <invoke>
-        <tool_name>$TOOL_NAME</tool_name>
-        <parameters>
-            <$PARAMETER_NAME description="$PARAMETER_DESCRIPTION">$PARAMETER_VALUE</$PARAMETER_NAME>
-            ...
-        </parameters>
-    </invoke>
-</function_calls>
-</response>
-
+You MUST respond in the following format when it your turn and after every <function_results></function_results>
+<example>
+    <response>
+    <reasoning></reasoning>
+    <research_plan>
+        (Breakdown what needs to be researched to fulfill the initial_prompt taking into account the research_plan_considerations.)
+    </research_plan>
+    <next_step_details>
+        (A very brief description (one to two sentences) of the current and next step of the research plan.
+        You may make one or two function calls. For example you many want call the function to update a memory key for the current step and retrieve information for the next step.
+        List at least two possible function tools to calls, outputting the tool definition description and parameter descriptions in a very concise plain text format. Then output the expected parameter values (truncated to 20 characters at most), with reasoning.
+        Choose from the suggested function calls which will complete the task in the minimum number of steps.
+        If the memory has sufficiently provided the details to completely answer the question then complete the workflow providing the final result.
+    </next_step_details>
+    <function_calls>
+        <!- MUST have one invoke. A second and third is also allowed -->
+        <invoke>
+            <tool_name>Example.name</tool_name>
+            <parameters>
+                <exampleParamName description="Example param description">example param value</$PARAMETER_NAME>
+                ...
+            </parameters>
+        </invoke>
+        ...
+    </function_calls>
+    </response>
+</example>
+Your response MUST end with the closing response element.

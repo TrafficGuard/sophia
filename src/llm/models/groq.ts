@@ -11,10 +11,18 @@ const groq = new Groq({
 	apiKey: process.env.GROQ_API_KEY,
 });
 
+export function groqMixtral8x7b(): LLM {
+	return new GroqLLM('groq', 'mixtral-8x7b-32768', 32_768, 0.27, 0.27);
+}
+
+export function groqGemma7bIt(): LLM {
+	return new GroqLLM('groq', 'gemma-7b-it', 8_192, 0.1 / 1000000, 0.1 / 1000000);
+}
+
 export function grokLLMs(): AgentLLMs {
-	const mixtral = new GroqLLM('groq', 'mixtral-8x7b-32768', 32_768, 0.27, 0.27);
+	const mixtral = groqMixtral8x7b()
 	return {
-		easy: new GroqLLM('groq', 'gemma-7b-it', 8_192, 0.1 / 1000000, 0.1 / 1000000),
+		easy: groqGemma7bIt(),
 		medium: mixtral,
 		hard: mixtral,
 		xhard: new MultiLLM([mixtral], 5),
@@ -35,6 +43,7 @@ export function groqLLmFromModel(model: string): LLM | null {
  * https://wow.groq.com/
  */
 export class GroqLLM extends BaseLLM {
+
 	@logDuration
 	async generateText(userPrompt: string, systemPrompt = ''): Promise<string> {
 		return withSpan('generateText', async (span) => {

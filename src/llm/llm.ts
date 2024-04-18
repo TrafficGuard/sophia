@@ -1,6 +1,5 @@
-import { agentContext } from '#agent/agentContext';
-import { CDATA_END, CDATA_START } from '#utils/xml-utils';
-import { BaseLLM } from './base-llm';
+import {agentContext} from '#agent/agentContext';
+import {BaseLLM} from './base-llm';
 
 export interface LLM {
 	generateText(prompt: string, systemPrompt?: string, type?: 'text' | 'json' | 'result' | 'function'): Promise<string>;
@@ -67,17 +66,7 @@ export interface Invoked extends Invoke {
 
 export function combinePrompts(userPrompt: string, systemPrompt?: string): string {
 	systemPrompt = systemPrompt ? `${systemPrompt}\n` : '';
-	return `${systemPrompt}${buildMemoryPrompt()}${userPrompt}`;
-}
-
-function buildMemoryPrompt(): string {
-	const memory = agentContext.getStore().memory;
-	let result = '<memory>\n';
-	for (const mem of memory.entries()) {
-		result += `<${mem[0]}>${CDATA_START}\n${mem[1]}\n${CDATA_END}</${mem[0]}>`;
-	}
-	result += '\n</memory>\n';
-	return result;
+	return `${systemPrompt}${userPrompt}`;
 }
 
 /**
@@ -88,17 +77,25 @@ function buildMemoryPrompt(): string {
  */
 export function logTextGeneration(originalMethod: any, context: ClassMethodDecoratorContext): any {
 	return async function replacementMethod(this: BaseLLM, ...args: any[]) {
-		console.log('= PROMPT ==========================================');
+
 		// system prompt
-		// if (args.length > 1) console.log(args[1]);
-		// prompt
-		const start = Date.now();
+		if (args.length > 1) {
+			// console.log('= SYSTEM PROMPT ==========================================');
+			// console.log(args[1]);
+		}
+		console.log()
+		console.log('==================================================================================================================');
+		console.log('= USER PROMPT ====================================================================================================');
 		console.log(args[0]);
+
+		const start = Date.now();
 		const result = await originalMethod.call(this, ...args);
+		console.log()
+		console.log('==================================================================================================================');
 		console.log(`= RESPONSE ${this.model} =========================================================================================`);
 		console.log(result);
 		const duration = `${((Date.now() - start) / 1000).toFixed(1)}s`;
-		console.log(`${duration}  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<`);
+		console.log(`${duration}  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<`);
 		return result;
 	};
 }
