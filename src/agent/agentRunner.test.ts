@@ -20,7 +20,7 @@ describe('agentRunner', () => {
 		xhard: mockLLM,
 	};
 
-	const agentSystemPrompt = readFileSync('ai-system').toString();
+	const agentSystemPrompt = readFileSync('src/test/agent-system').toString();
 	describe('test function calling', () => {
 		it('should be able to call a function with multiple parameters', async () => {
 			const toolbox = new Toolbox();

@@ -15,3 +15,5 @@ ai-in
 ai-out
 .npmrc
 .nous/
+src/test/*-in
+src/test/*-out
