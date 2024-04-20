@@ -92,9 +92,6 @@ When researching multiple variations/options/topics, then appropriately group th
 </memory>
 </example>
 
-Choose a structure which suits the research topic.  You can always change the knowledgebase structure as there is more information to integration.
-Ensure when re-structuring that all existing knowledgebase is in the updated knowledgebase.
-
 As you discover more information you must:
 1. Store in memory any information from function call results which will be required to complete the task/query.  Only store the minimal amount in memory. Don't store entire web pages. Extract what is required to complete the task.
 2. Output an updated version of the <research_plan></research_plan> taking into account new information and applying all the relevant <reasoning_techniques/> and <research_plan_considerations/>. Keep the plan as concise as reasonably possible. You will not have access to the function results in the future so be sure to include the information required for the next steps in the updated <research_plan/>

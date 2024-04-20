@@ -7,7 +7,7 @@ import { execCommand } from '#utils/exec';
 import { cacheRetry } from '../cache/cache';
 import { CodeEditor } from './codeEditor';
 import { TypescriptTools } from './nodejs/typescriptTools';
-import { ProjectInfo } from './projectDetection';
+import { ProjectInfo, detectProjectInfo } from './projectDetection';
 import { basePrompt } from './prompt';
 import { selectFilesToEdit } from './selectFilesToEdit';
 import { summariseRequirements } from './summariseRequirements';
@@ -36,16 +36,12 @@ export class DevEditWorkflow {
 	 */
 	@func()
 	async runDevEditWorkflow(requirements: string, projectInfo?: ProjectInfo) {
-		projectInfo ??= {
-			baseDir: process.cwd(),
-			language: 'nodejs',
-			initialise: 'npm install',
-			compile: 'npm run build',
-			format: 'npm run lint && npm run fix',
-			staticAnalysis: null,
-			test: 'npm run test:unit',
-			languageTools: new TypescriptTools(),
-		};
+		if (!projectInfo) {
+			const detected = await detectProjectInfo();
+			if (detected.length !== 1) throw new Error('projectInfo array must have one item');
+			projectInfo = detected[0];
+		}
+
 		const fileSystem: FileSystem = getFileSystem();
 		const projectPath = path.join(fileSystem.getWorkingDirectory(), projectInfo.baseDir);
 		fileSystem.setWorkingDirectory(projectInfo.baseDir);

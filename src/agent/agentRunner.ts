@@ -1,14 +1,14 @@
 import * as readline from 'readline';
-import {Span} from '@opentelemetry/api';
-import {FunctionResponse, Invoked} from '#llm/llm';
-import {logger} from '#o11y/logger';
-import {startSpan, withActiveSpan} from '#o11y/trace';
-import {appCtx} from '../app';
-import {AgentContext, agentContext, AgentLLMs, AgentRunningState, createContext, llms} from './agentContext';
-import {AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK} from './agentFunctions';
-import {getFunctionDefinitions} from './metadata';
-import {Toolbox} from './toolbox';
-import {CDATA_END, CDATA_START} from "#utils/xml-utils";
+import { Span } from '@opentelemetry/api';
+import { FunctionResponse, Invoked } from '#llm/llm';
+import { logger } from '#o11y/logger';
+import { startSpan, withActiveSpan } from '#o11y/trace';
+import { CDATA_END, CDATA_START } from '#utils/xml-utils';
+import { appCtx } from '../app';
+import { AgentContext, AgentLLMs, AgentRunningState, agentContext, createContext, llms } from './agentContext';
+import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from './agentFunctions';
+import { getFunctionDefinitions } from './metadata';
+import { Toolbox } from './toolbox';
 
 export interface RunAgentConfig {
 	/** The name of this agent */
@@ -41,17 +41,14 @@ export function buildFunctionCallHistoryPrompt(): string {
 	const functionCalls = agentContext.getStore().functionCallHistory;
 	let result = '<function_call_history>\n';
 	for (const call of functionCalls) {
-		let params = ''
+		let params = '';
 		for (let [name, value] of Object.entries(call.parameters)) {
-			if (Array.isArray(value))
-				value = JSON.stringify(value, null, ' ')
-			if (typeof value === 'string' && value.length > 50)
-				value = value.slice(0, 50) + '...'
-			if (typeof value === 'string')
-				value = value.replace('"', '\\"')
-			params += `${params.length ? ' ,' : ''}"${name}": "${value}"\n`
+			if (Array.isArray(value)) value = JSON.stringify(value, null, ' ');
+			if (typeof value === 'string' && value.length > 150) value = `${value.slice(0, 150)}...`;
+			if (typeof value === 'string') value = value.replace('"', '\\"');
+			params += `\n  "${name}": "${value}",\n`;
 		}
-		const output = call.stdout ? `<output>${call.stdout}</output>` : `<error>${call.stderr}</error>`
+		const output = call.stdout ? `<output>${call.stdout}</output>` : `<error>${call.stderr}</error>`;
 		result += `<function_call>\n ${call.tool_name}({${params}})\n ${output}</function_call>\n`;
 	}
 	result += '</function_call_history>\n';
@@ -102,8 +99,8 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 	let hilBudget = hilBudgetRaw ? parseFloat(hilBudgetRaw) : 0;
 	const hilCount = hilCountRaw ? parseInt(hilCountRaw) : 0;
 	// Default to $1 budget to avoid accidents
-	if(!hilCount && !hilBudget) {
-		hilBudget = 1
+	if (!hilCount && !hilBudget) {
+		hilBudget = 1;
 	}
 
 	let countSinceHil = 0;
@@ -125,6 +122,7 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 				let completed = false;
 				let requestFeedback = false;
 				let anyInvokeErrors = false;
+				let controlError = false;
 				try {
 					if (hilCount && countSinceHil === hilCount) {
 						await waitForInput();
@@ -147,7 +145,7 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 					if (initialPrompt !== currentPrompt && !currentPrompt.includes('<initial_prompt>')) {
 						currentPrompt = `<initial_prompt>\n${initialPrompt}\n</initial_prompt>\n${currentPrompt}`;
 					}
-					const currentPromptWithHistoryAndMemory = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + currentPrompt
+					const currentPromptWithHistoryAndMemory = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + currentPrompt;
 
 					const result: FunctionResponse = await llm.generateTextExpectingFunctions(currentPromptWithHistoryAndMemory, systemPromptWithFunctions);
 
@@ -161,7 +159,7 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 						// if its not sure what to do next.
 					}
 					ctx.state = 'functions';
-					ctx.inputPrompt = currentPrompt
+					ctx.inputPrompt = currentPrompt;
 					ctx.invoking.push(...invokers);
 					await agentStateService.save(ctx);
 
@@ -169,7 +167,7 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 						try {
 							const toolResponse = await toolbox.invokeTool(invoker);
 							let functionResult = llm.formatFunctionResult(invoker.tool_name, toolResponse);
-							if(functionResult.startsWith('<response>')) functionResult = functionResult.slice(10);
+							if (functionResult.startsWith('<response>')) functionResult = functionResult.slice(10);
 							// The trailing </response> will be removed as it's a stop word for the LLMs
 							currentPrompt += `\n${llm.formatFunctionResult(invoker.tool_name, toolResponse)}`;
 
@@ -196,7 +194,7 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 							ctx.state = 'error';
 							console.error('Tool error');
 							console.error(e);
-							ctx.error = stringifyError(e);
+							ctx.error = e.toString();
 							await agentStateService.save(ctx);
 							currentPrompt += `\n${llm.formatFunctionError(invoker.tool_name, e)}`;
 
@@ -211,16 +209,17 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 					// Function invocations are complete
 					ctx.invoking = [];
 					if (!anyInvokeErrors && !completed && !requestFeedback) ctx.state = 'agent';
-					ctx.inputPrompt = currentPrompt
+					ctx.inputPrompt = currentPrompt;
 					await agentStateService.save(ctx);
 				} catch (e) {
+					controlError = true;
 					ctx.state = 'error';
-					ctx.error = stringifyError(e);
-					ctx.inputPrompt = currentPrompt
+					ctx.error = e.toString();
+					ctx.inputPrompt = currentPrompt;
 					await agentStateService.save(ctx);
 				}
 				// return if the control loop should continue
-				return !(completed || requestFeedback || anyInvokeErrors);
+				return !(completed || requestFeedback || anyInvokeErrors || controlError);
 			});
 		}
 	});
@@ -267,19 +266,4 @@ export function updateToolDefinitions(systemPrompt: string, functionDefinitions:
 	const updatedPrompt = systemPrompt.replace(regex, `<tools>${functionDefinitions}</tools>`);
 	if (!updatedPrompt.includes(functionDefinitions)) throw new Error('Unable to update tool definitions. Regex replace failed');
 	return updatedPrompt;
-}
-
-function stringifyError(e: any): string {
-	try {
-		return JSON.stringify(e);
-	} catch (e) {
-		const error: any = {};
-		for (const [key, value] of Object.entries(e)) {
-			try {
-				JSON.stringify(value);
-				error[key] = value;
-			} catch (e) {}
-		}
-		return JSON.stringify(error);
-	}
 }

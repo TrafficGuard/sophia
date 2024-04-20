@@ -124,8 +124,8 @@ class AnthropicVertexLLM extends BaseLLM {
 
 			if (message.stop_reason === 'max_tokens') {
 				// TODO we can replay with request with the current response appended so the LLM can complete it
-				console.log('= RESPONSE exceeded max tokens ===============================')
-				console.log(response)
+				console.log('= RESPONSE exceeded max tokens ===============================');
+				console.log(response);
 				throw new MaxTokensError(maxTokens, response);
 			}
 			return response;

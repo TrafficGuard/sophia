@@ -38,7 +38,6 @@ export async function agentRoutesV1(fastify: AppFastifyInstance) {
 		},
 	);
 
-
 	fastify.get(
 		`${basePath}/list`,
 		{

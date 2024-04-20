@@ -56,17 +56,22 @@ export class Toolbox {
 		} else if (args.length === 1) {
 			result = await method.call(tool, args[0]);
 		} else {
-			const funcsDef: Record<string,FunctionDefinition> = Object.getPrototypeOf(tool).__functionsObj; // this lookup should be a method in metadata
+			const funcsDef: Record<string, FunctionDefinition> = Object.getPrototypeOf(tool).__functionsObj; // this lookup should be a method in metadata
 			if (!funcsDef) throw new Error(`__functionsObj not found on prototype for ${toolName}.${methodName}`);
 			const funcDef = funcsDef[methodName];
 			if (!funcDef.parameters) {
 				console.error(`${toolName}.${methodName} definition doesnt have any parameters`);
-				console.log(funcDef)
+				console.log(funcDef);
 			}
 			const args: any[] = new Array(funcDef.parameters.length);
 			for (const [paramName, paramValue] of Object.entries(invocation.parameters)) {
 				const paramDef = funcDef.parameters.find((paramDef) => paramDef.name === paramName);
-				if (!paramDef) throw new Error(`Invalid parameter name: ${paramName} for tool ${invocation.tool_name}. Valid parameters are: ${funcDef.parameters.map((paramDef) => paramDef.name).join(', ')}`);
+				if (!paramDef)
+					throw new Error(
+						`Invalid parameter name: ${paramName} for tool ${invocation.tool_name}. Valid parameters are: ${funcDef.parameters
+							.map((paramDef) => paramDef.name)
+							.join(', ')}`,
+					);
 				args[paramDef.index] = paramValue;
 			}
 			result = await method.call(tool, ...args);

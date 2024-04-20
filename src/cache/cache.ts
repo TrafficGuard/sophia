@@ -55,20 +55,19 @@ export function cacheRetry(options: Partial<CacheRetryOptions> = DEFAULTS) {
 				console.debug(`${this.constructor.name}.${methodName} retry ${attempt - 1}`);
 				try {
 					let result = await originalMethod.apply(this, args);
-					if(typeof result?.then === 'function')
-						result = await result
+					if (typeof result?.then === 'function') result = await result;
 					// convert undefined to null as we use undefined to indicate there's no cached value
 					if (result === undefined) result = null;
 					await cacheService.set(this.constructor.name, methodName, args, result);
 					return result;
 				} catch (error) {
-					// TODO determine if error can be retried
+					if (!(error instanceof RetryableError)) throw error;
 					// NOT retryable ===============
-					if (error.message?.includes('Cannot read properties of undefined')) {
-						throw error;
-					}
+					// if (error.message?.includes('Cannot read properties of undefined')) {
+					// 	throw error;
+					// }
 
-					console.error(`Retry decorator error ${error.message}`);
+					console.error(`Retry decorator attempt #${attempt} error ${error.message}`);
 					if (attempt < cacheOptions.retries) {
 						await new Promise((resolve) => setTimeout(resolve, cacheOptions.backOffMs * (attempt * attempt)));
 					} else {

@@ -9,7 +9,7 @@ interface ProjectDetections {
 	projects: ProjectDetection[];
 }
 
-type LanguageRuntime = 'nodejs' | 'php' | 'python' | 'terraform' | 'pulumi';
+type LanguageRuntime = 'nodejs' | 'php' | 'python' | 'terraform' | 'pulumi' | 'angular';
 
 interface ProjectDetection {
 	baseDir: string;
@@ -29,10 +29,25 @@ export interface ProjectInfo {
 }
 
 /**
- * Determines the language/runtime, base folder and key commands for a project on the filesystem
+ * Determines the language/runtime, base folder and key commands for a project on the filesystem.
+ * Loads from the file projectInfo.json if it exists
  */
 export async function detectProjectInfo(): Promise<ProjectInfo[]> {
 	const fileSystem = getFileSystem();
+	if (await fileSystem.fileExists('projectInfo.json')) {
+		const projectInfoJson = await fileSystem.getFileContents('projectInfo.json');
+		// TODO check projectInfo matches the format we expect
+		let projectInfos = JSON.parse(projectInfoJson) as ProjectInfo[];
+		if (!Array.isArray(projectInfos)) throw new Error('projectInfo.json should be a JSON array');
+		projectInfos = projectInfos.map((info) => {
+			// @ts-ignore
+			if (info.languageTools === 'typescript') {
+				info.languageTools = new TypescriptTools();
+			}
+			return info;
+		});
+		return projectInfos;
+	}
 	const files: string[] = await fileSystem.listFilesRecursively('./');
 	const prompt = `<task_requirements>
 <task_input>

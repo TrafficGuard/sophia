@@ -1,5 +1,5 @@
-import {agentContext} from '#agent/agentContext';
-import {BaseLLM} from './base-llm';
+import { agentContext } from '#agent/agentContext';
+import { BaseLLM } from './base-llm';
 
 export interface LLM {
 	generateText(prompt: string, systemPrompt?: string, type?: 'text' | 'json' | 'result' | 'function'): Promise<string>;
@@ -77,20 +77,19 @@ export function combinePrompts(userPrompt: string, systemPrompt?: string): strin
  */
 export function logTextGeneration(originalMethod: any, context: ClassMethodDecoratorContext): any {
 	return async function replacementMethod(this: BaseLLM, ...args: any[]) {
-
 		// system prompt
 		if (args.length > 1) {
 			// console.log('= SYSTEM PROMPT ==========================================');
 			// console.log(args[1]);
 		}
-		console.log()
+		console.log();
 		console.log('==================================================================================================================');
 		console.log('= USER PROMPT ====================================================================================================');
 		console.log(args[0]);
 
 		const start = Date.now();
 		const result = await originalMethod.call(this, ...args);
-		console.log()
+		console.log();
 		console.log('==================================================================================================================');
 		console.log(`= RESPONSE ${this.model} =========================================================================================`);
 		console.log(result);

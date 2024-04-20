@@ -34,7 +34,7 @@ async function main() {
 	context.toolbox.addTool(context.fileSystem, 'FileSystem');
 
 	// console.log(prompt)
-	const text =  await llm.generateText(prompt);
+	const text = await llm.generateText(prompt);
 
 	writeFileSync('src/test/chat-out', text);
 	console.log('wrote to chat-out');

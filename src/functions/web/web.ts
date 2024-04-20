@@ -1,11 +1,11 @@
 import path from 'path';
 import { Readability } from '@mozilla/readability';
 import { JSDOM } from 'jsdom';
-import {agentContext, getFileSystem, llms} from '#agent/agentContext';
+import { agentContext, getFileSystem, llms } from '#agent/agentContext';
 import { func } from '#agent/functions';
 import { funcClass } from '#agent/metadata';
-import { cacheRetry } from '../../cache/cache';
 import { execCommand } from '#utils/exec';
+import { cacheRetry } from '../../cache/cache';
 const { getJson } = require('serpapi');
 import { readFileSync } from 'fs';
 import { fileExistsAsync, fileExistsSync } from 'tsconfig-paths/lib/filesystem';
@@ -52,7 +52,6 @@ export class PublicWeb {
 		return new Map();
 	}
 
-
 	/**
 	 * Get the contents of a web page on the public internet and extract data using the provided instructions, and optionally store it in memory with a new unique key.
 	 * @param url {string} The web page URL (https://...)
@@ -64,11 +63,11 @@ export class PublicWeb {
 	@cacheRetry({ scope: 'global' })
 	async getWebPageExtract(url: string, dataExtractionInstructions: string, memoryKey?: string): Promise<string> {
 		const contents = await this.getWebPage(url);
-		const extracted = await llms().medium.generateText(`<page_contents>${contents}</page_contents>\n\n${dataExtractionInstructions}`)
-		if(memoryKey) {
-			agentContext.getStore().memory.set(memoryKey, extracted)
+		const extracted = await llms().medium.generateText(`<page_contents>${contents}</page_contents>\n\n${dataExtractionInstructions}`);
+		if (memoryKey) {
+			agentContext.getStore().memory.set(memoryKey, extracted);
 		}
-		return extracted
+		return extracted;
 	}
 
 	/**
@@ -101,25 +100,24 @@ export class PublicWeb {
 		}
 		// const htmlContents: string = readFileSync(wgetCachedPath).toString();
 
-		const isGitHubHomepage = url.match(gitHubRepoHomepageRegex);
-		// if (isGitHubHomepage) url += '/blob/master/README.md';
+		const isGitHubHomepage: boolean = gitHubRepoHomepageRegex.test(url);
 
 		if (!browser) browser = await puppeteer.launch({ headless: true });
 		const page = await browser.newPage();
 		const httpResponse = await page.goto(url);
-		if (isGitHubHomepage && httpResponse.status() === 404) {
-			url = url.replace('/master/', '/main/');
-			await page.goto(url);
-		}
 		await sleep(1000);
 		const htmlContents = await page.content();
 		await browser.close(); // can this handle concurrent requests?
 
-		// const htmlContents: string = readFileSync(wgetCachedPath).toString();
-		// Some more options at https://news.ycombinator.com/item?id=40033490  Pandoc etc
-		const readableHtml = this.readableVersionFromHtml(htmlContents, url);
+		let readableHtml: string;
+		if (isGitHubHomepage) {
+			readableHtml = htmlContents.slice(htmlContents.indexOf('<article '));
+			readableHtml = readableHtml.slice(0, readableHtml.indexOf('</article>') + 10);
+		} else {
+			readableHtml = this.readableVersionFromHtml(htmlContents, url);
+		}
 		const markdown = this.htmlToMarkdown(readableHtml, url);
-
+		console.log();
 		console.log(url);
 		console.log('MARKDOWN =======================================');
 		console.log(markdown);

@@ -20,7 +20,7 @@ export function groqGemma7bIt(): LLM {
 }
 
 export function grokLLMs(): AgentLLMs {
-	const mixtral = groqMixtral8x7b()
+	const mixtral = groqMixtral8x7b();
 	return {
 		easy: groqGemma7bIt(),
 		medium: mixtral,
@@ -43,7 +43,6 @@ export function groqLLmFromModel(model: string): LLM | null {
  * https://wow.groq.com/
  */
 export class GroqLLM extends BaseLLM {
-
 	@logDuration
 	async generateText(userPrompt: string, systemPrompt = ''): Promise<string> {
 		return withSpan('generateText', async (span) => {

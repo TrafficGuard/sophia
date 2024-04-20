@@ -80,7 +80,7 @@ describe('FileSystem', () => {
 		it('should list files and folders only in the current directory', async () => {
 			const paths = ['package.json', '/README.md', '/src/index.ts'];
 			const contents: string = await fileSystem.getMultipleFileContentsAsXml(paths);
-			console.log(contents);
+
 			expect(contents).to.include('file_content file_path="package.json"');
 			expect(contents).to.include('file_content file_path="README.md"');
 			expect(contents).to.include('file_content file_path="src/index.ts"');

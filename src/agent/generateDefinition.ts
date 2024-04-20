@@ -1,32 +1,31 @@
-import {readFileSync, writeFileSync} from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
+import fs from 'fs';
+import path from 'path';
 import { ClassDeclaration, Decorator, JSDoc, JSDocTag, MethodDeclaration, ParameterDeclaration, Project } from 'ts-morph';
-import {FunctionDefinition, FunctionParameter} from '#agent/functions';
-import path from "path";
-import fs from "fs";
-import {logger} from "#o11y/logger";
+import { FunctionDefinition, FunctionParameter } from '#agent/functions';
+import { logger } from '#o11y/logger';
 
-const CACHED_BASE_PATH = '.nous/functions/'
+const CACHED_BASE_PATH = '.nous/functions/';
 
 export function generateDefinition(sourceFilePath: string): [string, any] {
-
-	const cwd = process.cwd()
-	let cachedPath = path.relative(cwd, sourceFilePath)
+	const cwd = process.cwd();
+	let cachedPath = path.relative(cwd, sourceFilePath);
 	// trim the .ts file extension
-	cachedPath = cachedPath.slice(0, cachedPath.length - 3)
-	cachedPath = path.join(CACHED_BASE_PATH,cachedPath)
+	cachedPath = cachedPath.slice(0, cachedPath.length - 3);
+	cachedPath = path.join(CACHED_BASE_PATH, cachedPath);
 
-	const sourceUpdatedTimestamp = getFileUpdatedTimestamp(sourceFilePath)
-	const xmlUpdatedTimestamp = getFileUpdatedTimestamp(cachedPath + '.xml')
+	const sourceUpdatedTimestamp = getFileUpdatedTimestamp(sourceFilePath);
+	const xmlUpdatedTimestamp = getFileUpdatedTimestamp(`${cachedPath}.xml`);
 
 	// If the cached definitions are newer than the source file, then we can use them
-	if(xmlUpdatedTimestamp && xmlUpdatedTimestamp > sourceUpdatedTimestamp) {
+	if (xmlUpdatedTimestamp && xmlUpdatedTimestamp > sourceUpdatedTimestamp) {
 		try {
-			const xml = readFileSync(cachedPath + '.xml').toString()
-			const json = readFileSync(cachedPath + '.json').toString()
-			logger.debug(`Loading cached definitions from ${cachedPath}.xml and ${cachedPath}.json`)
-			return [xml, JSON.parse(json)]
-		} catch(e) {
-			logger.info('Error loading cached definitions: ', e.medium)
+			const xml = readFileSync(`${cachedPath}.xml`).toString();
+			const json = readFileSync(`${cachedPath}.json`).toString();
+			logger.debug(`Loading cached definitions from ${cachedPath}.xml and ${cachedPath}.json`);
+			return [xml, JSON.parse(json)];
+		} catch (e) {
+			logger.info('Error loading cached definitions: ', e.medium);
 		}
 	}
 
@@ -51,10 +50,10 @@ export function generateDefinition(sourceFilePath: string): [string, any] {
 			const methodDescription = method.getJsDocs()[0]?.getDescription().trim();
 			// console.log(methodName)
 
-			const optionalParams = []
+			const optionalParams = [];
 			for (const parameter of method.getParameters()) {
-				if(parameter.isOptional() || parameter.hasInitializer()) {
-					optionalParams.push(parameter.getName())
+				if (parameter.isOptional() || parameter.hasInitializer()) {
+					optionalParams.push(parameter.getName());
 				}
 			}
 
@@ -108,7 +107,7 @@ export function generateDefinition(sourceFilePath: string): [string, any] {
                     <parameter>
                     	<index>${index++}</index>
                         <name>${name}</name>
-                        <type>${type}</type>${optionalParams[name] ? `\n<optional>true</optional>\n` : ''}
+                        <type>${type}</type>${optionalParams[name] ? '\n<optional>true</optional>\n' : ''}
                         <description>${description || ''}</description>   
                     </parameter>`;
 				})
@@ -121,9 +120,8 @@ export function generateDefinition(sourceFilePath: string): [string, any] {
 					name: param.getName(),
 					type: param.getType().getText(),
 					description: paramDescriptions[param.getName()] || '',
-				}
-				if(optionalParams[param.getName()])
-					paramDef.optional = true;
+				};
+				if (optionalParams[param.getName()]) paramDef.optional = true;
 				params.push(paramDef);
 			});
 
@@ -154,11 +152,10 @@ export function generateDefinition(sourceFilePath: string): [string, any] {
 	});
 
 	fs.mkdirSync(path.join(cachedPath, '..'), { recursive: true });
-	writeFileSync(cachedPath + '.xml', definition)
-	writeFileSync(cachedPath + '.json', JSON.stringify(objDefinition, null, 2))
+	writeFileSync(`${cachedPath}.xml`, definition);
+	writeFileSync(`${cachedPath}.json`, JSON.stringify(objDefinition, null, 2));
 	return [definition, objDefinition];
 }
-
 
 function getFileUpdatedTimestamp(filePath: string): Date | null {
 	try {
