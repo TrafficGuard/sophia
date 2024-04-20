@@ -6,10 +6,41 @@
     echo "Source this script instead of trying to execute it"
 }
 
-echo "Ensure pyenv and nvm are installed"
-# brew pyenv, nvm,
-# Ensure py version in .python-version is installed
-# Ensure node version in .nvmrc is installed
+# Ensure pyenv, ripgrep and nvm are installed
+
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    sudo apt-get install ripgrep -y
+    if ! command -v pyenv &> /dev/null
+    then
+        echo "pyenv could not be found. To install run:";
+        echo "curl https://pyenv.run | bash";
+        exit 1
+    fi
+    if ! command -v nvm &> /dev/null
+    then
+        echo "nvm could not be found. To install run:";
+        echo "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash";
+        echo "Note the instructions at the end to update your .bashrc/.profile config files"
+        exit 1
+    fi
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    if ! command -v brew &> /dev/null
+    then
+        echo "brew could not be found. Install from https://brew.sh/"; exit 1
+    fi
+    brew install ripgrep nvm pyenv
+#elif [[ "$OSTYPE" == "cygwin" ]]; then
+        # POSIX compatibility layer and Linux environment emulation for Windows
+#elif [[ "$OSTYPE" == "msys" ]]; then
+        # Lightweight shell and GNU utilities compiled for Windows (part of MinGW)
+#elif [[ "$OSTYPE" == "win32" ]]; then
+        # I'm not sure this can happen.
+else
+    echo "Unsupported OSTYPE $OSTYPE"; exit 1
+fi
+
+# Python setup ------------------------
+pyenv install $(cat .python-version)
 
 [[ -n $VIRTUAL_ENV ]] || VIRTUAL_ENV="$(pwd)/.venv"
 if [[ -d "$VIRTUAL_ENV" ]]; then
@@ -23,6 +54,9 @@ else
     pip install aider
 fi
 
+# Node.js setup ------------------------
+
+nvm install $(cat .nvmrc)
 nvm use
 npm install
 
