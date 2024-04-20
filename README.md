@@ -64,16 +64,16 @@ Run in docker compose with `./bin/run`
 
 ## Development run scripts
 
-In the src folder are the ai.ts, agent.ts, edit-local.ts, research.ts, util.ts files.
+In the src/test folder are the chat.ts, agent.ts, edit-local.ts, research.ts, util.ts files.
 
-These can be run with `npm run ai`, `npm run agent`, `npm run edit-local`, `npm run research`, `npm run util`
+These can be run with `npm run chat`, `npm run agent`, `npm run edit-local`, `npm run research`, `npm run util`
 
-`ai`, `agent` and `edit-local` read their input from the /ai-in file. Util is for testing individual bits.
+`chat`, `agent` and `edit-local` read their input from the co-located files. Util is for testing individual pieces of code.
 
-- `ai` does a single completion from the AI
+- `chat` does a single completion from an LLM
 - `agent` runs the autonomous agent loop, using all the tool provided
 - `edit-local` runs the edit local repository (i.e this repository) workflow.
-- `research` runs the agent loop with the web reseach tools configured 
+- `research` runs the agent loop with the web research tools configured 
 - `util` if for running any random bit of code
 
 edit-local is a good place to start to make changes to the codebase.

@@ -9,7 +9,7 @@ import { GroqLLM } from '#llm/models/groq';
 import { GPT } from '#llm/models/openai';
 import { Gemini_1_0_Pro, Gemini_1_5_Pro } from '#llm/models/vertexai';
 import { withActiveSpan } from '#o11y/trace';
-import { AGENT_LLMS } from './agentLLMs';
+import { AGENT_LLMS } from '../agentLLMs';
 
 // Usage:
 // npm run ai
@@ -26,26 +26,18 @@ const llms: AgentLLMs = {
 };
 
 async function main() {
-	const system = readFileSync('ai-system', 'utf-8');
-	const prompt = readFileSync('ai-in', 'utf-8');
+	// const system = readFileSync('chat-system', 'utf-8');
+	const prompt = readFileSync('src/test/chat-in', 'utf-8');
 
-	const context: AgentContext = createContext('ai', llms);
+	const context: AgentContext = createContext('chat', llms);
 	agentContext.enterWith(context);
 	context.toolbox.addTool(context.fileSystem, 'FileSystem');
 
 	// console.log(prompt)
-	const text = await withActiveSpan('ai', async (span: Span) => {
-		return await llm.generateText(prompt);
-	});
-	// console.log(text)
-	try {
-		writeFileSync('ai-out.json', JSON.parse(text));
-		console.log('wrote to ai-out.json');
-	} catch (e) {
-		writeFileSync('ai-out', text);
-		console.log(text);
-		console.log('wrote to ai-out');
-	}
+	const text =  await llm.generateText(prompt);
+
+	writeFileSync('src/test/chat-out', text);
+	console.log('wrote to chat-out');
 }
 
 main()

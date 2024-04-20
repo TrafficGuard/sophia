@@ -11,15 +11,15 @@ import { Claude3_Opus, ClaudeLLMs } from '#llm/models/claude';
 import { GPT4 } from '#llm/models/openai';
 import { GEMINI_1_0_PRO_LLMS, GEMINI_1_5_PRO_LLMS, Gemini_1_5_Pro } from '#llm/models/vertexai';
 import { MultiLLM } from '#llm/multi-llm';
-import { GoogleCloud } from './functions/google-cloud';
-import { Jira } from './functions/jira';
-import { GitLabServer } from './functions/scm/gitlab';
-import { UtilFunctions } from './functions/util';
-import { PUBLIC_WEB, PublicWeb } from './functions/web/web';
-import { WebResearcher } from './functions/web/webResearch';
-import { CodeEditor } from './swe/codeEditor';
-import { DevEditWorkflow } from './swe/devEditWorkflow';
-import { TypescriptTools } from './swe/nodejs/typescriptTools';
+import { GoogleCloud } from '../functions/google-cloud';
+import { Jira } from '../functions/jira';
+import { GitLabServer } from '../functions/scm/gitlab';
+import { UtilFunctions } from '../functions/util';
+import { PUBLIC_WEB, PublicWeb } from '../functions/web/web';
+import { WebResearcher } from '../functions/web/webResearch';
+import { CodeEditor } from '../swe/codeEditor';
+import { DevEditWorkflow } from '../swe/devEditWorkflow';
+import { TypescriptTools } from '../swe/nodejs/typescriptTools';
 
 // let agentLLMs: AgentLLMs;
 // llms = GEMINI_1_0_PRO();
@@ -45,8 +45,9 @@ const AGENT_LLMS: AgentLLMs = {
 };
 
 export async function main() {
-	const systemPrompt = readFileSync('ai-system', 'utf-8');
-	const initialPrompt = readFileSync('ai-in', 'utf-8'); //'Complete the JIRA issue: ABC-123'
+
+	const systemPrompt = readFileSync('src/test/agent-system', 'utf-8');
+	const initialPrompt = readFileSync('src/test/agent-in', 'utf-8'); //'Complete the JIRA issue: ABC-123'
 
 	const toolbox = new Toolbox();
 	// toolbox.addToolType(Jira);

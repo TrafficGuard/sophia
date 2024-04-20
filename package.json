@@ -7,11 +7,11 @@
     "node": ">=20.6.0"
   },
   "scripts": {
-    "ai": "node --env-file=.env -r ts-node/register -r tsconfig-paths/register src/ai.ts",
-    "agent": "node --env-file=.env -r ts-node/register -r tsconfig-paths/register src/agent.ts",
-    "edit-local": "node --env-file=.env -r ts-node/register -r tsconfig-paths/register src/edit-local.ts",
-    "research": "node --env-file=.env -r ts-node/register -r tsconfig-paths/register src/researchAgent.ts",
-    "util": "node --env-file=.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/util.ts",
+    "ai": "node --env-file=.env -r ts-node/register -r tsconfig-paths/register src/test/chat.ts",
+    "agent": "node --env-file=.env -r ts-node/register -r tsconfig-paths/register src/test/agent.ts",
+    "edit-local": "node --env-file=.env -r ts-node/register -r tsconfig-paths/register src/test/edit-local.ts",
+    "research": "node --env-file=.env -r ts-node/register -r tsconfig-paths/register src/test/research.ts",
+    "util": "node --env-file=.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/test/util.ts",
     "build": "tsc",
     "build:dev": "tsc -project tsconfig.swc.json",
     "run": "node --env-file=.env -r ts-node/register -r tsconfig-paths/register src/index.ts",

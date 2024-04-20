@@ -11,14 +11,14 @@ import { Claude3_Opus, ClaudeLLMs } from '#llm/models/claude';
 import { GPT4 } from '#llm/models/openai';
 import { GEMINI_1_0_PRO_LLMS, Gemini_1_5_Pro } from '#llm/models/vertexai';
 import { MultiLLM } from '#llm/multi-llm';
-import { getFunctionDefinitions } from './agent/metadata';
-import { AGENT_LLMS } from './agentLLMs';
-import { GitLabServer } from './functions/scm/gitlab';
-import { PublicWeb } from './functions/web/web';
-import { ICodeReview, loadCodeReviews } from './swe/codeReview/codeReviewParser';
-import { ProjectInfo } from './swe/projectDetection';
-import { sleep } from './utils/async-utils';
-import { checkExecResult, execCmd, execCommand } from './utils/exec';
+import { getFunctionDefinitions } from '#agent/metadata';
+import { AGENT_LLMS } from '../agentLLMs';
+import { GitLabServer } from '../functions/scm/gitlab';
+import { PublicWeb } from '../functions/web/web';
+import { ICodeReview, loadCodeReviews } from '../swe/codeReview/codeReviewParser';
+import { ProjectInfo } from '../swe/projectDetection';
+import { sleep } from '#utils/async-utils';
+import { checkExecResult, execCmd, execCommand } from '#utils/exec';
 // import { UtilFunctions } from "./functions/util"
 
 // For running random bits of code
@@ -42,6 +42,9 @@ async function main() {
 
 	agentContext.getStore().fileSystem = new FileSystem();
 
+	const xml = await getFileSystem().getMultipleFileContentsAsXml(['README.md','bin/configure']);
+	console.log(xml);
+	if(console)return
 	// const requirements = "Create unit tests using mocha and chai for the functionality in the pgFunctionCache.ts.";
 
 	// await new DevRequirementsWorkflow().runDevRequirementsWorkflow(requirements);

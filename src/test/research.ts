@@ -11,16 +11,16 @@ import { Claude3_Opus } from '#llm/models/claude';
 import { GPT4 } from '#llm/models/openai';
 import { Gemini_1_0_Pro, Gemini_1_5_Pro } from '#llm/models/vertexai';
 import { MultiLLM } from '#llm/multi-llm';
-import { AGENT_LLMS } from './agentLLMs';
-import { GoogleCloud } from './functions/google-cloud';
-import { Jira } from './functions/jira';
-import { GitLabServer } from './functions/scm/gitlab';
-import { UtilFunctions } from './functions/util';
-import { PUBLIC_WEB } from './functions/web/web';
-import { WebResearcher } from './functions/web/webResearch';
-import { CodeEditor } from './swe/codeEditor';
-import { NpmPackages } from './swe/nodejs/researchNpmPackage';
-import { TypescriptTools } from './swe/nodejs/typescriptTools';
+import { AGENT_LLMS } from '../agentLLMs';
+import { GoogleCloud } from '../functions/google-cloud';
+import { Jira } from '../functions/jira';
+import { GitLabServer } from '../functions/scm/gitlab';
+import { UtilFunctions } from '../functions/util';
+import { PUBLIC_WEB } from '../functions/web/web';
+import { WebResearcher } from '../functions/web/webResearch';
+import { CodeEditor } from '../swe/codeEditor';
+import { NpmPackages } from '../swe/nodejs/researchNpmPackage';
+import { TypescriptTools } from '../swe/nodejs/typescriptTools';
 import { GroqLLM, grokLLMs, groqMixtral8x7b } from '#llm/models/groq';
 
 // Usage:
@@ -39,8 +39,8 @@ export const llms: AgentLLMs = {
 };
 
 export async function main() {
-	const systemPrompt = readFileSync('ai-system-research', 'utf-8');
-	const initialPrompt = readFileSync('ai-in-research', 'utf-8'); //'Complete the JIRA issue: ABC-123'
+	const systemPrompt = readFileSync('src/test/research-in', 'utf-8');
+	const initialPrompt = readFileSync('src/test/research-out', 'utf-8'); //'Complete the JIRA issue: ABC-123'
 
 	const toolbox = new Toolbox();
 	// toolbox.addTool('Jira', new Jira());

@@ -5,10 +5,10 @@ import { FileSystem } from '#agent/filesystem';
 import '#fastify/trace-init/trace-init';
 import { GEMINI_1_5_PRO_LLMS, Gemini_1_5_Pro } from '#llm/models/vertexai';
 import { withActiveSpan } from '#o11y/trace';
-import { AGENT_LLMS } from './agentLLMs';
-import { DevEditWorkflow } from './swe/devEditWorkflow';
-import { TypescriptTools } from './swe/nodejs/typescriptTools';
-import { ProjectInfo } from './swe/projectDetection';
+import { AGENT_LLMS } from '../agentLLMs';
+import { DevEditWorkflow } from '../swe/devEditWorkflow';
+import { TypescriptTools } from '../swe/nodejs/typescriptTools';
+import { ProjectInfo } from '../swe/projectDetection';
 
 // Used to test the local repo editing workflow in DevEditWorkflow
 
@@ -23,8 +23,8 @@ async function main() {
 	agentContext.enterWith(context);
 	context.toolbox.addTool(context.fileSystem, 'FileSystem');
 
-	const system = readFileSync('ai-system', 'utf-8');
-	const initialPrompt = readFileSync('ai-in', 'utf-8');
+	//const system = readFileSync('src/test/agent-system', 'utf-8');
+	const initialPrompt = readFileSync('src/test/edit-local-in', 'utf-8');
 
 	// const info = await new DevRequirementsWorkflow().detectProjectInfo();
 
