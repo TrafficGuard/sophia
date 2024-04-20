@@ -3,16 +3,17 @@
 
 # Getting started
 
+## Setup
+
 Run `source ./bin/configure`
 
 This will:
 - Set up a Python virtual environment and install aider,
 which is used for code editing.
 - Set the node version using nvm, and run `npm install`
+- Install ripgrep
 
-- brew install gh ripgrep <!-- gh GitHub CLI -->
-
-## API KEYS
+### API KEYS
 
 You will need an OpenAI key with some credits to use the CodeEditor function, unless [OpenRouter](https://aider.chat/docs/faq.html#accessing-other-llms-with-openrouter]) is configured for an alternative LLM.
 
@@ -46,8 +47,22 @@ Ensure you have authenticated the application default credentials with gcloud (`
 
 (Ensure you don't have anything running on port the callback webpage opens with)
 
+## Google Cloud
 
-# Notes
+If you are using the glcoud function or Vertex AI you should install the gcloud CLI
+
+https://cloud.google.com/sdk/docs/install
+
+Then authenticate the application default credentials by running
+`gcloud auth application-default login`
+
+# Running
+
+Run directly with `npm run run`
+
+Run in docker compose with `./bin/run`
+
+## Development run scripts
 
 In the src folder are the ai.ts, agent.ts, edit-local.ts, research.ts, util.ts files.
 

@@ -1,0 +1,16 @@
+services:
+  node:
+    container_name: nous
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    volumes:
+      - .:/nous
+      # Provides your Google Cloud application default credentials
+      - ~/.config/gcloud:/home/nous/.config/gcloud
+#    environment:
+#      - var=value
+
