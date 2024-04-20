@@ -5,7 +5,7 @@ import { BaseLLM } from '../base-llm';
 import { MaxTokensError } from '../errors';
 import { LLM, combinePrompts, logTextGeneration } from '../llm';
 import Message = Anthropic.Message;
-import { withSpan } from '#o11y/trace';
+import { withActiveSpan } from '#o11y/trace';
 import { envVar } from '#utils/env-var';
 import { RetryableError } from '../../cache/cache';
 import { MultiLLM } from '../multi-llm';
@@ -71,7 +71,7 @@ class AnthropicVertexLLM extends BaseLLM {
 	// {"error":{"code":400,"message":"Project `1234567890` is not allowed to use Publisher Model `projects/project-id/locations/us-central1/publishers/anthropic/models/claude-3-haiku@20240307`","status":"FAILED_PRECONDITION"}}
 	@logTextGeneration
 	async generateText(userPrompt: string, systemPrompt?: string): Promise<string> {
-		return withSpan('generateText', async (span) => {
+		return withActiveSpan('generateText', async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 			const maxTokens = 4096;
 

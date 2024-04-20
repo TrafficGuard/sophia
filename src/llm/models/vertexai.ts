@@ -1,6 +1,6 @@
 import { FunctionCall, GenerateContentRequest, HarmBlockThreshold, HarmCategory, SafetySetting, Tool, VertexAI } from '@google-cloud/vertexai';
 import { AgentLLMs, addCost, agentContext } from '#agent/agentContext';
-import { withSpan } from '#o11y/trace';
+import { withActiveSpan } from '#o11y/trace';
 import { projectId, region } from '../../config';
 import { BaseLLM } from '../base-llm';
 import { FunctionResponse, Invoke, LLM, combinePrompts, logTextGeneration } from '../llm';
@@ -51,7 +51,7 @@ export function vertexLLmFromModel(model: string): LLM | null {
 class VertexLLM extends BaseLLM {
 	@logTextGeneration
 	async generateText(userPrompt: string, systemPrompt: string): Promise<string> {
-		return withSpan('generateText', async (span) => {
+		return withActiveSpan('generateText', async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);

@@ -1,7 +1,7 @@
 import { addCost } from '#agent/agentContext';
-import { withSpan } from '#o11y/trace';
+import { withActiveSpan } from '#o11y/trace';
 import { BaseLLM } from '../base-llm';
-import { combinePrompts, logTextGeneration } from '../llm';
+import { combinePrompts } from '../llm';
 
 export class MockLLM extends BaseLLM {
 	/**
@@ -20,7 +20,7 @@ export class MockLLM extends BaseLLM {
 	}
 
 	async generateText(userPrompt: string, systemPrompt: string): Promise<string> {
-		return withSpan('generateText', async (span) => {
+		return withActiveSpan('generateText', async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);

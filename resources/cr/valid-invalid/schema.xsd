@@ -20,11 +20,11 @@
                 <xs:element name="examples">
                     <xs:complexType>
                         <xs:sequence>
-                            <xs:element name="example" maxOccurs="unbounded">
+                            <xs:element name="example" minOccurs="1" maxOccurs="unbounded">
                                 <xs:complexType>
                                     <xs:sequence>
-                                        <xs:element name="code" type="xs:string"/>
-                                        <xs:element name="review_comment" type="xs:string" minOccurs="0"/>
+                                        <xs:element name="invalid" type="xs:string" minOccurs="0"/>
+                                        <xs:element name="valid" type="xs:string" minOccurs="0"/>
                                     </xs:sequence>
                                 </xs:complexType>
                             </xs:element>

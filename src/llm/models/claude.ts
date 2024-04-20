@@ -6,7 +6,7 @@ import { MaxTokensError } from '../errors';
 import { LLM, combinePrompts, logTextGeneration } from '../llm';
 import { MultiLLM } from '../multi-llm';
 import Message = Anthropic.Message;
-import { withSpan } from '#o11y/trace';
+import { withActiveSpan } from '#o11y/trace';
 
 export const ANTHROPIC_SERVICE = 'anthropic';
 
@@ -48,7 +48,7 @@ export class Claude extends BaseLLM {
 
 	@logTextGeneration
 	async generateText(userPrompt: string, systemPrompt?: string): Promise<string> {
-		return withSpan('generateText', async (span) => {
+		return withActiveSpan('generateText', async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);

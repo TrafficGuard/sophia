@@ -1,10 +1,11 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs';
 import { AgentContext, AgentRunningState, agentContext, deserializeContext, serializeContext } from '#agent/agentContext';
 
 export interface AgentStateService {
 	save(state: AgentContext): Promise<void>;
 	updateState(ctx: AgentContext, state: AgentRunningState): Promise<void>;
 	load(executionId: string): Promise<AgentContext | null>;
+	listRunning(): Promise<AgentContext[]>;
 }
 
 export class AgentStateServiceFile implements AgentStateService {
@@ -19,6 +20,27 @@ export class AgentStateServiceFile implements AgentStateService {
 	async load(executionId: string): Promise<AgentContext> {
 		const jsonString = readFileSync(`./.nous/agent-state/${executionId}.json`).toString();
 		return deserializeContext(jsonString);
+	}
+
+	async listRunning(): Promise<AgentContext[]> {
+		// list files under './.nous/agent-state'
+		const contexts: AgentContext[] = [];
+		console.log('readdirSync');
+		const files = readdirSync('./.nous/agent-state');
+		for (const file of files) {
+			if (file.endsWith('.json')) {
+				console.log(`readFileSync ./.nous/agent-state/${file}`);
+				const jsonString = readFileSync(`./.nous/agent-state/${file}`).toString();
+				try {
+					const ctx = deserializeContext(jsonString);
+					if (ctx.state !== 'completed') contexts.push(ctx);
+				} catch (e) {
+					console.log('Unable to deserialise', file, e.message);
+				}
+			}
+		}
+
+		return contexts;
 	}
 }
 
@@ -35,6 +57,11 @@ export class AgentStateServiceInMemory implements AgentStateService {
 	async load(executionId: string): Promise<AgentContext> {
 		if (!this.stateMap.has(executionId)) throw new Error('Agent state not found');
 		return this.stateMap.get(executionId);
+	}
+
+	listRunning(): Promise<AgentContext[]> {
+		const running = Array.of(...this.stateMap.values()).filter((ctx) => ctx.state !== 'completed');
+		return Promise.resolve(running);
 	}
 }
 

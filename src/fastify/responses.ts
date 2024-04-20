@@ -1,7 +1,7 @@
 import { FastifyReply } from 'fastify';
 import * as HttpStatus from 'http-status-codes';
 
-export function send(reply: FastifyReply, statusCode: number, data: Record<string, any> | string | null = null, extra: object | null = {}): void {
+export function send(reply: any, statusCode: number, data: Record<string, any> | string | null = null, extra: object | null = {}): void {
 	reply.header('Content-Type', 'application/json; charset=utf-8');
 	reply.status(statusCode);
 
@@ -11,6 +11,12 @@ export function send(reply: FastifyReply, statusCode: number, data: Record<strin
 	}
 
 	reply.send(payload);
+}
+
+export function sendHTML(reply: any, html: string): void {
+	reply.header('Content-Type', 'text/html; charset=utf-8');
+	reply.status(200);
+	reply.send(html);
 }
 
 /**

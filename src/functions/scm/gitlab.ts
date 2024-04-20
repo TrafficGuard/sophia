@@ -2,15 +2,14 @@ import { existsSync } from 'fs';
 import { join } from 'path';
 import { Gitlab, MergeRequestDiffSchema, MergeRequestDiscussionNotePositionOptions, ProjectSchema } from '@gitbeaker/rest';
 import { getFileSystem, llms } from '#agent/agentContext';
+import { func } from '#agent/functions';
+import { funcClass } from '#agent/metadata';
 import { span } from '#o11y/trace';
 import { getFulfilled } from '#utils/async-utils';
-import { FileSystem } from '../../agent/filesystem';
-import { func } from '../../agent/functions';
-import { funcClass } from '../../agent/metadata';
+import { envVar } from '#utils/env-var';
+import { checkExecResult, execCmd, execCommand } from '#utils/exec';
 import { cacheRetry } from '../../cache/cache';
 import { ICodeReview, loadCodeReviews } from '../../swe/codeReview/codeReviewParser';
-import { envVar } from '../../utils/env-var';
-import { checkExecResult, execCmd, execCommand } from '../../utils/exec';
 import { UtilFunctions } from '../util';
 import { SourceControlManagement } from './sourceControlManagement';
 
@@ -213,7 +212,6 @@ export class GitLabServer implements SourceControlManagement {
 		return await this.api.MergeRequests.allDiffs(gitlabProjectId, mergeRequestIId, { perPage: 20 });
 	}
 
-	@cacheRetry()
 	@span()
 	async reviewMergeRequest(gitlabProjectId: string | number, mergeRequestIId: number): Promise<MergeRequestDiffSchema[]> {
 		const diffs: MergeRequestDiffSchema[] = await this.getDiffs(gitlabProjectId, mergeRequestIId);
@@ -247,13 +245,38 @@ export class GitLabServer implements SourceControlManagement {
 
 		const result = await Promise.allSettled(codeReviews);
 		const diffReviews = getFulfilled(result).filter((diffReview) => diffReview !== null);
+
+		const mr = await this.api.MergeRequests.show(gitlabProjectId, mergeRequestIId);
+		const sha = mr.sha;
+
 		for (const diffReview of diffReviews) {
 			// console.log('start>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
 			// console.log(diffReview.diff);
 			// console.log(review.newPath)
 			for (const comment of diffReview.comments) {
-				// console.log('COMMENT ---------------');
-				// console.log(comment.lineNumber, comment.comment);
+				console.log('COMMENT ---------------');
+				console.log(comment.lineNumber, comment.comment);
+				const position: MergeRequestDiscussionNotePositionOptions = comment;
+				position.baseSha = sha;
+				position.lineRange = {
+					start: { lineCode: `${sha}_${comment.lineNumber - 1}_${comment.lineNumber - 1}`, type: 'new' },
+					end: { lineCode: `${sha}_${comment.lineNumber - 1}_${comment.lineNumber - 1}`, type: 'new' },
+				};
+				position.oldLine = undefined;
+				console.log(position);
+				//}
+				// lineRange?: {
+				// 	start?: {
+				// 		lineCode: string;
+				// 		type: 'new' | 'old';
+				// 	};
+				// 	end?: {
+				// 		lineCode: string;
+				// 		type: 'new' | 'old';
+				// 	};
+				// };
+
+				await this.api.MergeRequestDiscussions.create(gitlabProjectId, mergeRequestIId, comment.comment, { position });
 			}
 			// console.log('end<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<');
 			// console.log();
@@ -269,16 +292,44 @@ export class GitLabServer implements SourceControlManagement {
 	 * @param mrDiff
 	 * @param codeReview
 	 */
+	@cacheRetry()
 	async reviewDiff(gitlabProjectId: string | number, mergeRequestIId: number, mrDiff: MergeRequestDiffSchema, codeReview: ICodeReview): Promise<DiffReview> {
+		// https://github.com/jdalrymple/gitbeaker/blob/main/packages/core/src/resources/MergeRequestNotes.ts
 		// console.log('REVIEWING >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
 		// console.log(mrDiff);
 		// console.log(codeReview.xml);
 		// console.log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<');
-		const diff = mrDiff.diff
+
+		console.log(mrDiff.diff);
+		// The first line of the diff has the starting line number e.g. @@ -0,0 +1,76 @@
+		let startingLineNumber = getStartingLineNumber(mrDiff.diff);
+
+		// Transform the diff, so it's not a diff, removing the deleted lines so only the unchanged and new lines
+		// remaining,
+		const diffLines: string[] = mrDiff.diff
+			.trim()
 			.split('\n')
 			.filter((line) => !line.startsWith('-'))
-			.map((line) => (line.startsWith('+') ? line.slice(1) : line))
-			.join('\n');
+			.map((line) => (line.startsWith('+') ? line.slice(1) : line));
+		// diffLines = diffLines.slice(1)
+		startingLineNumber -= 1;
+		diffLines[0] = `/*${startingLineNumber}*/`;
+
+		// Add lines numbers
+		for (let i = 1; i < diffLines.length; i++) {
+			const line = diffLines[i];
+			// Add the line number on blank lines
+			if (!line.trim().length) diffLines[i] = `/*${startingLineNumber + i}*/`;
+			// Add in a line number every ten lines
+			if (i % 10 === 0) {
+				const comment = `/*${startingLineNumber + i}*/`;
+				if (!line.slice(0, comment.length).trim().length) {
+					diffLines[i] = comment + line.slice(comment.length);
+				}
+			}
+		}
+		const diff = diffLines.join('\n');
+		console.log(diff);
 
 		const prompt = `You are an AI software engineer whose task is to review the code changes for our software development style standards.
 		The following is the configuration of the particular code review that you must do.
@@ -287,7 +338,7 @@ export class GitLabServer implements SourceControlManagement {
 		<diff>
 		${diff}
 		</diff>
-
+		The comments like /*14*/ at the start of lines are the line numbers
 		Response only in JSON wrapped in <json></json>.
 		Based on the provided code review guidelines, analyze the code changes and identify any potential invalid code which violates the code review description. 
 		If no violations are found, responsd with an empty JSON array i.e. <json>[]</json>
@@ -326,6 +377,11 @@ export class GitLabServer implements SourceControlManagement {
             To create a thread on a removed line (highlighted in red in the merge request diff), use position[old_line] and don’t include position[new_line].
             To create a thread on an unchanged line, include both position[new_line] and position[old_line] for the line. These positions might not be the same if earlier changes in the file changed the line number. For the discussion about a fix, see issue 32516.
             If you specify incorrect base, head, start, or SHA parameters, you might run into the bug described in issue #296829).
+
+            A line code is of the form <SHA>_<old>_<new>, like this: adc83b19e793491b1c6ea0fd8b46cd9f32e292fc_5_5
+			<SHA> is the SHA1 hash of the filename.
+			<old> is the line number before the change.
+			<new> is the line number after the change.
             */
 
 			const discussionNotePositionOptions: MergeRequestDiscussionNotePositionOptions = {
@@ -335,6 +391,7 @@ export class GitLabServer implements SourceControlManagement {
 				positionType: 'text',
 				new_path: mrDiff.new_path,
 				new_line: newLineNumber.toString(),
+				old_line: newLineNumber.toString(),
 			};
 
 			const reviewComment = { comment, lineNumber, ...discussionNotePositionOptions };
@@ -343,7 +400,11 @@ export class GitLabServer implements SourceControlManagement {
 			diffReview.comments.push(reviewComment);
 		}
 		return diffReview;
-
-		// await this.api.MergeRequestDiscussions.create(gitlabProjectId, mergeRequestIId, comment, { position: discussionNotePositionOptions });
 	}
+}
+
+export function getStartingLineNumber(diff: string): number {
+	diff = diff.slice(diff.indexOf('+'));
+	diff = diff.slice(0, diff.indexOf(','));
+	return parseInt(diff);
 }

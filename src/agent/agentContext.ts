@@ -187,7 +187,7 @@ export function deserializeContext(json: string): AgentContext {
 			context[key] = serialised[key];
 		}
 	}
-	
+
 	context.functionCacheService = new FileCacheService('').fromJSON(serialised.functionCacheService);
 	context.fileSystem = new FileSystem().fromJSON(serialised.fileSystem);
 	context.toolbox = new Toolbox().fromJSON(serialised.toolbox);

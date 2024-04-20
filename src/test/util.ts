@@ -5,20 +5,21 @@ import { DiffRefsSchema, MergeRequestDiffSchema, MergeRequestDiscussionNotePosit
 import { DOMParser } from 'xmldom';
 import { AgentContext, AgentLLMs, agentContext, createContext, enterWithContext, getFileSystem, llms } from '#agent/agentContext';
 import { FileSystem } from '#agent/filesystem';
+import { getFunctionDefinitions } from '#agent/metadata';
 import '#fastify/trace-init/trace-init';
 import { Claude3_Haiku_Vertex, Claude3_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { Claude3_Opus, ClaudeLLMs } from '#llm/models/claude';
 import { GPT4 } from '#llm/models/openai';
 import { GEMINI_1_0_PRO_LLMS, Gemini_1_5_Pro } from '#llm/models/vertexai';
 import { MultiLLM } from '#llm/multi-llm';
-import { getFunctionDefinitions } from '#agent/metadata';
+import { sleep } from '#utils/async-utils';
+import { checkExecResult, execCmd, execCommand } from '#utils/exec';
 import { AGENT_LLMS } from '../agentLLMs';
 import { GitLabServer } from '../functions/scm/gitlab';
 import { PublicWeb } from '../functions/web/web';
 import { ICodeReview, loadCodeReviews } from '../swe/codeReview/codeReviewParser';
 import { ProjectInfo } from '../swe/projectDetection';
-import { sleep } from '#utils/async-utils';
-import { checkExecResult, execCmd, execCommand } from '#utils/exec';
+
 // import { UtilFunctions } from "./functions/util"
 
 // For running random bits of code
@@ -30,8 +31,8 @@ const sonnet = Claude3_Sonnet_Vertex();
 const gemini = Gemini_1_5_Pro();
 export const utilLLMs: AgentLLMs = {
 	easy: gemini,
-	medium: sonnet,
-	hard: sonnet,
+	medium: gemini,
+	hard: gemini,
 	xhard: new MultiLLM([opus, GPT4(), Gemini_1_5_Pro()], 3),
 };
 
@@ -42,24 +43,30 @@ async function main() {
 
 	agentContext.getStore().fileSystem = new FileSystem();
 
-	const xml = await getFileSystem().getMultipleFileContentsAsXml(['README.md','bin/configure']);
+	const xml = await getFileSystem().getMultipleFileContentsAsXml(['README.md', 'bin/configure']);
 	console.log(xml);
-	if(console)return
+	if (console) return;
 	// const requirements = "Create unit tests using mocha and chai for the functionality in the pgFunctionCache.ts.";
 
 	// await new DevRequirementsWorkflow().runDevRequirementsWorkflow(requirements);
-
+	// id    iid
+	// 21966 2636 hotfix/ip-info-adjustment-null-to-lower-case
+	// 21957 2634 Remove read, write of is saved click and user profile
+	// 21942 2633 feature/XPLATFORM-1119-ftd-poc-waf-conversion-first-time-deposit-tracking
+	// 21939 2632 Resolve SEARCH-421 "Hotfix/ discovery include known bots and ad bots in pmax exclusion lists"
+	// 21938 2631 Release/2.55.0
+	// 21919 2629 SEARCH-385 "Ppc set is saved click for pageview events fix tests"
+	// 21918 2628 SEARCH-421 Exclude bots for pmax exclusion lists
+	// 21916 2627 quickfix/SEARCH-385-LOAD-TEST-ppc-set-is_saved_click-for-pageview-events
+	// 	21912 2626 Resolve SEARCH-385 "Ppc set is saved click for pageview events fix te
 
 	const codeReviews = await loadCodeReviews();
 	const gitlab = new GitLabServer();
-	const diffs = await gitlab.reviewMergeRequest('121', 2633);
+	const diffs = await gitlab.reviewMergeRequest('39', 4);
 
-	if (console) return;
-
-	// const page = await new PublicWeb().getWebPage('https://about.gitlab.com/blog/2023/07/06/how-to-automate-creation-of-runners/');
-	//
+	// const page = await new PublicWeb().getWebPage('https://github.com/kyrolabs/awesome-agents/blob/master/README.md');
 	// console.log(page);
-	// if (console) return;
+	if (console) return;
 	//
 	// const jira = await new Jira().getJiraDescription('CLD-1282');
 	// console.log(jira);

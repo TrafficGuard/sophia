@@ -17,6 +17,8 @@ Try and get your prompts working on a less capable model. This will help highlig
 
 Then when you switch to a more capable model it should be even more robust.
 
+https://cloud.google.com/vertex-ai/generative-ai/docs/learn/prompts/prompt-design-strategies
+
 
 # Use explicit types
 

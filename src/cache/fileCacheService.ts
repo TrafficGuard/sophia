@@ -20,7 +20,8 @@ export class FileCacheService implements FunctionCacheService {
 		};
 	}
 	fromJSON(obj: any): this {
-		this.baseFolderPath = obj.baseFolderPath;
+		if (obj?.baseFolderPath) this.baseFolderPath = obj.baseFolderPath;
+		else this.baseFolderPath = './cache/tools';
 		return this;
 	}
 

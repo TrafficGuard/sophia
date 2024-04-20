@@ -1,5 +1,6 @@
 import * as readline from 'readline';
 import { Span } from '@opentelemetry/api';
+import { getServiceName } from '#fastify/trace-init/trace-init';
 import { FunctionResponse, Invoked } from '#llm/llm';
 import { logger } from '#o11y/logger';
 import { startSpan, withActiveSpan } from '#o11y/trace';
@@ -114,6 +115,7 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 	await withActiveSpan(agentName, async (span: Span) => {
 		span.setAttributes({
 			initialPrompt,
+			'service.name': getServiceName(),
 		});
 
 		let shouldContinue = true;

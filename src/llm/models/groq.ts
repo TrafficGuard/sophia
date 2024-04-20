@@ -1,6 +1,6 @@
 import { AgentLLMs } from '#agent/agentContext';
 import { addCost } from '#agent/agentContext';
-import { withSpan } from '#o11y/trace';
+import { withActiveSpan } from '#o11y/trace';
 import { RetryableError } from '../../cache/cache';
 import { BaseLLM } from '../base-llm';
 import { LLM, combinePrompts, logDuration } from '../llm';
@@ -45,7 +45,7 @@ export function groqLLmFromModel(model: string): LLM | null {
 export class GroqLLM extends BaseLLM {
 	@logDuration
 	async generateText(userPrompt: string, systemPrompt = ''): Promise<string> {
-		return withSpan('generateText', async (span) => {
+		return withActiveSpan('generateText', async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
 			span.setAttributes({

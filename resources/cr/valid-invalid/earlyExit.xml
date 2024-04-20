@@ -1,10 +1,9 @@
 <code_review xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:noNamespaceSchemaLocation="schema.xsd">
     <description>
-        Prefer returning/throwing early, and handling null/empty cases first.
+        Prefer returning/throwing early.
         If an else block throws or returns, switch the ordering of the if/else blocks, which will result in not having an else block.
-        The line number should be the line of the `if` statement.
-        If there are multiple nested if/else block violations then leave a single review comment covering all violations.
+        The line number should be the line where the return or throw in the else block is.
     </description>
     <file_extensions>
         <include>.ts</include>
@@ -14,37 +13,36 @@
     </requires>
     <examples>
         <example>
-            <code><![CDATA[
-                async sendBirthdayGreeting(user: User | null): Promise<void> {
+            <invalid><![CDATA[
+                /*14*/ async sendBirthdayGreeting(user: User | null): Promise<void> {
                     if (user) {
                         if(user.dateOfBirth > Date.now()) {
                             if (dayOfYear(user.dateOfBirth) === dayOfYear(Date.now())) {
                                 await this.emailService.sendEmail(this.createBdayEmail(user));
                             }
-                        } else {
+                /*20*/  } else { // should handle this case first
                             throw new Error(`dateOfBirth in the future for user ${user.id}`);
                         }
-                    } else {
+                    } else { // should handle this case first
                         throw new Error('User was null');
                     }
                 }
-            ]]></code>
-            <review_comment><![CDATA[
-                Handle exceptional cases first and exit early to simplify the code flow.
-                ```
+            ]]></invalid>
+            <valid><![CDATA[
                 async sendBirthdayGreeting(user: User | null): Promise<void> {
+                    // Handle the user null case early
                     if (!user) throw new Error('User was null');
+                    // Handle the invalid dateOfBirth case early
                     if (user.dateOfBirth < Date.now()) throw new Error(`dateOfBirth in the future for user ${user.id}`);
 
                     if (dayOfYear(user.dateOfBirth) === dayOfYear(Date.now())) {
                         await this.emailService.sendEmail(this.createBdayEmail(user));
                     }
                 }
-                ```
-            ]]></review_comment>
+            ]]></valid>
         </example>
         <example>
-            <code><![CDATA[
+            <invalid><![CDATA[
                 async function deleteReservation(): Promise<boolean> {
                     const reservations = this.getReservations();
                     if (reservations.length) {
@@ -52,15 +50,13 @@
                             name: reservations[0].name,
                         });
                         return true;
-                    } else {
+                    } else { // should handle this case first
                         logger.info("No BigQuery reservation found.");
                         return false;
                     }
                 }
-            ]]></code>
-            <review_comment><![CDATA[
-                Handle exceptional cases first and exit early to simplify the code flow.
-                ```
+            ]]></invalid>
+            <valid><![CDATA[
                 async function deleteReservation(): Promise<boolean> {
                     const reservations = this.getReservations();
 
@@ -72,32 +68,7 @@
                     await this.reservationsClient.deleteReservation({ name: reservations[0].name });
                     return true;
                 }
-                ```
-            ]]></review_comment>
-        </example>
-        <example>
-            <code><![CDATA[
-                export function getDepositHeaders(enrichedRequest: EnrichedRequest): DepositHeadersResponse | null {
-                    const depositEnrichedInfo = requestHelper.gC(enrichedRequest.request, 'depositEnrichedInfo') as DepositEnrichedInfo;
-                    if (depositEnrichedInfo) {
-                        return buildHeaders(depositEnrichedInfo);
-                    }
-
-                    return null;
-                }
-            ]]></code>
-            <review_comment><![CDATA[
-                Handle exceptional cases first and exit early to simplify the code flow.
-                ```
-                export function getDepositHeaders(enrichedRequest: EnrichedRequest): DepositHeadersResponse | null {
-                    const depositEnrichedInfo = requestHelper.gC(enrichedRequest.request, 'depositEnrichedInfo') as DepositEnrichedInfo;
-
-                    if (!depositEnrichedInfo) return null;
-
-                    return buildHeaders(depositEnrichedInfo);
-                }
-                ```
-            ]]></review_comment>
+            ]]></valid>
         </example>
     </examples>
 </code_review>

@@ -1,5 +1,81 @@
-# AI bot
+<p align="center">
+  <img src="https://raw.githubusercontent.com/TrafficGuard/noos/main/site/banner.png" height="300" alt="noos logo"/>
+</p>
 
+<p align="center">
+  <em>🤖 An open-source platform for LLM based workflows and autonomous AI agents, in TypeScript 🤖</em>
+</p>
+<em><b>Nous</b></em>, or Greek νοῦς, sometimes equated to intellect or intelligence, is a concept from classical philosophy for the faculty of the human mind necessary for understanding what is true or real.
+
+In a nutshell <em><b>nous</b></em> is an integrated platform for Node.js/TypeScript agentic and LLM applications.
+- A minimal, lightweight API for interacting with LLMS
+- Provides the simplest mechanisim for defining LLM/agent usable functions
+    - Parses functions definitions directly from source code - no need to duplicate with Zod or other OpenAPI definitions.
+- Autonomous agent runtime
+    - Integrations to:
+        - Local filesystem
+        - Jira
+        - GitLab
+        - Perplexity
+        - Google Programmable search engine
+        - SerpAPI
+        - Google Drive
+        - DropBox
+        - Aider
+    - Configurable Human-in-the-loop settings
+- Observability for your app/agents with OpenTelemtry tracing integrated
+- Prompt management
+    - Prompt library
+    - Tag for reference and fine-tuning datasets
+    - Replay prompts with different models
+- AI agent implementations
+    - AI software engineer, leveraging [Aider](https://aider.chat/)
+        - Clone projects, create MRs
+    - AI code editor
+      - Project type detection
+      - Language specific tooling
+    - Code reviewer with GitLab integration
+    - Web researcher
+
+You can provide the prompt "Complete the Jira ABC-123" and the nous AI software engineer agent has the autonomous ability using the avilable tools to:
+- Read the Jira description
+- Look through the projects in GitLab for the relevant project
+- Clone the project
+- Select files to edit
+- Run a fixed edit/compile/lint/test cycle
+    - Use Aider to edit the files
+    - Run compile, format, lint, test targets auto-detected from project configuration
+    - Fix (attempt to!) compile, lint and test errors
+        - Utilizes web research to help fix compile
+        - Is allowed to install missing packages
+- Push to GitLab and raise a MR
+
+# Supported LLM services
+
+- OpenAI
+    - GPT4 Turbo
+- Google Cloud Vertex
+    - Gemini 1.0
+    - Gemini 1.5
+    - Claude 3
+- Anthropic
+    - Claude 3
+- Groq
+    - Mixtral-8x7b
+    - Gemma-7b
+- Fireworks.ai
+  - Llama 3
+- Together.ai
+  - Llama 3
+
+TODO
+- Cohere
+- AWS
+- Azure
+- Mistral
+- Replicate https://replicate.com/pricing
+- OctoAI https://octo.ai/pricing/text-gen-solution/
+- DeepInfra https://deepinfra.com/pricing
 
 # Getting started
 

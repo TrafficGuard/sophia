@@ -21,6 +21,9 @@ export function llmFromJSON(obj: any): LLM {
 			return vertexLLmFromModel(obj.model);
 		case TOGETHER_SERVICE:
 			return togetherLLmFromModel(obj.model);
+		case 'multi':
+			console.log('TODO deserialize multi LLM');
+			return null;
 		default:
 			throw new Error(`Unknown LLM service ${obj.service}`);
 	}
