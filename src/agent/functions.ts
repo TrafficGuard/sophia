@@ -95,7 +95,7 @@ export function func() {
 
 			return tracer.withActiveSpan(functionName, async (span: Span) => {
 				setFunctionSpanAttributes(span, functionName, attributeExtractors, args);
-				const result = await originalMethod.call(this, ...args);
+				const result = originalMethod.call(this, ...args);
 				if (typeof result?.then === 'function') await result;
 				try {
 					span.setAttribute('result', JSON.stringify(result));

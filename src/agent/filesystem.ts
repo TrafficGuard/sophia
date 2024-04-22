@@ -42,7 +42,8 @@ export class FileSystem {
 			workingDirectory: this.workingDirectory,
 		};
 	}
-	fromJSON(obj: any): this {
+	fromJSON(obj: any): this | null {
+		if (!obj) return null;
 		this.basePath = obj.basePath;
 		this.workingDirectory = obj.workingDirectory;
 		return this;

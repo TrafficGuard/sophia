@@ -13,6 +13,9 @@ import { setTracer } from '#o11y/trace';
 
 let initialized = false;
 
+export function getServiceName(): string | undefined {
+	return process.env.TRACE_SERVICE_NAME ?? process.env.K_SERVICE;
+}
 /**
  * This needs to be required/imported as early as possible in the startup sequence
  * before the modules it instruments are loaded.

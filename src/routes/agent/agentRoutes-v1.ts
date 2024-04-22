@@ -18,7 +18,7 @@ export async function agentRoutesV1(fastify: AppFastifyInstance) {
 				}),
 			},
 		},
-		async (req: any, reply) => {
+		async (req, reply) => {
 			const ctx: AgentContext = await fastify.agentStateService.load(req.body.executionId);
 
 			runAgent({
@@ -43,6 +43,8 @@ export async function agentRoutesV1(fastify: AppFastifyInstance) {
 	fastify.get(`${basePath}/list`, {}, async (req, reply) => {
 		// const ctxs: AgentContext[] = await fastify.agentStateService.list();
 		const ctxs: AgentContext[] = await fastify.agentStateService.listRunning();
+		const response = ctxs.map(serializeContext);
+		send(reply as FastifyReply, 200, response);
 
 		let html = `<html><head></head><body><table><tr>
 			<th>Name</th>
@@ -64,7 +66,7 @@ export async function agentRoutesV1(fastify: AppFastifyInstance) {
 				.map((def) => def.name)
 				.join(',')}</td>
 			<td>$${ctx.cost.toFixed(2)}</td>
-			<td>${ctx.llms.easy.getModelName()},${ctx.llms.medium.getModelName()},${ctx.llms.hard.getModelName()}</td>
+			<td>${ctx.llms.easy.getModel()},${ctx.llms.medium.getModel()},${ctx.llms.hard.getModel()}</td>
 			</tr>`;
 		}
 		html += '</table></body></html>';
@@ -75,7 +77,7 @@ export async function agentRoutesV1(fastify: AppFastifyInstance) {
 	fastify.get(`${basePath}/list/humanInLoop`, {}, async (req, reply) => {
 		const ctxs: AgentContext[] = await fastify.agentStateService.listRunning();
 		const response = ctxs.filter((ctx) => ctx.state === 'hil').map(serializeContext);
-		send(reply as FastifyReply, 200, response);
+		send(reply, 200, response);
 		/*
 			let html = `<html><head></head><body><table><tr>
 			<th>Name</th>
@@ -101,23 +103,33 @@ export async function agentRoutesV1(fastify: AppFastifyInstance) {
 			}
 			html += "</table></body></html>"
 
-			sendHTML(reply as FastifyReply, html);
+			sendHTML(reply, html);
 
  */
 	});
 
-	fastify.get(`${basePath}/details/:executionId`, {}, async (req: any, reply) => {
-		const executionId = req.params.executionId;
-		const ctx: AgentContext = await fastify.agentStateService.load(executionId);
+	fastify.get(
+		`${basePath}/details/:executionId`,
+		{
+			schema: {
+				params: Type.Object({
+					executionId: Type.String(),
+				}),
+			},
+		},
+		async (req, reply) => {
+			const executionId = req.params.executionId;
+			const ctx: AgentContext = await fastify.agentStateService.load(executionId);
 
-		send(reply, 200, ctx);
+			send(reply, 200, ctx);
 
-		// try {
-		//     send(reply, 200, reservation);
-		//     sendSuccess(reply, "No reservation found.");
-		// } catch (e: any) {
-		//     logger.error(e);
-		//     sendBadRequest(reply, e);
-		// }
-	});
+			// try {
+			//     send(reply, 200, reservation);
+			//     sendSuccess(reply, "No reservation found.");
+			// } catch (e: any) {
+			//     logger.error(e);
+			//     sendBadRequest(reply, e);
+			// }
+		},
+	);
 }

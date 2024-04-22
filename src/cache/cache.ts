@@ -54,7 +54,7 @@ export function cacheRetry(options: Partial<CacheRetryOptions> = DEFAULTS) {
 			for (let attempt = 1; attempt <= cacheOptions.retries; attempt++) {
 				console.debug(`${this.constructor.name}.${methodName} retry ${attempt - 1}`);
 				try {
-					let result = await originalMethod.apply(this, args);
+					let result = originalMethod.apply(this, args);
 					if (typeof result?.then === 'function') result = await result;
 					// convert undefined to null as we use undefined to indicate there's no cached value
 					if (result === undefined) result = null;

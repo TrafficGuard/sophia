@@ -62,6 +62,8 @@ export class PublicWeb {
 	@func()
 	@cacheRetry({ scope: 'global' })
 	async getWebPageExtract(url: string, dataExtractionInstructions: string, memoryKey?: string): Promise<string> {
+		const memory = agentContext.getStore().memory;
+		if (memory.has(memoryKey)) throw new Error(`The memory key ${memoryKey} already exists`);
 		const contents = await this.getWebPage(url);
 		const extracted = await llms().medium.generateText(`<page_contents>${contents}</page_contents>\n\n${dataExtractionInstructions}`);
 		if (memoryKey) {

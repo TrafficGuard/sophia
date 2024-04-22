@@ -24,18 +24,19 @@ describe('agentContext', () => {
 			agentContext.fileSystem.setWorkingDirectory('./workingDir');
 			agentContext.toolbox.addToolType(UtilFunctions);
 			agentContext.memory.set('memory_key', 'memory_value');
-			const serialised: string = serializeContext(agentContext);
+			const serialized = serializeContext(agentContext);
+			const serializedToString: string = JSON.stringify(serialized);
 
-			expect(serialised).to.include('memory_key');
-			expect(serialised).to.include('memory_value');
-			expect(serialised).to.include('easy');
-			expect(serialised).to.include('medium');
-			expect(serialised).to.include('workingDir');
-			expect(serialised).to.include('UtilFunctions');
+			expect(serializedToString).to.include('memory_key');
+			expect(serializedToString).to.include('memory_value');
+			expect(serializedToString).to.include('easy');
+			expect(serializedToString).to.include('medium');
+			expect(serializedToString).to.include('workingDir');
+			expect(serializedToString).to.include('UtilFunctions');
 
-			const deserialised = deserializeContext(serialised);
-			const reserialised: string = serializeContext(deserialised);
-			expect(JSON.parse(serialised)).to.be.deep.equal(JSON.parse(reserialised));
+			const deserialised = deserializeContext(serialized);
+			const reserialised = serializeContext(deserialised);
+			expect(serialized).to.be.deep.equal(reserialised);
 		});
 	});
 });

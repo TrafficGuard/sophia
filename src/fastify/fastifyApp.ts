@@ -73,7 +73,7 @@ function listen(port: number): void {
 			if (err) {
 				throw err;
 			}
-			logger.debug(`Listening on ${port}`);
+			logger.info(`Listening on ${port}`);
 		},
 	);
 }
@@ -88,6 +88,11 @@ async function loadPlugins(config: FastifyConfig) {
 		encoding: 'utf8',
 		runFirst: true,
 		routes: [],
+	});
+	await fastifyInstance.register(import('@fastify/cors'), {
+		origin: '*', // Allow requests from all origins
+		methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow these HTTP methods
+		allowedHeaders: ['content-type', 'authorization'], // Allow these headers
 	});
 }
 
@@ -162,7 +167,8 @@ function setErrorHandler() {
 			return;
 		}
 
-		reportError(error);
+		// TODO reportError(error);
+		logger.error(error);
 
 		reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
 			statusCode: HttpStatus.INTERNAL_SERVER_ERROR,

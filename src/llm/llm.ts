@@ -20,7 +20,7 @@ export interface LLM {
 	/**
 	 * The LLM model identifier
 	 */
-	getModelName(): string;
+	getModel(): string;
 	/**
 	 * Formats the output of a successful function call
 	 * @param toolName

@@ -11,7 +11,7 @@ export interface AgentStateService {
 export class AgentStateServiceFile implements AgentStateService {
 	async save(state: AgentContext): Promise<void> {
 		mkdirSync('./.nous/agent-state', { recursive: true });
-		writeFileSync(`./.nous/agent-state/${state.agentId}.json`, serializeContext(state));
+		writeFileSync(`./.nous/agent-state/${state.agentId}.json`, JSON.stringify(serializeContext(state)));
 	}
 	async updateState(ctx: AgentContext, state: AgentRunningState): Promise<void> {
 		ctx.state = state;
@@ -19,7 +19,7 @@ export class AgentStateServiceFile implements AgentStateService {
 	}
 	async load(executionId: string): Promise<AgentContext> {
 		const jsonString = readFileSync(`./.nous/agent-state/${executionId}.json`).toString();
-		return deserializeContext(jsonString);
+		return deserializeContext(JSON.parse(jsonString));
 	}
 
 	async listRunning(): Promise<AgentContext[]> {
@@ -32,7 +32,7 @@ export class AgentStateServiceFile implements AgentStateService {
 				console.log(`readFileSync ./.nous/agent-state/${file}`);
 				const jsonString = readFileSync(`./.nous/agent-state/${file}`).toString();
 				try {
-					const ctx = deserializeContext(jsonString);
+					const ctx = deserializeContext(JSON.parse(jsonString));
 					if (ctx.state !== 'completed') contexts.push(ctx);
 				} catch (e) {
 					console.log('Unable to deserialise', file, e.message);

@@ -26,7 +26,7 @@ export class MultiLLM extends BaseLLM {
 		const calls: Array<{ model: string; call: Promise<string> }> = [];
 		for (const llm of this.llms) {
 			for (let i = 0; i < this.callsPerLLM; i++) {
-				calls.push({ model: llm.getModelName(), call: llm.generateText(prompt, systemPrompt) });
+				calls.push({ model: llm.getModel(), call: llm.generateText(prompt, systemPrompt) });
 			}
 		}
 		const settled = await Promise.allSettled(calls.map((call) => call.call));

@@ -2,6 +2,7 @@ import { AgentLLMs } from '#agent/agentContext';
 import { LLM } from '#llm/llm';
 import { ANTHROPIC_VERTEX_SERVICE, anthropicVertexLLmFromModel } from '#llm/models/anthropic-vertex';
 import { ANTHROPIC_SERVICE, anthropicLLmFromModel } from '#llm/models/claude';
+import { FIREWORKS_SERVICE, fireworksLLmFromModel } from '#llm/models/fireworks';
 import { GROQ_SERVICE, groqLLmFromModel } from '#llm/models/groq';
 import { OPENAI_SERVICE, openaiLLmFromModel } from '#llm/models/openai';
 import { TOGETHER_SERVICE, togetherLLmFromModel } from '#llm/models/together';
@@ -21,6 +22,8 @@ export function llmFromJSON(obj: any): LLM {
 			return vertexLLmFromModel(obj.model);
 		case TOGETHER_SERVICE:
 			return togetherLLmFromModel(obj.model);
+		case FIREWORKS_SERVICE:
+			return fireworksLLmFromModel(obj.model);
 		case 'multi':
 			console.log('TODO deserialize multi LLM');
 			return null;

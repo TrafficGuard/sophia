@@ -54,7 +54,7 @@ export abstract class BaseLLM implements LLM {
 		return false;
 	}
 
-	getModelName(): string {
+	getModel(): string {
 		return `${this.constructor.name}:${this.model}`;
 	}
 

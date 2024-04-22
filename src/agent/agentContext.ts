@@ -137,7 +137,7 @@ export function updateContext(updates: Partial<AgentContext>) {
 	Object.assign(store, updates);
 }
 
-export function serializeContext(context: AgentContext): string {
+export function serializeContext(context: AgentContext): Record<string, any> {
 	const serialized = {};
 
 	for (const key of Object.keys(context)) {
@@ -163,10 +163,10 @@ export function serializeContext(context: AgentContext): string {
 			serialized[key] = JSON.stringify(Array.from(context[key].entries()));
 		} else if (key === 'llms') {
 			serialized[key] = {
-				easy: context.llms.easy.toJSON(),
-				medium: context.llms.medium.toJSON(),
-				hard: context.llms.hard.toJSON(),
-				xhard: context.llms.xhard.toJSON(),
+				easy: context.llms.easy?.toJSON(),
+				medium: context.llms.medium?.toJSON(),
+				hard: context.llms.hard?.toJSON(),
+				xhard: context.llms.xhard?.toJSON(),
 			};
 		}
 		// otherwise throw error
@@ -174,11 +174,10 @@ export function serializeContext(context: AgentContext): string {
 			throw new Error(`Cant serialize context property ${key}`);
 		}
 	}
-	return JSON.stringify(serialized);
+	return serialized;
 }
 
-export function deserializeContext(json: string): AgentContext {
-	const serialised = JSON.parse(json);
+export function deserializeContext(serialised: Record<string, any>): AgentContext {
 	const context: Partial<AgentContext> = {};
 
 	for (const key of Object.keys(serialised)) {
