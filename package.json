@@ -24,7 +24,8 @@
     "test:system": "node --env-file=variables/Development ./node_modules/mocha/bin/mocha -r ts-node/register -r tsconfig-paths/register \"src/**/*.sys.ts\" --timeout 0  --exit",
     "test:single": "node --env-file=variables/Development ./node_modules/mocha/bin/mocha -r ts-node/register -r tsconfig-paths/register $1 --timeout 0 --colors --exit --",
     "format": "biome format --write ./src",
-    "lint": "biome check --apply-unsafe ./src"
+    "lint": "biome check --apply-unsafe ./src",
+    "prepare": "node .husky/install.mjs"
   },
   "keywords": [],
   "author": "",
@@ -100,6 +101,7 @@
     "chai": "^4.4.1",
     "chai-subset": "^1.6.0",
     "drizzle-kit": "^0.20.14",
+    "husky": "^9.0.11",
     "mocha": "^10.3.0",
     "npm-run-all": "^4.1.5",
     "sinon": "^17.0.0",
