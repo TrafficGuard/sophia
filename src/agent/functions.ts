@@ -1,6 +1,7 @@
 // - Types --------------------------------------------------------------------
 
 import { Span } from '@opentelemetry/api';
+import { agentContext, agentContextStorage } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
 import { getTracer, setFunctionSpanAttributes } from '#o11y/trace';
 
@@ -95,14 +96,21 @@ export function func() {
 
 			return tracer.withActiveSpan(functionName, async (span: Span) => {
 				setFunctionSpanAttributes(span, functionName, attributeExtractors, args);
-				const result = originalMethod.call(this, ...args);
-				if (typeof result?.then === 'function') await result;
+
 				try {
-					span.setAttribute('result', JSON.stringify(result));
-				} catch (e) {
-					logger.info(`Could not serialize result from function ${functionName}: ${e.message}`);
+					agentContext().callStack.push(functionName);
+
+					const result = originalMethod.call(this, ...args);
+					if (typeof result?.then === 'function') await result;
+					try {
+						span.setAttribute('result', JSON.stringify(result));
+					} catch (e) {
+						logger.info(`Could not serialize result from function ${functionName}: ${e.message}`);
+					}
+					return result;
+				} finally {
+					agentContext().callStack.pop();
 				}
-				return result;
 			});
 		};
 	};

@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { Span } from '@opentelemetry/api';
-import { AgentContext, AgentLLMs, agentContext, createContext, enterWithContext } from '#agent/agentContext';
+import { AgentContext, AgentLLMs, agentContextStorage, createContext, enterWithContext } from '#agent/agentContext';
 import '#fastify/trace-init/trace-init';
 import { LLM } from '#llm/llm';
 import { Claude3_Sonnet_Vertex } from '#llm/models/anthropic-vertex';
@@ -30,7 +30,7 @@ async function main() {
 	const prompt = readFileSync('src/test/chat-in', 'utf-8');
 
 	const context: AgentContext = createContext('chat', llms);
-	agentContext.enterWith(context);
+	agentContextStorage.enterWith(context);
 	context.toolbox.addTool(context.fileSystem, 'FileSystem');
 
 	// console.log(prompt)

@@ -1,5 +1,5 @@
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs';
-import { AgentContext, AgentRunningState, agentContext, deserializeContext, serializeContext } from '#agent/agentContext';
+import { AgentContext, AgentRunningState, agentContextStorage, deserializeContext, serializeContext } from '#agent/agentContext';
 
 export interface AgentStateService {
 	save(state: AgentContext): Promise<void>;

@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import { Span } from '@opentelemetry/api';
-import { AgentContext, AgentLLMs, agentContext, createContext, enterWithContext } from '#agent/agentContext';
+import { AgentContext, AgentLLMs, agentContextStorage, createContext, enterWithContext } from '#agent/agentContext';
 import { FileSystem } from '#agent/filesystem';
 import '#fastify/trace-init/trace-init';
 import { GEMINI_1_5_PRO_LLMS, Gemini_1_5_Pro } from '#llm/models/vertexai';
@@ -20,7 +20,7 @@ async function main() {
 	const llms: AgentLLMs = GEMINI_1_5_PRO_LLMS();
 
 	const context: AgentContext = createContext('edit-local', llms);
-	agentContext.enterWith(context);
+	agentContextStorage.enterWith(context);
 	context.toolbox.addTool(context.fileSystem, 'FileSystem');
 
 	//const system = readFileSync('src/test/agent-system', 'utf-8');

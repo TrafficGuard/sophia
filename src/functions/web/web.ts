@@ -1,7 +1,7 @@
 import path from 'path';
 import { Readability } from '@mozilla/readability';
 import { JSDOM } from 'jsdom';
-import { agentContext, getFileSystem, llms } from '#agent/agentContext';
+import { agentContextStorage, getFileSystem, llms } from '#agent/agentContext';
 import { func } from '#agent/functions';
 import { funcClass } from '#agent/metadata';
 import { execCommand } from '#utils/exec';
@@ -62,12 +62,12 @@ export class PublicWeb {
 	@func()
 	@cacheRetry({ scope: 'global' })
 	async getWebPageExtract(url: string, dataExtractionInstructions: string, memoryKey?: string): Promise<string> {
-		const memory = agentContext.getStore().memory;
+		const memory = agentContextStorage.getStore().memory;
 		if (memory.has(memoryKey)) throw new Error(`The memory key ${memoryKey} already exists`);
 		const contents = await this.getWebPage(url);
 		const extracted = await llms().medium.generateText(`<page_contents>${contents}</page_contents>\n\n${dataExtractionInstructions}`);
 		if (memoryKey) {
-			agentContext.getStore().memory.set(memoryKey, extracted);
+			agentContextStorage.getStore().memory.set(memoryKey, extracted);
 		}
 		return extracted;
 	}

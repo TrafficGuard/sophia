@@ -3,7 +3,7 @@ import { existsSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { DiffRefsSchema, MergeRequestDiffSchema, MergeRequestDiscussionNotePositionOptions } from '@gitbeaker/rest';
 import { DOMParser } from 'xmldom';
-import { AgentContext, AgentLLMs, agentContext, createContext, enterWithContext, getFileSystem, llms } from '#agent/agentContext';
+import { AgentContext, AgentLLMs, agentContextStorage, createContext, enterWithContext, getFileSystem, llms } from '#agent/agentContext';
 import { FileSystem } from '#agent/filesystem';
 import { getFunctionDefinitions } from '#agent/metadata';
 import '#fastify/trace-init/trace-init';

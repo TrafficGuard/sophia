@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import { AgentLLMs, agentContext, enterWithContext, getFileSystem } from '#agent/agentContext';
+import { AgentLLMs, agentContextStorage, enterWithContext, getFileSystem } from '#agent/agentContext';
 import { RunAgentConfig, runAgent } from '#agent/agentRunner';
 import { getHumanInLoopSettings } from '#agent/humanInLoop';
 import { Toolbox } from '#agent/toolbox';

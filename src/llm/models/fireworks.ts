@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { addCost } from '#agent/agentContext';
+import { addCost, agentContext } from '#agent/agentContext';
 import { withSpan } from '#o11y/trace';
 import { sleep } from '#utils/async-utils';
 import { RetryableError } from '../../cache/cache';
@@ -27,6 +27,7 @@ export class FireworksLLM extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
+				caller: agentContext().callStack.at(-1) ?? '',
 			});
 			try {
 				const response: OpenAI.ChatCompletion = await client.chat.completions.create({

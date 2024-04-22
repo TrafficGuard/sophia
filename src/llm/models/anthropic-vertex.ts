@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { AnthropicVertex } from '@anthropic-ai/vertex-sdk';
-import { AgentLLMs, addCost } from '#agent/agentContext';
+import { AgentLLMs, addCost, agentContext } from '#agent/agentContext';
 import { BaseLLM } from '../base-llm';
 import { MaxTokensError } from '../errors';
 import { LLM, combinePrompts, logTextGeneration } from '../llm';
@@ -80,6 +80,7 @@ class AnthropicVertexLLM extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
+				caller: agentContext().callStack.at(-1) ?? '',
 			});
 
 			let message: Message;

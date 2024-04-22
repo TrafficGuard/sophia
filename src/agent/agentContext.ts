@@ -39,6 +39,8 @@ export interface AgentContext {
 	state: AgentRunningState;
 	inputPrompt: string;
 	systemPrompt: string;
+	/* Track what f3232unctions we've called into */
+	callStack: string[];
 	functionCallHistory: Invoked[];
 
 	// These three fields are mutable for when saving state as the agent does work
@@ -66,10 +68,14 @@ export interface AgentContext {
 	scm: SourceControlManagement | null;
 }
 
-export const agentContext = new AsyncLocalStorage<AgentContext>();
+export const agentContextStorage = new AsyncLocalStorage<AgentContext>();
+
+export function agentContext(): AgentContext {
+	return agentContextStorage.getStore();
+}
 
 export function llms(): AgentLLMs {
-	return agentContext.getStore().llms;
+	return agentContextStorage.getStore().llms;
 }
 
 /**
@@ -77,7 +83,7 @@ export function llms(): AgentLLMs {
  * @param cost the cost spent in $USD
  */
 export function addCost(cost: number) {
-	const store = agentContext.getStore();
+	const store = agentContextStorage.getStore();
 	console.log(`Adding cost $${cost}`);
 	store.cost += cost;
 	store.budgetRemaining -= cost;
@@ -85,14 +91,14 @@ export function addCost(cost: number) {
 }
 
 export function getFileSystem(): FileSystem {
-	const filesystem = agentContext.getStore().fileSystem;
+	const filesystem = agentContextStorage.getStore().fileSystem;
 	if (!filesystem) throw new Error('No file system available in the workflow context');
 	return filesystem;
 }
 
 export function runWithContext(config: { name: string; llms: AgentLLMs; retryExecutionId?: string }, func: () => any) {
 	const store: AgentContext = createContext(config.name, config.llms, config.retryExecutionId);
-	agentContext.run(store, func);
+	agentContextStorage.run(store, func);
 }
 
 /**
@@ -102,7 +108,7 @@ export function runWithContext(config: { name: string; llms: AgentLLMs; retryExe
  */
 export function enterWithContext(name: string, llms: AgentLLMs, retryExecutionId?: string) {
 	const context: AgentContext = createContext(name, llms, retryExecutionId);
-	agentContext.enterWith(context);
+	agentContextStorage.enterWith(context);
 	context.toolbox.addTool(context.fileSystem, 'FileSystem');
 }
 
@@ -115,6 +121,7 @@ export function createContext(name: string, llms: AgentLLMs, resumeAgentId?: str
 		systemPrompt: '',
 		inputPrompt: '',
 		state: 'agent',
+		callStack: [],
 		functionCallHistory: [],
 		invoking: [],
 		userEmail: process.env.USER_EMAIL,
@@ -133,7 +140,7 @@ export function createContext(name: string, llms: AgentLLMs, resumeAgentId?: str
 }
 
 export function updateContext(updates: Partial<AgentContext>) {
-	const store = agentContext.getStore();
+	const store = agentContextStorage.getStore();
 	Object.assign(store, updates);
 }
 

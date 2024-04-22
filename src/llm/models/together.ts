@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { addCost } from '#agent/agentContext';
+import { addCost, agentContext } from '#agent/agentContext';
 import { withSpan } from '#o11y/trace';
 import { sleep } from '#utils/async-utils';
 import { envVar } from '#utils/env-var';
@@ -47,6 +47,7 @@ export class TogetherLLM extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
+				caller: agentContext().callStack.at(-1) ?? '',
 			});
 			try {
 				const response: OpenAI.ChatCompletion = await this.client.chat.completions.create({

@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { AgentLLMs, addCost } from '#agent/agentContext';
+import { AgentLLMs, addCost, agentContext } from '#agent/agentContext';
 import { envVar } from '#utils/env-var';
 import { BaseLLM } from '../base-llm';
 import { MaxTokensError } from '../errors';
@@ -56,6 +56,7 @@ export class Claude extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
+				caller: agentContext().callStack.at(-1) ?? '',
 			});
 
 			let message: Message;

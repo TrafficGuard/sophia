@@ -1,5 +1,5 @@
 import { FunctionCall, GenerateContentRequest, HarmBlockThreshold, HarmCategory, SafetySetting, Tool, VertexAI } from '@google-cloud/vertexai';
-import { AgentLLMs, addCost, agentContext } from '#agent/agentContext';
+import { AgentLLMs, addCost, agentContext, agentContextStorage } from '#agent/agentContext';
 import { withActiveSpan } from '#o11y/trace';
 import { projectId, region } from '../../config';
 import { BaseLLM } from '../base-llm';
@@ -59,6 +59,7 @@ class VertexLLM extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
+				caller: agentContext().callStack.at(-1) ?? '',
 			});
 
 			const generativeModel = vertexAI.preview.getGenerativeModel({
@@ -105,7 +106,7 @@ class VertexLLM extends BaseLLM {
 	/*
 	generateTextExpectingFunctions(userPrompt: string, systemPrompt?: string): Promise<FunctionResponse> {
 		console.log(this.model, 'generateTextExpectingFunctions ========================')
-		return withSpan('generateText', async (span) => {
+		return withActiveSpan('generateText', async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
@@ -172,7 +173,7 @@ class VertexLLM extends BaseLLM {
 			return funcResponse;
 		});
 	}
-	*/
+	//*/
 }
 
 const SAFETY_SETTINGS: SafetySetting[] = [

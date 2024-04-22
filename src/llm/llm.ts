@@ -1,4 +1,4 @@
-import { agentContext } from '#agent/agentContext';
+import { agentContextStorage } from '#agent/agentContext';
 import { BaseLLM } from './base-llm';
 
 export interface LLM {
@@ -123,7 +123,7 @@ export function recordTextGenerationCosts(originalMethod: any, context: ClassMet
 
 		const response = await originalMethod.call(this, ...args);
 
-		const agentCtx = agentContext.getStore();
+		const agentCtx = agentContextStorage.getStore();
 		const inputCost = this.getInputCostPerToken() * prompt.length;
 		const outputCost = this.getOutputCostPerToken() * response.length;
 		const totalCost = inputCost + outputCost;

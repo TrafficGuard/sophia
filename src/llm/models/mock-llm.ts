@@ -1,4 +1,4 @@
-import { addCost } from '#agent/agentContext';
+import { addCost, agentContext } from '#agent/agentContext';
 import { withActiveSpan } from '#o11y/trace';
 import { BaseLLM } from '../base-llm';
 import { combinePrompts } from '../llm';
@@ -28,6 +28,7 @@ export class MockLLM extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
+				caller: agentContext().callStack.at(-1) ?? '',
 			});
 
 			if (this.response === undefined) throw new Error('Need to call setResponse on MockLLM before calling generateText');

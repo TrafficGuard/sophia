@@ -1,6 +1,6 @@
 import { func } from '#agent/functions';
 import { logger } from '#o11y/logger';
-import { agentContext } from './agentContext';
+import { agentContextStorage } from './agentContext';
 import { funcClass } from './metadata';
 
 export const AGENT_COMPLETED_NAME = 'Agent.completed';
@@ -38,7 +38,7 @@ export class Agent {
 	 */
 	@func()
 	async addNewMemory(key: string, content: string): Promise<void> {
-		const memory = agentContext.getStore().memory;
+		const memory = agentContextStorage.getStore().memory;
 		// if (memory.has(key)) throw new Error(`Memory key ${key} already exists. Did you mean to update or use a different key?`);
 		memory.set(key, content);
 	}
@@ -51,7 +51,7 @@ export class Agent {
 	 */
 	@func()
 	async updateMemory(key: string, content: string): Promise<void> {
-		const memory = agentContext.getStore().memory;
+		const memory = agentContextStorage.getStore().memory;
 		// if (!memory.has(key)) throw new Error(`Memory key ${key} does not exist. Did you mean to create a new memory key or use a different existing key?`);
 		memory.set(key, content);
 	}

@@ -6,7 +6,7 @@ import { logger } from '#o11y/logger';
 import { startSpan, withActiveSpan } from '#o11y/trace';
 import { CDATA_END, CDATA_START } from '#utils/xml-utils';
 import { appCtx } from '../app';
-import { AgentContext, AgentLLMs, AgentRunningState, agentContext, createContext, llms } from './agentContext';
+import { AgentContext, AgentLLMs, AgentRunningState, agentContextStorage, createContext, llms } from './agentContext';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from './agentFunctions';
 import { getFunctionDefinitions } from './metadata';
 import { Toolbox } from './toolbox';
@@ -29,7 +29,7 @@ export interface RunAgentConfig {
 }
 
 export function buildMemoryPrompt(): string {
-	const memory = agentContext.getStore().memory;
+	const memory = agentContextStorage.getStore().memory;
 	let result = '<memory>\n';
 	for (const mem of memory.entries()) {
 		result += `<${mem[0]}>${CDATA_START}\n${mem[1]}\n${CDATA_END}</${mem[0]}>\n`;
@@ -39,7 +39,7 @@ export function buildMemoryPrompt(): string {
 }
 
 export function buildFunctionCallHistoryPrompt(): string {
-	const functionCalls = agentContext.getStore().functionCallHistory;
+	const functionCalls = agentContextStorage.getStore().functionCallHistory;
 	let result = '<function_call_history>\n';
 	for (const call of functionCalls) {
 		let params = '';
@@ -71,7 +71,7 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 	let resumedState: AgentRunningState | null = null;
 	if (config.resumeAgentId) resumedState = context.state;
 
-	agentContext.enterWith(context);
+	agentContextStorage.enterWith(context);
 	context.toolbox.addTool(context.fileSystem, 'FileSystem');
 
 	const llm = llms().hard;
@@ -108,7 +108,7 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 	let costSinceHil = 0;
 	let previousCost = 0;
 
-	const ctx: AgentContext = agentContext.getStore();
+	const ctx: AgentContext = agentContextStorage.getStore();
 	context.state = 'agent';
 	await agentStateService.save(context);
 
@@ -132,11 +132,11 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 					}
 					countSinceHil++;
 
-					const newCosts = agentContext.getStore().cost - previousCost;
+					const newCosts = agentContextStorage.getStore().cost - previousCost;
 					if (newCosts) console.log(`New costs $${newCosts.toFixed(2)}`);
-					previousCost = agentContext.getStore().cost;
+					previousCost = agentContextStorage.getStore().cost;
 					costSinceHil += newCosts;
-					console.log(`Spent $${costSinceHil.toFixed(2)} since last input. Total cost $${agentContext.getStore().cost.toFixed(2)}`);
+					console.log(`Spent $${costSinceHil.toFixed(2)} since last input. Total cost $${agentContextStorage.getStore().cost.toFixed(2)}`);
 					if (hilBudget && costSinceHil > hilBudget) {
 						// format costSinceHil to 2 decimal places
 						await waitForInput();
@@ -237,7 +237,7 @@ class HumanInLoopReturn extends Error {}
 async function waitForInput() {
 	const span = startSpan('humanInLoop');
 
-	await appCtx().agentStateService.updateState(agentContext.getStore(), 'hil');
+	await appCtx().agentStateService.updateState(agentContextStorage.getStore(), 'hil');
 
 	const rl = readline.createInterface({
 		input: process.stdin,

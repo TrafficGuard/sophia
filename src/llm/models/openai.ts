@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { addCost } from '#agent/agentContext';
+import { addCost, agentContext } from '#agent/agentContext';
 import { withActiveSpan } from '#o11y/trace';
 import { BaseLLM } from '../base-llm';
 import { LLM, combinePrompts, logTextGeneration } from '../llm';
@@ -46,6 +46,7 @@ export class GPT extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
+				caller: agentContext().callStack.at(-1) ?? '',
 			});
 
 			const stream = await this.openai.chat.completions.create({

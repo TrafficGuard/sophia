@@ -1,4 +1,4 @@
-import { agentContext } from '#agent/agentContext';
+import { agentContextStorage } from '#agent/agentContext';
 
 /**
  * Interface for storing and retrieving cached function call results
@@ -42,7 +42,7 @@ export function cacheRetry(options: Partial<CacheRetryOptions> = DEFAULTS) {
 		const methodName = String(context.name);
 
 		async function replacementMethod(this: any, ...args: any[]) {
-			const cacheService = agentContext.getStore().functionCacheService;
+			const cacheService = agentContextStorage.getStore().functionCacheService;
 			// console.log(this.constructor.name, methodName, args)
 			const cachedValue = await cacheService.get(this.constructor.name, methodName, args);
 

@@ -1,4 +1,4 @@
-import { AgentLLMs } from '#agent/agentContext';
+import { AgentLLMs, agentContext } from '#agent/agentContext';
 import { addCost } from '#agent/agentContext';
 import { withActiveSpan } from '#o11y/trace';
 import { RetryableError } from '../../cache/cache';
@@ -52,6 +52,7 @@ export class GroqLLM extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
+				caller: agentContext().callStack.at(-1) ?? '',
 			});
 			span.setAttribute('userPrompt', userPrompt);
 			span.setAttribute('inputChars', prompt.length);
