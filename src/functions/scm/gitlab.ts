@@ -1,11 +1,13 @@
 import { existsSync } from 'fs';
 import { join } from 'path';
+import { ExpandedMergeRequestSchema } from '@gitbeaker/core';
 import { Gitlab, MergeRequestDiffSchema, MergeRequestDiscussionNotePositionOptions, ProjectSchema } from '@gitbeaker/rest';
 import { getFileSystem, llms } from '#agent/agentContext';
 import { func } from '#agent/functions';
 import { funcClass } from '#agent/metadata';
+import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
-import { getFulfilled } from '#utils/async-utils';
+import { allSettledAndFulFilled } from '#utils/async-utils';
 import { envVar } from '#utils/env-var';
 import { checkExecResult, execCmd, execCommand } from '#utils/exec';
 import { cacheRetry } from '../../cache/cache';
@@ -26,8 +28,11 @@ export interface GitLabConfig {
  * AI review of a git diff
  */
 type DiffReview = {
-	diff: string;
-	comments: Array<MergeRequestDiscussionNotePositionOptions & { comment: string; lineNumber: number }>;
+	mrDiff: MergeRequestDiffSchema;
+	/** The code being reviewed from the diff */
+	code: string;
+	/** Code review comments */
+	comments: Array<{ comment: string; lineNumber: number }>;
 };
 
 export type GitLabProject = Pick<
@@ -54,12 +59,12 @@ export class GitLabServer implements SourceControlManagement {
 	constructor(config?: GitLabConfig) {
 		this.host = envVar('GITLAB_HOST');
 		this.config = config ?? {
-			host: `https://${this.host}`,
+			host: this.host,
 			token: envVar('GITLAB_TOKEN'),
 			topLevelGroups: JSON.parse(envVar('GITLAB_GROUPS')),
 		};
 		this.api = new Gitlab({
-			host: this.config.host,
+			host: `https://${this.config.host}`,
 			token: this.config.token,
 		});
 	}
@@ -84,7 +89,7 @@ export class GitLabServer implements SourceControlManagement {
 	// 			'Select the project object which most closely matches the task and return the object. Output your answer in JSON format',
 	// 	});
 	//
-	// 	const project = await getLlm().generateTextAsJson(prompt);
+	// 	const project = await llms().medium.generateTextAsJson(prompt);
 	// 	return project;
 	// }
 
@@ -162,6 +167,11 @@ export class GitLabServer implements SourceControlManagement {
 		return path;
 	}
 
+	/**
+	 * Creates a Merge request
+	 * @param title {string} The title of the merge request
+	 * @param description {string} The description of the merge request
+	 */
 	@func()
 	async createMergeRequest(title: string, description: string): Promise<string> {
 		// TODO lookup project details from project list
@@ -214,10 +224,12 @@ export class GitLabServer implements SourceControlManagement {
 
 	@span()
 	async reviewMergeRequest(gitlabProjectId: string | number, mergeRequestIId: number): Promise<MergeRequestDiffSchema[]> {
+		const mergeRequest: ExpandedMergeRequestSchema = await this.api.MergeRequests.show(gitlabProjectId, mergeRequestIId);
 		const diffs: MergeRequestDiffSchema[] = await this.getDiffs(gitlabProjectId, mergeRequestIId);
 
 		const codeReviewConfigs = await loadCodeReviews();
 
+		// Find the code review configurations which are relevant for this diff
 		const codeReviews: Promise<DiffReview>[] = [];
 		for (const diff of diffs) {
 			for (const codeReview of codeReviewConfigs) {
@@ -237,75 +249,44 @@ export class GitLabServer implements SourceControlManagement {
 					}
 				}
 				if (hasExtension && hasText) {
-					codeReviews.push(this.reviewDiff(gitlabProjectId, mergeRequestIId, diff, codeReview));
+					codeReviews.push(this.reviewDiff(diff, codeReview));
 				}
 			}
 		}
-		// console.log(codeReviews.length);
 
-		const result = await Promise.allSettled(codeReviews);
-		const diffReviews = getFulfilled(result).filter((diffReview) => diffReview !== null);
-
-		const mr = await this.api.MergeRequests.show(gitlabProjectId, mergeRequestIId);
-		const sha = mr.sha;
+		let diffReviews = await allSettledAndFulFilled(codeReviews);
+		diffReviews = diffReviews.filter((diffReview) => diffReview !== null);
 
 		for (const diffReview of diffReviews) {
-			// console.log('start>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
-			// console.log(diffReview.diff);
-			// console.log(review.newPath)
 			for (const comment of diffReview.comments) {
-				console.log('COMMENT ---------------');
-				console.log(comment.lineNumber, comment.comment);
-				const position: MergeRequestDiscussionNotePositionOptions = comment;
-				position.baseSha = sha;
-				position.lineRange = {
-					start: { lineCode: `${sha}_${comment.lineNumber - 1}_${comment.lineNumber - 1}`, type: 'new' },
-					end: { lineCode: `${sha}_${comment.lineNumber - 1}_${comment.lineNumber - 1}`, type: 'new' },
+				logger.debug(comment, 'Review comment');
+				const position: MergeRequestDiscussionNotePositionOptions = {
+					baseSha: mergeRequest.diff_refs.base_sha,
+					headSha: mergeRequest.diff_refs.head_sha,
+					startSha: mergeRequest.diff_refs.start_sha,
+					newPath: diffReview.mrDiff.new_path,
+					positionType: 'text',
+					newLine: comment.lineNumber.toString(),
 				};
-				position.oldLine = undefined;
-				console.log(position);
-				//}
-				// lineRange?: {
-				// 	start?: {
-				// 		lineCode: string;
-				// 		type: 'new' | 'old';
-				// 	};
-				// 	end?: {
-				// 		lineCode: string;
-				// 		type: 'new' | 'old';
-				// 	};
-				// };
 
 				await this.api.MergeRequestDiscussions.create(gitlabProjectId, mergeRequestIId, comment.comment, { position });
 			}
-			// console.log('end<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<');
-			// console.log();
 		}
-
 		return diffs;
 	}
 
 	/**
 	 * Review a diff from a merge request using the code review guidelines configured by the files in resources/codeReview
-	 * @param gitlabProjectId
-	 * @param mergeRequestIId
 	 * @param mrDiff
 	 * @param codeReview
 	 */
 	@cacheRetry()
-	async reviewDiff(gitlabProjectId: string | number, mergeRequestIId: number, mrDiff: MergeRequestDiffSchema, codeReview: ICodeReview): Promise<DiffReview> {
-		// https://github.com/jdalrymple/gitbeaker/blob/main/packages/core/src/resources/MergeRequestNotes.ts
-		// console.log('REVIEWING >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
-		// console.log(mrDiff);
-		// console.log(codeReview.xml);
-		// console.log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<');
-
-		console.log(mrDiff.diff);
+	async reviewDiff(mrDiff: MergeRequestDiffSchema, codeReview: ICodeReview): Promise<DiffReview> {
 		// The first line of the diff has the starting line number e.g. @@ -0,0 +1,76 @@
 		let startingLineNumber = getStartingLineNumber(mrDiff.diff);
 
-		// Transform the diff, so it's not a diff, removing the deleted lines so only the unchanged and new lines
-		// remaining,
+		// Transform the diff, so it's not a diff, removing the deleted lines so only the unchanged and new lines remain
+		// i.e. the code in the latest commit
 		const diffLines: string[] = mrDiff.diff
 			.trim()
 			.split('\n')
@@ -328,17 +309,16 @@ export class GitLabServer implements SourceControlManagement {
 				}
 			}
 		}
-		const diff = diffLines.join('\n');
-		console.log(diff);
+		const currentCode = diffLines.join('\n');
 
 		const prompt = `You are an AI software engineer whose task is to review the code changes for our software development style standards.
 		The following is the configuration of the particular code review that you must do.
 		${codeReview.xml}
-		The diff to review is:
-		<diff>
-		${diff}
-		</diff>
-		The comments like /*14*/ at the start of lines are the line numbers
+		The code to review is:
+		<code>
+		${currentCode}
+		</code>
+		The comments like /*14*/ at the start of lines are the line numbers.
 		Response only in JSON wrapped in <json></json>.
 		Based on the provided code review guidelines, analyze the code changes and identify any potential invalid code which violates the code review description. 
 		If no violations are found, responsd with an empty JSON array i.e. <json>[]</json>
@@ -347,59 +327,15 @@ export class GitLabServer implements SourceControlManagement {
 		<example>
 		<json>
 		[{
-		  "line_number": number,
+		  "lineNumber": number,
 		  "comment": "Explanation of the violation and suggestion for valid code in Markdown format"
 		}]
 		</json>
 		</example>
 		`;
-		const results = await llms().medium.generateTextAsJson(prompt);
+		const reviewComments = (await llms().medium.generateTextAsJson(prompt)) as Array<{ lineNumber: number; comment: string }>;
 
-		if (!results.length) return null;
-
-		const diffReview: DiffReview = {
-			diff,
-			comments: [],
-		};
-
-		for (const result of results) {
-			const lineNumber = result.line_number;
-			const comment = result.comment;
-
-			// Parse the starting line number from the diff
-			const startingLineNumber = parseInt(mrDiff.diff.split('\n')[0].split(' ')[1], 10);
-			const newLineNumber = startingLineNumber + lineNumber - 1;
-
-			/*
-			https://archives.docs.gitlab.com/16.4/ee/api/discussions.html#create-a-new-thread-in-the-merge-request-diff
-            Both position[old_path] and position[new_path] are required and must refer to the file path before and after the change.
-            To create a thread on an added line (highlighted in green in the merge request diff), use position[new_line] and don’t include position[old_line].
-            To create a thread on a removed line (highlighted in red in the merge request diff), use position[old_line] and don’t include position[new_line].
-            To create a thread on an unchanged line, include both position[new_line] and position[old_line] for the line. These positions might not be the same if earlier changes in the file changed the line number. For the discussion about a fix, see issue 32516.
-            If you specify incorrect base, head, start, or SHA parameters, you might run into the bug described in issue #296829).
-
-            A line code is of the form <SHA>_<old>_<new>, like this: adc83b19e793491b1c6ea0fd8b46cd9f32e292fc_5_5
-			<SHA> is the SHA1 hash of the filename.
-			<old> is the line number before the change.
-			<new> is the line number after the change.
-            */
-
-			const discussionNotePositionOptions: MergeRequestDiscussionNotePositionOptions = {
-				baseSha: mrDiff.a_mode, // Assuming a_mode and b_mode represent base and head commit SHAs
-				startSha: mrDiff.b_mode,
-				headSha: mrDiff.b_mode,
-				positionType: 'text',
-				new_path: mrDiff.new_path,
-				new_line: newLineNumber.toString(),
-				old_line: newLineNumber.toString(),
-			};
-
-			const reviewComment = { comment, lineNumber, ...discussionNotePositionOptions };
-			// console.log('adding comment');
-			// console.log(reviewComment);
-			diffReview.comments.push(reviewComment);
-		}
-		return diffReview;
+		return { code: currentCode, comments: reviewComments, mrDiff };
 	}
 }
 

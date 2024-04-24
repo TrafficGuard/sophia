@@ -4,6 +4,11 @@ export async function sleep(millis: number) {
 	});
 }
 
+export async function allSettledAndFulFilled<T>(promises: Promise<T>[]): Promise<T[]> {
+	const settled = await Promise.allSettled(promises);
+	return getFulfilled(settled);
+}
+
 export function getFulfilled<T>(settledResults: PromiseSettledResult<T>[]) {
 	return settledResults.filter((result) => result.status === 'fulfilled').map((result) => (result as PromiseFulfilledResult<T>).value);
 }
