@@ -1,4 +1,5 @@
 import { agentContextStorage } from '#agent/agentContext';
+import { logger } from '#o11y/logger';
 
 /**
  * Interface for storing and retrieving cached function call results
@@ -47,12 +48,12 @@ export function cacheRetry(options: Partial<CacheRetryOptions> = DEFAULTS) {
 			const cachedValue = await cacheService.get(this.constructor.name, methodName, args);
 
 			if (cachedValue !== undefined) {
-				console.debug(`Cached return for ${this.constructor.name}.${methodName}`);
+				logger.debug(`Cached return for ${this.constructor.name}.${methodName}`);
 				return cachedValue;
 			}
 			const cacheOptions = cacheOpts(options);
 			for (let attempt = 1; attempt <= cacheOptions.retries; attempt++) {
-				console.debug(`${this.constructor.name}.${methodName} retry ${attempt - 1}`);
+				logger.debug(`${this.constructor.name}.${methodName} retry ${attempt - 1}`);
 				try {
 					let result = originalMethod.apply(this, args);
 					if (typeof result?.then === 'function') result = await result;
@@ -67,7 +68,7 @@ export function cacheRetry(options: Partial<CacheRetryOptions> = DEFAULTS) {
 					// 	throw error;
 					// }
 
-					console.error(`Retry decorator attempt #${attempt} error ${error.message}`);
+					logger.debug(`Retry decorator attempt #${attempt} error ${error.message}`);
 					if (attempt < cacheOptions.retries) {
 						await new Promise((resolve) => setTimeout(resolve, cacheOptions.backOffMs * (attempt * attempt)));
 					} else {

@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs';
 import { AgentContext, AgentRunningState, agentContextStorage, deserializeContext, serializeContext } from '#agent/agentContext';
+import { logger } from '#o11y/logger';
 
 export interface AgentStateService {
 	save(state: AgentContext): Promise<void>;
@@ -25,17 +26,15 @@ export class AgentStateServiceFile implements AgentStateService {
 	async listRunning(): Promise<AgentContext[]> {
 		// list files under './.nous/agent-state'
 		const contexts: AgentContext[] = [];
-		console.log('readdirSync');
 		const files = readdirSync('./.nous/agent-state');
 		for (const file of files) {
 			if (file.endsWith('.json')) {
-				console.log(`readFileSync ./.nous/agent-state/${file}`);
 				const jsonString = readFileSync(`./.nous/agent-state/${file}`).toString();
 				try {
 					const ctx = deserializeContext(JSON.parse(jsonString));
 					if (ctx.state !== 'completed') contexts.push(ctx);
 				} catch (e) {
-					console.log('Unable to deserialise', file, e.message);
+					logger.warn('Unable to deserialize %o %s', file, e.message);
 				}
 			}
 		}

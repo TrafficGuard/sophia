@@ -1,0 +1,58 @@
+<code_review xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="schema.xsd">
+    <description>
+        All TypeScript functions should have the typing for the return type. If it's possible to confidently infer the return
+        type, then include it in the review comment, otherwise use the placeholder TODO. If the function is async then ensure
+        the return type is a Promise.
+    </description>
+    <file_extensions>
+        <include>.ts</include>
+    </file_extensions>
+    <requires>
+        <text>) {</text>
+    </requires>
+    <examples>
+        <example>
+            <code><![CDATA[
+                async function sendBirthdayGreeting(user: User | null) {
+                    if (!user) throw new Error('User was null');
+                    if (user.dateOfBirth < Date.now()) throw new Error(`dateOfBirth in the future for user ${user.id}`);
+                    if (dayOfYear(user.dateOfBirth) === dayOfYear(Date.now())) {
+                        await this.emailService.sendEmail(this.createBdayEmail(user));
+                    }
+                }
+            ]]></code>
+            <review_comment><![CDATA[
+                Functions must specify a return type.
+                ```
+                async sendBirthdayGreeting(user: User | null): Promise<void> {
+                ```
+            ]]></review_comment>
+        </example>
+        <example>
+            <code><![CDATA[
+                async function processAsync() {
+                    return buildComplexTypeAsync()
+                }
+            ]]></code>
+            <review_comment><![CDATA[
+                Functions must specify a return type.
+                ```
+                async function processAsync(): Promise<TODO> {
+                ```
+            ]]></review_comment>
+        </example>
+        <example>
+            <code><![CDATA[
+                function processSync() {
+                    return buildComplexTypeSync()
+                }
+            ]]></code>
+            <review_comment><![CDATA[
+                Functions must specify a return type.
+                ```
+                function processSync(): TODO {
+                ```
+            ]]></review_comment>
+        </example>
+    </examples>
+</code_review>

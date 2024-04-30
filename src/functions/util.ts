@@ -12,9 +12,7 @@ export class UtilFunctions {
 	 */
 	@func()
 	async processText(text: string, descriptionOfChanges: string): Promise<string> {
-		const prompt = `<input>${text}<input>\n` + `<action>\n${descriptionOfChanges}. Output the response inside <response></response> tags.\n</action>`;
-		const response = await llms().medium.generateText(prompt);
-		response.trim().slice('<response>'.length, '</response>'.length * -1);
-		return text;
+		const prompt = `<input>${text}<input>\n` + `<action>\n${descriptionOfChanges}. Output the response inside <result></result> tags.\n</action>`;
+		return await llms().medium.generateTextWithResult(prompt);
 	}
 }

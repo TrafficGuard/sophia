@@ -1,6 +1,7 @@
 /* eslint-disable semi */
 import { Span, Tracer } from '@opentelemetry/api';
 import opentelemetry from '@opentelemetry/api';
+import { logger } from '#o11y/logger';
 import { SugaredTracer, wrapTracer } from './trace/SugaredTracer';
 
 /**
@@ -129,7 +130,7 @@ export function setFunctionSpanAttributes(span: Span, functionName: string, attr
 		} else if (typeof extractor === 'function') {
 			span.setAttribute(attribute, extractor(...args));
 		} else {
-			console.warn(`Invalid attribute extractor for ${functionName}() attribute[${attribute}], must be a number or function`);
+			logger.warn(`Invalid attribute extractor for ${functionName}() attribute[${attribute}], must be a number or function`);
 		}
 	}
 }

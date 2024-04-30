@@ -88,7 +88,7 @@ class VertexLLM extends BaseLLM {
 			const inputCost = prompt.length * this.getInputCostPerToken();
 			const outputCost = response.length * this.getOutputCostPerToken();
 			const cost = inputCost + outputCost;
-			console.log(this.model, 'input', prompt.length, 'output', response.length);
+
 			span.setAttributes({
 				inputChars: prompt.length,
 				outputChars: response.length,

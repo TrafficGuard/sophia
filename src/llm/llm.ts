@@ -45,8 +45,13 @@ export interface LLM {
  */
 export type TaskLevel = 'easy' | 'medium' | 'hard' | 'xhard';
 
+/**
+ * The parsed response from an LLM when expecting it to respond with <function_calls></function_calls>
+ */
 export interface FunctionResponse {
+	/** The response from the LMM upto the <function_calls> element */
 	response: string;
+	/** The parsed <function_calls> element */
 	functions: FunctionCalls;
 }
 
@@ -79,8 +84,8 @@ export function logTextGeneration(originalMethod: any, context: ClassMethodDecor
 	return async function replacementMethod(this: BaseLLM, ...args: any[]) {
 		// system prompt
 		if (args.length > 1) {
-			// console.log('= SYSTEM PROMPT ==========================================');
-			// console.log(args[1]);
+			console.log('= SYSTEM PROMPT ==========================================');
+			console.log(args[1]);
 		}
 		console.log();
 		console.log('==================================================================================================================');

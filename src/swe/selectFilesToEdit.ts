@@ -1,5 +1,7 @@
-import { getFileSystem, llms } from '#agent/agentContext';
+import { agentContext, getFileSystem, llms } from '#agent/agentContext';
+import { logger } from '#o11y/logger';
 import { TypescriptTools } from './nodejs/typescriptTools';
+import { ProjectInfo } from './projectDetection';
 
 export interface SelectFilesResponse {
 	primaryFiles: SelectedFiles[];
@@ -11,8 +13,11 @@ export interface SelectedFiles {
 	reason: string;
 }
 
-export async function selectFilesToEdit(requirements: string) {
-	const repositoryMap = await new TypescriptTools().generateProjectMap();
+export async function selectFilesToEdit(requirements: string, projectInfo: ProjectInfo): Promise<SelectFilesResponse> {
+	const tools = projectInfo.languageTools;
+	let repositoryMap = '';
+	if (tools) repositoryMap = await tools.generateProjectMap();
+	else repositoryMap = (await getFileSystem().listFilesRecursively()).join('\n');
 
 	const prompt = `
 <project_map>
@@ -55,9 +60,9 @@ The file paths MUST exist in the <project_map /> file_contents path attributes.
 	const files = [...primaryFiles, ...secondaryFiles];
 	for (const file of files) {
 		if (!(await getFileSystem().fileExists(file))) {
-			console.error(`File ${file} does not exist`);
+			logger.error(`File ${file} does not exist`);
 		}
 	}
 
-	return files;
+	return response;
 }

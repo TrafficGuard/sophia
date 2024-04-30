@@ -1,5 +1,4 @@
-<code_review xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-             xsi:noNamespaceSchemaLocation="schema.xsd">
+<code_review xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="schema.xsd">
     <description>
         Prefer returning/throwing early, and handling null/empty cases first.
         If an else block throws or returns, switch the ordering of the if/else blocks, which will result in not having an else block.
@@ -8,6 +7,7 @@
     </description>
     <file_extensions>
         <include>.ts</include>
+        <include>.js</include>
     </file_extensions>
     <requires>
         <text>else</text>

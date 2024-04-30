@@ -29,7 +29,7 @@ export function generateDefinition(sourceFilePath: string): [string, any] {
 		}
 	}
 
-	console.log(`Generating definition for ${sourceFilePath}`);
+	logger.info(`Generating definition for ${sourceFilePath}`);
 	const project = new Project();
 	const sourceFile = project.createSourceFile('temp.ts', readFileSync(sourceFilePath, 'utf8'));
 
@@ -61,7 +61,7 @@ export function generateDefinition(sourceFilePath: string): [string, any] {
 			if (!hasFuncDecorator) return;
 
 			if (method.getJsDocs().length === 0) {
-				console.log(`No JSDocs found for ${methodName}. Skipping function definition`);
+				logger.warn(`No JSDocs found for ${methodName}. Skipping function definition`);
 				return;
 			}
 

@@ -1,4 +1,5 @@
 import { agentContextStorage, getFileSystem } from '#agent/agentContext';
+import { logger } from '#o11y/logger';
 import { func } from '../../agent/functions';
 import { funcClass } from '../../agent/metadata';
 import { cacheRetry } from '../../cache/cache';
@@ -23,7 +24,7 @@ export class NpmPackages {
 
 		await Promise.all(crawls);
 
-		console.log(info);
+		logger.info(info);
 		throw new Error('Not implemented');
 	}
 
@@ -36,7 +37,7 @@ export class NpmPackages {
 
 		await Promise.all(crawls);
 
-		console.log(info);
+		logger.info(info);
 		throw new Error('Not implemented');
 	}
 

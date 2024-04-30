@@ -3,12 +3,14 @@ import { resolve } from 'node:path';
 import path, { join } from 'path';
 import { promisify } from 'util';
 import ignore from 'ignore';
+import Pino from 'pino';
+import { logger } from '#o11y/logger';
 import { execCommand } from '#utils/exec';
+import { CDATA_END, CDATA_START } from '#utils/xml-utils';
+import { needsCDATA } from '#utils/xml-utils';
 import { Git } from '../functions/scm/git';
 import { VersionControlSystem } from '../functions/scm/versionControlSystem';
 import { UtilFunctions } from '../functions/util';
-import { CDATA_END, CDATA_START } from '../utils/xml-utils';
-import { needsCDATA } from '../utils/xml-utils';
 import { func, parseArrayParameterValue } from './functions';
 import { funcClass } from './metadata';
 const fs = {
@@ -22,14 +24,16 @@ type FileFilter = (filename: string) => boolean;
 @funcClass(__filename)
 export class FileSystem {
 	/** The path relative to the basePath */
-	private workingDirectory = './';
+	private workingDirectory = '.';
 	vcs: VersionControlSystem | null = null;
+	log: Pino.Logger;
 
 	/**
 	 * @param basePath The root folder allowed to be accessed by this file system instance. This should only be accessed by system level
 	 * functions. Generally getWorkingDirectory() should be used
 	 */
 	constructor(public basePath: string = process.cwd()) {
+		this.log = logger.child({ FileSystem: basePath });
 		// We will want to re-visit this, the .git folder can be in a parent directory
 		if (existsSync(path.join(basePath, '.git'))) {
 			this.vcs = new Git(this);
@@ -53,6 +57,7 @@ export class FileSystem {
 	 * @returns the full path of the working directory on the filesystem
 	 */
 	getWorkingDirectory(): string {
+		if (this.workingDirectory.startsWith(this.basePath)) return this.workingDirectory;
 		return path.join(this.basePath, this.workingDirectory);
 	}
 
@@ -61,6 +66,8 @@ export class FileSystem {
 	 * @param dir the new working directory
 	 */
 	setWorkingDirectory(dir: string): void {
+		this.log.info(`setWorkingDirectory ${dir}`);
+		if (`/${dir}`.startsWith(this.basePath)) dir = `/${dir}`;
 		let newWorkingDirectory = dir.startsWith(this.basePath) ? dir.replace(this.basePath, '') : dir;
 		newWorkingDirectory = dir.startsWith('/') ? newWorkingDirectory : path.join(this.workingDirectory, newWorkingDirectory);
 		// Get the relative path from baseUrl to new working path
@@ -68,6 +75,7 @@ export class FileSystem {
 		let relativePath = path.relative(this.basePath, newFullWorkingDir);
 		// If the relative path starts with '..', new path is higher than basePath, so set it as the current dir
 		if (relativePath.startsWith('..')) relativePath = './';
+		this.log.debug(`  this.workingDirectory: ${relativePath}`);
 		this.workingDirectory = relativePath;
 	}
 
@@ -150,14 +158,18 @@ export class FileSystem {
 
 	/**
 	 * List all the files recursively under the given path, excluding any paths in a .gitignore file if it exists
-	 * @param dirPath The directory to search under
+	 * @param dirPath The directory to search under (Optional - defaults to the workingDirectory)
 	 * @returns the list of files
 	 */
 	@func()
-	async listFilesRecursively(dirPath?: string): Promise<string[]> {
+	async listFilesRecursively(dirPath = './'): Promise<string[]> {
 		// dirPath ??= getFileSystem().workingDirectory
+		this.log.debug(`basePath: ${this.basePath}`);
+		this.log.debug(`cwd: ${this.workingDirectory}`);
+		this.log.debug(`cwd(): ${this.getWorkingDirectory()}`);
 
-		const fullPath = dirPath ? path.join(this.basePath, dirPath) : this.basePath;
+		const fullPath = path.join(this.getWorkingDirectory(), dirPath);
+		// TODO check isnt going higher than this.basePath
 
 		const filter: FileFilter = (name) => true;
 		const ig = ignore();
@@ -181,22 +193,22 @@ export class FileSystem {
 
 	async listFilesRecurse(rootPath: string, dirPath: string, ig, filter: (file: string) => boolean = (name) => true): Promise<string[]> {
 		const relativeRoot = this.basePath;
-
+		this.log.debug(`listFilesRecurse dirPath: ${dirPath}`);
 		const files: string[] = [];
 
 		const dirents = await fs.readdir(dirPath, { withFileTypes: true });
 		for (const dirent of dirents) {
 			if (dirent.isDirectory()) {
-				const relativePath = path.relative(rootPath, `${dirPath}/${dirent.name}`);
+				const relativePath = path.relative(rootPath, path.join(dirPath, dirent.name));
 				if (!ig.ignores(relativePath) && !ig.ignores(`${relativePath}/`)) {
-					files.push(...(await this.listFilesRecurse(rootPath, `${dirPath}/${dirent.name}`, ig, filter)));
+					files.push(...(await this.listFilesRecurse(rootPath, path.join(dirPath, dirent.name), ig, filter)));
 				}
 			} else {
-				const relativePath = path.relative(relativeRoot, `${dirPath}/${dirent.name}`);
+				const relativePath = path.relative(relativeRoot, path.join(dirPath, dirent.name));
 
 				if (!ig.ignores(relativePath)) {
 					// console.log(`pushing ${dirPath}/${dirent.name}`)
-					files.push(`${dirPath}/${dirent.name}`);
+					files.push(path.join(dirPath, dirent.name));
 				}
 			}
 		}
@@ -210,9 +222,20 @@ export class FileSystem {
 	 */
 	@func()
 	async getFileContents(filePath: string): Promise<string> {
-		const fullPath = path.join(this.basePath, filePath);
-		const contents = await fs.readFile(fullPath, 'utf8');
-		return `<file_content file_path="${filePath}">\n${contents}\n</file_contents>\n`;
+		// A filePath starts with / is it relative to FileSystem.basePath, otherwise its relative to FileSystem.workingDirectory
+		const fullPath = filePath.startsWith('/') ? resolve(this.basePath, filePath.slice(1)) : resolve(this.basePath, this.workingDirectory, filePath);
+		// const fullPath = path.join(this.basePath, filePath);
+		return fs.readFile(fullPath, 'utf8');
+	}
+
+	/**
+	 * Gets the contents of a local file on the file system.
+	 * @param filePath The file path to read the contents of (e.g. src/index.ts)
+	 * @returns the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
+	 */
+	@func()
+	async getFileContentsAsXML(filePath: string): Promise<string> {
+		return `<file_content file_path="${filePath}">\n${await this.getFileContents(filePath)}\n</file_contents>\n`;
 	}
 
 	/**
@@ -229,8 +252,7 @@ export class FileSystem {
 				const contents = await fs.readFile(filePath, 'utf8');
 				mapResult.set(projectFilePath, contents);
 			} catch (e) {
-				console.error(`Error reading ${filePath} (projectFilePath ${projectFilePath})`);
-				console.error(e);
+				this.log.error(e, `Error reading ${filePath} (projectFilePath ${projectFilePath})`);
 			}
 		}
 		return mapResult;

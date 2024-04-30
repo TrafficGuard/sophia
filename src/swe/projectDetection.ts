@@ -1,4 +1,5 @@
 import { getFileSystem, llms } from '#agent/agentContext';
+import { logger } from '#o11y/logger';
 import { LanguageTools } from './lang/languageTools';
 import { TypescriptTools } from './nodejs/typescriptTools';
 import { PhpTools } from './php/phpTools';
@@ -19,13 +20,13 @@ interface ProjectDetection {
 
 export interface ProjectInfo {
 	baseDir: string;
-	language: LanguageRuntime;
+	language: LanguageRuntime | '';
 	initialise: string;
 	compile: string;
 	format: string;
 	staticAnalysis: string;
 	test: string;
-	languageTools: LanguageTools;
+	languageTools: LanguageTools | null;
 }
 
 /**
@@ -37,16 +38,20 @@ export async function detectProjectInfo(): Promise<ProjectInfo[]> {
 	if (await fileSystem.fileExists('projectInfo.json')) {
 		const projectInfoJson = await fileSystem.getFileContents('projectInfo.json');
 		// TODO check projectInfo matches the format we expect
-		let projectInfos = JSON.parse(projectInfoJson) as ProjectInfo[];
-		if (!Array.isArray(projectInfos)) throw new Error('projectInfo.json should be a JSON array');
-		projectInfos = projectInfos.map((info) => {
-			// @ts-ignore
-			if (info.languageTools === 'typescript') {
-				info.languageTools = new TypescriptTools();
-			}
-			return info;
-		});
-		return projectInfos;
+		try {
+			let projectInfos = JSON.parse(projectInfoJson) as ProjectInfo[];
+			if (!Array.isArray(projectInfos)) throw new Error('projectInfo.json should be a JSON array');
+			projectInfos = projectInfos.map((info) => {
+				// @ts-ignore
+				if (info.languageTools === 'typescript') {
+					info.languageTools = new TypescriptTools();
+				}
+				return info;
+			});
+			return projectInfos;
+		} catch (e) {
+			logger.warn(e, 'Error loading projectInfo.json');
+		}
 	}
 	const files: string[] = await fileSystem.listFilesRecursively('./');
 	const prompt = `<task_requirements>
@@ -88,7 +93,7 @@ frontend/package.json
 frontend/ts-config.json
 frontend/README.md
 frontend/src/index.ts
-backend/src/module1/module1.ts
+backend/src/module1/module1.ts  
 backend/src/module2/module2.ts
 backend/src/module3/module3.ts
 </input>
@@ -144,7 +149,7 @@ Explain your reasoning, then output a Markdown JSON block, with the JSON in this
 		languageTools: getLanguageTools(projectDetection.language),
 	};
 
-	console.log('ProjectInfo', projectInfo);
+	logger.info('ProjectInfo %o', projectInfo);
 	return [projectInfo];
 }
 

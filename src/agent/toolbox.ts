@@ -1,5 +1,6 @@
 import { FunctionDefinition } from '#agent/functions';
 import { Invoke } from '#llm/llm';
+import { logger } from '#o11y/logger';
 import { Agent } from './agentFunctions';
 import { toolFactory } from './metadata';
 
@@ -60,8 +61,8 @@ export class Toolbox {
 			if (!funcsDef) throw new Error(`__functionsObj not found on prototype for ${toolName}.${methodName}`);
 			const funcDef = funcsDef[methodName];
 			if (!funcDef.parameters) {
-				console.error(`${toolName}.${methodName} definition doesnt have any parameters`);
-				console.log(funcDef);
+				logger.error(`${toolName}.${methodName} definition doesnt have any parameters`);
+				logger.info(funcDef);
 			}
 			const args: any[] = new Array(funcDef.parameters.length);
 			for (const [paramName, paramValue] of Object.entries(invocation.parameters)) {

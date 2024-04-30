@@ -2,6 +2,7 @@ import { Type } from '@sinclair/typebox';
 import { FastifyReply } from 'fastify';
 import { AgentContext, serializeContext } from '#agent/agentContext';
 import { runAgent } from '#agent/agentRunner';
+import { toolFactory } from '#agent/metadata';
 import { send, sendSuccess } from '#fastify/index';
 import { sendHTML } from '#fastify/responses';
 import { logger } from '#o11y/logger';
@@ -46,32 +47,36 @@ export async function agentRoutesV1(fastify: AppFastifyInstance) {
 		const response = ctxs.map(serializeContext);
 		send(reply as FastifyReply, 200, response);
 
-		let html = `<html><head></head><body><table><tr>
-			<th>Name</th>
-			<th>State</th>
-			<th>Func call #</th>
-			<th>Error</th>
-			<th>Tools</th>
-			<th>Cost</th>
-			<th>LLMS</th>
-			</tr>`;
-		for (const ctx of ctxs) {
-			html += `<tr>
-			<td><a href="details/${ctx.executionId}">${ctx.name}</a></td>
-			<td>${ctx.state}</td>
-			<td>${ctx.functionCallHistory.length}</td>
-			<td>${ctx.error?.slice(0, 50)}</td>
-			<td>${ctx.toolbox
-				.getToolDefinitions()
-				.map((def) => def.name)
-				.join(',')}</td>
-			<td>$${ctx.cost.toFixed(2)}</td>
-			<td>${ctx.llms.easy.getModel()},${ctx.llms.medium.getModel()},${ctx.llms.hard.getModel()}</td>
-			</tr>`;
-		}
-		html += '</table></body></html>';
+		// let html = `<html><head></head><body><table><tr>
+		// 	<th>Name</th>
+		// 	<th>State</th>
+		// 	<th>Func call #</th>
+		// 	<th>Error</th>
+		// 	<th>Tools</th>
+		// 	<th>Cost</th>
+		// 	<th>LLMS</th>
+		// 	</tr>`;
+		// for (const ctx of ctxs) {
+		// 	html += `<tr>
+		// 	<td><a href="details/${ctx.executionId}">${ctx.name}</a></td>
+		// 	<td>${ctx.state}</td>
+		// 	<td>${ctx.functionCallHistory.length}</td>
+		// 	<td>${ctx.error?.slice(0, 50)}</td>
+		// 	<td>${ctx.toolbox
+		// 		.getToolDefinitions()
+		// 		.map((def) => def.name)
+		// 		.join(',')}</td>
+		// 	<td>$${ctx.cost.toFixed(2)}</td>
+		// 	<td>${ctx.llms.easy.getModel()},${ctx.llms.medium.getModel()},${ctx.llms.hard.getModel()}</td>
+		// 	</tr>`;
+		// }
+		// html += '</table></body></html>';
+		//
+		// sendHTML(reply, html);
+	});
 
-		sendHTML(reply, html);
+	fastify.get(`${basePath}/tools`, {}, async (req, reply) => {
+		send(reply as FastifyReply, 200, Object.keys(toolFactory));
 	});
 
 	fastify.get(`${basePath}/list/humanInLoop`, {}, async (req, reply) => {

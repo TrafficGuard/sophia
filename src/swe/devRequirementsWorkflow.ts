@@ -1,5 +1,7 @@
 import { agentContextStorage, getFileSystem, llms } from '#agent/agentContext';
 import { func } from '#agent/functions';
+import { funcClass } from '#agent/metadata';
+import { logger } from '#o11y/logger';
 import { cacheRetry } from '../cache/cache';
 import { GitLabProject } from '../functions/scm/gitlab';
 import { UtilFunctions } from '../functions/util';
@@ -16,14 +18,17 @@ export function buildPrompt(args: {
 }
 
 /**
- * Workflow for completing requirements
+ * Workflow for completing requirements. This will look up the appropriate project in source control, clone, make the changes and create a pull/merge request.
  * Assumes the SCM is set on the workflow context
  */
+@funcClass(__filename)
 export class DevRequirementsWorkflow {
 	/**
+	 * Runs the main workflow for implementing requirements. This will look up the appropriate project in GitLab, clone it, make the changes, compile and test if applicable, commit and create a pull/merge request to review.
 	 * @param requirements the requirements for the changes.
 	 */
-	async runDevRequirementsWorkflow(requirements: string) {
+	@func()
+	async runSoftwareDeveloperWorkflow(requirements: string): Promise<void> {
 		const summary = await this.summariseRequirements(requirements);
 
 		// console.log('Summary: ' + summary);
@@ -39,13 +44,16 @@ export class DevRequirementsWorkflow {
 
 		const projectInfo = projectInfos[0];
 
-		await getFileSystem().vcs.createBranch('ABC-123-test');
+		const branchName = await this.createBranchName(requirements);
+		await getFileSystem().vcs.createBranch(branchName);
 
 		let error: any;
 		try {
 			await new DevEditWorkflow().runDevEditWorkflow(`${requirements}\n\n${summary}`, projectInfo);
 		} catch (e) {
+			logger.error(e);
 			error = e;
+			throw e;
 		}
 
 		const mrDescription = await new UtilFunctions().processText(
@@ -61,8 +69,18 @@ export class DevRequirementsWorkflow {
 		// TODO notify who started the workflow
 	}
 
+	@cacheRetry({ scope: 'agent' })
+	async createBranchName(requirements: string, issueId?: string): Promise<string> {
+		return llms().medium.generateTextWithResult(`<requirements>${requirements}</requirement>\n
+		From the requirements generate a Git branch name (up to about 10 words/200 characters maximum) to make the changes on. Seperate words with dashes. Output your response in <result></result>`);
+	}
+
+	/**
+	 * Summarises/re-writes the requirements in a clear, structured manner from the perspective of a software developer who needs is doing the implementation
+	 * @param requirements the requirements to implement
+	 */
 	@cacheRetry()
-	@func()
+	// @func()
 	async summariseRequirements(requirements: string): Promise<string> {
 		const prompt = buildPrompt({
 			information: '',

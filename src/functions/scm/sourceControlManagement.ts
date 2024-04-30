@@ -1,7 +1,5 @@
-import { FileSystem } from '../../agent/filesystem';
-
 /**
- * Source Code Management system (GitHub etc)
+ * Source Code Management system (GitHub, Gitlab, BitBucket etc)
  */
 export interface SourceControlManagement {
 	getProjects(): Promise<any[]>;

@@ -1,12 +1,12 @@
 import * as readline from 'readline';
 import { Span } from '@opentelemetry/api';
+import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateToolDefinitions } from '#agent/agentPromptUtils';
 import { getServiceName } from '#fastify/trace-init/trace-init';
-import { FunctionResponse, Invoked } from '#llm/llm';
+import { FunctionResponse } from '#llm/llm';
 import { logger } from '#o11y/logger';
 import { startSpan, withActiveSpan } from '#o11y/trace';
-import { CDATA_END, CDATA_START } from '#utils/xml-utils';
 import { appCtx } from '../app';
-import { AgentContext, AgentLLMs, AgentRunningState, agentContextStorage, createContext, llms } from './agentContext';
+import { AgentContext, AgentLLMs, AgentRunningState, agentContext, agentContextStorage, createContext, llms } from './agentContext';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from './agentFunctions';
 import { getFunctionDefinitions } from './metadata';
 import { Toolbox } from './toolbox';
@@ -26,34 +26,6 @@ export interface RunAgentConfig {
 	llms: AgentLLMs;
 	/** The agent to resume */
 	resumeAgentId?: string;
-}
-
-export function buildMemoryPrompt(): string {
-	const memory = agentContextStorage.getStore().memory;
-	let result = '<memory>\n';
-	for (const mem of memory.entries()) {
-		result += `<${mem[0]}>${CDATA_START}\n${mem[1]}\n${CDATA_END}</${mem[0]}>\n`;
-	}
-	result += '</memory>\n';
-	return result;
-}
-
-export function buildFunctionCallHistoryPrompt(): string {
-	const functionCalls = agentContextStorage.getStore().functionCallHistory;
-	let result = '<function_call_history>\n';
-	for (const call of functionCalls) {
-		let params = '';
-		for (let [name, value] of Object.entries(call.parameters)) {
-			if (Array.isArray(value)) value = JSON.stringify(value, null, ' ');
-			if (typeof value === 'string' && value.length > 150) value = `${value.slice(0, 150)}...`;
-			if (typeof value === 'string') value = value.replace('"', '\\"');
-			params += `\n  "${name}": "${value}",\n`;
-		}
-		const output = call.stdout ? `<output>${call.stdout}</output>` : `<error>${call.stderr}</error>`;
-		result += `<function_call>\n ${call.tool_name}({${params}})\n ${output}</function_call>\n`;
-	}
-	result += '</function_call_history>\n';
-	return result;
 }
 
 /**
@@ -132,11 +104,11 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 					}
 					countSinceHil++;
 
-					const newCosts = agentContextStorage.getStore().cost - previousCost;
-					if (newCosts) console.log(`New costs $${newCosts.toFixed(2)}`);
-					previousCost = agentContextStorage.getStore().cost;
+					const newCosts = agentContext().cost - previousCost;
+					if (newCosts) logger.debug(`New costs $${newCosts.toFixed(2)}`);
+					previousCost = agentContext().cost;
 					costSinceHil += newCosts;
-					console.log(`Spent $${costSinceHil.toFixed(2)} since last input. Total cost $${agentContextStorage.getStore().cost.toFixed(2)}`);
+					logger.info(`Spent $${costSinceHil.toFixed(2)} since last input. Total cost $${agentContextStorage.getStore().cost.toFixed(2)}`);
 					if (hilBudget && costSinceHil > hilBudget) {
 						// format costSinceHil to 2 decimal places
 						await waitForInput();
@@ -180,13 +152,13 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 							});
 							// Should check if completed or requestFeedback then there's no more invokers
 							if (invoker.tool_name === AGENT_COMPLETED_NAME) {
-								console.log('Task completed');
+								logger.info('Task completed');
 								ctx.state = 'completed';
 								completed = true;
 								break;
 							}
 							if (invoker.tool_name === AGENT_REQUEST_FEEDBACK) {
-								console.log('Feedback requested');
+								logger.info('Feedback requested');
 								ctx.state = 'feedback';
 								requestFeedback = true;
 								break;
@@ -194,8 +166,7 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 						} catch (e) {
 							anyInvokeErrors = true;
 							ctx.state = 'error';
-							console.error('Tool error');
-							console.error(e);
+							logger.error(e, 'Tool error');
 							ctx.error = e.toString();
 							await agentStateService.save(ctx);
 							currentPrompt += `\n${llm.formatFunctionError(invoker.tool_name, e)}`;
@@ -254,18 +225,4 @@ async function waitForInput() {
 		rl.close();
 	})();
 	span.end();
-}
-
-/**
- * Update the system prompt to include all the function definitions.
- * Requires the system prompt to contain <tools></tools>
- * @param systemPrompt {string} the initial system prompt
- * @param functionDefinitions {string} the function definitions
- * @returns the updated system prompt
- */
-export function updateToolDefinitions(systemPrompt: string, functionDefinitions: string): string {
-	const regex = /<tools>[\s\S]*?<\/tools>/g;
-	const updatedPrompt = systemPrompt.replace(regex, `<tools>${functionDefinitions}</tools>`);
-	if (!updatedPrompt.includes(functionDefinitions)) throw new Error('Unable to update tool definitions. Regex replace failed');
-	return updatedPrompt;
 }

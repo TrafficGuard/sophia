@@ -1,6 +1,7 @@
 import { llms } from '#agent/agentContext';
 import { func } from '#agent/functions';
 import { funcClass } from '#agent/metadata';
+import { logger } from '#o11y/logger';
 import { cacheRetry } from '../../cache/cache';
 import { OrganicSearchResult, PUBLIC_WEB } from './web';
 
@@ -14,7 +15,7 @@ export class WebResearcher {
 		const prompt = `<research_topic>\n${task}\n</research_topic>\n<task>Your task is to research the web to for information to assisst with completing the research topic.\nFirst rephrase the topic into a search query which is most suitable for getting the most relevant results when searching Google.\nOutput your response in the following format:\n<response><reasoning>Explaing reasoning of the rephrasing of the search query</reasoning><result>The search query</result></response></task>`;
 
 		const query: string = await llms().medium.generateTextWithResult(prompt);
-		console.log(`Search query: ${query}`);
+		logger.debug(`Search query: ${query}`);
 		return query;
 	}
 
@@ -36,7 +37,7 @@ export class WebResearcher {
 				const pageContent = await PUBLIC_WEB.getWebPage(result.url);
 				result.content = `<web_page url="${result.url}">\n${pageContent}\n</web_page>`;
 			} catch (e) {
-				console.log(`Couldn\'t get ${result.url}. ${e.message}`);
+				logger.warn(`Couldn\'t get ${result.url}. ${e.message}`);
 			}
 		}
 
@@ -65,7 +66,7 @@ export class WebResearcher {
 			let pagesAdded = 1;
 			let nextSearchResult: OrganicSearchResult = serpResults.length ? serpResults[serpResults.length - 1] : null;
 			while (nextSearchResult && content.length + nextSearchResult.content.length < maxContentSize && pagesAdded <= 2) {
-				console.log('Adding search result', nextSearchResult.content.length);
+				logger.debug('Adding search result', nextSearchResult.content.length);
 				content += `\n${serpResults.pop().content}`;
 				pagesAdded++;
 				nextSearchResult = serpResults.length ? serpResults[serpResults.length - 1] : null;
@@ -84,7 +85,7 @@ export class WebResearcher {
 				continuePrompt += 'Your response must either be <result>CONTINUE</result>, or <result>COMPLETED</result>';
 				const result = await llms().medium.generateTextWithResult(continuePrompt);
 				if (result === 'COMPLETED') {
-					console.log('SEARCH COMPLETED EARLY =============================================');
+					logger.debug('SEARCH COMPLETED EARLY =============================================');
 					break;
 				}
 			}

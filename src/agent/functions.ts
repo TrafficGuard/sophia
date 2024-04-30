@@ -47,7 +47,7 @@ export function parseArrayParameterValue(paramValue: string): string[] {
  */
 export function getAllFunctions(obj: any): FunctionDefinition[] {
 	if (obj.__functions === undefined || obj.__functions === null) {
-		console.log(`no functions set for ${obj.constructor.name}`);
+		logger.warn(`no functions set for ${obj.constructor.name}`);
 		return [];
 	}
 	return obj.__functions;
@@ -86,10 +86,12 @@ export function func() {
 			if (!tracer) {
 				return originalMethod.call(this, ...args);
 			}
-
 			// NOTE - modification, build attributeExtractors from all the arguments
+			if (!this.__functionsObj) throw new Error(`No function definitions found for ${functionName}. Does the class have the @funcClass decorator?`);
 			const funcDef: FunctionDefinition = this.__functionsObj[functionName];
+			if (!funcDef) throw new Error(`No function definition found for ${functionName}. Does the method have JSDoc?`);
 			const attributeExtractors = {};
+			if (funcDef.parameters === undefined) throw new Error(`No parameters defined for ${functionName}`);
 			for (const param of funcDef.parameters) {
 				attributeExtractors[param.name] = param.index;
 			}
@@ -98,7 +100,7 @@ export function func() {
 				setFunctionSpanAttributes(span, functionName, attributeExtractors, args);
 
 				try {
-					agentContext().callStack.push(functionName);
+					agentContext()?.callStack.push(functionName);
 
 					const result = originalMethod.call(this, ...args);
 					if (typeof result?.then === 'function') await result;
@@ -109,7 +111,7 @@ export function func() {
 					}
 					return result;
 				} finally {
-					agentContext().callStack.pop();
+					agentContext()?.callStack.pop();
 				}
 			});
 		};

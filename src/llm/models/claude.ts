@@ -6,6 +6,7 @@ import { MaxTokensError } from '../errors';
 import { LLM, combinePrompts, logTextGeneration } from '../llm';
 import { MultiLLM } from '../multi-llm';
 import Message = Anthropic.Message;
+import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 
 export const ANTHROPIC_SERVICE = 'anthropic';
@@ -69,8 +70,8 @@ export class Claude extends BaseLLM {
 					stop_sequences: ['</response>'], // This is needed otherwise it can hallucinate the function response and continue on
 				});
 			} catch (e) {
-				console.log(e);
-				console.log(Object.keys(e));
+				logger.error(e);
+				logger.error(Object.keys(e));
 				throw e;
 			}
 
@@ -84,8 +85,7 @@ export class Claude extends BaseLLM {
 			const inputCost = this.getInputCostPerToken() * inputTokens;
 			const outputCost = this.getOutputCostPerToken() * outputTokens;
 			const cost = inputCost + outputCost;
-			console.log('inputCost', inputCost);
-			console.log('outputCost', outputCost);
+
 			span.setAttributes({
 				inputTokens,
 				outputTokens,

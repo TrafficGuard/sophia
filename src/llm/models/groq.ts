@@ -19,13 +19,17 @@ export function groqGemma7bIt(): LLM {
 	return new GroqLLM('groq', 'gemma-7b-it', 8_192, 0.1 / 1000000, 0.1 / 1000000);
 }
 
+export function groqLlama3_70B(): LLM {
+	return new GroqLLM('groq', 'llama3-70b-8192', 8_192, 0.1 / 1000000, 0.1 / 1000000);
+}
+
 export function grokLLMs(): AgentLLMs {
 	const mixtral = groqMixtral8x7b();
 	return {
 		easy: groqGemma7bIt(),
 		medium: mixtral,
-		hard: mixtral,
-		xhard: new MultiLLM([mixtral], 5),
+		hard: groqLlama3_70B(),
+		xhard: new MultiLLM([mixtral, groqLlama3_70B()], 5),
 	};
 }
 

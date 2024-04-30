@@ -17,3 +17,5 @@ ai-out
 .nous/
 src/test/*-in
 src/test/*-out
+ng-starter/
+tg/

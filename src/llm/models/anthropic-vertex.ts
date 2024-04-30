@@ -5,6 +5,7 @@ import { BaseLLM } from '../base-llm';
 import { MaxTokensError } from '../errors';
 import { LLM, combinePrompts, logTextGeneration } from '../llm';
 import Message = Anthropic.Message;
+import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { envVar } from '#utils/env-var';
 import { RetryableError } from '../../cache/cache';
@@ -109,8 +110,6 @@ class AnthropicVertexLLM extends BaseLLM {
 			const inputCost = this.getInputCostPerToken() * message.usage.input_tokens;
 			const outputCost = this.getOutputCostPerToken() * message.usage.output_tokens;
 			const cost = inputCost + outputCost;
-			console.log('inputCost', inputCost);
-			console.log('outputCost', outputCost);
 			addCost(cost);
 
 			span.setAttributes({
@@ -125,8 +124,8 @@ class AnthropicVertexLLM extends BaseLLM {
 
 			if (message.stop_reason === 'max_tokens') {
 				// TODO we can replay with request with the current response appended so the LLM can complete it
-				console.log('= RESPONSE exceeded max tokens ===============================');
-				console.log(response);
+				logger.error('= RESPONSE exceeded max tokens ===============================');
+				logger.debug(response);
 				throw new MaxTokensError(maxTokens, response);
 			}
 			return response;

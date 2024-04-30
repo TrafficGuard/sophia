@@ -159,7 +159,7 @@ export class GitLabServer implements SourceControlManagement {
 			const result = await execCmd(`git -C ${path} pull`);
 			checkExecResult(result, `Failed to pull unshallow ${path}`);
 		} else {
-			console.log(`Cloning to ${path}`);
+			logger.info(`Cloning to ${path}`);
 			const command = `git clone https://oauth2:${this.config.token}@${this.config.host}/${projectPathWithNamespace}.git ${path}`;
 			const result = await execCmd(command);
 			checkExecResult(result, `Failed to clone ${projectPathWithNamespace}`);

@@ -16,8 +16,11 @@ ENV homedir  /home/nous/
 RUN useradd --create-home -g users nous
 WORKDIR $homedir
 
-COPY package*.json .
-RUN npm install --only=production
+RUN mkdir ".husky"
+COPY .husky/install.mjs .husky/install.mjs
+
+COPY package*.json ./
+RUN npm ci
 
 USER $user
 

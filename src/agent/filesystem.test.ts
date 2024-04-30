@@ -1,4 +1,4 @@
-import { resolve } from 'path';
+import path, { resolve } from 'path';
 import { expect } from 'chai';
 import { FileSystem } from './filesystem';
 
@@ -53,6 +53,29 @@ describe('FileSystem', () => {
 		});
 		it('should return false if a file doesnt exist', async () => {
 			expect(await fileSystem.fileExists('./apivheoirvaifvjaoiergalenrbna')).to.be.false;
+		});
+	});
+
+	describe.only('listFilesRecursively', () => {
+		const fileSystem = new FileSystem(path.join(process.cwd(), 'test', 'filesystem'));
+		it('should list all files under the filesystem baseDir', async () => {
+			const files: string[] = await fileSystem.listFilesRecursively();
+
+			expect(files).to.contain('toplevel');
+			expect(files).to.contain('dir1/file1a');
+			expect(files).to.contain('dir1/file1b');
+			expect(files).to.contain('dir1/dir2/file2a');
+		});
+		it('should list files and folders in working directory', async () => {
+			fileSystem.setWorkingDirectory('dir1/dir2');
+			const files: string[] = await fileSystem.listFilesRecursively();
+
+			expect(files.length).to.equal(1);
+			expect(files).to.contain('dir1/dir2/file2a');
+
+			// files = await fileSystem.listFilesRecursively('src');
+			// expect(files).to.contain('src/index.ts');
+			// expect(files).not.to.contain('package.json');
 		});
 	});
 

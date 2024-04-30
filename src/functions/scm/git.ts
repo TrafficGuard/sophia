@@ -1,5 +1,6 @@
 import * as console from 'console';
 import { getFileSystem } from '#agent/agentContext';
+import { logger } from '#o11y/logger';
 import { FileSystem } from '../../agent/filesystem';
 import { func } from '../../agent/functions';
 import { execCmd, execCommand } from '../../utils/exec';
@@ -48,13 +49,10 @@ export class Git implements VersionControlSystem {
 		if (!sourceBranch) throw new Error('Source branch is required');
 		const cmd = sourceBranch ? `git merge-base HEAD ${sourceBranch}` : 'git diff $(git merge-base HEAD @{u})';
 		const { stdout, stderr } = await execCommand(cmd);
-		console.log('1');
-		console.log('2');
-		console.log('3');
 		return stdout;
 	}
 
-	@func()
+	// @func()
 	async getDiff(): Promise<string> {
 		const cwd = this.fileSystem.getWorkingDirectory();
 		try {
@@ -66,12 +64,12 @@ export class Git implements VersionControlSystem {
 			}
 			return stdout;
 		} catch (error) {
-			console.error(error);
+			logger.error(error);
 			throw error;
 		}
 	}
 
-	@func()
+	// @func()
 	async createBranch(branchName: string): Promise<void> {
 		this.baseBranch = await this.getBranchName();
 		const cwd = this.fileSystem.getWorkingDirectory();
@@ -81,11 +79,11 @@ export class Git implements VersionControlSystem {
 				throw new Error(stderr);
 			}
 		} catch (error) {
-			console.error(error);
+			logger.error(error);
 			throw error;
 		}
 	}
-	@func()
+	// @func()
 	async cloneBranch(repoUrl: string, branchName: string): Promise<void> {
 		const cwd = this.fileSystem.getWorkingDirectory();
 		try {
@@ -96,11 +94,11 @@ export class Git implements VersionControlSystem {
 				throw new Error(stderr);
 			}
 		} catch (error) {
-			console.error(error);
+			logger.error(error);
 			throw error;
 		}
 	}
-	@func()
+	// @func()
 	async commit(commitMessage: string): Promise<void> {
 		const cwd = this.fileSystem.getWorkingDirectory();
 		try {
@@ -112,7 +110,7 @@ export class Git implements VersionControlSystem {
 				throw new Error(stderr);
 			}
 		} catch (error) {
-			console.error(error);
+			logger.error(error);
 			throw error;
 		}
 	}

@@ -107,8 +107,6 @@ Create an API key at https://platform.openai.com/api-keys and update OPENAI_API_
 
 Create an API key at https://id.atlassian.com/manage-profile/security/api-tokens and update JIRA_API_TOKEN in `.env`
 
-Note you will need to add a \ before the = in the token value to escape it.
-
 ### GitLab
 
 Create an API key at https://gitlab.synrgy.mobi/-/user_settings/personal_access_tokens with the api, read_repo and write_repo roles, and update GITLAB_TOKEN in `.env`. You will need to also set GITLAB_HOST (e.g. gitlab.selfhost.com) and GITLAB_GROUPS (JSON array containing the top level groups it will search e.g ["group1", "group2"])
@@ -142,13 +140,14 @@ Run in docker compose with `./bin/run`
 
 In the src/test folder are the chat.ts, agent.ts, edit-local.ts, research.ts, util.ts files.
 
-These can be run with `npm run chat`, `npm run agent`, `npm run edit-local`, `npm run research`, `npm run util`
+These can be run with `npm run chat`, `npm run agent`, `npm run edit-local`, `npm run swe`, `npm run research`, `npm run util`
 
 `chat`, `agent` and `edit-local` read their input from the co-located files. Util is for testing individual pieces of code.
 
 - `chat` does a single completion from an LLM
 - `agent` runs the autonomous agent loop, using all the tool provided
 - `edit-local` runs the edit local repository (i.e this repository) workflow.
+- `swe` runs the software engineer workflow, which can find a remote repo to clone, edit and create a PR/MR.
 - `research` runs the agent loop with the web research tools configured 
 - `util` if for running any random bit of code
 

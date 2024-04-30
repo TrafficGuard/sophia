@@ -1,0 +1,54 @@
+<code_review xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="schema.xsd">
+    <description>
+        If a JavaScript/TypeScript function is defined as async, it should have an await in the function (nested functions don't count)
+    </description>
+    <file_extensions>
+        <include>.ts</include>
+    </file_extensions>
+    <requires>
+        <text>async</text>
+        <text>await</text>
+    </requires>
+    <examples>
+        <example>
+            <code><![CDATA[
+                function getCachedData(): [] {
+                    return arrayCache.get()
+                }
+
+                async function processData(): Promise<[]> {
+                  const data: [] = getCachedData();
+                  return data;
+                }
+            ]]></code>
+            <review_comment><![CDATA[
+                Async function does not have an await. Remove async and potentially change the return type to the unwrapped type.
+                ```
+                function processData(): [] {
+                ```
+            ]]></review_comment>
+        </example>
+        <example><!-- Where await is in a nested function -->
+            <code><![CDATA[
+                async function updateDatabase(entries: Entry[]): Promise<void> {
+                    entries.forEach(async (entry) => {
+                        await updateEntry(entry);
+                    });
+                }
+
+                async function updateEntry(entry: Entry): Promise<void> {
+                    // Assume updateEntry performs an asynchronous operation
+                    console.log("Entry updated:", entry);
+                }
+            ]]></code>
+            <review_comment><![CDATA[
+                The 'updateDatabase' async function does not have an await and does not manage the promises created by the forEach loop. It should ensure all operations complete before resolving.
+                ```typescript
+                async function updateDatabase(entries: Entry[]): Promise<void> {
+                    await Promise.all(entries.map(entry => updateEntry(entry)));
+                }
+                ```
+            ]]></review_comment>
+        </example>
+    </examples>
+</code_review>

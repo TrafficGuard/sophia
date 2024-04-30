@@ -2,6 +2,7 @@ import { DOMParser } from 'xmldom';
 const fs = require('fs');
 const path = require('path');
 import { XMLBuilder, XMLParser, XMLValidator } from 'fast-xml-parser';
+import { logger } from '#o11y/logger';
 interface IExample {
 	code: string;
 	review_comment: string;
@@ -48,9 +49,9 @@ export function loadCodeReviews(): Promise<ICodeReview[]> {
 		try {
 			const xml = fs.readFileSync(`./resources/codeReview/${file}`, 'utf-8');
 			codeReviews.push(parseCodeReview(xml));
-			console.log(`Parsed ${file}`);
+			logger.debug(`Parsed ${file}`);
 		} catch (e) {
-			console.error(`Could not parse ${file}`, e);
+			logger.warn(`Could not parse ${file}`, e);
 		}
 	}
 	return Promise.resolve(codeReviews);

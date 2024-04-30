@@ -14,8 +14,8 @@ const exec2 = promisify(exec);
  */
 export function checkExecResult(result: ExecResults, message: string) {
 	if (result.error) {
-		console.log(result.stdout);
-		console.error(result.stderr);
+		logger.info(result.stdout);
+		logger.error(result.stderr);
 		throw new Error(`Error executing command: ${result.cmd} in ${result.cwd ?? '.'}\n${message}: ${result.error.message}`);
 	}
 }
@@ -35,7 +35,7 @@ export interface ExecResults {
  */
 export async function execCmd(command: string, cwd?: string): Promise<ExecResults> {
 	const home = process.env.HOME;
-	console.log(`execCmd ${home ? command.replace(home, '~') : command} ${cwd ?? ''}`);
+	logger.info(`execCmd ${home ? command.replace(home, '~') : command} ${cwd ?? ''}`);
 	// return {
 	//     stdout: '', stderr: '', error: null
 	// }
@@ -56,7 +56,7 @@ export async function execCmd(command: string, cwd?: string): Promise<ExecResult
 		if (!result.error || i === 3) {
 			return result;
 		}
-		console.log(`Retrying ${command}`);
+		logger.info(`Retrying ${command}`);
 		await new Promise((resolve) => setTimeout(resolve, 1000 * i));
 	}
 	throw new Error('Should never happen');

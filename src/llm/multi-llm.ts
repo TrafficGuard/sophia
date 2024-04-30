@@ -1,4 +1,5 @@
 import { llms } from '#agent/agentContext';
+import { logger } from '#o11y/logger';
 import { BaseLLM } from './base-llm';
 import { LLM } from './llm';
 
@@ -34,7 +35,7 @@ export class MultiLLM extends BaseLLM {
 
 		const response = await llms().hard.generateTextWithResult(selectBestResponsePrompt(responses, prompt, systemPrompt));
 		const index = Number.parseInt(response) - 1; // sub 1 as responses are indexed from 1 in the prompt
-		console.log(`Best response was from ${calls[index].model}`);
+		logger.info(`Best response was from ${calls[index].model}`);
 		return responses[index];
 	}
 

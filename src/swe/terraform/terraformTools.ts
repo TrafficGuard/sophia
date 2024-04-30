@@ -1,4 +1,4 @@
-import { funcClass } from '../../agent/metadata';
+import { funcClass } from '#agent/metadata';
 import { LanguageTools } from '../lang/languageTools';
 
 @funcClass(__filename)

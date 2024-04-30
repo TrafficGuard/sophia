@@ -1,4 +1,5 @@
 import { DOMParser } from 'xmldom';
+import { logger } from '#o11y/logger';
 import { FunctionCalls } from './llm';
 
 /**
@@ -89,7 +90,7 @@ export function extractJsonResult(rawText: string): any {
 	try {
 		return JSON.parse(text);
 	} catch (e) {
-		console.error(`Could not parse:\n${text}`);
+		logger.error(`Could not parse:\n${text}`);
 		throw e;
 	}
 }

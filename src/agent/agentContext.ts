@@ -3,6 +3,7 @@ import { AsyncLocalStorage } from 'async_hooks';
 import { Toolbox } from '#agent/toolbox';
 import { Invoke, Invoked, LLM, TaskLevel } from '#llm/llm';
 import { deserializeLLMs } from '#llm/llmFactory';
+import { logger } from '#o11y/logger';
 import { FunctionCacheService } from '../cache/cache';
 import { FileCacheService } from '../cache/fileCacheService';
 import { GitLabServer } from '../functions/scm/gitlab';
@@ -84,7 +85,7 @@ export function llms(): AgentLLMs {
  */
 export function addCost(cost: number) {
 	const store = agentContextStorage.getStore();
-	console.log(`Adding cost $${cost}`);
+	logger.info(`Adding cost $${cost}`);
 	store.cost += cost;
 	store.budgetRemaining -= cost;
 	if (store.budgetRemaining < 0) store.budgetRemaining = 0;

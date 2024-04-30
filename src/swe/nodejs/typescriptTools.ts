@@ -1,6 +1,7 @@
 import { getFileSystem } from '#agent/agentContext';
 import { func } from '#agent/functions';
 import { funcClass } from '#agent/metadata';
+import { logger } from '#o11y/logger';
 import { execCommand } from '#utils/exec';
 import { LanguageTools } from '../lang/languageTools';
 
@@ -12,7 +13,7 @@ export class TypescriptTools implements LanguageTools {
 	 */
 	@func()
 	async generateProjectMap(): Promise<string> {
-		console.log('Generating TypeScript project map');
+		logger.info('Generating TypeScript project map');
 		const tempFolder = 'temp/dts';
 		const tsConfigExists = await getFileSystem().fileExists('tsconfig.json');
 		if (!tsConfigExists) throw new Error(`tsconfig.json not found in ${getFileSystem().getWorkingDirectory()}`);
@@ -28,7 +29,7 @@ export class TypescriptTools implements LanguageTools {
 		const dtsFiles = new Map();
 		const allFiles = await getFileSystem().getFileContentsRecursively(tempFolder);
 		allFiles.forEach((value, key) => {
-			console.log(key);
+			logger.debug(key);
 			dtsFiles.set(key.replace('.d.ts', '.ts').replace(tempFolder, 'src'), value);
 		});
 		const fileContents: string = getFileSystem().formatFileContentsAsXml(dtsFiles);

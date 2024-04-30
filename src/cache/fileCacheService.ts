@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { existsSync, writeFileSync } from 'fs';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import { logger } from '#o11y/logger';
 import { FunctionCacheService } from './cache';
 
 /**
@@ -51,8 +52,8 @@ export class FileCacheService implements FunctionCacheService {
 			// return this.toStringArg(params).replace(/[<>:"\/\\|?*]+/g, '');
 			return hashMd5(JSON.stringify(params)).replace(/[<>:"\/\\|?*]+/g, '');
 		} catch (e) {
-			console.error("Couldn't create cache key for");
-			console.error(params);
+			logger.error("Couldn't create cache key for");
+			logger.error(params);
 			throw e;
 		}
 	}
@@ -65,8 +66,8 @@ export class FileCacheService implements FunctionCacheService {
 			const data = await fs.readFile(filePath, 'utf8');
 			return data.startsWith('{') || data.startsWith('[') ? JSON.parse(data) : data;
 		} catch (error) {
-			console.error(`Error getting cached value for ${filePath}`);
-			console.error(error);
+			logger.error(`Error getting cached value for ${filePath}`);
+			logger.error(error);
 		}
 	}
 

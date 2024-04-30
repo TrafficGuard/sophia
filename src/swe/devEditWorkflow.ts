@@ -3,13 +3,14 @@ import { getFileSystem, llms } from '#agent/agentContext';
 import { FileSystem } from '#agent/filesystem';
 import { func } from '#agent/functions';
 import { funcClass } from '#agent/metadata';
+import { logger } from '#o11y/logger';
 import { execCommand } from '#utils/exec';
 import { cacheRetry } from '../cache/cache';
 import { CodeEditor } from './codeEditor';
 import { TypescriptTools } from './nodejs/typescriptTools';
 import { ProjectInfo, detectProjectInfo } from './projectDetection';
 import { basePrompt } from './prompt';
-import { selectFilesToEdit } from './selectFilesToEdit';
+import { SelectFilesResponse, selectFilesToEdit } from './selectFilesToEdit';
 import { summariseRequirements } from './summariseRequirements';
 
 export function buildPrompt(args: {
@@ -46,12 +47,16 @@ export class DevEditWorkflow {
 		const projectPath = path.join(fileSystem.getWorkingDirectory(), projectInfo.baseDir);
 		fileSystem.setWorkingDirectory(projectInfo.baseDir);
 
-		const initialSelectedFiles: string[] = await this.selectFilesToEdit(requirements);
+		const filesResponse: SelectFilesResponse = await this.selectFilesToEdit(requirements, projectInfo);
+		const initialSelectedFiles: string[] = [
+			...filesResponse.primaryFiles.map((selected) => selected.path),
+			...filesResponse.secondaryFiles.map((selected) => selected.path),
+		];
 
 		const updatedRequirements = `${requirements}\nSome of the requirements may have already been implemented, so don't duplicate any existing implementation meeting the requirements.`;
 
-		console.log('projectPath', projectPath, '---------------------');
-		console.log(initialSelectedFiles);
+		logger.info(`projectPath ${projectPath}`);
+		logger.info(initialSelectedFiles, 'Initial selected files');
 
 		let errorAnalysis: ErrorAnalysis = null;
 		let compileErrorOutput = null;
@@ -83,8 +88,7 @@ export class DevEditWorkflow {
 				}
 				// TODO If compiling fails after Aider edit, we could add in the diff from the files with compile errors
 				compileErrorOutput = e.message;
-				console.log('compileErrorOutput');
-				console.log(compileErrorOutput);
+				logger.error(`Compile Error Output: ${compileErrorOutput}`);
 				// TODO handle code editor error separately - what failure modes does it have (invalid args, git error etc)?
 				errorAnalysis = await this.analyzeCompileErrors(e, projectPath, requirements, initialSelectedFiles);
 			}
@@ -155,7 +159,7 @@ Respond ONLY as JSON that MUST be in the format of this example:
 		// if (stat(projectRoots + '/' + projectPath).isDirectory()) {
 		// 	console.log('Directory')
 		// }
-		console.log(getFileSystem().getWorkingDirectory(), projectInfo.compile);
+		logger.debug(getFileSystem().getWorkingDirectory(), projectInfo.compile);
 		const { exitCode, stdout, stderr } = await execCommand(projectInfo.compile, getFileSystem().getWorkingDirectory());
 		const result = `<compile_output>
 	<command>${projectInfo.compile}</command>
@@ -168,15 +172,15 @@ Respond ONLY as JSON that MUST be in the format of this example:
 </compile_output>`;
 		// console.log('exit code', exitCode);
 		if (exitCode > 0) {
-			console.log(stdout);
-			console.error(stderr);
+			logger.info(stdout);
+			logger.error(stderr);
 			throw new Error(result);
 		}
 	}
 
 	@cacheRetry()
-	async selectFilesToEdit(requirements: string): Promise<string[]> {
-		return await selectFilesToEdit(requirements);
+	async selectFilesToEdit(requirements: string, projectInfo: ProjectInfo): Promise<SelectFilesResponse> {
+		return await selectFilesToEdit(requirements, projectInfo);
 	}
 
 	async runStaticAnalysis(projectInfo: ProjectInfo): Promise<void> {
@@ -214,8 +218,7 @@ Respond ONLY as JSON that MUST be in the format of this example:
 					throw e;
 				}
 				testErrorOutput = e.message;
-				console.log('testErrorOutput');
-				console.log(testErrorOutput);
+				logger.info(`Test error output: ${testErrorOutput}`);
 				errorAnalysis = await this.analyzeCompileErrors(e, projectPath, requirements, initialSelectedFiles);
 			}
 		}

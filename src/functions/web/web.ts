@@ -12,6 +12,7 @@ import { fileExistsAsync, fileExistsSync } from 'tsconfig-paths/lib/filesystem';
 import { sleep } from '#utils/async-utils';
 const puppeteer = require('puppeteer');
 import { Browser } from 'puppeteer';
+import { logger } from '#o11y/logger';
 
 // For Node.js
 const TurndownService = require('turndown');
@@ -42,7 +43,7 @@ export class PublicWeb {
 	// @func
 	// @cacheRetry({scope: 'global' })
 	async crawlWebsite(url: string): Promise<Map<string, string>> {
-		console.log(`Crawling ${url}`);
+		logger.info(`Crawling ${url}`);
 		const cwd = path.join(getFileSystem().basePath, '.cache', 'wget');
 		const { stdout, stderr, exitCode } = await execCommand(`wget -r -l 1  -k -p ${url}`, cwd);
 		if (exitCode > 0) throw new Error(`${stdout} ${stderr}`);
@@ -55,7 +56,7 @@ export class PublicWeb {
 	/**
 	 * Get the contents of a web page on the public internet and extract data using the provided instructions, and optionally store it in memory with a new unique key.
 	 * @param url {string} The web page URL (https://...)
-	 * @param dataExtractionInstructions {string} Detailed natural language instructions of what data and in what format should be extracted from the web page's contents.
+	 * @param dataExtractionInstructions {string} Detailed natural language instructions of what data should be extracted from the web page's contents. Provide an example of what structure the data should be in, e.g. [{"name":"description"}, age: number}]
 	 * @param memoryKey {string} The key to update the memory with, storing the data extracted from the web page. This key must NOT already exist in the memory block.
 	 * @returns the extracted data
 	 */
@@ -73,14 +74,14 @@ export class PublicWeb {
 	}
 
 	/**
-	 * Get the contents of a web page on the public open internet at the provided URL. NOTE: Do NOT use this for URLs websites which would require authentication.
+	 * Get the contents of a web page on the public open internet at the provided URL. NOTE: Do NOT use this for URLs websites/SaaS which would require authentication.
 	 * @param url {string} The web page URL (https://...)
 	 * @returns the web page contents in Markdown format
 	 */
 	@func()
 	@cacheRetry({ scope: 'global' })
 	async getWebPage(url: string): Promise<string> {
-		console.log(`PublicWeb.getWebPage ${url}`);
+		logger.info(`PublicWeb.getWebPage ${url}`);
 		const wgetBasePath = path.join(getFileSystem().basePath, '.cache', 'wget');
 		// Remove https:// or http://
 		const urlPath = url.slice(url.indexOf('/') + 2);
@@ -119,11 +120,8 @@ export class PublicWeb {
 			readableHtml = this.readableVersionFromHtml(htmlContents, url);
 		}
 		const markdown = this.htmlToMarkdown(readableHtml, url);
-		console.log();
-		console.log(url);
-		console.log('MARKDOWN =======================================');
-		console.log(markdown);
-		console.log('================================================');
+
+		logger.debug(`MARKDOWN =======================================\n${markdown}\n================================================`);
 		// const newSizePercent = Number((markdown.length / htmlContents.length) * 100).toFixed(1);
 		// console.log(`Readable and markdown conversion compressed to ${newSizePercent}%${url ? ` for ${url}` : ''}`);
 		return markdown;
@@ -141,8 +139,7 @@ export class PublicWeb {
 			const article = reader.parse();
 			return article.content;
 		} catch (e) {
-			console.error(`Could not create readability version of ${url}`);
-			console.error(e);
+			logger.warn(e, `Could not create readability version of ${url}`);
 			return html;
 		}
 	}
@@ -213,7 +210,7 @@ export class PublicWeb {
 		// https://serpapi.com/search-api
 		// https://serpapi.com/search&q=
 		// const searchedUrls = new Set<string>();
-		console.log('SerpApi search', searchTerm);
+		logger.info('SerpApi search', searchTerm);
 		const json = await getJson({
 			// engine: "google",
 			q: searchTerm,

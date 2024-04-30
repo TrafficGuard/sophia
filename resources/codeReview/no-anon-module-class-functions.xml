@@ -1,0 +1,67 @@
+<code_review xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:noNamespaceSchemaLocation="schema.xsd">
+    <description>
+        Prefer function declarations over arrow functions or function expressions when defining named functions.
+        This is particularly for module level and class level functions.
+        https://google.github.io/styleguide/tsguide.html#function-declarations.
+
+        Acceptable exceptions:
+        - Arrow functions may be passed as an argument.
+        - Arrow functions may be used when an explicit type annotation is required.
+        ```
+        interface SearchFunction {
+          (source: string, subString: string): boolean;
+        }
+
+        const fooSearch: SearchFunction = (source, subString) => { ... };
+        ```
+    </description>
+    <file_extensions>
+        <include>*.ts</include>
+        <include>*.js</include>
+    </file_extensions>
+    <requires>
+        <text>= (</text>
+    </requires>
+    <examples>
+
+        <example>
+            <code><![CDATA[
+                export const isFoo = (request: any) => {
+                    const eventName = requestHelper.getQueryValue(request, 'event_name');
+                    if (eventName === EventName.FOO) {
+                      return true;
+                    }
+                    return false;
+                };
+            ]]></code>
+            <review_comment><![CDATA[
+                Don't export anonymous functions. Declare as a named function
+                ```
+                export function isFoo(request: any) {
+                    // ...
+                };
+                ```
+            ]]></review_comment>
+        </example>
+
+        <example>
+            <code><![CDATA[
+                class Foo {
+                    bar = (baz: string) => {
+                       console.log('baz');
+                    }
+                }
+            ]]></code>
+            <review_comment><![CDATA[
+                Class methods should be named functions
+                ```
+                bar(baz: string){
+                   // ...
+                }
+                ```
+            ]]></review_comment>
+        </example>
+
+    </examples>
+</code_review>

@@ -25,7 +25,7 @@ export class Perplexity {
 					{ role: 'user', content: query },
 				],
 			});
-			console.log(response);
+			logger.debug(response);
 			return response;
 			// $0.60/MIL + $5/1000
 			// 5 / 1000

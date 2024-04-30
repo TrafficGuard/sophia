@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import { func } from '#agent/functions';
 import { funcClass } from '#agent/metadata';
+import { logger } from '#o11y/logger';
 import { envVar } from '#utils/env-var';
 import { cacheRetry } from '../cache/cache';
 
@@ -13,7 +14,7 @@ export class Jira {
 			baseURL: baseUrl,
 			headers: {
 				Authorization: `Basic ${Buffer.from(`${email}:${apiToken}`).toString('base64')}`,
-				'Content-Type': 'application/json',
+				'Content-Type': 'application/json ',
 			},
 		});
 	}
@@ -27,10 +28,11 @@ export class Jira {
 	// @cacheRetry({ scope: 'global', ttlSeconds: 60 * 10 })
 	async getJiraDescription(issueId: string): Promise<string> {
 		try {
-			const response = await this.instance.get(`/issue/${issueId}`);
+			// logger.info(`Getting jira description for issue ${issueId}`);
+			const response = await this.instance.get(`issue/${issueId}`);
 			return response.data.fields.description;
 		} catch (error) {
-			console.error('Error fetching issue description:', error.message);
+			logger.error('Error fetching issue description:', error.message);
 			throw error;
 		}
 	}
