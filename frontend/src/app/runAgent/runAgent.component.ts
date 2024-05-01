@@ -93,6 +93,8 @@ export class RunAgentComponent implements OnInit {
       name: new FormControl('', Validators.required),
       type: new FormControl('', Validators.required),
       systemPrompt: new FormControl('', Validators.required),
+      budget: new FormControl(0, [Validators.required, Validators.min(0)]),
+      count: new FormControl(0, [Validators.required, Validators.min(0), Validators.pattern('^[0-9]*$')]),
     });
   }
 
@@ -127,6 +129,8 @@ export class RunAgentComponent implements OnInit {
       type: this.runAgentForm.value.type,
       systemPrompt: this.runAgentForm.value.systemPrompt,
       tools: selectedTools,
+      budget: this.runAgentForm.value.budget,
+      count: this.runAgentForm.value.count,
     });
   }
 }
