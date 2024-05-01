@@ -2,10 +2,10 @@ import { AgentStateService, AgentStateServiceFile } from '#agent/agentStateServi
 import { RouteDefinition } from '#fastify/fastifyApp';
 import { logger } from '#o11y/logger';
 import { TypeBoxFastifyInstance, initFastify } from './fastify';
+import { agentStartRoute } from './routes/agent/agent-start-route';
 import { agentRoutesV1 } from './routes/agent/agentRoutes-v1';
 import { gitlabRoutesV1 } from './routes/gitlab/gitlabRoutes-v1';
 import { DatastoreUserService, UserService } from './services/userService';
-import {agentStartRoute} from "./routes/agent/agent-start-route";
 
 export interface ApplicationContext {
 	agentStateService: AgentStateService;

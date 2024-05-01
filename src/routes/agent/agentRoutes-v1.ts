@@ -1,13 +1,13 @@
 import { Type } from '@sinclair/typebox';
 import { FastifyReply } from 'fastify';
 import { AgentContext, serializeContext } from '#agent/agentContext';
+import { Agent } from '#agent/agentFunctions';
 import { runAgent } from '#agent/agentRunner';
 import { toolFactory } from '#agent/metadata';
 import { send, sendSuccess } from '#fastify/index';
 import { sendHTML } from '#fastify/responses';
 import { logger } from '#o11y/logger';
 import { AppFastifyInstance } from '../../app';
-import {Agent} from "#agent/agentFunctions";
 
 const basePath = '/agent/v1';
 export async function agentRoutesV1(fastify: AppFastifyInstance) {
@@ -16,15 +16,11 @@ export async function agentRoutesV1(fastify: AppFastifyInstance) {
 		`${basePath}/run`,
 		{
 			schema: {
-				body: Type.Object({
-
-
-				}),
+				body: Type.Object({}),
 			},
 		},
 		async (req, reply) => {
-
-			const agent = req.body as AgentContext
+			const agent = req.body as AgentContext;
 			// TODO agent is missing the following properties from type AgentContext: agentId, executionId, name, isRetry, and 16 more.
 
 			await fastify.agentStateService.save(agent);
