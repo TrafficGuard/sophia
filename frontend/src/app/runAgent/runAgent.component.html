@@ -1,0 +1,39 @@
+<div class="mat-elevation-z8">
+  <form [formGroup]="runAgentForm" (ngSubmit)="onSubmit()" class="agent-form">
+    <div class="form-row">
+      <label for="name">Name</label>
+      <mat-form-field appearance="fill">
+        <input matInput id="name" placeholder="Enter a name" formControlName="name" />
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <label for="type">Type</label>
+      <mat-form-field appearance="fill">
+        <mat-select id="type" formControlName="type">
+          <!-- Options will be populated here -->
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <label for="systemPrompt">System Prompt</label>
+      <mat-form-field appearance="fill">
+        <mat-select id="systemPrompt" formControlName="systemPrompt">
+          <!-- Options will be populated here -->
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <label>Available Tools</label>
+    </div>
+    <div class="form-row" *ngFor="let tool of tools; let i = index">
+      <mat-checkbox [formControlName]="'tool' + i">{{ tool }}</mat-checkbox>
+    </div>
+
+    <div class="form-row">
+      <button mat-raised-button color="primary" type="submit" [disabled]="!runAgentForm.valid">Run</button>
+    </div>
+  </form>
+</div>

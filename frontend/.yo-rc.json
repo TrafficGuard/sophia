@@ -1,0 +1,32 @@
+{
+  "generator-ngx-rocket": {
+    "version": "11.0.0",
+    "props": {
+      "location": "path",
+      "strict": true,
+      "skipInstall": false,
+      "skipQuickstart": false,
+      "initGit": true,
+      "usePrefix": true,
+      "appName": "nous-ng",
+      "target": ["web"],
+      "ui": "material",
+      "layout": "side-menu",
+      "features": ["auth", "lazy", "cypress"],
+      "languages": ["en-US"],
+      "tools": ["prettier", "hads", "jest"],
+      "utility": ["lodash", "datefns"],
+      "deploy": "firebase",
+      "projectName": "nous-ng",
+      "packageManager": "npm",
+      "mobile": [],
+      "desktop": [],
+      "pwa": false,
+      "auth": true,
+      "lazy": true,
+      "e2e": false,
+      "cypress": true,
+      "angulartics": false
+    }
+  }
+}

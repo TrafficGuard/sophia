@@ -4,9 +4,12 @@ import { logger } from '#o11y/logger';
 import { TypeBoxFastifyInstance, initFastify } from './fastify';
 import { agentRoutesV1 } from './routes/agent/agentRoutes-v1';
 import { gitlabRoutesV1 } from './routes/gitlab/gitlabRoutes-v1';
+import { DatastoreUserService, UserService } from './services/userService';
+import {agentStartRoute} from "./routes/agent/agent-start-route";
 
 export interface ApplicationContext {
 	agentStateService: AgentStateService;
+	userService: UserService;
 }
 
 export interface AppFastifyInstance extends TypeBoxFastifyInstance, ApplicationContext {}
@@ -16,6 +19,7 @@ let appContext: ApplicationContext;
 function createApplicationContext(): ApplicationContext {
 	return {
 		agentStateService: new AgentStateServiceFile(),
+		userService: new DatastoreUserService(),
 	};
 }
 
@@ -33,7 +37,7 @@ export async function initApp(): Promise<void> {
 	appContext = createApplicationContext();
 	try {
 		await initFastify({
-			routes: [gitlabRoutesV1 as RouteDefinition, agentRoutesV1 as RouteDefinition],
+			routes: [gitlabRoutesV1 as RouteDefinition, agentRoutesV1 as RouteDefinition, agentStartRoute as RouteDefinition],
 			instanceDecorators: appContext,
 			requestDecorators: {},
 		});

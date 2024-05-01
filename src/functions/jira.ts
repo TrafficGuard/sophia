@@ -5,6 +5,12 @@ import { logger } from '#o11y/logger';
 import { envVar } from '#utils/env-var';
 import { cacheRetry } from '../cache/cache';
 
+export interface JiraConfig {
+	baseUrl: string;
+	email: string;
+	token: string;
+}
+
 @funcClass(__filename)
 export class Jira {
 	instance: AxiosInstance;

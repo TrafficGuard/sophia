@@ -56,7 +56,7 @@ describe('FileSystem', () => {
 		});
 	});
 
-	describe.only('listFilesRecursively', () => {
+	describe('listFilesRecursively', () => {
 		const fileSystem = new FileSystem(path.join(process.cwd(), 'test', 'filesystem'));
 		it('should list all files under the filesystem baseDir', async () => {
 			const files: string[] = await fileSystem.listFilesRecursively();

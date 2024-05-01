@@ -5,6 +5,7 @@ import { use } from 'chai';
 import { AgentLLMs, enterWithContext, getFileSystem } from '#agent/agentContext';
 import { RunAgentConfig, runAgent } from '#agent/agentRunner';
 import { getHumanInLoopSettings } from '#agent/humanInLoop';
+import { getFunctionDefinitions } from '#agent/metadata';
 import { Toolbox } from '#agent/toolbox';
 import { Claude3_Sonnet_Vertex } from '#llm/models/anthropic-vertex';
 import { Claude3_Opus, ClaudeLLMs } from '#llm/models/claude';
@@ -19,7 +20,9 @@ import { PUBLIC_WEB, PublicWeb } from '../functions/web/web';
 import { WebResearcher } from '../functions/web/webResearch';
 import { CodeEditor } from '../swe/codeEditor';
 import { DevEditWorkflow } from '../swe/devEditWorkflow';
+import { DevRequirementsWorkflow } from '../swe/devRequirementsWorkflow';
 import { TypescriptTools } from '../swe/nodejs/typescriptTools';
+import { SimpleCodeEditor } from '../swe/simpleCodeEditor';
 
 // let agentLLMs: AgentLLMs;
 // llms = GEMINI_1_0_PRO();
@@ -54,10 +57,15 @@ export async function main() {
 	// toolbox.addToolType(UtilFunctions);
 	// toolbox.addToolType(GitLabServer);
 	// toolbox.addToolType(CodeEditor);
+	// toolbox.addToolType(SimpleCodeEditor);
 	// toolbox.addToolType(DevEditWorkflow);
+	toolbox.addToolType(DevRequirementsWorkflow);
 	// toolbox.addToolType(PublicWeb);
 	// toolbox.addToolType(WebResearcher);
 	// toolbox.addToolType(TypescriptTools);
+
+	// console.log(getFunctionDefinitions(toolbox.getTools()))
+	// if(console)return
 
 	const config: RunAgentConfig = {
 		agentName: 'nous',

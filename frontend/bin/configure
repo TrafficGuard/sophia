@@ -1,0 +1,22 @@
+
+
+# Python setup ------------------------
+# pyenv install $(cat .python-version)
+
+[[ -n $VIRTUAL_ENV ]] || VIRTUAL_ENV="$(pwd)/.venv"
+if [[ -d "$VIRTUAL_ENV" ]]; then
+    echo "Activating python virtual environment"
+    source ./.venv/bin/activate
+else
+    echo "Creating python virtual environment"
+    python3 -m venv .venv
+    source ./.venv/bin/activate
+    python -m pip install --upgrade pip
+    pip install aider-chat
+fi
+
+# Node.js setup ------------------------
+
+#nvm install $(cat .nvmrc)
+nvm use
+#npm install

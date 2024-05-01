@@ -1,0 +1,12 @@
+[
+  {
+    "baseDir": "./",
+    "language": "angular",
+    "initialise": "npm install",
+    "compile": "npm run build",
+    "format": "npm run prettier",
+    "staticAnalysis": "npm run lint",
+    "test": "npm run test",
+    "languageTools": "typescript"
+  }
+]

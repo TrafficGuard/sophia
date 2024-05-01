@@ -19,9 +19,12 @@
     "paths": {
       "#agent/*": ["./src/agent/*"],
       "#fastify/*": ["./src/fastify/*"],
+      "#functions/*": ["./src/functions/*"],
       "#llm/*": ["./src/llm/*"],
+      "#model/*": ["./src/model/*"],
       "#o11y/*": ["./src/o11y/*"],
       "#utils/*": ["./src/utils/*"]
     }
-  }
+  },
+  "exclude": ["frontend"]
 }

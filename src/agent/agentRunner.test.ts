@@ -4,14 +4,15 @@ import sinon from 'sinon';
 import { appCtx, setApplicationContext } from 'src/app';
 import { runAgent } from '#agent/agentRunner';
 import { Toolbox } from '#agent/toolbox';
+import { THROW_ERROR_TEXT, TestFunctions } from '#functions/testFunctions';
 import { FunctionResponse, Invoke } from '#llm/llm';
 import { MockLLM } from '#llm/models/mock-llm';
-import { THROW_ERROR_TEXT, TestFunctions } from '../functions/testFunctions';
+import { FakeUserService } from '../services/userService';
 import { AgentLLMs } from './agentContext';
 import { AgentStateServiceInMemory } from './agentStateService';
 
 describe('agentRunner', () => {
-	setApplicationContext({ agentStateService: new AgentStateServiceInMemory() });
+	setApplicationContext({ agentStateService: new AgentStateServiceInMemory(), userService: new FakeUserService() });
 	const mockLLM = new MockLLM();
 	const llms: AgentLLMs = {
 		easy: mockLLM,

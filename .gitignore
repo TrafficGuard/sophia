@@ -2,7 +2,7 @@
 .vscode/
 node_modules/
 dist/
-.env
+#.env
 **.idea
 **.vscode
 build/
