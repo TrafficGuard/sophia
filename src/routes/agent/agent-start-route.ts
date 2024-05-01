@@ -13,11 +13,16 @@ export async function agentStartRoute(fastify: AppFastifyInstance) {
 		`${v1BasePath}/run`,
 		{
 			schema: {
-				body: Type.Object({}),
+				body: Type.Object({
+					name: Type.String(),
+					type: Type.String(),
+					budget: Type.Number({ minimum: 0 }),
+					count: Type.Integer({ minimum: 0 }),
+				}),
 			},
 		},
 		async (req, reply) => {
-			const agent = req.body as AgentContext;
+			const agent = req.body as unknown as AgentContext;
 			// TODO agent is missing the following properties from type AgentContext: agentId, executionId, name, isRetry, and 16 more.
 
 			await fastify.agentStateService.save(agent);
