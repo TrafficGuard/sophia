@@ -8,6 +8,37 @@ import { UserService } from './userService';
 describe('FakeUserService', () => {
 	const fakeUserService = new FakeUserService();
 
+	function createUserWithDefaults(overrides: Partial<User>): User {
+		const defaultUser: User = {
+			id: '',
+			email: '',
+			enabled: true,
+			hilBudget: 0,
+			hilCount: 0,
+			llmConfig: {
+				anthropicKey: '',
+				openaiKey: '',
+				groqKey: '',
+				togetheraiKey: '',
+			},
+			gitlabConfig: {
+				host: '',
+				token: '',
+				topLevelGroups: [],
+			},
+			githubConfig: {
+				token: '',
+			},
+			jiraConfig: {
+				baseUrl: '',
+				email: '',
+				token: '',
+			},
+			perplexityKey: '',
+		};
+		return { ...defaultUser, ...overrides };
+	}
+
 	beforeEach(() => {
 		// Reset the state before each test
 		fakeUserService.users = [];
@@ -15,37 +46,20 @@ describe('FakeUserService', () => {
 
 	describe('getUser', () => {
 		it('should retrieve a user by ID', async () => {
-			const user: User = {
+			const user = createUserWithDefaults({
 				id: '1',
 				email: 'test@example.com',
-				enabled: true,
 				hilBudget: 100,
-				hilCount: 0,
-				llmConfig: {
-					anthropicKey: '',
-					openaiKey: '',
-					groqKey: '',
-					togetheraiKey: '',
-				},
-				gitlabConfig: {
-					host: '',
-					token: '',
-					topLevelGroups: [],
-				},
-				githubConfig: {
-					token: '',
-				},
-				jiraConfig: {
-					baseUrl: '',
-					email: '',
-					token: '',
-				},
-				perplexityKey: '',
-			};
+			});
 			await fakeUserService.createUser(user);
 			const retrievedUser = await fakeUserService.getUser('1');
 			expect(retrievedUser).to.deep.equal(user);
 		});
+
+		// ... other tests ...
+	});
+
+	// ... other describe blocks ...
 
 		it('should throw an error if user is not found', (done) => {
 			fakeUserService.getUser('nonexistent').catch((err) => {
@@ -211,11 +225,10 @@ describe('FakeUserService', () => {
 
 	describe('createUser', () => {
 		it('should create a new user', async () => {
-			const newUser: Partial<User> = {
+			const newUser = createUserWithDefaults({
 				id: '6',
 				email: 'create@example.com',
-				enabled: true,
-			};
+			});
 			const createdUser = await fakeUserService.createUser(newUser);
 			expect(createdUser).to.include(newUser);
 			const retrievedUser = await fakeUserService.getUser('6');
