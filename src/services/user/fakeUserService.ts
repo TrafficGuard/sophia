@@ -27,6 +27,19 @@ export class FakeUserService implements UserService {
 	}
 
 	createUser(user: Partial<User>): Promise<User> {
-		return Promise.resolve(undefined);
+		const newUser: User = {
+			id: user.id,
+			email: user.email,
+			enabled: user.enabled ?? true,
+			hilBudget: user.hilBudget ?? 0,
+			hilCount: user.hilCount ?? 0,
+			llmConfig: user.llmConfig ?? { anthropicKey: '', openaiKey: '', groqKey: '', togetheraiKey: '' },
+			gitlabConfig: user.gitlabConfig ?? { host: '', token: '', topLevelGroups: [] },
+			githubConfig: user.githubConfig ?? { token: '' },
+			jiraConfig: user.jiraConfig ?? { baseUrl: '', email: '', token: '' },
+			perplexityKey: user.perplexityKey ?? '',
+		};
+		this.users.push(newUser);
+		return Promise.resolve(newUser);
 	}
 }

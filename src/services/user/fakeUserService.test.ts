@@ -47,8 +47,11 @@ describe('FakeUserService', () => {
 			expect(retrievedUser).to.deep.equal(user);
 		});
 
-		it('should throw an error if user is not found', async () => {
-			expect(fakeUserService.getUser('nonexistent')).to.throw(Error);
+		it('should throw an error if user is not found', (done) => {
+			fakeUserService.getUser('nonexistent').catch((err) => {
+				expect(err).to.be.an('error');
+				done();
+			});
 		});
 	});
 
@@ -188,6 +191,24 @@ describe('FakeUserService', () => {
 		});
 	});
 
+	describe('updateUser error cases', () => {
+		it('should throw an error if user does not exist', (done) => {
+			fakeUserService.updateUser('nonexistent', { email: 'noone@example.com' }).catch((err) => {
+				expect(err).to.be.an('error');
+				done();
+			});
+		});
+	});
+
+	describe('disableUser error cases', () => {
+		it('should throw an error if user does not exist', (done) => {
+			fakeUserService.disableUser('nonexistent').catch((err) => {
+				expect(err).to.be.an('error');
+				done();
+			});
+		});
+	});
+
 	describe('createUser', () => {
 		it('should create a new user', async () => {
 			const newUser: Partial<User> = {
@@ -200,8 +221,5 @@ describe('FakeUserService', () => {
 			const retrievedUser = await fakeUserService.getUser('6');
 			expect(retrievedUser).to.include(newUser);
 		});
-	});
-	describe('createUser', () => {
-		it('should ', async () => {});
 	});
 });
