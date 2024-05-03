@@ -1,14 +1,16 @@
 import * as path from 'path';
 import { expect } from 'chai';
 import * as fs from 'fs/promises';
-import { UserService } from './userService'; // Path to your cacheService file
+import { User } from '#model/user';
+import { FakeUserService } from '#services/user/fakeUserService'; // Path to your cacheService file
+import { UserService } from './userService';
 
 describe('FakeUserService', () => {
 	const fakeUserService = new FakeUserService();
 
 	beforeEach(() => {
 		// Reset the state before each test
-		fakeUserService['users'] = [];
+		fakeUserService.users = [];
 	});
 
 	describe('getUser', () => {
@@ -32,7 +34,6 @@ describe('FakeUserService', () => {
 				},
 				githubConfig: {
 					token: '',
-					repositories: [],
 				},
 				jiraConfig: {
 					baseUrl: '',
@@ -47,7 +48,7 @@ describe('FakeUserService', () => {
 		});
 
 		it('should throw an error if user is not found', async () => {
-			await expect(fakeUserService.getUser('nonexistent')).to.be.rejectedWith(Error);
+			expect(fakeUserService.getUser('nonexistent')).to.throw(Error);
 		});
 	});
 
@@ -72,7 +73,6 @@ describe('FakeUserService', () => {
 				},
 				githubConfig: {
 					token: '',
-					repositories: [],
 				},
 				jiraConfig: {
 					baseUrl: '',
@@ -109,7 +109,6 @@ describe('FakeUserService', () => {
 				},
 				githubConfig: {
 					token: '',
-					repositories: [],
 				},
 				jiraConfig: {
 					baseUrl: '',
@@ -146,7 +145,6 @@ describe('FakeUserService', () => {
 				},
 				githubConfig: {
 					token: '',
-					repositories: [],
 				},
 				jiraConfig: {
 					baseUrl: '',
@@ -174,7 +172,6 @@ describe('FakeUserService', () => {
 				},
 				githubConfig: {
 					token: '',
-					repositories: [],
 				},
 				jiraConfig: {
 					baseUrl: '',
