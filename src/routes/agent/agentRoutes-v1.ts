@@ -11,38 +11,6 @@ import { AppFastifyInstance } from '../../app';
 
 const basePath = '/agent/v1';
 export async function agentRoutesV1(fastify: AppFastifyInstance) {
-	/** Starts a new agent */
-	fastify.post(
-		`${basePath}/run`,
-		{
-			schema: {
-				body: Type.Object({}),
-			},
-		},
-		async (req, reply) => {
-			const agent = req.body as AgentContext;
-			// TODO agent is missing the following properties from type AgentContext: agentId, executionId, name, isRetry, and 16 more.
-
-			await fastify.agentStateService.save(agent);
-
-			runAgent({
-				agentName: agent.name,
-				initialPrompt: agent.inputPrompt,
-				llms: agent.llms,
-				systemPrompt: agent.systemPrompt,
-				toolbox: agent.toolbox,
-			});
-
-			send(reply, 200);
-			// try {
-			//     send(reply, 200, reservation);
-			//     sendSuccess(reply, "No reservation found.");
-			// } catch (e: any) {
-			//     logger.error(e);
-			//     sendBadRequest(reply, e);
-			// }
-		},
-	);
 	fastify.post(
 		`${basePath}/resume`,
 		{

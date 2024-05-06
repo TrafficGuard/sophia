@@ -23,6 +23,7 @@
       "#llm/*": ["./src/llm/*"],
       "#model/*": ["./src/model/*"],
       "#o11y/*": ["./src/o11y/*"],
+      "#services/*": ["./src/services/*"],
       "#utils/*": ["./src/utils/*"]
     }
   },

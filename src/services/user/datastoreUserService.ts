@@ -1,16 +1,7 @@
 import { Datastore } from '@google-cloud/datastore';
 import { User } from '#model/user';
 import { envVar } from '#utils/env-var';
-
-export interface UserService {
-	getUser(userId: string): Promise<User>;
-
-	updateUser(userId: string, updates: Partial<User>): Promise<void>;
-
-	disableUser(userId: string): Promise<void>;
-
-	listUsers(): Promise<User[]>;
-}
+import { UserService } from './userService';
 
 export class DatastoreUserService implements UserService {
 	private datastore: Datastore = new Datastore({
@@ -40,30 +31,9 @@ export class DatastoreUserService implements UserService {
 		const [users] = await this.datastore.runQuery(query);
 		return users;
 	}
-}
 
-export class FakeUserService implements UserService {
-	private users: User[] = [];
-
-	async getUser(userId: string): Promise<User> {
-		const user = this.users.find((user) => user.id === userId);
-		if (!user) {
-			throw new Error(`No user found with ID ${userId}`);
-		}
-		return user;
-	}
-
-	async updateUser(userId: string, updates: Partial<User>): Promise<void> {
-		const user = await this.getUser(userId);
-		Object.assign(user, updates);
-	}
-
-	async disableUser(userId: string): Promise<void> {
-		const user = await this.getUser(userId);
-		user.enabled = false;
-	}
-
-	async listUsers(): Promise<User[]> {
-		return this.users;
+	async createUser(user: Partial<User>): Promise<User> {
+		// TODO implement properly
+		return user as User;
 	}
 }

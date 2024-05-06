@@ -10,6 +10,9 @@ const routes: Routes = [
   Shell.childRoutes([
     { path: 'runAgent', loadChildren: () => import('./runAgent/runAgent.module').then((m) => m.RunAgentModule) },
   ]),
+  Shell.childRoutes([
+    { path: 'profile', loadChildren: () => import('./profile/profile.module').then((m) => m.ProfileModule) },
+  ]),
   // Fallback when no prior route is matched
   { path: '**', redirectTo: '', pathMatch: 'full' },
 ];

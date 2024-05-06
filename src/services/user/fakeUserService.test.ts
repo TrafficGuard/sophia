@@ -56,11 +56,6 @@ describe('FakeUserService', () => {
 			expect(retrievedUser).to.deep.equal(user);
 		});
 
-		// ... other tests ...
-	});
-
-	// ... other describe blocks ...
-
 		it('should throw an error if user is not found', (done) => {
 			fakeUserService.getUser('nonexistent').catch((err) => {
 				expect(err).to.be.an('error');
@@ -73,7 +68,7 @@ describe('FakeUserService', () => {
 		it('should update user details', async () => {
 			const user: User = {
 				id: '2',
-				email: 'update@example.com',
+				email: 'original@example.com',
 				enabled: true,
 				hilBudget: 100,
 				hilCount: 0,

@@ -37,6 +37,10 @@
             <span translate>About</span>
           </a>
           <mat-divider></mat-divider>
+          <a mat-list-item routerLink="/profile" routerLinkActive="active" (click)="isMobile && sidenav.close()">
+            <span translate>Profile</span>
+          </a>
+          <mat-divider></mat-divider>
           <a mat-list-item routerLink="/agents" routerLinkActive="active" (click)="isMobile && sidenav.close()">
             <span translate>Agents</span>
           </a>

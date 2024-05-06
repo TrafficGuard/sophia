@@ -7,7 +7,7 @@ import { Toolbox } from '#agent/toolbox';
 import { THROW_ERROR_TEXT, TestFunctions } from '#functions/testFunctions';
 import { FunctionResponse, Invoke } from '#llm/llm';
 import { MockLLM } from '#llm/models/mock-llm';
-import { FakeUserService } from '../services/userService';
+import { FakeUserService } from '#services/user/fakeUserService';
 import { AgentLLMs } from './agentContext';
 import { AgentStateServiceInMemory } from './agentStateService';
 
