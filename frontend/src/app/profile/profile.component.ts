@@ -3,6 +3,7 @@ import { FormGroup, FormControl } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from '@env/environment';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-profile',
@@ -11,7 +12,7 @@ import { environment } from '@env/environment';
 })
 export class ProfileComponent implements OnInit {
   profileForm: FormGroup;
-  constructor(private http: HttpClient, private toastr: ToastrService) {
+  constructor(private http: HttpClient, private snackBar: MatSnackBar) {
     this.profileForm = new FormGroup({
       id: new FormControl(''),
       email: new FormControl(''),
@@ -42,21 +43,28 @@ export class ProfileComponent implements OnInit {
   ngOnInit(): void {
     this.loadUserProfile();
   }
+      // ... (rest of the form initialization)
+    });
+  }
+
+  // ... (rest of the component methods)
 
   onSave(): void {
     const updateUrl = `${environment.apiUrl}/profile/update`;
     this.http.post(updateUrl, { user: this.profileForm.value }).subscribe({
       next: () => {
+        // ... (handle success)
         console.log('Profile updated successfully.');
         // Handle successful update, e.g., show a notification to the user
       },
       error: (error) => {
-        this.toastr.error('Failed to save profile.', 'Error');
+        this.snackBar.open('Failed to save profile.', 'Close', { duration: 3000 });
         // Handle error case, e.g., show an error notification to the user
       }
     });
   }
 
+  // ... (rest of the component methods)
   private loadUserProfile(): void {
     const profileUrl = `${environment.apiUrl}/profile/view`;
     this.http.get(profileUrl).subscribe((user: any) => {
