@@ -7,6 +7,7 @@ import { TypeBoxFastifyInstance, initFastify } from './fastify';
 import { agentStartRoute } from './routes/agent/agent-start-route';
 import { agentRoutesV1 } from './routes/agent/agentRoutes-v1';
 import { gitlabRoutesV1 } from './routes/gitlab/gitlabRoutes-v1';
+import { profileRoute } from './routes/profile/profile-route';
 
 export interface ApplicationContext {
 	agentStateService: AgentStateService;
@@ -38,7 +39,7 @@ export async function initApp(): Promise<void> {
 	appContext = createApplicationContext();
 	try {
 		await initFastify({
-			routes: [gitlabRoutesV1 as RouteDefinition, agentRoutesV1 as RouteDefinition, agentStartRoute as RouteDefinition],
+			routes: [gitlabRoutesV1 as RouteDefinition, agentRoutesV1 as RouteDefinition, agentStartRoute as RouteDefinition, profileRoute as RouteDefinition],
 			instanceDecorators: appContext,
 			requestDecorators: {},
 		});

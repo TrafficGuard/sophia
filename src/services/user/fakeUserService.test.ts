@@ -94,7 +94,7 @@ describe('FakeUserService', () => {
 				perplexityKey: '',
 			};
 			await fakeUserService.createUser(user);
-			await fakeUserService.updateUser('2', { email: 'updated@example.com' });
+			await fakeUserService.updateUser({ email: 'updated@example.com' }, '2');
 			const updatedUser = await fakeUserService.getUser('2');
 			expect(updatedUser.email).to.equal('updated@example.com');
 		});
@@ -202,7 +202,7 @@ describe('FakeUserService', () => {
 
 	describe('updateUser error cases', () => {
 		it('should throw an error if user does not exist', (done) => {
-			fakeUserService.updateUser('nonexistent', { email: 'noone@example.com' }).catch((err) => {
+			fakeUserService.updateUser({ email: 'noone@example.com' }, 'nonexistent').catch((err) => {
 				expect(err).to.be.an('error');
 				done();
 			});

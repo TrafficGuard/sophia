@@ -3,6 +3,10 @@ import { User } from '#model/user';
 import { envVar } from '#utils/env-var';
 import { UserService } from './userService';
 
+function getCurrentUserId(): string {
+	return 'local';
+}
+
 export class DatastoreUserService implements UserService {
 	private datastore: Datastore = new Datastore({
 		projectId: envVar('GCLOUD_PROJECT'),
@@ -10,20 +14,25 @@ export class DatastoreUserService implements UserService {
 		databaseId: process.env.DATASTORE_DATABASE_ID,
 	});
 
+	async getCurrentUser(): Promise<User> {
+		return await this.getUser(getCurrentUserId());
+	}
+
 	async getUser(userId: string): Promise<User> {
 		const key = this.datastore.key(['User', userId]);
 		const [user] = await this.datastore.get(key);
 		return user;
 	}
 
-	async updateUser(userId: string, updates: Partial<User>): Promise<void> {
+	async updateUser(updates: Partial<User>, userId?: string): Promise<void> {
+		userId ??= getCurrentUserId();
 		const key = this.datastore.key(['User', userId]);
 		const user = this.datastore.entity(key, updates);
 		await this.datastore.update(user);
 	}
 
 	async disableUser(userId: string): Promise<void> {
-		await this.updateUser(userId, { enabled: false });
+		await this.updateUser({ enabled: false }, userId);
 	}
 
 	async listUsers(): Promise<User[]> {

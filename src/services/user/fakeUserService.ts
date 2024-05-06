@@ -12,7 +12,8 @@ export class FakeUserService implements UserService {
 		return user;
 	}
 
-	async updateUser(userId: string, updates: Partial<User>): Promise<void> {
+	async updateUser(updates: Partial<User>, userId: string): Promise<void> {
+		userId ??= 'fake';
 		const user = await this.getUser(userId);
 		Object.assign(user, updates);
 	}
@@ -41,5 +42,9 @@ export class FakeUserService implements UserService {
 		};
 		this.users.push(newUser);
 		return Promise.resolve(newUser);
+	}
+
+	getCurrentUser(): Promise<User> {
+		return this.getUser('fake');
 	}
 }
