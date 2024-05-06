@@ -51,5 +51,5 @@
 
   <!-- Add other form controls for llmConfig, gitlabConfig, githubConfig, jiraConfig, and perplexityKey -->
 
-  <button type="submit" [disabled]="!profileForm.valid">Save</button>
+  <button type="button" (click)="onSave()" [disabled]="!profileForm.valid">Save</button>
 </form>
