@@ -42,6 +42,20 @@ export class ProfileComponent implements OnInit {
     this.loadUserProfile();
   }
 
+  onSave(): void {
+    const updateUrl = `${environment.apiUrl}/profile/update`;
+    this.http.post(updateUrl, { user: this.profileForm.value }).subscribe({
+      next: () => {
+        console.log('Profile updated successfully.');
+        // Handle successful update, e.g., show a notification to the user
+      },
+      error: (error) => {
+        console.error('Failed to update profile', error);
+        // Handle error case, e.g., show an error notification to the user
+      }
+    });
+  }
+
   private loadUserProfile(): void {
     const profileUrl = `${environment.apiUrl}/profile/view`;
     this.http.get(profileUrl).subscribe((user: any) => {
