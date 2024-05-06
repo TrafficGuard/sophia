@@ -1,1 +1,20 @@
-<p>profile works!</p>
+<form [formGroup]="profileForm">
+  <label for="id">ID:</label>
+  <input type="text" id="id" formControlName="id">
+
+  <label for="email">Email:</label>
+  <input type="email" id="email" formControlName="email">
+
+  <label for="enabled">Enabled:</label>
+  <input type="checkbox" id="enabled" formControlName="enabled">
+
+  <label for="hilBudget">HIL Budget:</label>
+  <input type="number" id="hilBudget" formControlName="hilBudget">
+
+  <label for="hilCount">HIL Count:</label>
+  <input type="number" id="hilCount" formControlName="hilCount">
+
+  <!-- Add other form controls for llmConfig, gitlabConfig, githubConfig, jiraConfig, and perplexityKey -->
+
+  <button type="submit" [disabled]="!profileForm.valid">Save</button>
+</form>
