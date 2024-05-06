@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormControl } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { ToastrService } from 'ngx-toastr';
 import { environment } from '@env/environment';
 
 @Component({
@@ -10,7 +11,7 @@ import { environment } from '@env/environment';
 })
 export class ProfileComponent implements OnInit {
   profileForm: FormGroup;
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private toastr: ToastrService) {
     this.profileForm = new FormGroup({
       id: new FormControl(''),
       email: new FormControl(''),
@@ -50,7 +51,7 @@ export class ProfileComponent implements OnInit {
         // Handle successful update, e.g., show a notification to the user
       },
       error: (error) => {
-        console.error('Failed to update profile', error);
+        this.toastr.error('Failed to save profile.', 'Error');
         // Handle error case, e.g., show an error notification to the user
       }
     });
