@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormControl } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-profile',
@@ -8,7 +10,7 @@ import { FormGroup, FormControl } from '@angular/forms';
 })
 export class ProfileComponent implements OnInit {
   profileForm: FormGroup;
-  constructor() {
+  constructor(private http: HttpClient) {
     this.profileForm = new FormGroup({
       id: new FormControl(''),
       email: new FormControl(''),
@@ -37,6 +39,16 @@ export class ProfileComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadUserProfile();
+  }
+
+  private loadUserProfile(): void {
+    const profileUrl = `${environment.apiUrl}/profile/view`;
+    this.http.get(profileUrl).subscribe((user: any) => {
+      this.profileForm.patchValue(user);
+    }, error => {
+      console.error('Failed to load user profile', error);
+    });
   }
 
 }
