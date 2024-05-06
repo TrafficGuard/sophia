@@ -14,6 +14,20 @@
   <label for="hilCount">HIL Count:</label>
   <input type="number" id="hilCount" formControlName="hilCount">
 
+  <label for="anthropicKey">Anthropic Key:</label>
+  <input type="text" id="anthropicKey" formControlName="llmConfig.anthropicKey">
+
+  <label for="openaiKey">OpenAI Key:</label>
+  <input type="text" id="openaiKey" formControlName="llmConfig.openaiKey">
+
+  <label for="groqKey">Groq Key:</label>
+  <input type="text" id="groqKey" formControlName="llmConfig.groqKey">
+
+  <label for="togetheraiKey">TogetherAI Key:</label>
+  <input type="text" id="togetheraiKey" formControlName="llmConfig.togetheraiKey">
+
+  <!-- Add other form controls for gitlabConfig, githubConfig, jiraConfig, and perplexityKey -->
+
   <!-- Add other form controls for llmConfig, gitlabConfig, githubConfig, jiraConfig, and perplexityKey -->
 
   <button type="submit" [disabled]="!profileForm.valid">Save</button>
