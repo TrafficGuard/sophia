@@ -37,6 +37,15 @@
   <input type="text" id="gitlabTopLevelGroups" formControlName="gitlabConfig.topLevelGroups">
 
 
+  <label for="jiraBaseUrl">Jira Base URL:</label>
+  <input type="text" id="jiraBaseUrl" formControlName="jiraConfig.baseUrl">
+
+  <label for="jiraEmail">Jira Email:</label>
+  <input type="email" id="jiraEmail" formControlName="jiraConfig.email">
+
+  <label for="jiraToken">Jira Token:</label>
+  <input type="text" id="jiraToken" formControlName="jiraConfig.token">
+
   <!-- Add other form controls for llmConfig, gitlabConfig, githubConfig, jiraConfig, and perplexityKey -->
 
   <button type="submit" [disabled]="!profileForm.valid">Save</button>

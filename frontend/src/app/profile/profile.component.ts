@@ -26,7 +26,12 @@ export class ProfileComponent implements OnInit {
         token: new FormControl(''),
         topLevelGroups: new FormControl('')
       }),
-      // Initialize form controls for githubConfig, jiraConfig, and perplexityKey
+      jiraConfig: new FormGroup({
+        baseUrl: new FormControl(''),
+        email: new FormControl(''),
+        token: new FormControl('')
+      }),
+      // Initialize form controls for githubConfig, and perplexityKey
     });
   }
 
