@@ -8,8 +8,6 @@ import { FormGroup, FormControl } from '@angular/forms';
 })
 export class ProfileComponent implements OnInit {
   profileForm: FormGroup;
-
-  constructor() { }
   constructor() {
     this.profileForm = new FormGroup({
       id: new FormControl(''),
