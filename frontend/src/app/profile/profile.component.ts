@@ -21,7 +21,12 @@ export class ProfileComponent implements OnInit {
         groqKey: new FormControl(''),
         togetheraiKey: new FormControl('')
       }),
-      // Initialize form controls for gitlabConfig, githubConfig, jiraConfig, and perplexityKey
+      gitlabConfig: new FormGroup({
+        host: new FormControl(''),
+        token: new FormControl(''),
+        topLevelGroups: new FormControl('')
+      }),
+      // Initialize form controls for githubConfig, jiraConfig, and perplexityKey
     });
   }
 
