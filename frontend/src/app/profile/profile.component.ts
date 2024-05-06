@@ -31,7 +31,8 @@ export class ProfileComponent implements OnInit {
         email: new FormControl(''),
         token: new FormControl('')
       }),
-      // Initialize form controls for githubConfig, and perplexityKey
+      perplexityKey: new FormControl(''),
+      // Initialize form controls for githubConfig
     });
   }
 

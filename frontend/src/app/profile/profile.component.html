@@ -46,6 +46,9 @@
   <label for="jiraToken">Jira Token:</label>
   <input type="text" id="jiraToken" formControlName="jiraConfig.token">
 
+  <label for="perplexityKey">Perplexity Key:</label>
+  <input type="text" id="perplexityKey" formControlName="perplexityKey">
+
   <!-- Add other form controls for llmConfig, gitlabConfig, githubConfig, jiraConfig, and perplexityKey -->
 
   <button type="submit" [disabled]="!profileForm.valid">Save</button>
