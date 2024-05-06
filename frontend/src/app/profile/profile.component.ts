@@ -15,7 +15,13 @@ export class ProfileComponent implements OnInit {
       enabled: new FormControl(false),
       hilBudget: new FormControl(0),
       hilCount: new FormControl(0),
-      // Initialize form controls for llmConfig, gitlabConfig, githubConfig, jiraConfig, and perplexityKey
+      llmConfig: new FormGroup({
+        anthropicKey: new FormControl(''),
+        openaiKey: new FormControl(''),
+        groqKey: new FormControl(''),
+        togetheraiKey: new FormControl('')
+      }),
+      // Initialize form controls for gitlabConfig, githubConfig, jiraConfig, and perplexityKey
     });
   }
 
