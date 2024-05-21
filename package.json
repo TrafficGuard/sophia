@@ -7,6 +7,7 @@
     "node": ">=20.6.0"
   },
   "scripts": {
+    "clean": "echo dumy clean",
     "chat": "    node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/test/chat.ts",
     "agent": "   node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/test/agent.ts",
     "code": "    node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/test/code.ts",
