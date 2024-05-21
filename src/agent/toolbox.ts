@@ -1,8 +1,8 @@
-import { FunctionDefinition } from '#agent/functions';
 import { Invoke } from '#llm/llm';
 import { logger } from '#o11y/logger';
+import { FunctionDefinition } from '../functionDefinition/functions';
+import { toolFactory } from '../functionDefinition/metadata';
 import { Agent } from './agentFunctions';
-import { toolFactory } from './metadata';
 
 export class Toolbox {
 	tools: { [toolName: string]: any } = {
@@ -27,6 +27,10 @@ export class Toolbox {
 		return Object.values(this.tools);
 	}
 
+	getToolNames(): string[] {
+		return Object.keys(this.tools);
+	}
+
 	getToolDefinitions(): Array<FunctionDefinition> {
 		return this.getTools().map((tool) => Object.getPrototypeOf(tool).__functionsObj);
 	}
@@ -36,6 +40,7 @@ export class Toolbox {
 	}
 
 	addToolType(...toolTypes: any): void {
+		// Check the prototype of the instantiated tool has the functions metadata
 		for (const toolType of toolTypes) this.tools[toolType.name] = new toolType();
 	}
 

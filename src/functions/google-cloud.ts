@@ -1,5 +1,5 @@
-import { func } from '#agent/functions';
-import { funcClass } from '#agent/metadata';
+import { func } from '../functionDefinition/functions';
+import { funcClass } from '../functionDefinition/metadata';
 
 @funcClass(__filename)
 export class GoogleCloud {

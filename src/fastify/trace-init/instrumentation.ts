@@ -33,7 +33,7 @@ import { InstrumentationBase, InstrumentationConfig, InstrumentationNodeModuleDe
 // -----------------------------------------------------------------------------
 
 const gcpProjectId = [process.env.GCLOUD_PROJECT, process.env.GCP_PROJECT, process.env.PROJECT].find((val) => val?.length);
-if (!gcpProjectId) {
+if (!gcpProjectId && process.env.TRACE_AGENT_ENABLED?.toLowerCase() === 'true') {
 	throw new Error('GCLOUD_PROJECT, GCP_PROJECT, or PROJECT environment variable is required for Pino OpenTelemetry instrumentation');
 }
 const tracePrefix = `projects/${gcpProjectId}/traces/`;

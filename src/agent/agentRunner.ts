@@ -1,67 +1,131 @@
 import * as readline from 'readline';
-import { Span } from '@opentelemetry/api';
+import { Span, SpanStatusCode } from '@opentelemetry/api';
 import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateToolDefinitions } from '#agent/agentPromptUtils';
 import { getServiceName } from '#fastify/trace-init/trace-init';
-import { FunctionResponse } from '#llm/llm';
+import { Slack } from '#functions/slack';
+import { FunctionResponse, Invoked } from '#llm/llm';
 import { logger } from '#o11y/logger';
 import { startSpan, withActiveSpan } from '#o11y/trace';
-import { appCtx } from '../app';
+import { User } from '#user/user';
+import { sleep } from '#utils/async-utils';
+import { envVar } from '#utils/env-var';
+import { appContext } from '../app';
+import { getFunctionDefinitions } from '../functionDefinition/metadata';
 import { AgentContext, AgentLLMs, AgentRunningState, agentContext, agentContextStorage, createContext, llms } from './agentContext';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from './agentFunctions';
-import { getFunctionDefinitions } from './metadata';
 import { Toolbox } from './toolbox';
 
+export const SUPERVISOR_RESUMED_FUNCTION_NAME = 'Supervisor.Resumed';
+export const SUPERVISOR_CANCELLED_FUNCTION_NAME = 'Supervisor.Cancelled';
+
 export interface RunAgentConfig {
+	user: User;
 	/** The name of this agent */
 	agentName: string;
 	/** The tools the agent has available to call */
 	toolbox: Toolbox;
-	/** The initial user prompt */
+	/** The initial prompt */
 	initialPrompt: string;
 	/** The agent system prompt */
-	systemPrompt: string;
+	systemPrompt?: string;
 	/** Settings for requiring a human in the loop */
 	humanInLoop?: { budget?: number; count?: number };
 	/** The LLMs available to use */
 	llms: AgentLLMs;
 	/** The agent to resume */
 	resumeAgentId?: string;
+	/** Message to add to the prompt when resuming */
+	resumeMessage?: string;
 }
 
-/**
- * Runs an autonomous agent using the tools provided.
- * @param config {RunAgentConfig} The agent configuration
- */
-export async function runAgent(config: RunAgentConfig): Promise<string> {
-	const agentStateService = appCtx().agentStateService;
-
-	// start or resume an agent
-	const context: AgentContext = config.resumeAgentId
-		? await agentStateService.load(config.resumeAgentId)
-		: createContext(config.agentName, config.llms, config.resumeAgentId);
-
-	let resumedState: AgentRunningState | null = null;
-	if (config.resumeAgentId) resumedState = context.state;
-
-	agentContextStorage.enterWith(context);
-	context.toolbox.addTool(context.fileSystem, 'FileSystem');
-
-	const llm = llms().hard;
-
-	let currentPrompt = config.initialPrompt;
-	let initialPrompt = config.initialPrompt;
-	const toolbox = config.toolbox;
-	const agentName = config.agentName;
-
-	const systemPrompt = updateToolDefinitions(config.systemPrompt, getFunctionDefinitions(toolbox.getTools()));
-	// If we've pasted in a prompt to resume then extract out the initial prompt
-	if (initialPrompt.includes('<initial_prompt>')) {
-		const startIndex = initialPrompt.indexOf('<initial_prompt>') + '<initial_prompt>'.length;
-		const endIndex = initialPrompt.indexOf('</initial_prompt>') - 1;
-		initialPrompt = initialPrompt.slice(startIndex, endIndex);
-		logger.info('Extracted initial prompt');
-		logger.debug(`<initial_prompt>${initialPrompt}</initial_prompt>`);
+export async function cancelAgent(agentId: string, executionId: string, feedback: string): Promise<void> {
+	const agent = await appContext().agentStateService.load(agentId);
+	if (agent.executionId !== executionId) {
+		throw new Error('Invalid executionId. Agent has already been cancelled/resumed');
 	}
+	agent.functionCallHistory.push({
+		tool_name: SUPERVISOR_CANCELLED_FUNCTION_NAME,
+		stdout: feedback,
+		parameters: {},
+	});
+	agent.state = 'completed';
+	await appContext().agentStateService.save(agent);
+}
+
+export async function resumeError(agentId: string, executionId: string, feedback: string): Promise<string> {
+	const agent = await appContext().agentStateService.load(agentId);
+	if (agent.executionId !== executionId) {
+		throw new Error('Invalid executionId. Agent has already been resumed');
+	}
+	agent.functionCallHistory.push({
+		tool_name: SUPERVISOR_RESUMED_FUNCTION_NAME,
+		stdout: feedback,
+		parameters: {},
+	});
+	agent.state = 'agent';
+	agent.inputPrompt += `\nSupervisor note: ${feedback}`;
+	await appContext().agentStateService.save(agent);
+	return runAgent(agent);
+}
+
+export async function provideFeedback(agentId: string, executionId: string, feedback: string): Promise<string> {
+	const agent = await appContext().agentStateService.load(agentId);
+	if (agent.executionId !== executionId) {
+		throw new Error('Invalid executionId. Agent has already been provided feedback');
+	}
+	// The last function call should be the feedback
+	const invoked: Invoked = agent.functionCallHistory.slice(-1)[0];
+	if (invoked.tool_name !== AGENT_REQUEST_FEEDBACK) throw new Error(`Expected the last function call to be ${AGENT_REQUEST_FEEDBACK}`);
+	invoked.stdout = feedback;
+	agent.state = 'agent';
+	await appContext().agentStateService.save(agent);
+
+	return runAgent(agent);
+}
+
+// export async function runAgent2(config: RunAgentConfig): Promise<string> {
+// 	return executeAgent(createContext(config))
+// }
+
+// export function executeAgent(agent: AgentContext): Promise<string> {
+// 	const agentStateService = appCtx().agentStateService;
+// }
+
+export async function startAgent(config: RunAgentConfig): Promise<string> {
+	const agent: AgentContext = createContext(config);
+
+	if (config.initialPrompt?.includes('<user_request>')) {
+		const startIndex = config.initialPrompt.indexOf('<user_request>') + '<user_request>'.length;
+		const endIndex = config.initialPrompt.indexOf('</user_request>');
+		agent.inputPrompt = config.initialPrompt;
+		agent.userPrompt = config.initialPrompt.slice(startIndex, endIndex);
+		logger.debug(`Extracted initial prompt:\n${agent.userPrompt}`);
+	} else {
+		agent.userPrompt = config.initialPrompt;
+		agent.inputPrompt = `<user_request>${config.initialPrompt}</user_request>`;
+	}
+	await appContext().agentStateService.save(agent);
+	return runAgent(agent);
+}
+
+export async function runAgent(agent: AgentContext): Promise<string> {
+	const agentStateService = appContext().agentStateService;
+	agent.state = 'agent';
+
+	agentContextStorage.enterWith(agent);
+
+	// TODO only do this if FileSystem is selected by the user
+	// The filesystem will always be on on the context for programmatic usage
+	agent.toolbox.addTool(agent.fileSystem, 'FileSystem');
+
+	const agentLLM = llms().hard;
+
+	const userRequestXml = `<user_request>${agent.userPrompt}</user_request>\n`;
+	let currentPrompt = agent.inputPrompt;
+
+	const toolbox = agent.toolbox;
+
+	const systemPrompt = updateToolDefinitions(agent.systemPrompt, getFunctionDefinitions(toolbox.getTools()));
 	const functionDefinitions = getFunctionDefinitions(toolbox.getTools());
 	const systemPromptWithFunctions = updateToolDefinitions(systemPrompt, functionDefinitions);
 
@@ -71,23 +135,26 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 	const hilCountRaw = process.env.HIL_COUNT;
 	let hilBudget = hilBudgetRaw ? parseFloat(hilBudgetRaw) : 0;
 	const hilCount = hilCountRaw ? parseInt(hilCountRaw) : 0;
-	// Default to $1 budget to avoid accidents
+	// Default to $5 budget to avoid accidents
 	if (!hilCount && !hilBudget) {
-		hilBudget = 1;
+		logger.info('Default Human in the Loop budget to $5');
+		hilBudget = 5;
 	}
 
 	let countSinceHil = 0;
 	let costSinceHil = 0;
 	let previousCost = 0;
 
-	const ctx: AgentContext = agentContextStorage.getStore();
-	context.state = 'agent';
-	await agentStateService.save(context);
+	await agentStateService.save(agent);
 
-	await withActiveSpan(agentName, async (span: Span) => {
+	await withActiveSpan(agent.name, async (span: Span) => {
 		span.setAttributes({
-			initialPrompt,
+			initialPrompt: agent.inputPrompt,
 			'service.name': getServiceName(),
+			agentId: agent.agentId,
+			executionId: agent.executionId,
+			parentId: agent.parentAgentId,
+			tools: agent.toolbox.getToolNames(),
 		});
 
 		let shouldContinue = true;
@@ -108,44 +175,59 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 					if (newCosts) logger.debug(`New costs $${newCosts.toFixed(2)}`);
 					previousCost = agentContext().cost;
 					costSinceHil += newCosts;
-					logger.info(`Spent $${costSinceHil.toFixed(2)} since last input. Total cost $${agentContextStorage.getStore().cost.toFixed(2)}`);
+					logger.debug(`Spent $${costSinceHil.toFixed(2)} since last input. Total cost $${agentContextStorage.getStore().cost.toFixed(2)}`);
 					if (hilBudget && costSinceHil > hilBudget) {
 						// format costSinceHil to 2 decimal places
 						await waitForInput();
 						costSinceHil = 0;
 					}
 
-					// If it's not the first control loop run, and not resuming the agent, then pre-pend the initial prompt
-					if (initialPrompt !== currentPrompt && !currentPrompt.includes('<initial_prompt>')) {
-						currentPrompt = `<initial_prompt>\n${initialPrompt}\n</initial_prompt>\n${currentPrompt}`;
+					if (!currentPrompt.includes('<function_call_history>')) {
+						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + currentPrompt;
 					}
-					const currentPromptWithHistoryAndMemory = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + currentPrompt;
 
-					const result: FunctionResponse = await llm.generateTextExpectingFunctions(currentPromptWithHistoryAndMemory, systemPromptWithFunctions);
-
-					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + result.response;
-					const invokers = result.functions.invoke;
+					let llmResponse: FunctionResponse;
+					try {
+						llmResponse = await agentLLM.generateTextExpectingFunctions(currentPrompt, systemPromptWithFunctions);
+					} catch (e) {
+						const retryPrompt = `${currentPrompt}\nNote: Your previous response did not contain the response in the required format of <response><function_calls>...</function_calls></response>. You must reply in the correct response format.`;
+						llmResponse = await agentLLM.generateTextExpectingFunctions(retryPrompt, systemPromptWithFunctions);
+					}
+					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + userRequestXml + llmResponse.textResponse;
+					const invokers = llmResponse.functions.invoke;
 
 					if (!invokers.length) {
-						throw new Error('Found no function invocations');
-						// TODO Send back the response (ensuring the stop sequence </ response > is stripped) with a note
-						// that there was no function calls, and it should call one of the Workflow functions to finish
-						// if its not sure what to do next.
+						// Re-try once with an addition to the prompt that there was no function calls,
+						// and it should call one of the Workflow functions to finish if it's not sure what to do next.
+						const retryPrompt = `${currentPrompt}
+						Note: Your previous response did not contain a function call.  If you are able to answer/complete the question/task, then call the ${AGENT_COMPLETED_NAME} function with the appropriate response.
+						If you are unsure what to do next then call the ${AGENT_REQUEST_FEEDBACK} function with a clarifying question.`;
+						const functionCallResponse: FunctionResponse = await agentLLM.generateTextExpectingFunctions(retryPrompt, systemPromptWithFunctions);
+						// retrying
+						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + userRequestXml + functionCallResponse.textResponse;
+						const invokers = functionCallResponse.functions.invoke;
+						if (!invokers.length) {
+							throw new Error('Found no function invocations');
+						}
 					}
-					ctx.state = 'functions';
-					ctx.inputPrompt = currentPrompt;
-					ctx.invoking.push(...invokers);
-					await agentStateService.save(ctx);
+
+					agent.state = 'functions';
+					agent.inputPrompt = currentPrompt;
+					agent.invoking.push(...invokers);
+					await agentStateService.save(agent);
+
+					const functionResults = [];
 
 					for (const invoker of invokers) {
 						try {
 							const toolResponse = await toolbox.invokeTool(invoker);
-							let functionResult = llm.formatFunctionResult(invoker.tool_name, toolResponse);
+							let functionResult = agentLLM.formatFunctionResult(invoker.tool_name, toolResponse);
 							if (functionResult.startsWith('<response>')) functionResult = functionResult.slice(10);
 							// The trailing </response> will be removed as it's a stop word for the LLMs
-							currentPrompt += `\n${llm.formatFunctionResult(invoker.tool_name, toolResponse)}`;
+							functionResults.push(agentLLM.formatFunctionResult(invoker.tool_name, toolResponse));
+							// currentPrompt += `\n${llm.formatFunctionResult(invoker.tool_name, toolResponse)}`;
 
-							ctx.functionCallHistory.push({
+							agent.functionCallHistory.push({
 								tool_name: invoker.tool_name,
 								parameters: invoker.parameters,
 								stdout: JSON.stringify(toolResponse),
@@ -153,50 +235,91 @@ export async function runAgent(config: RunAgentConfig): Promise<string> {
 							// Should check if completed or requestFeedback then there's no more invokers
 							if (invoker.tool_name === AGENT_COMPLETED_NAME) {
 								logger.info('Task completed');
-								ctx.state = 'completed';
+								agent.state = 'completed';
 								completed = true;
 								break;
 							}
 							if (invoker.tool_name === AGENT_REQUEST_FEEDBACK) {
 								logger.info('Feedback requested');
-								ctx.state = 'feedback';
+								agent.state = 'feedback';
 								requestFeedback = true;
 								break;
 							}
 						} catch (e) {
 							anyInvokeErrors = true;
-							ctx.state = 'error';
+							agent.state = 'error';
 							logger.error(e, 'Tool error');
-							ctx.error = e.toString();
-							await agentStateService.save(ctx);
-							currentPrompt += `\n${llm.formatFunctionError(invoker.tool_name, e)}`;
+							agent.error = e.toString();
+							await agentStateService.save(agent);
+							functionResults.push(agentLLM.formatFunctionError(invoker.tool_name, e));
+							// currentPrompt += `\n${llm.formatFunctionError(invoker.tool_name, e)}`;
 
-							ctx.functionCallHistory.push({
+							agent.functionCallHistory.push({
 								tool_name: invoker.tool_name,
 								parameters: invoker.parameters,
-								stdout: ctx.error,
+								stdout: agent.error,
 							});
 							// How to handle tool invocation errors? Give the agent a chance to re-try or try something different, or always human in loop?
 						}
 					}
 					// Function invocations are complete
-					ctx.invoking = [];
-					if (!anyInvokeErrors && !completed && !requestFeedback) ctx.state = 'agent';
-					ctx.inputPrompt = currentPrompt;
-					await agentStateService.save(ctx);
+					span.setAttribute('functionCalls', invokers.map((invoker) => invoker.tool_name).join(', '));
+
+					// This section is duplicated in the provideFeedback function
+					agent.invoking = [];
+					if (!anyInvokeErrors && !completed && !requestFeedback) agent.state = 'agent';
+					currentPrompt = `${userRequestXml}\n${llmResponse.textResponse}\n${functionResults.join('\n')}`;
+					agent.inputPrompt = currentPrompt;
+					await agentStateService.save(agent);
 				} catch (e) {
+					span.setStatus({ code: SpanStatusCode.ERROR, message: e.toString() });
+					logger.error(e, 'Control loop error');
 					controlError = true;
-					ctx.state = 'error';
-					ctx.error = e.toString();
-					ctx.inputPrompt = currentPrompt;
-					await agentStateService.save(ctx);
+					agent.state = 'error';
+					agent.error = e.toString();
+					agent.inputPrompt = currentPrompt;
+					await agentStateService.save(agent);
 				}
 				// return if the control loop should continue
 				return !(completed || requestFeedback || anyInvokeErrors || controlError);
 			});
 		}
+
+		// Send notification message
+		const uiUrl = envVar('UI_URL');
+		let message = notificationMessage(agent);
+		message += `\n${uiUrl}/agent/${agent.agentId}`;
+		logger.info(message);
+
+		const slackConfig = agent.user.toolConfig[Slack.name];
+		if (slackConfig?.webhookUrl || slackConfig?.token) {
+			try {
+				await new Slack().sendMessage(message);
+			} catch (e) {
+				logger.error(e, 'Failed to send supervisor notification message');
+			}
+		}
 	});
-	return context.agentId;
+	return agent.agentId;
+}
+
+function notificationMessage(agent: AgentContext): string {
+	switch (agent.state) {
+		case 'error':
+			return `Agent error.\nName:${agent.name}\nError: ${agent.error}`;
+		case 'hil':
+			return `Agent has reached Human-in-the-loop threshold.\nName: ${agent.name}`;
+		case 'feedback':
+			return `Agent has requested feedback.\nName: ${agent.name}\n:Question: ${getLastFunctionCallArg(agent)}`;
+		case 'completed':
+			return `Agent has completed.\nName: ${agent.name}\nNote: ${getLastFunctionCallArg(agent)}`;
+		default:
+	}
+}
+
+function getLastFunctionCallArg(agent: AgentContext) {
+	const invoked: Invoked = agent.functionCallHistory.slice(-1)[0];
+	return Object.values(invoked.parameters)[0];
 }
 
 class HumanInLoopReturn extends Error {}
@@ -208,7 +331,12 @@ class HumanInLoopReturn extends Error {}
 async function waitForInput() {
 	const span = startSpan('humanInLoop');
 
-	await appCtx().agentStateService.updateState(agentContextStorage.getStore(), 'hil');
+	await appContext().agentStateService.updateState(agentContextStorage.getStore(), 'hil');
+
+	// Beep beep!
+	process.stdout.write('\u0007');
+	await sleep(100);
+	process.stdout.write('\u0007');
 
 	const rl = readline.createInterface({
 		input: process.stdin,

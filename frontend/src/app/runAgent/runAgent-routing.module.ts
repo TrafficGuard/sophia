@@ -6,7 +6,7 @@ import { RunAgentComponent } from './runAgent.component';
 
 const routes: Routes = [
   // Module is lazy loaded, see app-routing.module.ts
-  { path: '', component: RunAgentComponent, data: { title: marker('RunAgent') } },
+  { path: '', component: RunAgentComponent, data: { title: marker('New Agent') } },
 ];
 
 @NgModule({

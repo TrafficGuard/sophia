@@ -85,7 +85,7 @@ type SpanAttributeExtractor = number | ((...args: any) => string);
 type SpanAttributeExtractors = Record<string, SpanAttributeExtractor>;
 
 /**
- * Decorator for creating a span around a function, which can add the function arguments as
+ * Decorator for creating an active span around a function, which can add the function arguments as
  * attributes to the span. The decorator argument object has the keys as the attribute names
  * and the values as either 1) the function args array index 2) a function which takes the args array as its one argument
  * e.g.
@@ -105,7 +105,7 @@ export function span(attributeExtractors: SpanAttributeExtractors = {}) {
 			if (!tracer) {
 				return originalMethod.call(this, ...args);
 			}
-			return tracer.withSpan(functionName, (span: Span) => {
+			return tracer.withActiveSpan(functionName, (span: Span) => {
 				setFunctionSpanAttributes(span, functionName, attributeExtractors, args);
 				return originalMethod.call(this, ...args);
 			});

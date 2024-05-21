@@ -1,6 +1,18 @@
 import * as http from 'http';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
-import fastify, { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest, RawReplyDefaultExpression, RawRequestDefaultExpression } from 'fastify';
+import fastify, {
+	FastifyBaseLogger,
+	FastifyInstance,
+	FastifyReply,
+	FastifyRequest as FastifyRequestBase,
+	RawReplyDefaultExpression,
+	RawRequestDefaultExpression,
+} from 'fastify';
+import { User } from '#user/user';
+
+interface FastifyRequest extends FastifyRequestBase {
+	currentUser?: User;
+}
 import fastifyPlugin from 'fastify-plugin';
 import * as HttpStatus from 'http-status-codes';
 import { logger } from '#o11y/logger';

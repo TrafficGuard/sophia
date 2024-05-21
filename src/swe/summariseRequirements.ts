@@ -1,5 +1,5 @@
 import { llms } from '#agent/agentContext';
-import { buildPrompt } from './devRequirementsWorkflow';
+import { buildPrompt } from './softwareDeveloperWorkflow';
 
 export async function summariseRequirements(requirements: string): Promise<string> {
 	const prompt = buildPrompt({

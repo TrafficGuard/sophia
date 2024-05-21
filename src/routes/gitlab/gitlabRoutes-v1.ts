@@ -1,28 +1,23 @@
-import { Gitlab } from '@gitbeaker/rest';
 import { Type } from '@sinclair/typebox';
+import { AgentContext, agentContextStorage, createContext } from '#agent/agentContext';
+import { RunAgentConfig } from '#agent/agentRunner';
+import { getHumanInLoopSettings } from '#agent/humanInLoop';
+import { Toolbox } from '#agent/toolbox';
 import { send, sendSuccess } from '#fastify/index';
+import { GitLabServer } from '#functions/scm/gitlab';
+import { GEMINI_1_5_PRO_LLMS } from '#llm/models/vertexai';
 import { logger } from '#o11y/logger';
-import { envVar } from '#utils/env-var';
+import { currentUser } from '#user/userService/userContext';
 import { AppFastifyInstance } from '../../app';
 
-const config = {
-	host: envVar('GITLAB_HOST'),
-	token: envVar('GITLAB_TOKEN'),
-	topLevelGroups: JSON.parse(envVar('GITLAB_GROUPS')),
-};
-const api = new Gitlab({
-	host: config.host,
-	token: config.token,
-});
-
 const basePath = '/gitlab/v1';
+
 export async function gitlabRoutesV1(fastify: AppFastifyInstance) {
 	// /get
 	// See https://docs.gitlab.com/ee/user/project/integrations/webhook_events.html#merge-request-events
 	fastify.post(
 		`${basePath}/webhook`,
 		{
-			// using sinclair typebox the body can have a field labels which can have any key to string value
 			schema: {
 				body: Type.Any(),
 			},
@@ -34,21 +29,22 @@ export async function gitlabRoutesV1(fastify: AppFastifyInstance) {
 
 			if (event.object_attributes.draft) sendSuccess(reply);
 
-			const id = event.last_commit.id;
-			const author = event.last_commit.author.email;
+			const config: RunAgentConfig = {
+				agentName: `MR review - ${event.object_attributes.title}`,
+				llms: GEMINI_1_5_PRO_LLMS(),
+				toolbox: new Toolbox(),
+				user: currentUser(),
+				initialPrompt: '',
+				humanInLoop: getHumanInLoopSettings(),
+			};
+			const context: AgentContext = createContext(config);
+			agentContextStorage.enterWith(context);
 
-			const diffs = await api.MergeRequests.allDiffs(event.project.id, event.object_attributes.id, { perPage: 100 });
-
-			// TODO Start a new workflow which reviews the merge request
+			new GitLabServer()
+				.reviewMergeRequest(event.project.id, event.object_attributes.id)
+				.catch((error) => logger.error(error, 'Error reviewing merge request'));
 
 			send(reply, 200);
-			// try {
-			//     send(reply, 200, reservation);
-			//     sendSuccess(reply, "No reservation found.");
-			// } catch (e: any) {
-			//     logger.error(e);
-			//     sendBadRequest(reply, e);
-			// }
 		},
 	);
 }

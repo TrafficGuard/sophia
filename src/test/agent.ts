@@ -1,48 +1,32 @@
 import '#fastify/trace-init/trace-init';
 
 import { readFileSync } from 'fs';
-import { use } from 'chai';
-import { AgentLLMs, enterWithContext, getFileSystem } from '#agent/agentContext';
-import { RunAgentConfig, runAgent } from '#agent/agentRunner';
+import { AgentLLMs, getFileSystem } from '#agent/agentContext';
+import { RunAgentConfig, runAgent, startAgent } from '#agent/agentRunner';
 import { getHumanInLoopSettings } from '#agent/humanInLoop';
-import { getFunctionDefinitions } from '#agent/metadata';
 import { Toolbox } from '#agent/toolbox';
-import { Claude3_Sonnet_Vertex } from '#llm/models/anthropic-vertex';
-import { Claude3_Opus, ClaudeLLMs } from '#llm/models/claude';
+import { FileSystem } from '#functions/filesystem';
+import { Claude3_Opus, ClaudeLLMs } from '#llm/models/anthropic';
+import { Claude3_Haiku_Vertex, Claude3_Sonnet_Vertex } from '#llm/models/anthropic-vertex';
 import { GPT4 } from '#llm/models/openai';
-import { GEMINI_1_0_PRO_LLMS, GEMINI_1_5_PRO_LLMS, Gemini_1_5_Pro } from '#llm/models/vertexai';
+import { GEMINI_1_5_PRO_LLMS, Gemini_1_5_Pro } from '#llm/models/vertexai';
 import { MultiLLM } from '#llm/multi-llm';
-import { GoogleCloud } from '../functions/google-cloud';
-import { Jira } from '../functions/jira';
-import { GitLabServer } from '../functions/scm/gitlab';
-import { UtilFunctions } from '../functions/util';
-import { PUBLIC_WEB, PublicWeb } from '../functions/web/web';
-import { WebResearcher } from '../functions/web/webResearch';
-import { CodeEditor } from '../swe/codeEditor';
-import { DevEditWorkflow } from '../swe/devEditWorkflow';
-import { DevRequirementsWorkflow } from '../swe/devRequirementsWorkflow';
-import { TypescriptTools } from '../swe/nodejs/typescriptTools';
+import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
+import { appContext } from '../app';
+import { CodeEditingWorkflow } from '../swe/codeEditingWorkflow';
 import { SimpleCodeEditor } from '../swe/simpleCodeEditor';
+import { SoftwareDeveloperWorkflow } from '../swe/softwareDeveloperWorkflow';
 
-// let agentLLMs: AgentLLMs;
-// llms = GEMINI_1_0_PRO();
-// llms = ClaudeLLMs();
-// workflowLLMs = WORKFLOW_LLMS;
+import { currentUser } from '#user/userService/userContext';
 
 const opus = Claude3_Opus();
 const sonnet = Claude3_Sonnet_Vertex();
-// export const AGENT_LLMS: AgentLLMs = {
-// 	// easy: Gemini_1_0_Pro(),
-// 	// medium: Gemini_1_0_Pro(),
-// 	easy: Claude3_Haiku_Vertex(),
-// 	medium: sonnet,
-// 	hard: sonnet,
-// 	xhard: new MultiLLM([sonnet, Gemini_1_5_Pro()], 3),
-// };
+const haiku = Claude3_Haiku_Vertex();
 const gemini = Gemini_1_5_Pro();
+
 const AGENT_LLMS: AgentLLMs = {
 	easy: gemini,
-	medium: gemini,
+	medium: sonnet,
 	hard: opus,
 	xhard: new MultiLLM([opus, GPT4(), Gemini_1_5_Pro()], 3),
 };
@@ -58,8 +42,9 @@ export async function main() {
 	// toolbox.addToolType(GitLabServer);
 	// toolbox.addToolType(CodeEditor);
 	// toolbox.addToolType(SimpleCodeEditor);
-	// toolbox.addToolType(DevEditWorkflow);
-	toolbox.addToolType(DevRequirementsWorkflow);
+	toolbox.addToolType(CodeEditingWorkflow);
+	toolbox.addToolType(FileSystem);
+	// toolbox.addToolType(DevRequirementsWorkflow);
 	// toolbox.addToolType(PublicWeb);
 	// toolbox.addToolType(WebResearcher);
 	// toolbox.addToolType(TypescriptTools);
@@ -68,15 +53,16 @@ export async function main() {
 	// if(console)return
 
 	const config: RunAgentConfig = {
-		agentName: 'nous',
+		agentName: '',
 		initialPrompt,
+		user: currentUser(),
 		systemPrompt,
 		toolbox,
 		humanInLoop: getHumanInLoopSettings(),
 		llms: AGENT_LLMS,
 	};
 
-	await runAgent(config);
+	await startAgent(config);
 }
 
 main()

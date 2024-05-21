@@ -1,8 +1,9 @@
-import { func } from '#agent/functions';
-import { funcClass } from '#agent/metadata';
+import { func } from '../functionDefinition/functions';
+import { funcClass } from '../functionDefinition/metadata';
 
 import { Dropbox } from 'dropbox';
-import { envVar } from '#utils/env-var';
+
+import { toolConfig } from '#user/userService/userContext';
 
 /**
  * AI generated. Not tested.
@@ -12,7 +13,7 @@ class DropboxClient {
 	private dbx: Dropbox;
 
 	constructor() {
-		this.dbx = new Dropbox({ accessToken: envVar('DROPBOX_ACCESS_TOKEN') });
+		this.dbx = new Dropbox({ accessToken: toolConfig(DropboxClient).token });
 	}
 
 	@func()

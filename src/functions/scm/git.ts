@@ -1,25 +1,27 @@
-import * as console from 'console';
-import { getFileSystem } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
-import { FileSystem } from '../../agent/filesystem';
-import { func } from '../../agent/functions';
-import { execCmd, execCommand } from '../../utils/exec';
+import { span } from '#o11y/trace';
+import { execCmd, execCommand } from '#utils/exec';
+import { FileSystem } from '../filesystem';
 import { VersionControlSystem } from './versionControlSystem';
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 
 export class Git implements VersionControlSystem {
-	/** When a new branch is made the original branch is stored. This aids diffing between the branches */
-	baseBranch: string;
+	/** The branch name before calling switchToBranch. This enables getting the diff between the current and previous branch */
+	previousBranch: string | undefined;
 
 	constructor(private fileSystem: FileSystem) {}
 
 	/**
-	 * Adds all files which are already tracked by version control to the index and commits
+	 * Adds all files which are already tracked by version control to the index and commits.
+	 * If there are no changes
 	 * @param commitMessage
 	 */
 	async addAllTrackedAndCommit(commitMessage: string): Promise<void> {
-		// TODO check if any unstaged tracked files
+		// If nothing has changed then return
+		const execResult = await execCommand('git status --porcelain');
+		if (execResult.exitCode === 0) return;
+
 		const { exitCode, stdout, stderr } = await execCommand('git add .');
 		if (exitCode > 0) throw new Error(`${stdout}\n${stderr}`);
 
@@ -27,8 +29,8 @@ export class Git implements VersionControlSystem {
 	}
 
 	async getFilesAddedInHeadCommit(): Promise<string[]> {
-		const { exitCode, stdout, stderr } = await execCommand(`git diff --name-status HEAD^..HEAD | grep '^A'`);
-		if (exitCode > 0) throw new Error(stderr);
+		const { stdout } = await execCommand(`git diff --name-status HEAD^..HEAD | grep '^A'`);
+		// grep returns 1 if there are no matches. That's ok in this case as its likely there won't be new files, only edits to existing files.
 		// Output is in the format
 		// A       etc/newFile
 		// A       src/cache/newFile.test.ts
@@ -45,7 +47,7 @@ export class Git implements VersionControlSystem {
 		return stdout.trim();
 	}
 
-	async getBranchDiff(sourceBranch: string = this.baseBranch): Promise<string> {
+	async getBranchDiff(sourceBranch: string = this.previousBranch): Promise<string> {
 		if (!sourceBranch) throw new Error('Source branch is required');
 		const cmd = sourceBranch ? `git merge-base HEAD ${sourceBranch}` : 'git diff $(git merge-base HEAD @{u})';
 		const { stdout, stderr } = await execCommand(cmd);
@@ -69,36 +71,31 @@ export class Git implements VersionControlSystem {
 		}
 	}
 
-	// @func()
+	@span({ branch: 0 })
 	async createBranch(branchName: string): Promise<void> {
-		this.baseBranch = await this.getBranchName();
-		const cwd = this.fileSystem.getWorkingDirectory();
-		try {
-			const { stderr } = await exec(`git branch ${branchName}`, { cwd });
-			if (stderr.trim().length) {
-				throw new Error(stderr);
-			}
-		} catch (error) {
-			logger.error(error);
-			throw error;
+		this.previousBranch = await this.getBranchName();
+
+		const { stdout, stderr, exitCode } = await execCommand(`git branch ${branchName}`);
+
+		if (exitCode > 0 && stderr?.includes('already exists')) {
+			logger.info(`Branch ${branchName} already exists. Switching to it`);
+			await this.switchToBranch(branchName);
+		} else if (exitCode > 0) throw new Error(`${stdout}\n${stderr}`);
+	}
+
+	@span({ branch: 0 })
+	async switchToBranch(branchName: string): Promise<void> {
+		this.previousBranch = await this.getBranchName();
+		const { stderr, exitCode } = await execCommand(`git switch -c ${branchName}`);
+		if (exitCode > 0 && stderr?.includes('already exists')) {
+			logger.info(`Branch ${branchName} already exists. Switching to it`);
+			const { stdout, stderr, exitCode } = await execCommand(`git switch ${branchName}`);
+			if (exitCode > 0) throw new Error(`${stdout}\n${stderr}`);
 		}
 	}
+
 	// @func()
-	async cloneBranch(repoUrl: string, branchName: string): Promise<void> {
-		const cwd = this.fileSystem.getWorkingDirectory();
-		try {
-			const { stderr } = await exec(`git clone -b ${branchName} ${repoUrl}`, {
-				cwd,
-			});
-			if (stderr.trim().length) {
-				throw new Error(stderr);
-			}
-		} catch (error) {
-			logger.error(error);
-			throw error;
-		}
-	}
-	// @func()
+	@span({ message: 0 })
 	async commit(commitMessage: string): Promise<void> {
 		const cwd = this.fileSystem.getWorkingDirectory();
 		try {

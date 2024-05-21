@@ -1,5 +1,5 @@
 import { FunctionDeclarationSchema, FunctionDeclarationSchemaType, Tool } from '@google-cloud/vertexai';
-import { FunctionDefinition, FunctionParameter } from '#agent/functions';
+import { FunctionDefinition, FunctionParameter } from '../../functionDefinition/functions';
 
 function convertFunctionParameterToFunctionDeclarationSchema(functionParameter: FunctionParameter): FunctionDeclarationSchema {
 	const properties: { [key: string]: any } = {};

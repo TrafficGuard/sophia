@@ -1,6 +1,6 @@
 import { agentContext, getFileSystem, llms } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
-import { TypescriptTools } from './nodejs/typescriptTools';
+import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
 import { ProjectInfo } from './projectDetection';
 
 export interface SelectFilesResponse {

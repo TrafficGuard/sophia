@@ -11,6 +11,11 @@ describe('responseParsers', () => {
 			expect(object).to.deep.equal({ foo: 'bar' });
 		});
 
+		it('Should extract when there is some chat before', async () => {
+			const object = extractJsonResult('Here is your JSON: { "foo": "bar" }');
+			expect(object).to.deep.equal({ foo: 'bar' });
+		});
+
 		it('Should extract the Markdown formatted JSON when there is other text preceding it', async () => {
 			const object = extractJsonResult(`something. reasoning from the LLM
 \`\`\`json

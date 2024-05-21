@@ -51,7 +51,7 @@ else
     python3 -m venv .venv
     source ./.venv/bin/activate
     python -m pip install --upgrade pip
-    pip install aider-chat
+    pip install aider-chat mkdocs mkdocs-material
 fi
 
 # Node.js setup ------------------------

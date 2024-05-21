@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { Pool } from 'pg';
-import { FunctionCacheService } from './cache';
+
+import { CacheScope, FunctionCacheService } from './functionCacheService';
 
 // AI generated. Not yet tested --------------------------
 // TypeORM doesn't work with TypeScript 5.0+ with the new decorators
@@ -32,14 +33,14 @@ export class PgFunctionCacheService implements FunctionCacheService {
 		return hash.digest('hex');
 	}
 
-	async get(className: string, method: string, params: any[]): Promise<any> {
+	async getValue(scope: CacheScope, className: string, method: string, params: any[]): Promise<any> {
 		const hash = PgFunctionCacheService.generateHash(className, method, params);
 		const query = 'SELECT result FROM function_cache WHERE hash = $1';
 		const { rows } = await this.pool.query(query, [hash]);
 		return rows.length > 0 ? rows[0].result : undefined;
 	}
 
-	async set(className: string, method: string, params: any[], value: any): Promise<void> {
+	async setValue(scope: CacheScope, className: string, method: string, params: any[], value: any): Promise<void> {
 		const hash = PgFunctionCacheService.generateHash(className, method, params);
 		const query = `
             INSERT INTO function_cache (hash, class_name, method, params, result)
@@ -47,6 +48,14 @@ export class PgFunctionCacheService implements FunctionCacheService {
             ON CONFLICT (hash) DO UPDATE SET result = EXCLUDED.result;
         `;
 		await this.pool.query(query, [hash, className, method, JSON.stringify(params), JSON.stringify(value)]);
+	}
+
+	clearAgentCache(agentId: string): Promise<number> {
+		return Promise.resolve(0);
+	}
+
+	clearUserCache(userId: string): Promise<number> {
+		return Promise.resolve(0);
 	}
 }
 

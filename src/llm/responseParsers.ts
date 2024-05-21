@@ -87,6 +87,14 @@ export function extractJsonResult(rawText: string): any {
 	while (text.endsWith('`')) {
 		text = text.slice(0, -1);
 	}
+	// If there's some chit-chat before the JSON then remove it.
+	const firstSquare = text.indexOf('[');
+	const fistCurly = text.indexOf('{');
+	if (fistCurly > 0 || firstSquare > 0) {
+		if (firstSquare < 0) text = text.slice(fistCurly);
+		else if (fistCurly < 0) text = text.slice(firstSquare);
+		else text = text.slice(Math.min(firstSquare, fistCurly));
+	}
 	try {
 		return JSON.parse(text);
 	} catch (e) {

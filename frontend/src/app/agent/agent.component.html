@@ -1,0 +1,173 @@
+<mat-tab-group *ngIf="agentDetails" [(selectedIndex)]="selectedTabIndex" (selectedIndexChange)="onTabChange($event)">
+
+  <mat-tab label="Details">
+
+    <mat-icon (click)="refreshAgentDetails()">refresh</mat-icon>
+
+    <mat-card *ngIf="agentDetails.state === 'feedback'">
+      <form [formGroup]="feedbackForm" (ngSubmit)="onSubmitFeedback()">
+        <mat-card-title>Feedback Requested</mat-card-title>
+        <mat-card-content>
+          <span class="fixed-width-field"><strong>Feedback:</strong></span>
+          <mat-form-field appearance="fill" class="full-width">
+            <textarea matInput placeholder="Enter your feedback" formControlName="feedback"></textarea>
+          </mat-form-field>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-raised-button color="primary" type="submit" [disabled]="!feedbackForm.valid">Submit Feedback</button>
+        </mat-card-actions>
+      </form>
+    </mat-card>
+
+    <mat-card *ngIf="agentDetails.state === 'error'">
+      <form [formGroup]="errorForm" (ngSubmit)="onResumeError()">
+        <mat-card-title>Error Occurred</mat-card-title>
+        <mat-card-content>
+          <span class="fixed-width-field"><strong>Error Details:</strong></span>
+          <mat-form-field appearance="fill" class="full-width">
+            <textarea matInput placeholder="Describe the error or provide additional details" formControlName="errorDetails"></textarea>
+          </mat-form-field>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-raised-button color="primary" type="submit" [disabled]="!errorForm.valid">Resume</button>
+          <button mat-raised-button color="warn" (click)="cancelAgent()">Cancel Agent</button>
+        </mat-card-actions>
+      </form>
+    </mat-card>
+
+    <mat-card>
+      <mat-list>
+        <mat-list-item *ngIf="agentDetails.agentId"><span
+          class="fixed-width-field"><strong>Agent ID:</strong></span> {{ agentDetails.agentId }}
+        </mat-list-item>
+        <!--
+        <mat-list-item><span
+          class="fixed-width-field"><strong>Execution ID:</strong></span> {{ agentDetails.executionId }}
+        </mat-list-item>-->
+        <mat-list-item><span class="fixed-width-field"><strong>Name:</strong></span> {{ agentDetails.name }}
+        </mat-list-item>
+        <mat-list-item *ngIf="agentDetails.parentAgentId"><span
+          class="fixed-width-field"><strong>Parent Agent ID:</strong></span> {{ agentDetails.parentAgentId }}
+        </mat-list-item>
+        <mat-list-item *ngIf="agentDetails.userId"><span
+          class="fixed-width-field"><strong>User ID:</strong></span> {{ agentDetails.userId }}
+        </mat-list-item>
+        <mat-list-item><span class="fixed-width-field"><strong>State:</strong></span> {{ agentDetails.state }}
+        </mat-list-item>
+        <mat-list-item *ngIf="agentDetails.state === 'completed'"><span class="fixed-width-field"><strong>Output:</strong></span> {{ output }}
+        </mat-list-item>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <span class="fixed-width-field"><strong>User Prompt:</strong></span> <span class="system-prompt-preview">{{ agentDetails.userPrompt | slice:0:50 }}...</span>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div matExpansionPanelContent>
+            {{ agentDetails.userPrompt }}
+          </div>
+        </mat-expansion-panel>
+        <!--
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <span class="fixed-width-field"><strong>System Prompt:</strong></span>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div matExpansionPanelContent>
+            {{ agentDetails.systemPrompt.text }}
+          </div>
+        </mat-expansion-panel>
+        -->
+        <mat-list-item *ngIf="agentDetails.error"><span
+          class="fixed-width-field"><strong>Error:</strong></span> {{ agentDetails.error }}
+        </mat-list-item>
+        <mat-list-item *ngIf="agentDetails.planningResponse"><span
+          class="fixed-width-field"><strong>Planning Response:</strong></span> {{ agentDetails.planningResponse }}
+        </mat-list-item>
+        <mat-list-item class="llm-row">
+          <span
+            class="fixed-width-field"><strong>LLMS:</strong></span>
+          <div class="llm-column"><strong>Easy:</strong> {{ agentDetails.llms.easy }}</div>
+          <div class="llm-column"><strong>Medium:</strong> {{ agentDetails.llms.medium }}</div>
+          <div class="llm-column"><strong>Hard:</strong> {{ agentDetails.llms.hard }}</div>
+        </mat-list-item>
+        <mat-list-item><span class="fixed-width-field"><strong>Cost:</strong></span>
+          ${{ agentDetails.cost | number:'1.2-2' }}
+        </mat-list-item>
+        <mat-list-item><span class="fixed-width-field"><strong>Budget:</strong></span>
+          ${{ agentDetails.budget | number:'1.2-2' }}
+        </mat-list-item>
+        <mat-list-item><span class="fixed-width-field"><strong>Budget Remaining:</strong></span>
+          ${{ agentDetails.budgetRemaining | number:'1.2-2' }}
+        </mat-list-item>
+        <mat-list-item><span class="fixed-width-field"><strong>Temp Dir:</strong></span> {{ agentDetails.tempDir }}
+        </mat-list-item>
+      </mat-list>
+    </mat-card>
+  </mat-tab>
+
+  <mat-tab label="Memory">
+    <div *ngIf="agentDetails.memory">
+      <mat-card *ngFor="let entry of agentDetails.memory | keyvalue">
+        <mat-card-title>{{ entry.key }}</mat-card-title>
+        <mat-card-content>{{ entry.value }}</mat-card-content>
+      </mat-card>
+    </div>
+  </mat-tab>
+
+  <mat-tab label="Function Calls">
+    <mat-card *ngFor="let invoked of agentDetails.functionCallHistory; let i = index">
+      <mat-card-title>{{ invoked.tool_name }}</mat-card-title>
+      <mat-card-content>
+        <div *ngFor="let param of invoked.parameters | keyvalue">
+          <p><strong>{{ param.key }}</strong> {{ param.value }}</p>
+        </div>
+        <strong>{{invoked.stdout ? 'Output: ' : ''}}</strong>{{invoked.stdout}}<br *ngIf="invoked.stdout"/>
+        <strong>{{invoked.stderr ? 'Errors: ' : ''}}</strong>{{invoked.stderr}}
+      </mat-card-content>
+    </mat-card>
+    <div *ngIf="agentDetails.functionCallHistory.length === 0">
+      <p>No function calls found for this agent.</p>
+    </div>
+  </mat-tab>
+
+  <mat-tab label="LLM Calls">
+    <mat-card *ngFor="let call of llmCalls; let i = index">
+      <mat-card-title>Call ID: {{ call.response.id }}</mat-card-title>
+      <mat-card-content>
+        <p><strong>LLM:</strong> {{ call.response.llmId }}</p>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <strong>System Prompt: <span *ngIf="!panelOpenState[i]"
+                                           class="system-prompt-preview">{{ call.request.systemPrompt?.text | slice:0:50 }}
+                ...</span></strong>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div matExpansionPanelContent>
+            {{ call.request.systemPrompt?.text }}
+          </div>
+        </mat-expansion-panel>
+        <p><strong>User Prompt:</strong> {{ removeFunctionCallHistory(removeMemoryContent(call.request.userPromptText)) }}</p>
+        <p><strong>Response Text:</strong> {{ call.response.responseText }}</p>
+
+        <p *ngIf="extractFunctionCallHistory(call.request.userPromptText)">
+          <strong>Function Call History:</strong> {{ extractFunctionCallHistory(call.request.userPromptText) }}</p>
+        <p *ngIf="extractMemoryContent(call.request.userPromptText)">
+          <strong>Memory Content:</strong> {{ extractMemoryContent(call.request.userPromptText) }}
+        </p>
+
+        <p><strong>Request Time:</strong> {{ call.response.requestTime | date:'medium' }}</p>
+        <p><strong>First Response Duration:</strong> {{ call.response.firstResponse }} ms</p>
+        <p><strong>Total Time:</strong> {{ call.response.totalTime }} ms</p>
+        <!--
+        <p><strong>LLM Response ID:</strong> {{ call.response.id }}</p>
+        <p><strong>LLM Request ID:</strong> {{ call.response.llmRequestId }}</p>
+        -->
+      </mat-card-content>
+    </mat-card>
+    <div *ngIf="llmCalls.length === 0">
+      <p>No LLM calls found for this agent.</p>
+    </div>
+  </mat-tab>
+</mat-tab-group>

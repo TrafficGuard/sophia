@@ -1,42 +1,47 @@
 import { AgentLLMs } from '#agent/agentContext';
 import { LLM } from '#llm/llm';
-import { ANTHROPIC_VERTEX_SERVICE, anthropicVertexLLmFromModel } from '#llm/models/anthropic-vertex';
-import { ANTHROPIC_SERVICE, anthropicLLmFromModel } from '#llm/models/claude';
-import { FIREWORKS_SERVICE, fireworksLLmFromModel } from '#llm/models/fireworks';
-import { GROQ_SERVICE, groqLLmFromModel } from '#llm/models/groq';
-import { OPENAI_SERVICE, openaiLLmFromModel } from '#llm/models/openai';
-import { TOGETHER_SERVICE, togetherLLmFromModel } from '#llm/models/together';
-import { VERTEX_SERVICE, vertexLLmFromModel } from '#llm/models/vertexai';
+import { anthropicLLMRegistry } from '#llm/models/anthropic';
+import { anthropicVertexLLMRegistry } from '#llm/models/anthropic-vertex';
+import { fireworksLLMRegistry } from '#llm/models/fireworks';
+import { groqLLMRegistry } from '#llm/models/groq';
+import { openAiLLMRegistry } from '#llm/models/openai';
+import { togetherLLMRegistry } from '#llm/models/together';
+import { vertexLLMRegistry } from '#llm/models/vertexai';
 
-export function llmFromJSON(obj: any): LLM {
-	switch (obj.service) {
-		case ANTHROPIC_SERVICE:
-			return anthropicLLmFromModel(obj.model);
-		case ANTHROPIC_VERTEX_SERVICE:
-			return anthropicVertexLLmFromModel(obj.model);
-		case GROQ_SERVICE:
-			return groqLLmFromModel(obj.model);
-		case OPENAI_SERVICE:
-			return openaiLLmFromModel(obj.model);
-		case VERTEX_SERVICE:
-			return vertexLLmFromModel(obj.model);
-		case TOGETHER_SERVICE:
-			return togetherLLmFromModel(obj.model);
-		case FIREWORKS_SERVICE:
-			return fireworksLLmFromModel(obj.model);
-		case 'multi':
-			console.log('TODO deserialize multi LLM');
-			return null;
-		default:
-			throw new Error(`Unknown LLM service ${obj.service}`);
+export const LLM_REGISTRY: Record<string, () => LLM> = {
+	...anthropicVertexLLMRegistry(),
+	...anthropicLLMRegistry(),
+	...fireworksLLMRegistry(),
+	...groqLLMRegistry(),
+	...openAiLLMRegistry(),
+	...togetherLLMRegistry(),
+	...vertexLLMRegistry(),
+};
+
+const REGISTRY_KEYS = Object.keys(LLM_REGISTRY);
+
+/**
+ * @param llmId LLM identifier in the format service:model
+ */
+export function getLLM(llmId: string): LLM {
+	// Check matching id first
+	if (LLM_REGISTRY[llmId]) {
+		return LLM_REGISTRY[llmId]();
 	}
+	// Check substring matching
+	for (const key of REGISTRY_KEYS) {
+		if (llmId.startsWith(key)) {
+			return LLM_REGISTRY[key]();
+		}
+	}
+	throw new Error(`No LLM registered with id ${llmId}`);
 }
 
 export function deserializeLLMs(obj: any): AgentLLMs {
 	return {
-		easy: llmFromJSON(obj.easy),
-		medium: llmFromJSON(obj.medium),
-		hard: llmFromJSON(obj.hard),
-		xhard: llmFromJSON(obj.xhard),
+		easy: getLLM(obj.easy),
+		medium: getLLM(obj.medium),
+		hard: getLLM(obj.hard),
+		xhard: getLLM(obj.xhard),
 	};
 }

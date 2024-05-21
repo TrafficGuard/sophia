@@ -8,6 +8,9 @@ const routes: Routes = [
     { path: 'agents', loadChildren: () => import('./agents/agents.module').then((m) => m.AgentsModule) },
   ]),
   Shell.childRoutes([
+    { path: 'agent', loadChildren: () => import('./agent/agent.module').then((m) => m.AgentModule) },
+  ]),
+  Shell.childRoutes([
     { path: 'runAgent', loadChildren: () => import('./runAgent/runAgent.module').then((m) => m.RunAgentModule) },
   ]),
   Shell.childRoutes([

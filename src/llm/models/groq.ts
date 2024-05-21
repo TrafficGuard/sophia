@@ -1,26 +1,37 @@
+import Groq from 'groq-sdk';
 import { AgentLLMs, agentContext } from '#agent/agentContext';
 import { addCost } from '#agent/agentContext';
+import { CallerId } from '#llm/llmCallService/llmCallService';
+import { CreateLlmResponse } from '#llm/llmCallService/llmRequestResponse';
 import { withActiveSpan } from '#o11y/trace';
-import { RetryableError } from '../../cache/cache';
+import { currentUser } from '#user/userService/userContext';
+import { envVar } from '#utils/env-var';
+import { appContext } from '../../app';
+import { RetryableError } from '../../cache/cacheRetry';
 import { BaseLLM } from '../base-llm';
 import { LLM, combinePrompts, logDuration } from '../llm';
 import { MultiLLM } from '../multi-llm';
 
-const Groq = require('groq-sdk');
-const groq = new Groq({
-	apiKey: process.env.GROQ_API_KEY,
-});
+export const GROQ_SERVICE = 'groq';
+
+export function groqLLMRegistry(): Record<string, () => LLM> {
+	return {
+		'groq:mixtral-8x7b-32768': groqMixtral8x7b,
+		'groq:gemma-7b-it': groqGemma7bIt,
+		'groq:llama3-70b-8192': groqLlama3_70B,
+	};
+}
 
 export function groqMixtral8x7b(): LLM {
-	return new GroqLLM('groq', 'mixtral-8x7b-32768', 32_768, 0.27, 0.27);
+	return new GroqLLM(GROQ_SERVICE, 'mixtral-8x7b-32768', 32_768, 0.27, 0.27);
 }
 
 export function groqGemma7bIt(): LLM {
-	return new GroqLLM('groq', 'gemma-7b-it', 8_192, 0.1 / 1000000, 0.1 / 1000000);
+	return new GroqLLM(GROQ_SERVICE, 'gemma-7b-it', 8_192, 0.1 / 1000000, 0.1 / 1000000);
 }
 
 export function groqLlama3_70B(): LLM {
-	return new GroqLLM('groq', 'llama3-70b-8192', 8_192, 0.1 / 1000000, 0.1 / 1000000);
+	return new GroqLLM(GROQ_SERVICE, 'llama3-70b-8192', 8_192, 0.1 / 1000000, 0.1 / 1000000);
 }
 
 export function grokLLMs(): AgentLLMs {
@@ -33,20 +44,13 @@ export function grokLLMs(): AgentLLMs {
 	};
 }
 
-export const GROQ_SERVICE = 'groq';
-
-export function groqLLmFromModel(model: string): LLM | null {
-	// TODO groqLLmFromModel()
-	// if (model.startsWith('claude-3-sonnet-')) return Claude3_Sonnet();
-	// if (model.startsWith('claude-3-haiku-')) return Claude3_Haiku();
-	// if (model.startsWith('claude-3-opus-')) return Claude3_Opus();
-	return null;
-}
-
 /**
  * https://wow.groq.com/
  */
 export class GroqLLM extends BaseLLM {
+	groq = new Groq({
+		apiKey: currentUser().llmConfig.groqKey ?? envVar('GROQ_API_KEY'),
+	});
 	@logDuration
 	async generateText(userPrompt: string, systemPrompt = ''): Promise<string> {
 		return withActiveSpan('generateText', async (span) => {
@@ -56,13 +60,16 @@ export class GroqLLM extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
-				caller: agentContext().callStack.at(-1) ?? '',
 			});
 			span.setAttribute('userPrompt', userPrompt);
 			span.setAttribute('inputChars', prompt.length);
 
+			const caller: CallerId = { agentId: agentContext().agentId };
+			const llmRequestSave = appContext().llmCallService.saveRequest(userPrompt, systemPrompt);
+			const requestTime = Date.now();
+
 			try {
-				const completion = await groq.chat.completions.create({
+				const completion = await this.groq.chat.completions.create({
 					messages: [
 						{
 							role: 'user',
@@ -71,22 +78,35 @@ export class GroqLLM extends BaseLLM {
 					],
 					model: this.model,
 				});
-				const response = completion.choices[0]?.message?.content || '';
+				const responseText = completion.choices[0]?.message?.content || '';
+
+				const timeToFirstToken = Date.now();
+				const finishTime = Date.now();
+				const llmRequest = await llmRequestSave;
+				const llmResponse: CreateLlmResponse = {
+					llmId: this.getId(),
+					llmRequestId: llmRequest.id,
+					responseText: responseText,
+					requestTime,
+					timeToFirstToken: timeToFirstToken,
+					totalTime: finishTime - requestTime,
+				};
+				await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
 
 				const inputCost = this.getInputCostPerToken() * prompt.length;
 				const outputCost = this.getOutputCostPerToken() * (completion.choices[0]?.message?.content || '').length;
 				const cost = inputCost + outputCost;
 
 				span.setAttributes({
-					response,
+					response: responseText,
 					inputCost,
 					outputCost,
 					cost,
-					outputChars: response.length,
+					outputChars: responseText.length,
 				});
 				addCost(cost);
 
-				return response;
+				return responseText;
 			} catch (e) {
 				if (e.error?.code === 'rate_limit_exceeded') throw new RetryableError(e);
 				throw e;

@@ -1,71 +1,87 @@
-import { FunctionCall, GenerateContentRequest, HarmBlockThreshold, HarmCategory, SafetySetting, Tool, VertexAI } from '@google-cloud/vertexai';
-import { AgentLLMs, addCost, agentContext, agentContextStorage } from '#agent/agentContext';
+import { HarmBlockThreshold, HarmCategory, SafetySetting, VertexAI } from '@google-cloud/vertexai';
+import { AgentLLMs, addCost, agentContext } from '#agent/agentContext';
+import { CallerId } from '#llm/llmCallService/llmCallService';
+import { CreateLlmResponse } from '#llm/llmCallService/llmRequestResponse';
+import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
-import { projectId, region } from '../../config';
+import { currentUser } from '#user/userService/userContext';
+import { envVar } from '#utils/env-var';
+import { appContext } from '../../app';
 import { BaseLLM } from '../base-llm';
-import { FunctionResponse, Invoke, LLM, combinePrompts, logTextGeneration } from '../llm';
+import { LLM, combinePrompts, logTextGeneration } from '../llm';
 import { MultiLLM } from '../multi-llm';
-
-const vertexAI = new VertexAI({ project: projectId, location: region });
-
-export function GEMINI_1_0_PRO_LLMS(): AgentLLMs {
-	const pro1_0 = Gemini_1_0_Pro();
-	return {
-		easy: pro1_0,
-		medium: pro1_0,
-		hard: pro1_0,
-		xhard: new MultiLLM([pro1_0], 5),
-	};
-}
 
 export function GEMINI_1_5_PRO_LLMS(): AgentLLMs {
 	const pro1_5 = Gemini_1_5_Pro();
 	return {
-		easy: pro1_5,
+		easy: Gemini_1_5_Flash(),
 		medium: pro1_5,
 		hard: pro1_5,
 		xhard: new MultiLLM([pro1_5], 5),
 	};
 }
 
-export function Gemini_1_0_Pro() {
-	return new VertexLLM(VERTEX_SERVICE, 'gemini-1.0-pro-001', 32_000, 0.0036 / 1000, 0.018 / 1000);
+export const VERTEX_SERVICE = 'vertex';
+
+export function vertexLLMRegistry(): Record<string, () => LLM> {
+	return {
+		[`${VERTEX_SERVICE}:gemini-1.5-pro-preview-0409`]: Gemini_1_5_Pro,
+		[`${VERTEX_SERVICE}:gemini-experimental`]: Gemini_1_5_Experimental,
+		[`${VERTEX_SERVICE}:gemini-1.5-flash-preview-0514`]: Gemini_1_5_Flash,
+
+		[`${VERTEX_SERVICE}:gemini-1.5-pro`]: Gemini_1_5_Pro,
+		[`${VERTEX_SERVICE}:gemini-1.5-flash`]: Gemini_1_5_Flash,
+	};
 }
+
+// A token is equivalent to about 4 characters for Gemini models. 100 tokens are about 60-80 English words.
+// https://ai.google.dev/gemini-api/docs/models/gemini#token-size
+// https://cloud.google.com/vertex-ai/generative-ai/pricing
 
 // gemini-1.5-pro-latest
 export function Gemini_1_5_Pro() {
-	return new VertexLLM(VERTEX_SERVICE, 'gemini-1.5-pro-preview-0409', 1_000_000, 0.0036 / 1000, 0.018 / 1000);
+	return new VertexLLM(VERTEX_SERVICE, 'gemini-1.5-pro-preview-0409', 1_000_000, 0.00125 / 1000, 0.00375 / 1000);
 }
 
-export const VERTEX_SERVICE = 'vertex';
+export function Gemini_1_5_Experimental() {
+	return new VertexLLM(VERTEX_SERVICE, 'gemini-experimental', 1_000_000, 0.0036 / 1000, 0.018 / 1000);
+}
 
-export function vertexLLmFromModel(model: string): LLM | null {
-	if (model.startsWith('gemini-1.0-pro')) return Gemini_1_0_Pro();
-	if (model.startsWith('gemini-1.5-pro')) return Gemini_1_5_Pro();
-	return null;
+export function Gemini_1_5_Flash() {
+	return new VertexLLM(VERTEX_SERVICE, 'gemini-1.5-flash-preview-0514', 1_000_000, 0.000125 / 1000, 0.000375 / 1000);
 }
 
 /**
  * Vertex AI models - Gemini
  */
 class VertexLLM extends BaseLLM {
+	vertexAI = new VertexAI({
+		project: currentUser().llmConfig.vertexProjectId ?? envVar('GCLOUD_PROJECT'),
+		location: currentUser().llmConfig.vertexRegion ?? envVar('GCLOUD_REGION'),
+	});
+
 	@logTextGeneration
 	async generateText(userPrompt: string, systemPrompt: string): Promise<string> {
 		return withActiveSpan('generateText', async (span) => {
-			const prompt = combinePrompts(userPrompt, systemPrompt);
-
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
+
+			const promptLength = userPrompt.length + systemPrompt?.length ?? 0;
+
 			span.setAttributes({
 				userPrompt,
-				inputChars: prompt.length,
+				inputChars: promptLength,
 				model: this.model,
-				caller: agentContext().callStack.at(-1) ?? '',
 			});
 
-			const generativeModel = vertexAI.preview.getGenerativeModel({
+			const caller: CallerId = { agentId: agentContext().agentId };
+			const llmRequestSave = appContext().llmCallService.saveRequest(userPrompt, systemPrompt);
+			const requestTime = Date.now();
+
+			const generativeModel = this.vertexAI.preview.getGenerativeModel({
 				model: this.model,
+				systemInstruction: systemPrompt ? { role: 'system', parts: [{ text: systemPrompt }] } : undefined,
 				generationConfig: {
-					maxOutputTokens: this.model.includes('1.5-pro') ? 8192 : 4096,
+					maxOutputTokens: 8192,
 					temperature: 1,
 					topP: 0.95,
 					stopSequences: ['</response>'],
@@ -73,33 +89,53 @@ class VertexLLM extends BaseLLM {
 				safetySettings: SAFETY_SETTINGS,
 			});
 
-			const request = {
-				contents: [{ role: 'user', parts: [{ text: prompt }] }],
-			};
+			// const request = {
+			// 	contents: [{ role: 'user', parts: [{ text: prompt }] }],
+			// };
 
 			// const inputTokens = await generativeModel.countTokens(request);
 
-			const streamingResp = await generativeModel.generateContentStream(request);
-			let response = '';
+			const streamingResp = await generativeModel.generateContentStream(userPrompt);
+			let responseText = '';
+			let timeToFirstToken = null;
 			for await (const item of streamingResp.stream) {
-				response += item.candidates[0].content.parts[0].text;
+				if (!timeToFirstToken) timeToFirstToken = Date.now();
+				if (item.candidates[0]?.content?.parts?.length > 0) {
+					responseText += item.candidates[0].content.parts[0].text;
+				}
 			}
 
-			const inputCost = prompt.length * this.getInputCostPerToken();
-			const outputCost = response.length * this.getOutputCostPerToken();
+			const finishTime = Date.now();
+			const llmRequest = await llmRequestSave;
+			const llmResponse: CreateLlmResponse = {
+				llmId: this.getId(),
+				llmRequestId: llmRequest.id,
+				responseText: responseText,
+				requestTime,
+				timeToFirstToken,
+				totalTime: finishTime - requestTime,
+			};
+			try {
+				await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
+			} catch (e) {
+				logger.error(e);
+			}
+
+			const inputCost = promptLength * this.getInputCostPerToken();
+			const outputCost = responseText.length * this.getOutputCostPerToken();
 			const cost = inputCost + outputCost;
 
 			span.setAttributes({
-				inputChars: prompt.length,
-				outputChars: response.length,
-				response,
+				inputChars: promptLength,
+				outputChars: responseText.length,
+				response: responseText,
 				inputCost,
 				outputCost,
 				cost,
 			});
 			addCost(cost);
 
-			return response;
+			return responseText;
 		});
 	}
 

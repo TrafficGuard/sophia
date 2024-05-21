@@ -77,6 +77,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { filter, startWith, map } from 'rxjs/operators';
 import { MatTableDataSource } from '@angular/material/table';
+import {environment} from "@env/environment";
 
 @Component({
   selector: 'app-contexts',
@@ -88,10 +89,10 @@ export class AgentsComponent implements OnInit {
 
   public agentContextDataSource = new MatTableDataSource<AgentContext>();
   displayedColumns: string[] = [
-    'agentId',
+    'name',
     'state',
-    'inputPrompt',
-    'systemPrompt',
+    'userPrompt',
+    //'systemPrompt',
     'error',
     'planningResponse',
     'cost',
@@ -104,7 +105,7 @@ export class AgentsComponent implements OnInit {
 
   ngOnInit(): void {
     this.http
-      .get<{ data: AgentContext[] }>('http://localhost:3000/agent/v1/list')
+      .get<{ data: AgentContext[] }>(`${environment.apiUrl}/agent/v1/list`)
       .pipe(
         filter((contexts) => contexts !== null),
         map((contexts) => {

@@ -1,14 +1,13 @@
 import { randomUUID } from 'crypto';
 import { AsyncLocalStorage } from 'async_hooks';
+import { RunAgentConfig } from '#agent/agentRunner';
 import { Toolbox } from '#agent/toolbox';
+import { FileSystem } from '#functions/filesystem';
 import { Invoke, Invoked, LLM, TaskLevel } from '#llm/llm';
 import { deserializeLLMs } from '#llm/llmFactory';
 import { logger } from '#o11y/logger';
-import { FunctionCacheService } from '../cache/cache';
-import { FileCacheService } from '../cache/fileCacheService';
-import { GitLabServer } from '../functions/scm/gitlab';
-import { SourceControlManagement } from '../functions/scm/sourceControlManagement';
-import { FileSystem } from './filesystem';
+import { User } from '#user/user';
+import { appContext } from '../app';
 
 /**
  * The LLMs for each Task Level
@@ -17,30 +16,33 @@ export type AgentLLMs = Record<TaskLevel, LLM>;
 
 /**
  * agent - waiting for the agent control loop to plan
- * functions - waiting for the function calls to complete
+ * functions - waiting for the function call(s) to complete
  * error - the agent control loop has errored
  * hil - the agent is waiting human confirmation to continue
  * feedback - the agent is waiting human feedback for a decision
- * completed - the agent has completed
+ * completed - the agent has finished
  */
 export type AgentRunningState = 'agent' | 'functions' | 'error' | 'hil' | 'feedback' | 'completed';
 
 export interface AgentContext {
-	/** Agent instance id - allocated when the agent is first starts */
+	/** Primary Key - Agent instance id. Allocated when the agent is first starts */
 	agentId: string;
 	/** Id of the running execution. This changes after the control loop restarts after an exit due to pausing, human in loop etc */
 	executionId: string;
+	/** User provided name */
 	name: string;
 	parentAgentId?: string;
-	isRetry: boolean;
-	/** Empty string in single-user mode */
-	userId: string;
-	userEmail?: string;
+
+	user: User;
 
 	state: AgentRunningState;
+	/** The initial user prompt */
+	userPrompt: string;
+	/** The prompt the agent execution started with */
 	inputPrompt: string;
+
 	systemPrompt: string;
-	/* Track what f3232unctions we've called into */
+	/* Track what functions we've called into */
 	callStack: string[];
 	functionCallHistory: Invoked[];
 
@@ -56,22 +58,19 @@ export interface AgentContext {
 	budgetRemaining: number;
 
 	llms: AgentLLMs;
-	functionCacheService: FunctionCacheService;
 	/** Working filesystem */
 	fileSystem?: FileSystem | null;
-	/** Directory for cloning repositories etc */
-	tempDir: string;
 	/** The tools/functions available to the agent */
 	toolbox: Toolbox;
 	/** Memory persisted over the agent's control loop iterations */
-	memory: Map<string, string>;
-	/** GitLab/GitHub/BitBucket when the working directory is a Git repo */
-	scm: SourceControlManagement | null;
+	memory: Record<string, string>;
+
+	lastUpdate: number;
 }
 
 export const agentContextStorage = new AsyncLocalStorage<AgentContext>();
 
-export function agentContext(): AgentContext {
+export function agentContext(): AgentContext | undefined {
 	return agentContextStorage.getStore();
 }
 
@@ -85,7 +84,7 @@ export function llms(): AgentLLMs {
  */
 export function addCost(cost: number) {
 	const store = agentContextStorage.getStore();
-	logger.info(`Adding cost $${cost}`);
+	logger.debug(`Adding cost $${cost}`);
 	store.cost += cost;
 	store.budgetRemaining -= cost;
 	if (store.budgetRemaining < 0) store.budgetRemaining = 0;
@@ -97,46 +96,27 @@ export function getFileSystem(): FileSystem {
 	return filesystem;
 }
 
-export function runWithContext(config: { name: string; llms: AgentLLMs; retryExecutionId?: string }, func: () => any) {
-	const store: AgentContext = createContext(config.name, config.llms, config.retryExecutionId);
-	agentContextStorage.run(store, func);
-}
-
-/**
- * Sets the AsyncLocalStorage agent context for the remainder of the current synchronous execution and then persists it through any following asynchronous calls.
- * @param llms
- * @param retryExecutionId
- */
-export function enterWithContext(name: string, llms: AgentLLMs, retryExecutionId?: string) {
-	const context: AgentContext = createContext(name, llms, retryExecutionId);
-	agentContextStorage.enterWith(context);
-	context.toolbox.addTool(context.fileSystem, 'FileSystem');
-}
-
-export function createContext(name: string, llms: AgentLLMs, resumeAgentId?: string): AgentContext {
+export function createContext(config: RunAgentConfig): AgentContext {
 	return {
-		agentId: resumeAgentId || randomUUID(),
+		agentId: config.resumeAgentId || randomUUID(),
 		executionId: randomUUID(),
-		name,
-		userId: '',
-		systemPrompt: '',
+		name: config.agentName,
+		user: config.user,
+		systemPrompt: config.systemPrompt,
 		inputPrompt: '',
+		userPrompt: config.initialPrompt,
 		state: 'agent',
-		callStack: [],
 		functionCallHistory: [],
-		invoking: [],
-		userEmail: process.env.USER_EMAIL,
-		isRetry: !!resumeAgentId,
-		functionCacheService: new FileCacheService('./.cache/tools'),
+		callStack: [],
 		budget: 0,
 		budgetRemaining: 0,
 		cost: 0,
-		llms: llms,
-		scm: null,
-		tempDir: './temp',
+		llms: config.llms,
 		fileSystem: new FileSystem(),
-		toolbox: new Toolbox(),
-		memory: new Map(),
+		toolbox: config.toolbox,
+		memory: {},
+		invoking: [],
+		lastUpdate: Date.now(),
 	};
 }
 
@@ -168,14 +148,16 @@ export function serializeContext(context: AgentContext): Record<string, any> {
 		}
 		// Handle Maps (must only contain primitive/simple object values)
 		else if (key === 'memory') {
-			serialized[key] = JSON.stringify(Array.from(context[key].entries()));
+			serialized[key] = context[key];
 		} else if (key === 'llms') {
 			serialized[key] = {
-				easy: context.llms.easy?.toJSON(),
-				medium: context.llms.medium?.toJSON(),
-				hard: context.llms.hard?.toJSON(),
-				xhard: context.llms.xhard?.toJSON(),
+				easy: context.llms.easy?.getId(),
+				medium: context.llms.medium?.getId(),
+				hard: context.llms.hard?.getId(),
+				xhard: context.llms.xhard?.getId(),
 			};
+		} else if (key === 'user') {
+			serialized[key] = context.user.id;
 		}
 		// otherwise throw error
 		else {
@@ -185,22 +167,20 @@ export function serializeContext(context: AgentContext): Record<string, any> {
 	return serialized;
 }
 
-export function deserializeContext(serialised: Record<string, any>): AgentContext {
+export async function deserializeAgentContext(serialized: Record<string, any>): Promise<AgentContext> {
 	const context: Partial<AgentContext> = {};
 
-	for (const key of Object.keys(serialised)) {
+	for (const key of Object.keys(serialized)) {
 		// copy Array and primitive properties across
-		if (Array.isArray(serialised[key]) || typeof serialised[key] === 'string' || typeof serialised[key] === 'number' || typeof serialised[key] === 'boolean') {
-			context[key] = serialised[key];
+		if (Array.isArray(serialized[key]) || typeof serialized[key] === 'string' || typeof serialized[key] === 'number' || typeof serialized[key] === 'boolean') {
+			context[key] = serialized[key];
 		}
 	}
 
-	context.functionCacheService = new FileCacheService('').fromJSON(serialised.functionCacheService);
-	context.fileSystem = new FileSystem().fromJSON(serialised.fileSystem);
-	context.toolbox = new Toolbox().fromJSON(serialised.toolbox);
-	context.memory = new Map(JSON.parse(serialised.memory));
-	console.log('TODO deserialize context.scm'); // TODO deserialize context.scm
-	context.scm = serialised.scm ? new GitLabServer() : null;
-	context.llms = deserializeLLMs(serialised.llms);
+	context.fileSystem = new FileSystem().fromJSON(serialized.fileSystem);
+	context.toolbox = new Toolbox().fromJSON(serialized.toolbox);
+	context.memory = serialized.memory;
+	context.user = await appContext().userService.getUser(serialized.user);
+	context.llms = deserializeLLMs(serialized.llms);
 	return context as AgentContext;
 }

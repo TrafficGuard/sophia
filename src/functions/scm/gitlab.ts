@@ -1,17 +1,17 @@
 import { existsSync } from 'fs';
 import { join } from 'path';
-import { ExpandedMergeRequestSchema } from '@gitbeaker/core';
-import { Gitlab, MergeRequestDiffSchema, MergeRequestDiscussionNotePositionOptions, ProjectSchema } from '@gitbeaker/rest';
+import { ExpandedMergeRequestSchema, Gitlab, Jobs, MergeRequestDiffSchema, MergeRequestDiscussionNotePositionOptions, ProjectSchema } from '@gitbeaker/rest';
 import { getFileSystem, llms } from '#agent/agentContext';
-import { func } from '#agent/functions';
-import { funcClass } from '#agent/metadata';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
+import { ICodeReview, loadCodeReviews } from '#swe/codeReview/codeReviewParser';
+import { toolConfig } from '#user/userService/userContext';
 import { allSettledAndFulFilled } from '#utils/async-utils';
 import { envVar } from '#utils/env-var';
 import { checkExecResult, execCmd, execCommand } from '#utils/exec';
-import { cacheRetry } from '../../cache/cache';
-import { ICodeReview, loadCodeReviews } from '../../swe/codeReview/codeReviewParser';
+import { cacheRetry } from '../../cache/cacheRetry';
+import { func } from '../../functionDefinition/functions';
+import { funcClass } from '../../functionDefinition/metadata';
 import { UtilFunctions } from '../util';
 import { SourceControlManagement } from './sourceControlManagement';
 
@@ -20,6 +20,7 @@ export interface GitLabConfig {
 	token: string;
 	secretName?: string;
 	secretProject?: string;
+	/** Comma seperated list of the top level groups */
 	topLevelGroups: string[];
 	groupExcludes?: Set<string>;
 }
@@ -50,18 +51,23 @@ export type GitLabProject = Pick<
 	| 'ci_config_path'
 >;
 
+function sanitize(s: string): string {
+	return s.replaceAll("'", "\\'");
+}
+
 @funcClass(__filename)
 export class GitLabServer implements SourceControlManagement {
 	api;
 	host;
 	config: GitLabConfig;
 
-	constructor(config?: GitLabConfig) {
-		this.host = envVar('GITLAB_HOST');
-		this.config = config ?? {
-			host: this.host,
-			token: envVar('GITLAB_TOKEN'),
-			topLevelGroups: JSON.parse(envVar('GITLAB_GROUPS')),
+	constructor() {
+		const config = toolConfig(GitLabServer);
+		this.host = config.host;
+		this.config = {
+			host: this.host ?? envVar('GITLAB_HOST'),
+			token: config.token,
+			topLevelGroups: (config.topLevelGroups ?? envVar('GITLAB_GROUPS')).split(',').map((group) => group.trim()),
 		};
 		this.api = new Gitlab({
 			host: `https://${this.config.host}`,
@@ -152,14 +158,20 @@ export class GitLabServer implements SourceControlManagement {
 	 */
 	@func()
 	async cloneProject(projectPathWithNamespace: string): Promise<string> {
-		const path = join(getFileSystem().getWorkingDirectory(), 'gitlab', projectPathWithNamespace);
+		if (!projectPathWithNamespace) throw new Error('Parameter "projectPathWithNamespace" must be truthy');
+		const path = join(getFileSystem().basePath, '.nous', 'gitlab', projectPathWithNamespace);
+
+		// TODO it cloned a project to the main branch when the default is master?
 
 		// If the project already exists pull updates
 		if (existsSync(path) && existsSync(join(path, '.git'))) {
+			logger.info(`${projectPathWithNamespace} exists at ${path}. Pulling updates`);
+			// If we're resuming an agent which has already created the branch but not pushed
+			// then it won't exist remotely, so this will return a non-zero code
 			const result = await execCmd(`git -C ${path} pull`);
-			checkExecResult(result, `Failed to pull unshallow ${path}`);
+			// checkExecResult(result, `Failed to pull ${path}`);
 		} else {
-			logger.info(`Cloning to ${path}`);
+			logger.info(`Cloning project: ${projectPathWithNamespace} to ${path}`);
 			const command = `git clone https://oauth2:${this.config.token}@${this.config.host}/${projectPathWithNamespace}.git ${path}`;
 			const result = await execCmd(command);
 			checkExecResult(result, `Failed to clone ${projectPathWithNamespace}`);
@@ -176,11 +188,13 @@ export class GitLabServer implements SourceControlManagement {
 	async createMergeRequest(title: string, description: string): Promise<string> {
 		// TODO lookup project details from project list
 		// get main branch. If starts with feature and dev develop exists, then that
-		const currentBranch = getFileSystem().vcs.getBranchName();
+		const currentBranch: string = await getFileSystem().vcs.getBranchName();
 
 		const targetBranch = 'master'; // TODO get from the GitLab project
 
-		const cmd = `git push --set-upstream origin "${currentBranch}" -o merge_request.create -o merge_request.target="${targetBranch}" -o merge_request.remove_source_branch -o merge_request.title="${title}"`;
+		const cmd = `git push --set-upstream origin '${currentBranch}' -o merge_request.create -o merge_request.target='${targetBranch}' -o merge_request.remove_source_branch -o merge_request.title='${sanitize(
+			title,
+		)}'`;
 		const { exitCode, stdout, stderr } = await execCommand(cmd);
 		if (exitCode > 0) throw new Error(`${stdout}\n${stderr}`);
 
@@ -336,6 +350,18 @@ export class GitLabServer implements SourceControlManagement {
 		const reviewComments = (await llms().medium.generateTextAsJson(prompt)) as Array<{ lineNumber: number; comment: string }>;
 
 		return { code: currentCode, comments: reviewComments, mrDiff };
+	}
+
+	@func()
+	async getJobLogs(projectPath: string, jobId: string): Promise<string> {
+		if (!projectPath) throw new Error('Parameter "projectPath" must be truthy');
+		if (!jobId) throw new Error('Parameter "jobId" must be truthy');
+
+		const project = await this.api.Projects.show(projectPath);
+		const job = await this.api.Jobs.show(project.id, jobId);
+		const logs = await this.api.Jobs.trace(project.id, job.id);
+
+		return logs;
 	}
 }
 

@@ -1,15 +1,13 @@
 import { readFileSync, writeFileSync } from 'fs';
-import { Span } from '@opentelemetry/api';
-import { AgentContext, AgentLLMs, agentContextStorage, createContext, enterWithContext } from '#agent/agentContext';
+import { AgentContext, AgentLLMs, agentContextStorage, createContext } from '#agent/agentContext';
+import { Toolbox } from '#agent/toolbox';
 import '#fastify/trace-init/trace-init';
 import { LLM } from '#llm/llm';
+import { Claude3_Opus, Claude3_Sonnet } from '#llm/models/anthropic';
 import { Claude3_Sonnet_Vertex } from '#llm/models/anthropic-vertex';
-import { Claude3_Opus, Claude3_Sonnet } from '#llm/models/claude';
-import { GroqLLM } from '#llm/models/groq';
-import { GPT } from '#llm/models/openai';
-import { Gemini_1_0_Pro, Gemini_1_5_Pro } from '#llm/models/vertexai';
-import { withActiveSpan } from '#o11y/trace';
-import { AGENT_LLMS } from '../agentLLMs';
+import { Gemini_1_5_Experimental, Gemini_1_5_Pro } from '#llm/models/vertexai';
+
+import { currentUser } from '#user/userService/userContext';
 
 // Usage:
 // npm run ai
@@ -17,6 +15,7 @@ import { AGENT_LLMS } from '../agentLLMs';
 let llm: LLM = Claude3_Sonnet_Vertex();
 llm = Claude3_Opus();
 llm = Gemini_1_5_Pro();
+// llm = Gemini_1_5_Experimental();
 
 const llms: AgentLLMs = {
 	easy: llm,
@@ -29,11 +28,15 @@ async function main() {
 	// const system = readFileSync('chat-system', 'utf-8');
 	const prompt = readFileSync('src/test/chat-in', 'utf-8');
 
-	const context: AgentContext = createContext('chat', llms);
+	const context: AgentContext = createContext({
+		initialPrompt: prompt,
+		agentName: 'chat',
+		llms,
+		user: currentUser(),
+		toolbox: new Toolbox(),
+	});
 	agentContextStorage.enterWith(context);
-	context.toolbox.addTool(context.fileSystem, 'FileSystem');
 
-	// console.log(prompt)
 	const text = await llm.generateText(prompt);
 
 	writeFileSync('src/test/chat-out', text);
@@ -47,45 +50,3 @@ main()
 	.catch((e) => {
 		console.error(e);
 	});
-
-/*
-The following is an example of how a plan structure evolves as information is discovered
-<revised_task>
-</revised_task>
-<task_tool_plan_pseudocode>
-</task_tool_plan_pseudocode>
-
-3. Update a revised version of the current phase task_tool_plan_pseudocode
-
-An example pseudocode for the task "Increment the version of the waf node.js project"
-<task_tool_plan_pseudocode>
-    # Discovery
-    project = GitLabServer.selectProject(requirements)
-    project =
-</task_tool_plan_pseudocode>
-
-An example pseudocode for the task "Increment the version of the waf node.js project"
-<task_tool_plan_pseudocode>
-    # Discovery
-    project = GitLabServer.selectProject(requirements)
-    project =
-</task_tool_plan_pseudocode>
-
-
-
-You must answer in the following format:
-<revised_task>Updated task taking into account any new information retrieved by tools from function calls</revised_task>
-<plan_outline></plan_outline>
-<function_call_plan description="">
-    <phase:requirements goal="Gather the requirements">
-        <tool toolName="ToolGroup.toolName" toolParam="paramValue"></tool>
-    </phase:requirements>
-    <pending_output tool="ToolGroup.toolName"></pending_output>
-</function_call_plan>
-<current_plan_step></current_plan_step>
-<next_step_details>Details of the next step to take with reasoning</next_step_details>
-<function_calls></function_calls>
-
-
-
-*/

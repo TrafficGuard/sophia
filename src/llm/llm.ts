@@ -1,4 +1,4 @@
-import { agentContextStorage } from '#agent/agentContext';
+import { logger } from '#o11y/logger';
 import { BaseLLM } from './base-llm';
 
 export interface LLM {
@@ -18,9 +18,20 @@ export interface LLM {
 	generateTextExpectingFunctions(prompt: string, systemPrompt?: string): Promise<FunctionResponse>;
 
 	/**
+	 * The service provider of the LLM (OpenAI, Google, TogetherAI etc)
+	 */
+	getService(): string;
+
+	/**
 	 * The LLM model identifier
 	 */
 	getModel(): string;
+
+	/**
+	 * The LLM identifier in the format service:model
+	 */
+	getId(): string;
+
 	/**
 	 * Formats the output of a successful function call
 	 * @param toolName
@@ -35,9 +46,6 @@ export interface LLM {
 	formatFunctionError(toolName: string, error: any): string;
 	/** The maximum number of input tokens */
 	getMaxInputTokens(): number;
-
-	/** Convert to a serializable form */
-	toJSON(): any;
 }
 
 /**
@@ -50,7 +58,7 @@ export type TaskLevel = 'easy' | 'medium' | 'hard' | 'xhard';
  */
 export interface FunctionResponse {
 	/** The response from the LMM upto the <function_calls> element */
-	response: string;
+	textResponse: string;
 	/** The parsed <function_calls> element */
 	functions: FunctionCalls;
 }
@@ -84,22 +92,18 @@ export function logTextGeneration(originalMethod: any, context: ClassMethodDecor
 	return async function replacementMethod(this: BaseLLM, ...args: any[]) {
 		// system prompt
 		if (args.length > 1) {
-			console.log('= SYSTEM PROMPT ==========================================');
-			console.log(args[1]);
+			// logger.info('= SYSTEM PROMPT ==========================================');
+			// logger.info(args[1]);
 		}
-		console.log();
-		console.log('==================================================================================================================');
-		console.log('= USER PROMPT ====================================================================================================');
-		console.log(args[0]);
+		logger.info('= USER PROMPT ====================================================================================================');
+		logger.info(args[0]);
 
 		const start = Date.now();
 		const result = await originalMethod.call(this, ...args);
-		console.log();
-		console.log('==================================================================================================================');
-		console.log(`= RESPONSE ${this.model} =========================================================================================`);
-		console.log(result);
+		logger.info(`= RESPONSE ${this.model} =========================================================================================`);
+		logger.info(result);
 		const duration = `${((Date.now() - start) / 1000).toFixed(1)}s`;
-		console.log(`${duration}  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<`);
+		logger.info(`${duration}  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<`);
 		return result;
 	};
 }
@@ -111,30 +115,5 @@ export function logDuration(originalMethod: any, context: ClassMethodDecoratorCo
 		const result = await originalMethod.call(this, ...args);
 		console.log(`${functionName} took ${Date.now() - start}ms`);
 		return result;
-	};
-}
-
-/**
- * AI generated code, not yet reviewed or tested
- * Decorator to record the cost of a workflow/llm call.
- * @param originalMethod
- * @param context
- */
-export function recordTextGenerationCosts(originalMethod: any, context: ClassMethodDecoratorContext): any {
-	const functionName = String(context.name);
-	return async function replacementMethod(this: BaseLLM, ...args: any[]) {
-		const systemPrompt = args.length > 1 ? args[1] : '';
-		const userPrompt = args[0];
-
-		const response = await originalMethod.call(this, ...args);
-
-		const agentCtx = agentContextStorage.getStore();
-		const inputCost = this.getInputCostPerToken() * prompt.length;
-		const outputCost = this.getOutputCostPerToken() * response.length;
-		const totalCost = inputCost + outputCost;
-		agentCtx.cost += totalCost;
-		agentCtx.budgetRemaining = Math.max(agentCtx.budgetRemaining - totalCost, 0);
-
-		return response;
 	};
 }

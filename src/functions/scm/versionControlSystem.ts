@@ -8,9 +8,9 @@ export interface VersionControlSystem {
 
 	createBranch(branchName: string): Promise<void>;
 
-	getBranchName(): Promise<string>;
+	switchToBranch(branchName: string): Promise<void>;
 
-	cloneBranch(repoUrl: string, branchName: string): Promise<void>;
+	getBranchName(): Promise<string>;
 
 	/**
 	 * Adds all files which are already tracked by version control to the index and commits

@@ -1,0 +1,26 @@
+.fixed-width-field {
+  display: inline-block;
+  width: 150px; /* Adjust the width as needed */
+  min-width: 150px;
+  margin-right: 10px;
+}
+
+.truncate {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.system-prompt-preview {
+  font-weight: normal;
+  font-size: smaller;
+}
+.llm-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.llm-column {
+  flex: 1;
+  text-align: center;
+}

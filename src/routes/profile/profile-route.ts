@@ -1,14 +1,16 @@
 import { Type } from '@sinclair/typebox';
 import { FastifyReply } from 'fastify';
 import { send, sendSuccess } from '#fastify/index';
-import { User } from '#model/user';
 import { logger } from '#o11y/logger';
+import { User } from '#user/user';
 import { AppFastifyInstance } from '../../app';
+
+import { currentUser } from '#user/userService/userContext';
 
 const basePath = '/profile';
 export async function profileRoute(fastify: AppFastifyInstance) {
 	fastify.get(`${basePath}/view`, async (req, reply) => {
-		const user: User = await fastify.userService.getCurrentUser();
+		const user: User = currentUser();
 
 		send(reply, 200, user);
 	});

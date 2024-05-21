@@ -1,6 +1,9 @@
 .idea/
 .vscode/
 node_modules/
+frontend/node_modules/
+frontend/.angular/
+.husky/
 dist/
 #.env
 **.idea

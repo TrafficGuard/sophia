@@ -1,22 +1,32 @@
 import OpenAI from 'openai';
 import { addCost, agentContext } from '#agent/agentContext';
+import { CallerId } from '#llm/llmCallService/llmCallService';
+import { CreateLlmResponse } from '#llm/llmCallService/llmRequestResponse';
 import { withSpan } from '#o11y/trace';
+import { currentUser } from '#user/userService/userContext';
 import { sleep } from '#utils/async-utils';
-import { RetryableError } from '../../cache/cache';
+import { envVar } from '#utils/env-var';
+import { appContext } from '../../app';
+import { RetryableError } from '../../cache/cacheRetry';
 import { BaseLLM } from '../base-llm';
 import { LLM, combinePrompts, logTextGeneration } from '../llm';
 
 export const FIREWORKS_SERVICE = 'fireworks';
 
-const client = new OpenAI({
-	apiKey: process.env.FIREWORKS_KEY,
-	baseURL: 'https://api.fireworks.ai/inference/v1',
-});
-
 /**
- * Together AI models
+ * Fireworks AI models
  */
 export class FireworksLLM extends BaseLLM {
+	client: OpenAI;
+
+	constructor(model: string, maxTokens: number, inputCostPerToken: number, outputCostPerToken: number) {
+		super(FIREWORKS_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
+		this.client = new OpenAI({
+			apiKey: currentUser().llmConfig.fireworksKey ?? envVar('FIREWORKS_KEY'),
+			baseURL: 'https://api.fireworks.ai/inference/v1',
+		});
+	}
+
 	@logTextGeneration
 	async generateText(userPrompt: string, systemPrompt: string): Promise<string> {
 		return withSpan('generateText', async (span) => {
@@ -27,10 +37,14 @@ export class FireworksLLM extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
-				caller: agentContext().callStack.at(-1) ?? '',
 			});
+
+			const caller: CallerId = { agentId: agentContext().agentId };
+			const llmRequestSave = appContext().llmCallService.saveRequest(userPrompt, systemPrompt);
+			const requestTime = Date.now();
+
 			try {
-				const response: OpenAI.ChatCompletion = await client.chat.completions.create({
+				const completion: OpenAI.ChatCompletion = await this.client.chat.completions.create({
 					messages: [
 						{
 							role: 'system',
@@ -45,23 +59,37 @@ export class FireworksLLM extends BaseLLM {
 					max_tokens: 4094,
 				});
 
-				const outputText = response.choices[0].message.content;
+				const responseText = completion.choices[0].message.content;
+
+				const timeToFirstToken = Date.now();
+				const finishTime = Date.now();
+
+				const llmRequest = await llmRequestSave;
+				const llmResponse: CreateLlmResponse = {
+					llmId: this.getId(),
+					llmRequestId: llmRequest.id,
+					responseText: responseText,
+					requestTime,
+					timeToFirstToken: timeToFirstToken,
+					totalTime: finishTime - requestTime,
+				};
+				await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
 
 				const inputCost = this.getInputCostPerToken() * prompt.length;
-				const outputCost = this.getOutputCostPerToken() * outputText.length;
+				const outputCost = this.getOutputCostPerToken() * responseText.length;
 				const cost = inputCost + outputCost;
 
 				span.setAttributes({
-					response: outputText,
+					response: responseText,
 					inputCost,
 					outputCost,
 					cost,
-					outputChars: outputText.length,
+					outputChars: responseText.length,
 				});
 
 				addCost(cost);
 
-				return outputText;
+				return responseText;
 			} catch (e) {
 				if (e.message.includes('rate limiting')) {
 					await sleep(1000);
@@ -73,8 +101,13 @@ export class FireworksLLM extends BaseLLM {
 	}
 }
 
+export function fireworksLLMRegistry(): Record<string, () => LLM> {
+	return {
+		[`${FIREWORKS_SERVICE}:accounts/fireworks/models/llama-v3-70b-instruct`]: fireworksLlama3_70B,
+	};
+}
 export function fireworksLlama3_70B(): LLM {
-	return new FireworksLLM(FIREWORKS_SERVICE, 'accounts/fireworks/models/llama-v3-70b-instruct', 8000, 0.9 / 1_000_000, 0.9 / 1_000_000);
+	return new FireworksLLM('accounts/fireworks/models/llama-v3-70b-instruct', 8000, 0.9 / 1_000_000, 0.9 / 1_000_000);
 }
 
 export function fireworksLLmFromModel(model: string): LLM | null {

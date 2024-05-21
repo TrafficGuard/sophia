@@ -2,26 +2,26 @@ import { CDATA_END, CDATA_START } from '#utils/xml-utils';
 import { FunctionResponse, LLM } from './llm';
 import { extractJsonResult, extractStringResult, parseFunctionCallsXml } from './responseParsers';
 
+export interface SerializedLLM {
+	service: string;
+	model: string;
+}
+
+export type GenerationMode = 'text' | 'json';
+
 export abstract class BaseLLM implements LLM {
 	constructor(
 		protected readonly service: string,
 		protected readonly model: string,
 		private maxInputTokens: number,
-		private inputCostPerToken: number,
-		private outputCostPerToken: number,
+		private inputCostPerChar: number,
+		private outputCostPerChar: number,
 	) {}
-
-	toJSON(): any {
-		return {
-			service: this.service,
-			model: this.model,
-		};
-	}
 
 	async generateTextExpectingFunctions(prompt: string, systemPrompt?: string): Promise<FunctionResponse> {
 		const response = await this.generateText(prompt, systemPrompt);
 		return {
-			response: response,
+			textResponse: response,
 			functions: parseFunctionCallsXml(response),
 		};
 	}
@@ -32,22 +32,22 @@ export abstract class BaseLLM implements LLM {
 	}
 
 	async generateTextAsJson(prompt: string, systemPrompt?: string): Promise<any> {
-		const response = await this.generateText(prompt, systemPrompt);
+		const response = await this.generateText(prompt, systemPrompt, 'json');
 		return extractJsonResult(response);
 	}
 
-	abstract generateText(prompt: string, systemPrompt?: string): Promise<string>;
+	abstract generateText(prompt: string, systemPrompt?: string, mode?: GenerationMode): Promise<string>;
 
 	getMaxInputTokens(): number {
 		return this.maxInputTokens;
 	}
 
 	getInputCostPerToken(): number {
-		return this.inputCostPerToken;
+		return this.inputCostPerChar;
 	}
 
 	getOutputCostPerToken(): number {
-		return this.outputCostPerToken;
+		return this.outputCostPerChar;
 	}
 
 	isRetryableError(e: any): boolean {
@@ -55,7 +55,15 @@ export abstract class BaseLLM implements LLM {
 	}
 
 	getModel(): string {
-		return `${this.constructor.name}:${this.model}`;
+		return this.model;
+	}
+
+	getService(): string {
+		return this.service;
+	}
+
+	getId(): string {
+		return `${this.service}:${this.model}`;
 	}
 
 	formatFunctionResult(toolName: string, result: any): string {

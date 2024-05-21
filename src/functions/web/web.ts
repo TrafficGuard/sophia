@@ -2,10 +2,10 @@ import path from 'path';
 import { Readability } from '@mozilla/readability';
 import { JSDOM } from 'jsdom';
 import { agentContextStorage, getFileSystem, llms } from '#agent/agentContext';
-import { func } from '#agent/functions';
-import { funcClass } from '#agent/metadata';
 import { execCommand } from '#utils/exec';
-import { cacheRetry } from '../../cache/cache';
+import { cacheRetry } from '../../cache/cacheRetry';
+import { func } from '../../functionDefinition/functions';
+import { funcClass } from '../../functionDefinition/metadata';
 const { getJson } = require('serpapi');
 import { readFileSync } from 'fs';
 import { fileExistsAsync, fileExistsSync } from 'tsconfig-paths/lib/filesystem';
@@ -64,11 +64,11 @@ export class PublicWeb {
 	@cacheRetry({ scope: 'global' })
 	async getWebPageExtract(url: string, dataExtractionInstructions: string, memoryKey?: string): Promise<string> {
 		const memory = agentContextStorage.getStore().memory;
-		if (memory.has(memoryKey)) throw new Error(`The memory key ${memoryKey} already exists`);
+		if (memory[memoryKey]) throw new Error(`The memory key ${memoryKey} already exists`);
 		const contents = await this.getWebPage(url);
 		const extracted = await llms().medium.generateText(`<page_contents>${contents}</page_contents>\n\n${dataExtractionInstructions}`);
 		if (memoryKey) {
-			agentContextStorage.getStore().memory.set(memoryKey, extracted);
+			agentContextStorage.getStore().memory[memoryKey] = extracted;
 		}
 		return extracted;
 	}
@@ -221,7 +221,7 @@ export class PublicWeb {
 			// num: "10",
 			// start: "10",
 			// safe: "active",
-			api_key: process.env.SERP_API_KEY,
+			api_key: process.env.SERP_API_KEY, // TODO change to user property
 		});
 		return json.organic_results.map((result) => {
 			return { url: result.link, title: result.title };

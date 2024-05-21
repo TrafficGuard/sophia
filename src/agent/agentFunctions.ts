@@ -1,11 +1,13 @@
-import { func } from '#agent/functions';
 import { logger } from '#o11y/logger';
-import { agentContextStorage } from './agentContext';
-import { funcClass } from './metadata';
+import { func } from '../functionDefinition/functions';
+import { funcClass } from '../functionDefinition/metadata';
+import { agentContext } from './agentContext';
 
 export const AGENT_COMPLETED_NAME = 'Agent.completed';
 
 export const AGENT_REQUEST_FEEDBACK = 'Agent.requestFeedback';
+
+export const REQUEST_FEEDBACK_PARAM_NAME = 'request';
 
 /**
  * Functions for the agent to manage its memory and execution
@@ -14,11 +16,12 @@ export const AGENT_REQUEST_FEEDBACK = 'Agent.requestFeedback';
 export class Agent {
 	/**
 	 * Pauses the work and request feedback/interaction from a supervisor when a decision or approval needs to be made before proceeding with the plan.
-	 * @param decisionNotes {string} Notes on what decision or approval is required
+	 * @param request {string} Notes on what decision or approval is required
 	 */
 	@func()
-	async requestFeedback(decisionNotes: string): Promise<void> {
-		logger.info(`Feedback requested: ${decisionNotes}`);
+	async requestFeedback(request: string): Promise<void> {
+		// arg name must match REQUEST_FEEDBACK_PARAM_NAME
+		logger.info(`Feedback requested: ${request}`);
 	}
 
 	/**
@@ -38,9 +41,9 @@ export class Agent {
 	 */
 	@func()
 	async addNewMemory(key: string, content: string): Promise<void> {
-		const memory = agentContextStorage.getStore().memory;
+		const memory = agentContext().memory;
 		// if (memory.has(key)) throw new Error(`Memory key ${key} already exists. Did you mean to update or use a different key?`);
-		memory.set(key, content);
+		memory[key] = content;
 	}
 
 	/**
@@ -51,8 +54,8 @@ export class Agent {
 	 */
 	@func()
 	async updateMemory(key: string, content: string): Promise<void> {
-		const memory = agentContextStorage.getStore().memory;
+		const memory = agentContext().memory;
 		// if (!memory.has(key)) throw new Error(`Memory key ${key} does not exist. Did you mean to create a new memory key or use a different existing key?`);
-		memory.set(key, content);
+		memory[key] = content;
 	}
 }

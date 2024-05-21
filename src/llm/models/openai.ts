@@ -1,43 +1,51 @@
-import OpenAI from 'openai';
+import { OpenAI as OpenAISDK } from 'openai';
 import { addCost, agentContext } from '#agent/agentContext';
+import { CallerId } from '#llm/llmCallService/llmCallService';
+import { CreateLlmResponse } from '#llm/llmCallService/llmRequestResponse';
 import { withActiveSpan } from '#o11y/trace';
-import { BaseLLM } from '../base-llm';
+import { currentUser } from '#user/userService/userContext';
+import { envVar } from '#utils/env-var';
+import { appContext } from '../../app';
+import { BaseLLM, GenerationMode } from '../base-llm';
 import { LLM, combinePrompts, logTextGeneration } from '../llm';
 
-type Model = 'gpt-4-turbo-preview' | 'gpt-4-vision-preview' | 'gpt-4' | 'gpt-4-32k' | 'gpt-3.5-turbo' | 'gpt-3.5-turbo-16k';
-
 // https://platform.openai.com/docs/models/gpt-4-and-gpt-4-turbo
-function maxTokens(model: Model) {
-	switch (model) {
-		case 'gpt-4-turbo-preview':
-			return 128_000;
-		default:
-			throw new Error(`Need to configure max token input for ${model} in ${__filename}`);
-	}
+export const OPENAI_SERVICE = 'openai';
+
+export function openAiLLMRegistry(): Record<string, () => LLM> {
+	return {
+		'openai:gpt-4-turbo-preview': () => openaiLLmFromModel('gpt-4-turbo'),
+		'openai:gpt-4o': () => openaiLLmFromModel('gpt-4o'),
+	};
 }
 
-export const OPENAI_SERVICE = 'openai';
+type Model = 'gpt-4o' | 'gpt-4-turbo-preview' | 'gpt-4-vision-preview' | 'gpt-4' | 'gpt-4-32k' | 'gpt-3.5-turbo' | 'gpt-3.5-turbo-16k';
 
 export function openaiLLmFromModel(model: string): LLM {
 	if (model.startsWith('gpt-4-turbo')) return GPT4();
+	if (model.startsWith('gpt-4o')) return GPT4o();
 	throw new Error(`Unsupported ${OPENAI_SERVICE} model: ${model}`);
 }
 
+// 1 token ~= 4 chars
 export function GPT4() {
-	return new GPT('gpt-4-turbo-preview', 0.03 / 1000, 0.06 / 1000);
+	return new OpenAI('gpt-4-turbo-preview', 128_000, 10 / (1_000_000 * 4), 30 / (1_000_000 * 4));
 }
 
-export class GPT extends BaseLLM {
-	openai = new OpenAI({
-		apiKey: process.env.OPENAI_API_KEY,
+export function GPT4o() {
+	return new OpenAI('gpt-4o', 128_000, 5 / (1_000_000 * 4), 15 / (1_000_000 * 4));
+}
+export class OpenAI extends BaseLLM {
+	openai = new OpenAISDK({
+		apiKey: currentUser().llmConfig.openaiKey ?? envVar('OPENAI_API_KEY'),
 	});
 
-	constructor(model: Model, inputCostPerToken: number, outputCostPerToken: number) {
-		super(OPENAI_SERVICE, model, maxTokens(model), inputCostPerToken, outputCostPerToken);
+	constructor(model: Model, maxInputTokens: number, inputCostPerChar: number, outputCostPerChar: number) {
+		super(OPENAI_SERVICE, model, maxInputTokens, inputCostPerChar, outputCostPerChar);
 	}
 
 	@logTextGeneration
-	async generateText(userPrompt: string, systemPrompt: string): Promise<string> {
+	async generateText(userPrompt: string, systemPrompt: string, mode?: GenerationMode): Promise<string> {
 		return withActiveSpan('generateText', async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 
@@ -46,25 +54,44 @@ export class GPT extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
-				caller: agentContext().callStack.at(-1) ?? '',
 			});
+
+			const caller: CallerId = { agentId: agentContext().agentId };
+			const llmRequestSave = appContext().llmCallService.saveRequest(userPrompt, systemPrompt);
+			const requestTime = Date.now();
 
 			const stream = await this.openai.chat.completions.create({
 				model: this.model,
+				response_format: { type: mode === 'json' ? 'json_object' : 'text' },
 				messages: [{ role: 'user', content: prompt }],
 				stream: true,
 			});
-			let response = '';
+			let responseText = '';
+			let timeToFirstToken = null;
 			for await (const chunk of stream) {
-				response += chunk.choices[0]?.delta?.content || '';
+				responseText += chunk.choices[0]?.delta?.content || '';
+				if (!timeToFirstToken) timeToFirstToken = Date.now();
 			}
+			const finishTime = Date.now();
+
+			const llmRequest = await llmRequestSave;
+			const llmResponse: CreateLlmResponse = {
+				llmId: this.getId(),
+				llmRequestId: llmRequest.id,
+				responseText: responseText,
+				requestTime,
+				timeToFirstToken: timeToFirstToken,
+				totalTime: finishTime - requestTime,
+			};
+			await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
+
 			const inputCost = this.getInputCostPerToken() * prompt.length;
-			const outputCost = this.getOutputCostPerToken() * response.length;
+			const outputCost = this.getOutputCostPerToken() * responseText.length;
 			const cost = inputCost + outputCost;
 			span.setAttributes({
 				inputChars: prompt.length,
-				outputChars: response.length,
-				response,
+				outputChars: responseText.length,
+				response: responseText,
 				inputCost,
 				outputCost,
 				cost,
@@ -72,7 +99,7 @@ export class GPT extends BaseLLM {
 
 			addCost(cost);
 
-			return response;
+			return responseText;
 		});
 	}
 }

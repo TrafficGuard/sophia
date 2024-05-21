@@ -1,55 +1,113 @@
-<form [formGroup]="profileForm">
-  <label for="id">ID:</label>
-  <input type="text" id="id" formControlName="id">
+<div class="mat-elevation-z8">
+  <form [formGroup]="profileForm" (ngSubmit)="onSave()" class="profile-form">
 
-  <label for="email">Email:</label>
-  <input type="email" id="email" formControlName="email">
+    <mat-card>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field appearance="fill">
+            <mat-label>ID</mat-label>
+            <input matInput id="id" placeholder="Enter ID" formControlName="id" [attr.disabled]="true" />
+          </mat-form-field>
 
-  <label for="enabled">Enabled:</label>
-  <input type="checkbox" id="enabled" formControlName="enabled">
+          <mat-form-field appearance="fill">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" id="email" placeholder="Enter email" formControlName="email" />
+          </mat-form-field>
+        </div>
 
-  <label for="hilBudget">HIL Budget:</label>
-  <input type="number" id="hilBudget" formControlName="hilBudget">
+        <div class="section-title">Default Human In The Loop settings</div>
+        <div class="form-row">
+          <mat-form-field appearance="fill">
+            <mat-label>Budget</mat-label>
+            <input matInput type="number" id="hilBudget" placeholder="Enter HIL Budget" formControlName="hilBudget"
+              min="0" step="any" />
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>Control loop iterations</mat-label>
+            <input matInput type="number" id="hilCount" placeholder="Enter HIL Count" formControlName="hilCount"
+              min="0" />
+          </mat-form-field>
+        </div>
 
-  <label for="hilCount">HIL Count:</label>
-  <input type="number" id="hilCount" formControlName="hilCount">
+        <div class="section-title">LLM API Keys</div>
+        <div formGroupName="llmConfig">
+          <div class="form-row horizontal-group">
+            <mat-form-field appearance="fill">
+              <mat-label>Anthropic</mat-label>
+              <input matInput id="anthropicKey" placeholder="Enter Anthropic Key" formControlName="anthropicKey" />
+            </mat-form-field>
+            <mat-form-field appearance="fill">
+              <mat-label>Fireworks</mat-label>
+              <input matInput id="fireworksKey" placeholder="Enter Fireworks Key" formControlName="fireworksKey" />
+            </mat-form-field>
+            <mat-form-field appearance="fill">
+              <mat-label>Groq</mat-label>
+              <input matInput id="groqKey" placeholder="Enter Groq Key" formControlName="groqKey" />
+            </mat-form-field>
+          </div>
+          <div class="form-row horizontal-group">
+            <mat-form-field appearance="fill">
+              <mat-label>OpenAI</mat-label>
+              <input matInput id="openaiKey" placeholder="Enter OpenAI Key" formControlName="openaiKey" />
+            </mat-form-field>
+            <mat-form-field appearance="fill">
+              <mat-label>TogetherAI</mat-label>
+              <input matInput id="togetheraiKey" placeholder="Enter TogetherAI Key" formControlName="togetheraiKey" />
+            </mat-form-field>
+          </div>
+        </div>
 
-  <label for="anthropicKey">Anthropic Key:</label>
-  <input type="text" id="anthropicKey" formControlName="llmConfig.anthropicKey">
+        <div formGroupName="toolConfig">
 
-  <label for="openaiKey">OpenAI Key:</label>
-  <input type="text" id="openaiKey" formControlName="llmConfig.openaiKey">
-
-  <label for="groqKey">Groq Key:</label>
-  <input type="text" id="groqKey" formControlName="llmConfig.groqKey">
-
-  <label for="togetheraiKey">TogetherAI Key:</label>
-  <input type="text" id="togetheraiKey" formControlName="llmConfig.togetheraiKey">
-
-  <!-- Add other form controls for gitlabConfig, githubConfig, jiraConfig, and perplexityKey -->
-  <label for="gitlabHost">GitLab Host:</label>
-  <input type="text" id="gitlabHost" formControlName="gitlabConfig.host">
-
-  <label for="gitlabToken">GitLab Token:</label>
-  <input type="text" id="gitlabToken" formControlName="gitlabConfig.token">
-
-  <label for="gitlabTopLevelGroups">GitLab Top Level Groups:</label>
-  <input type="text" id="gitlabTopLevelGroups" formControlName="gitlabConfig.topLevelGroups">
-
-
-  <label for="jiraBaseUrl">Jira Base URL:</label>
-  <input type="text" id="jiraBaseUrl" formControlName="jiraConfig.baseUrl">
-
-  <label for="jiraEmail">Jira Email:</label>
-  <input type="email" id="jiraEmail" formControlName="jiraConfig.email">
-
-  <label for="jiraToken">Jira Token:</label>
-  <input type="text" id="jiraToken" formControlName="jiraConfig.token">
-
-  <label for="perplexityKey">Perplexity Key:</label>
-  <input type="text" id="perplexityKey" formControlName="perplexityKey">
-
-  <!-- Add other form controls for llmConfig, gitlabConfig, githubConfig, jiraConfig, and perplexityKey -->
-
-  <button type="button" (click)="onSave()" [disabled]="!profileForm.valid">Save</button>
-</form>
+          <div formGroupName="GitLabServer">
+            <div class="section-title">GitLab Configuration</div>
+            <div class="form-row horizontal-group">
+              <mat-form-field appearance="fill">
+                <mat-label>Host</mat-label>
+                <input matInput id="gitlabHost" placeholder="Enter GitLab Host" formControlName="host" />
+              </mat-form-field>
+              <mat-form-field appearance="fill">
+                <mat-label>Token</mat-label>
+                <input matInput id="gitlabToken" placeholder="Enter GitLab Token" formControlName="token" />
+              </mat-form-field>
+              <mat-form-field appearance="fill">
+                <mat-label>Top Level Groups</mat-label>
+                <input matInput id="gitlabTopLevelGroups" placeholder="Enter GitLab Top Level Groups"
+                  formControlName="topLevelGroups" />
+              </mat-form-field>
+            </div>
+          </div>
+          <div formGroupName="Jira">
+            <div class="section-title">Jira Configuration</div>
+            <div class="form-row horizontal-group">
+              <mat-form-field appearance="fill">
+                <mat-label>Base URL</mat-label>
+                <input matInput id="jiraBaseUrl" placeholder="Enter Jira Base URL" formControlName="baseUrl" />
+              </mat-form-field>
+              <mat-form-field appearance="fill">
+                <mat-label>Email</mat-label>
+                <input matInput type="email" id="jiraEmail" placeholder="Enter Jira Email" formControlName="email" />
+              </mat-form-field>
+              <mat-form-field appearance="fill">
+                <mat-label>Token</mat-label>
+                <input matInput id="jiraToken" placeholder="Enter Jira Token" formControlName="token" />
+              </mat-form-field>
+            </div>
+          </div>
+          <div formGroupName="Perplexity">
+            <div class="section-title">Perplexity</div>
+            <div class="form-row horizontal-group">
+              <mat-form-field appearance="fill">
+                <mat-label>Perplexity Key</mat-label>
+                <input matInput id="perplexityKey" placeholder="Enter Perplexity Key" formControlName="key" />
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-raised-button color="primary" type="submit" [disabled]="!profileForm.valid">Save</button>
+      </mat-card-actions>
+    </mat-card>
+  </form>
+</div>

@@ -1,14 +1,24 @@
 import { llms } from '#agent/agentContext';
-import { func } from '#agent/functions';
-import { funcClass } from '#agent/metadata';
+import { func } from '../functionDefinition/functions';
+import { funcClass } from '../functionDefinition/metadata';
 
 export const THROW_ERROR_TEXT = 'FunctionErrorText';
+export const TEST_FUNC_SUM = 'TestFunctions.sum';
 
+export const TEST_FUNC_NOOP = 'TestFunctions.noop';
 /**
  * Mainly used for testing
  */
 @funcClass(__filename)
 export class TestFunctions {
+	/**
+	 * No-op function
+	 */
+	@func()
+	async noop(): Promise<string> {
+		return '';
+	}
+
 	/**
 	 * Calculates the sum of two numbers. Always use this when needing to sum numbers.
 	 * @param num1 {number} the first number

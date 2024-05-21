@@ -1,12 +1,17 @@
 import { logger } from '#o11y/logger';
 
-const sdk = require('api')('@pplx/v0#29jnn2rlt35the2');
-
-import { func } from '#agent/functions';
-import { funcClass } from '#agent/metadata';
-import { cacheRetry } from '../../cache/cache';
+import OpenAI from 'openai';
+import { currentUser, toolConfig } from '#user/userService/userContext';
+import { envVar } from '#utils/env-var';
+import { cacheRetry } from '../../cache/cacheRetry';
+import { func } from '../../functionDefinition/functions';
+import { funcClass } from '../../functionDefinition/metadata';
 
 const log = logger.child({ class: 'Perplexity' });
+
+export interface PerplexityConfig {
+	key: string;
+}
 
 @funcClass(__filename)
 export class Perplexity {
@@ -18,15 +23,19 @@ export class Perplexity {
 	@func()
 	async search(query: string): Promise<string> {
 		try {
-			const response = await sdk.post_chat_completions({
-				model: 'sonar-medium-online',
-				messages: [
-					{ role: 'system', content: 'Be precise and concise.' },
-					{ role: 'user', content: query },
-				],
+			const perplexity = new OpenAI({
+				apiKey: toolConfig(Perplexity).key ?? envVar('PERPLEXITY_KEY'),
+				baseURL: 'https://api.perplexity.ai',
 			});
-			logger.debug(response);
-			return response;
+
+			const response = await perplexity.chat.completions.create({
+				model: 'llama-3-sonar-large-32k-online',
+				max_tokens: 4096,
+				messages: [{ role: 'user', content: query }],
+				stream: false,
+			});
+			return response.choices[0].message?.content;
+
 			// $0.60/MIL + $5/1000
 			// 5 / 1000
 		} catch (e) {

@@ -1,18 +1,23 @@
-import { agentContextStorage } from '#agent/agentContext';
-import { CDATA_END, CDATA_START } from '#utils/xml-utils';
+import { agentContext } from '#agent/agentContext';
 
+/**
+ * @return An XML representation of the agent's memory
+ */
 export function buildMemoryPrompt(): string {
-	const memory = agentContextStorage.getStore().memory;
+	const memory = agentContext().memory;
 	let result = '<memory>\n';
-	for (const mem of memory.entries()) {
-		result += `<${mem[0]}>${CDATA_START}\n${mem[1]}\n${CDATA_END}</${mem[0]}>\n`;
+	for (const mem of Object.entries(memory)) {
+		result += `<${mem[0]}>\n${mem[1]}\n</${mem[0]}>\n`;
 	}
 	result += '</memory>\n';
 	return result;
 }
 
+/**
+ * @return An XML representation of the agent's function call history
+ */
 export function buildFunctionCallHistoryPrompt(): string {
-	const functionCalls = agentContextStorage.getStore().functionCallHistory;
+	const functionCalls = agentContext().functionCallHistory;
 	let result = '<function_call_history>\n';
 	for (const call of functionCalls) {
 		let params = '';
@@ -22,7 +27,13 @@ export function buildFunctionCallHistoryPrompt(): string {
 			if (typeof value === 'string') value = value.replace('"', '\\"');
 			params += `\n  "${name}": "${value}",\n`;
 		}
-		const output = call.stdout ? `<output>${call.stdout}</output>` : `<error>${call.stderr}</error>`;
+		let output = '';
+		if (call.stdout) {
+			output += `<output>${call.stdout}</output>\n`;
+		}
+		if (call.stderr) {
+			output += `<error>${call.stderr}</error>\n`;
+		}
 		result += `<function_call>\n ${call.tool_name}({${params}})\n ${output}</function_call>\n`;
 	}
 	result += '</function_call_history>\n';
@@ -30,7 +41,7 @@ export function buildFunctionCallHistoryPrompt(): string {
 }
 
 /**
- * Update the system prompt to include all the function definitions.
+ * Update the system prompt to include all the function definitions available to the agent.
  * Requires the system prompt to contain <tools></tools>
  * @param systemPrompt {string} the initial system prompt
  * @param functionDefinitions {string} the function definitions

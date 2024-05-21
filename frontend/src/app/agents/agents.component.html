@@ -2,9 +2,11 @@
   <table mat-table [dataSource]="agentContexts$">
     <!-- Column definitions -->
 
-    <ng-container matColumnDef="agentId">
-      <th mat-header-cell *matHeaderCellDef>ID</th>
-      <td mat-cell *matCellDef="let element">{{ element.agentId }}</td>
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef>Name</th>
+      <td mat-cell *matCellDef="let element">
+        <a [routerLink]="['/agent', element.agentId]">{{ element.name }}</a>
+      </td>
     </ng-container>
 
     <ng-container matColumnDef="state">
@@ -12,9 +14,9 @@
       <td mat-cell *matCellDef="let element">{{ element.state }}</td>
     </ng-container>
 
-    <ng-container matColumnDef="inputPrompt">
-      <th mat-header-cell *matHeaderCellDef>Input Prompt</th>
-      <td mat-cell *matCellDef="let element">{{ element.inputPrompt }}</td>
+    <ng-container matColumnDef="userPrompt">
+      <th mat-header-cell *matHeaderCellDef>User Prompt</th>
+      <td mat-cell *matCellDef="let element">{{ element.userPrompt }}</td>
     </ng-container>
 
     <ng-container matColumnDef="systemPrompt">
@@ -34,23 +36,24 @@
 
     <ng-container matColumnDef="cost">
       <th mat-header-cell *matHeaderCellDef>Cost</th>
-      <td mat-cell *matCellDef="let element">{{ element.cost }}</td>
+      <td mat-cell *matCellDef="let element">{{ element.cost | number:'1.2-2' }}</td>
     </ng-container>
 
     <ng-container matColumnDef="budget">
       <th mat-header-cell *matHeaderCellDef>Budget</th>
-      <td mat-cell *matCellDef="let element">{{ element.budget }}</td>
+      <td mat-cell *matCellDef="let element">{{ element.budget | number:'1.2-2' }}</td>
     </ng-container>
 
     <ng-container matColumnDef="budgetRemaining">
       <th mat-header-cell *matHeaderCellDef>Budget Remaining</th>
-      <td mat-cell *matCellDef="let element">{{ element.budgetRemaining }}</td>
+      <td mat-cell *matCellDef="let element">{{ element.budgetRemaining | number:'1.2-2'}}</td>
     </ng-container>
 
     <ng-container matColumnDef="tempDir">
       <th mat-header-cell *matHeaderCellDef>Temp Dir</th>
       <td mat-cell *matCellDef="let element">{{ element.tempDir }}</td>
     </ng-container>
+    <!-- ... other column definitions ... -->
 
     <!-- Header and Row Definitions -->
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>

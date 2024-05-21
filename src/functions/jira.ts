@@ -1,9 +1,11 @@
 import axios, { AxiosInstance } from 'axios';
-import { func } from '#agent/functions';
-import { funcClass } from '#agent/metadata';
 import { logger } from '#o11y/logger';
 import { envVar } from '#utils/env-var';
-import { cacheRetry } from '../cache/cache';
+import { cacheRetry } from '../cache/cacheRetry';
+import { func } from '../functionDefinition/functions';
+import { funcClass } from '../functionDefinition/metadata';
+
+import { currentUser, toolConfig } from '#user/userService/userContext';
 
 export interface JiraConfig {
 	baseUrl: string;
@@ -15,7 +17,12 @@ export interface JiraConfig {
 export class Jira {
 	instance: AxiosInstance;
 
-	constructor(baseUrl = envVar('JIRA_BASE_URL'), email = envVar('JIRA_EMAIL'), apiToken = envVar('JIRA_API_TOKEN')) {
+	constructor() {
+		const config: JiraConfig = toolConfig(Jira) as JiraConfig;
+		const baseUrl = config.baseUrl;
+		const email = config.email;
+		const apiToken = config.token;
+
 		this.instance = axios.create({
 			baseURL: baseUrl,
 			headers: {

@@ -9,8 +9,8 @@
 
 In a nutshell <em><b>nous</b></em> is an integrated platform for Node.js/TypeScript agentic and LLM applications.
 - A minimal, lightweight API for interacting with LLMS
-- Provides the simplest mechanisim for defining LLM/agent usable functions
-    - Parses functions definitions directly from source code - no need to duplicate with Zod or other OpenAPI definitions.
+- Provides the simplest mechanism for defining LLM/agent usable functions
+    - Parse functions definitions directly from source code - no need to duplicate with Zod or other OpenAPI definitions.
 - Autonomous agent runtime
     - Integrations to:
         - Local filesystem
@@ -23,7 +23,7 @@ In a nutshell <em><b>nous</b></em> is an integrated platform for Node.js/TypeScr
         - DropBox
         - Aider
     - Configurable Human-in-the-loop settings
-- Observability for your app/agents with OpenTelemtry tracing integrated
+- Observability for your app/agents with OpenTelemetry tracing integrated
 - Prompt management
     - Prompt library
     - Tag for reference and fine-tuning datasets
@@ -163,6 +163,18 @@ HIL_COUNT is how many iterations of the main control loop can run before requiri
 # Tracing
 
 Any entrypoint file should start with `import '#fastify/trace-init/trace-init';` to ensure the logger is instrumented
+
+# Tests
+
+### Unit tests
+
+`npm run test:unit`
+
+### Integration tests
+
+`gcloud emulators firestore start --host-port=127.0.0.1:8243`
+
+`npm run test:integration`
 
 
 # Design

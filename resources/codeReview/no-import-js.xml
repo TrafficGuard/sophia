@@ -1,0 +1,39 @@
+<code_review xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="schema.xsd">
+    <description>
+        All JavaScript files should use require instead of import statements.
+    </description>
+    <file_extensions>
+        <include>.js</include>
+    </file_extensions>
+    <requires>
+        <text>import </text>
+        <text>from </text>
+    </requires>
+    <examples>
+        <example>
+            <code><![CDATA[
+                import * as fooService from 'fooService';
+                import { barService } from 'barService';
+            ]]></code>
+            <review_comment><![CDATA[
+                Use require instead of import statements in .js files.
+                ```javascript
+                const { fooService } = require('fooService');
+                const { barService } = require('barService');
+                ```
+            ]]></review_comment>
+        </example>
+        <example>
+            <code><![CDATA[
+                const bazService = require('bazService');
+                import * as quxService from 'quxService';
+            ]]></code>
+            <review_comment><![CDATA[
+                Use require instead of import statements .js files.
+                ```javascript
+                const { quxService } = require('quxService');
+                ```
+            ]]></review_comment>
+        </example>
+    </examples>
+</code_review>
