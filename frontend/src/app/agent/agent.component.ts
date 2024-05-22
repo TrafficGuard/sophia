@@ -154,7 +154,7 @@ export class AgentComponent implements OnInit {
     this.isSubmitting = true;
     if (this.errorForm.valid) {
       const errorDetails = this.errorForm.get('errorDetails')?.value;
-      this.http.post(`${environment.apiUrl}/agent/v1/resume-error`, { agentId: this.agentId, executionId: this.agentDetails.executionId, feedback: errorDetails })
+      this.http.post(`${environment.serverUrl}/agent/v1/resume-error`, { agentId: this.agentId, executionId: this.agentDetails.executionId, feedback: errorDetails })
         .subscribe({
           next: (response) => {
             console.log('Agent resumed successfully:', response);
@@ -164,7 +164,6 @@ export class AgentComponent implements OnInit {
           },
           error: (error) => {
             this.isSubmitting = false;
-          error: (error) => {
             console.error('Error resuming agent:', error);
             this.snackBar.open('Error resuming agent', 'Close', { duration: 3000 });
           }
@@ -174,7 +173,7 @@ export class AgentComponent implements OnInit {
 
   cancelAgent(): void {
     if (this.agentId) {
-      this.http.post(`${environment.apiUrl}/agent/v1/cancel`, { agentId: this.agentId, executionId: this.agentDetails.executionId, reason: 'None provided' })
+      this.http.post(`${environment.serverUrl}/agent/v1/cancel`, { agentId: this.agentId, executionId: this.agentDetails.executionId, reason: 'None provided' })
         .subscribe({
           next: (response) => {
             console.log('Agent cancelled successfully:', response);
@@ -191,7 +190,7 @@ export class AgentComponent implements OnInit {
   onSubmitFeedback(): void {
     if (this.feedbackForm.valid) {
       const feedback = this.feedbackForm.get('feedback')?.value;
-      this.http.post(`${environment.apiUrl}/agent/v1/feedback`, { agentId: this.agentId, executionId: this.agentDetails.executionId, feedback: feedback })
+      this.http.post(`${environment.serverUrl}/agent/v1/feedback`, { agentId: this.agentId, executionId: this.agentDetails.executionId, feedback: feedback })
         .subscribe({
           next: (response) => {
             console.log('Feedback submitted successfully:', response);
@@ -208,7 +207,7 @@ export class AgentComponent implements OnInit {
 
   loadLlmCalls(): void {
     if (this.agentId) {
-      this.http.get<any>(`${environment.apiUrl}/llms/calls/agent/${this.agentId}`)
+      this.http.get<any>(`${environment.serverUrl}/llms/calls/agent/${this.agentId}`)
         .subscribe((calls) => {
           this.llmCalls = calls.data;
           this.llmCalls.forEach(call => {
@@ -227,7 +226,7 @@ export class AgentComponent implements OnInit {
   }
 
   private loadAgentDetails(agentId: string): void {
-    this.http.get<any>(`${environment.apiUrl}/agent/v1/details/${agentId}`).subscribe(details => {
+    this.http.get<any>(`${environment.serverUrl}/agent/v1/details/${agentId}`).subscribe(details => {
       this.agentDetails = details.data;
       this.output = null
       if (this.agentDetails && this.agentDetails.state === 'completed') {

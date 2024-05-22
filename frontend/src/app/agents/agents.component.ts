@@ -105,7 +105,7 @@ export class AgentsComponent implements OnInit {
 
   ngOnInit(): void {
     this.http
-      .get<{ data: AgentContext[] }>(`${environment.apiUrl}/agent/v1/list`)
+      .get<{ data: AgentContext[] }>(`${environment.serverUrl}/agent/v1/list`)
       .pipe(
         filter((contexts) => contexts !== null),
         map((contexts) => {

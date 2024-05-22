@@ -67,7 +67,7 @@ The default build configuration is `prod`.
 
 ## Configuration
 
-For deployed builds set the API_URL environment variable to the backend API server URL before running `npm run build`
+For deployed builds set the SERVER_URL environment variable to the backend API server URL before running `npm run build`
 
 The path the UI is served at is set in the package.json `build` script and has been set to `/ui/`.
 

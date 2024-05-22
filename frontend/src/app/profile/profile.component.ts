@@ -57,7 +57,7 @@ export class ProfileComponent implements OnInit {
   }
 
   onSave(): void {
-    const updateUrl = `${environment.apiUrl}/profile/update`;
+    const updateUrl = `${environment.serverUrl}/profile/update`;
     this.http.post(updateUrl, { user: this.profileForm.value }).subscribe({
       next: () => {
         this.snackBar.open('Profile updated', 'Close', { duration: 3000 });
@@ -72,7 +72,7 @@ export class ProfileComponent implements OnInit {
   // ... (rest of the component methods)
   private loadUserProfile(): void {
     console.log('Loading profile profile...');
-    const profileUrl = `${environment.apiUrl}/profile/view`;
+    const profileUrl = `${environment.serverUrl}/profile/view`;
     this.http.get(profileUrl).subscribe((response: any) => {
       console.log(response.data);
       this.profileForm.patchValue(response.data);

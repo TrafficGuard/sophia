@@ -15,6 +15,7 @@ export class RunAgentComponent implements OnInit {
   tools: string[] = [];
   llms: string[] = []
   runAgentForm: FormGroup;
+  isSubmitting: boolean = false;
 
   constructor(private http: HttpClient, private snackBar: MatSnackBar) {
     this.runAgentForm = new FormGroup({
@@ -49,7 +50,7 @@ export class RunAgentComponent implements OnInit {
 
   ngOnInit(): void {
     this.http
-      .get<{ data: string[] }>(`${environment.apiUrl}/agent/v1/tools`)
+      .get<{ data: string[] }>(`${environment.serverUrl}/agent/v1/tools`)
       .pipe(
         map((response) => {
           console.log(response);
@@ -64,7 +65,7 @@ export class RunAgentComponent implements OnInit {
         });
       });
     this.http
-      .get<{ data: string[] }>(`${environment.apiUrl}/llms/list`)
+      .get<{ data: string[] }>(`${environment.serverUrl}/llms/list`)
       .pipe(
         map((response) => {
           console.log(response);
@@ -84,7 +85,7 @@ export class RunAgentComponent implements OnInit {
     const selectedTools: string[] = this.tools
       .filter((_, index) => this.runAgentForm.value['tool' + index])
       .map((tool, _) => tool);
-    this.http.post(`${environment.apiUrl}/agent/v1/start`, {
+    this.http.post(`${environment.serverUrl}/agent/v1/start`, {
       name: this.runAgentForm.value.name,
       userPrompt: this.runAgentForm.value.userPrompt,
       // type: this.runAgentForm.value.type,
