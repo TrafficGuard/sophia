@@ -8,12 +8,12 @@
 // This is useful for granularity you might need beyond just the environment.
 // Note that as usual, any environment variables you expose through it will end up in your
 // bundle, and you should not use it for any sensitive information like passwords or keys.
+// Update the write:env script in package.json to add additional variables to write to the .env.ts file.
 import { env } from './.env';
 
 export const environment = {
   production: false,
   version: env['npm_package_version'] + '-dev',
-  serverUrl: '/api',
   defaultLanguage: 'en-US',
   supportedLanguages: ['en-US'],
   apiUrl: 'http://localhost:3000'

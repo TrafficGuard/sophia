@@ -1,4 +1,5 @@
-import * as http from 'http';
+import * as http from 'node:http';
+import { join } from 'node:path';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import fastify, {
 	FastifyBaseLogger,
@@ -58,6 +59,11 @@ export async function initFastify(config: FastifyConfig): Promise<void> {
 	if (config.instanceDecorators) registerInstanceDecorators(config.instanceDecorators);
 	if (config.requestDecorators) registerRequestDecorators(config.requestDecorators);
 	registerRoutes(config.routes);
+	fastifyInstance.register(require('@fastify/static'), {
+		root: join(__dirname, 'public'),
+		prefix: '/ui/', // optional: default '/'
+		// constraints: { host: 'example.com' } // optional: default {}
+	});
 	setErrorHandler();
 	let port = config.port;
 	// If not provided autodetect from PORT or SERVER_PORT

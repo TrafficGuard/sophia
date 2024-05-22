@@ -65,6 +65,12 @@ When building the application, you can specify the target configuration using th
 
 The default build configuration is `prod`.
 
+## Configuration
+
+For deployed builds set the API_URL environment variable to the backend API server URL before running `npm run build`
+
+The path the UI is served at is set in the package.json `build` script and has been set to `/ui/`.
+
 ## Development server
 
 Run `npm start` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change
