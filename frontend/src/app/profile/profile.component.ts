@@ -58,7 +58,8 @@ export class ProfileComponent implements OnInit {
 
   onSave(): void {
     const updateUrl = `${environment.serverUrl}/profile/update`;
-    this.http.post(updateUrl, { user: this.profileForm.value }).subscribe({
+    const formValue = this.profileForm.getRawValue();
+    this.http.post(updateUrl, { user: formValue }).subscribe({
       next: () => {
         this.snackBar.open('Profile updated', 'Close', { duration: 3000 });
       },
