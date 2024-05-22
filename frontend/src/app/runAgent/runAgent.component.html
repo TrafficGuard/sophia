@@ -85,7 +85,10 @@
       </div>
       </mat-card-content>
       <mat-card-actions>
-        <button mat-raised-button color="primary" type="submit" [disabled]="!runAgentForm.valid">Run</button>
+        <button mat-raised-button color="primary" type="submit" [disabled]="!runAgentForm.valid || isSubmitting">
+          <mat-spinner *ngIf="isSubmitting" diameter="20"></mat-spinner>
+          Run
+        </button>
       </mat-card-actions>
     </mat-card>
   </form>

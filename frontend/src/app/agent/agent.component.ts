@@ -71,6 +71,7 @@ export class AgentComponent implements OnInit {
   feedbackForm!: FormGroup;
   errorForm!: FormGroup;
   output: string | null = null;
+  isSubmitting: boolean = false;
 
   constructor(private route: ActivatedRoute, private http: HttpClient, private formBuilder: FormBuilder, private snackBar: MatSnackBar, private router: Router) { }
 
@@ -150,6 +151,7 @@ export class AgentComponent implements OnInit {
   }
 
   onResumeError(): void {
+    this.isSubmitting = true;
     if (this.errorForm.valid) {
       const errorDetails = this.errorForm.get('errorDetails')?.value;
       this.http.post(`${environment.apiUrl}/agent/v1/resume-error`, { agentId: this.agentId, executionId: this.agentDetails.executionId, feedback: errorDetails })
@@ -157,7 +159,11 @@ export class AgentComponent implements OnInit {
           next: (response) => {
             console.log('Agent resumed successfully:', response);
             this.loadAgentDetails(this.agentId!);
+            this.isSubmitting = false;
+            this.loadAgentDetails(this.agentId!);
           },
+          error: (error) => {
+            this.isSubmitting = false;
           error: (error) => {
             console.error('Error resuming agent:', error);
             this.snackBar.open('Error resuming agent', 'Close', { duration: 3000 });
