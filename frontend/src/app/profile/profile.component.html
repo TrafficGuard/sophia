@@ -94,7 +94,24 @@
               </mat-form-field>
             </div>
           </div>
-          <div formGroupName="Perplexity">
+          <div formGroupName="Slack">
+            <div class="section-title">Slack Configuration</div>
+            <div class="form-row horizontal-group">
+              <mat-form-field appearance="fill">
+                <mat-label>Slack Token</mat-label>
+                <input matInput id="slackToken" placeholder="Enter Slack Token" formControlName="token" />
+              </mat-form-field>
+              <mat-form-field appearance="fill">
+                <mat-label>Slack User ID</mat-label>
+                <input matInput id="slackUserId" placeholder="Enter Slack User ID" formControlName="userId" />
+              </mat-form-field>
+              <mat-form-field appearance="fill">
+                <mat-label>Slack Webhook URL</mat-label>
+                <input matInput id="slackWebhookUrl" placeholder="Enter Slack Webhook URL" formControlName="webhookUrl" />
+              </mat-form-field>
+            </div>
+          </div>
+          
             <div class="section-title">Perplexity</div>
             <div class="form-row horizontal-group">
               <mat-form-field appearance="fill">

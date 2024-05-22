@@ -44,6 +44,11 @@ export class ProfileComponent implements OnInit {
           email: new FormControl(''),
           token: new FormControl('')
         }),
+        Slack: new FormGroup({
+          token: new FormControl(''),
+          userId: new FormControl(''),
+          webhookUrl: new FormControl('')
+        }),
         Perplexity: new FormGroup({
           key: new FormControl(''),
         }),
