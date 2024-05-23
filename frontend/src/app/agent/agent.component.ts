@@ -3,8 +3,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import {environment} from "@env/environment";
-import {MatSnackBar} from "@angular/material/snack-bar";
+import { environment } from '@env/environment';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 export interface LLMCall {
   request: LlmRequest;
@@ -34,7 +34,6 @@ export interface SystemPrompt {
   variationSource?: SystemPrompt;
 }
 
-
 export interface LlmResponse {
   /** UUID */
   id: string;
@@ -60,7 +59,7 @@ export interface LlmResponse {
 @Component({
   selector: 'app-agent',
   templateUrl: './agent.component.html',
-  styleUrls: ['./agent.component.scss']
+  styleUrls: ['./agent.component.scss'],
 })
 export class AgentComponent implements OnInit {
   llmCalls: LLMCall[] = [];
@@ -73,7 +72,13 @@ export class AgentComponent implements OnInit {
   output: string | null = null;
   isSubmitting: boolean = false;
 
-  constructor(private route: ActivatedRoute, private http: HttpClient, private formBuilder: FormBuilder, private snackBar: MatSnackBar, private router: Router) { }
+  constructor(
+    private route: ActivatedRoute,
+    private http: HttpClient,
+    private formBuilder: FormBuilder,
+    private snackBar: MatSnackBar,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     // Check if there's a tab name in the URL
@@ -88,9 +93,7 @@ export class AgentComponent implements OnInit {
     } else {
       this.selectedTabIndex = 0; // Default to the first tab if no fragment is present
     }
-    this.route.paramMap.pipe(
-      map(params => params.get('agentId'))
-    ).subscribe(agentId => {
+    this.route.paramMap.pipe(map((params) => params.get('agentId'))).subscribe((agentId) => {
       this.agentId = agentId;
       if (agentId) {
         this.loadAgentDetails(agentId);
@@ -140,13 +143,13 @@ export class AgentComponent implements OnInit {
 
   private initializeFeedbackForm(): void {
     this.feedbackForm = this.formBuilder.group({
-      feedback: ['', Validators.required]
+      feedback: ['', Validators.required],
     });
   }
 
   private initializeErrorForm(): void {
     this.errorForm = this.formBuilder.group({
-      errorDetails: ['', Validators.required]
+      errorDetails: ['', Validators.required],
     });
   }
 
@@ -154,7 +157,12 @@ export class AgentComponent implements OnInit {
     this.isSubmitting = true;
     if (this.errorForm.valid) {
       const errorDetails = this.errorForm.get('errorDetails')?.value;
-      this.http.post(`${environment.serverUrl}/agent/v1/resume-error`, { agentId: this.agentId, executionId: this.agentDetails.executionId, feedback: errorDetails })
+      this.http
+        .post(`${environment.serverUrl}/agent/v1/resume-error`, {
+          agentId: this.agentId,
+          executionId: this.agentDetails.executionId,
+          feedback: errorDetails,
+        })
         .subscribe({
           next: (response) => {
             console.log('Agent resumed successfully:', response);
@@ -166,14 +174,19 @@ export class AgentComponent implements OnInit {
             this.isSubmitting = false;
             console.error('Error resuming agent:', error);
             this.snackBar.open('Error resuming agent', 'Close', { duration: 3000 });
-          }
+          },
         });
     }
   }
 
   cancelAgent(): void {
     if (this.agentId) {
-      this.http.post(`${environment.serverUrl}/agent/v1/cancel`, { agentId: this.agentId, executionId: this.agentDetails.executionId, reason: 'None provided' })
+      this.http
+        .post(`${environment.serverUrl}/agent/v1/cancel`, {
+          agentId: this.agentId,
+          executionId: this.agentDetails.executionId,
+          reason: 'None provided',
+        })
         .subscribe({
           next: (response) => {
             console.log('Agent cancelled successfully:', response);
@@ -182,7 +195,7 @@ export class AgentComponent implements OnInit {
           error: (error) => {
             console.error('Error cancelling agent:', error);
             this.snackBar.open('Error cancelling agent', 'Close', { duration: 3000 });
-          }
+          },
         });
     }
   }
@@ -190,7 +203,12 @@ export class AgentComponent implements OnInit {
   onSubmitFeedback(): void {
     if (this.feedbackForm.valid) {
       const feedback = this.feedbackForm.get('feedback')?.value;
-      this.http.post(`${environment.serverUrl}/agent/v1/feedback`, { agentId: this.agentId, executionId: this.agentDetails.executionId, feedback: feedback })
+      this.http
+        .post(`${environment.serverUrl}/agent/v1/feedback`, {
+          agentId: this.agentId,
+          executionId: this.agentDetails.executionId,
+          feedback: feedback,
+        })
         .subscribe({
           next: (response) => {
             console.log('Feedback submitted successfully:', response);
@@ -200,24 +218,26 @@ export class AgentComponent implements OnInit {
           error: (error) => {
             console.error('Error submitting feedback:', error);
             this.snackBar.open('Error submitting feedback', 'Close', { duration: 3000 });
-          }
+          },
         });
     }
   }
 
   loadLlmCalls(): void {
     if (this.agentId) {
-      this.http.get<any>(`${environment.serverUrl}/llms/calls/agent/${this.agentId}`)
-        .subscribe((calls) => {
+      this.http.get<any>(`${environment.serverUrl}/llms/calls/agent/${this.agentId}`).subscribe(
+        (calls) => {
           this.llmCalls = calls.data;
-          this.llmCalls.forEach(call => {
+          this.llmCalls.forEach((call) => {
             call.request.userPromptText = call.request.userPromptText.replace('\\n', '<br/>');
-            if(call.request.systemPrompt)
+            if (call.request.systemPrompt)
               call.request.systemPrompt.text = call.request.systemPrompt.text.replace('\\n', '<br/>');
           });
-        }, (error) => {
+        },
+        (error) => {
           console.error('Error loading LLM calls', error);
-        });
+        }
+      );
     }
   }
 
@@ -226,16 +246,16 @@ export class AgentComponent implements OnInit {
   }
 
   private loadAgentDetails(agentId: string): void {
-    this.http.get<any>(`${environment.serverUrl}/agent/v1/details/${agentId}`).subscribe(details => {
+    this.http.get<any>(`${environment.serverUrl}/agent/v1/details/${agentId}`).subscribe((details) => {
       this.agentDetails = details.data;
-      this.output = null
+      this.output = null;
       if (this.agentDetails && this.agentDetails.state === 'completed') {
         // If the agent has been cancelled after an error then display the error
         // Otherwise display the Agent.completed argument
-        const completed = this.agentDetails.functionCallHistory.slice(-1)[0]
-        this.output = this.agentDetails.error ?? Object.values(completed.parameters)
+        const completed = this.agentDetails.functionCallHistory.slice(-1)[0];
+        this.output = this.agentDetails.error ?? Object.values(completed.parameters);
       }
-    })
+    });
   }
 
   refreshAgentDetails(): void {

@@ -7,7 +7,7 @@ import { AppFastifyInstance } from '../../app';
 
 import { currentUser } from '#user/userService/userContext';
 
-const basePath = '/profile';
+const basePath = '/api/profile';
 export async function profileRoute(fastify: AppFastifyInstance) {
 	fastify.get(`${basePath}/view`, async (req, reply) => {
 		const user: User = currentUser();

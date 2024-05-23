@@ -10,13 +10,13 @@ import { logger } from '#o11y/logger';
 import { currentUser } from '#user/userService/userContext';
 import { AppFastifyInstance } from '../../app';
 
-const basePath = '/gitlab/v1';
+const basePath = '/api/webhooks';
 
 export async function gitlabRoutesV1(fastify: AppFastifyInstance) {
 	// /get
 	// See https://docs.gitlab.com/ee/user/project/integrations/webhook_events.html#merge-request-events
 	fastify.post(
-		`${basePath}/webhook`,
+		`${basePath}/gitlab`,
 		{
 			schema: {
 				body: Type.Any(),

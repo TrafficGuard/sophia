@@ -10,7 +10,7 @@ import { toolFactory } from '../../functionDefinition/metadata';
 
 import { currentUser } from '#user/userService/userContext';
 
-const v1BasePath = '/agent/v1';
+const v1BasePath = '/api/agent/v1';
 export async function agentStartRoute(fastify: AppFastifyInstance) {
 	/** Starts a new agent */
 	fastify.post(

@@ -4,11 +4,10 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '@env/environment';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
-
 @Component({
   selector: 'app-profile',
   templateUrl: './profile.component.html',
-  styleUrls: ['./profile.component.scss']
+  styleUrls: ['./profile.component.scss'],
 })
 export class ProfileComponent implements OnInit {
   profileForm: FormGroup;
@@ -28,7 +27,7 @@ export class ProfileComponent implements OnInit {
         openaiKey: new FormControl(''),
         groqKey: new FormControl(''),
         togetheraiKey: new FormControl(''),
-        fireworksKey: new FormControl('')
+        fireworksKey: new FormControl(''),
       }),
       toolConfig: new FormGroup({
         GitHub: new FormGroup({
@@ -37,23 +36,22 @@ export class ProfileComponent implements OnInit {
         GitLabServer: new FormGroup({
           host: new FormControl(''),
           token: new FormControl(''),
-          topLevelGroups: new FormControl('')
+          topLevelGroups: new FormControl(''),
         }),
         Jira: new FormGroup({
           baseUrl: new FormControl(''),
           email: new FormControl(''),
-          token: new FormControl('')
+          token: new FormControl(''),
         }),
         Slack: new FormGroup({
           token: new FormControl(''),
           userId: new FormControl(''),
-          webhookUrl: new FormControl('')
+          webhookUrl: new FormControl(''),
         }),
         Perplexity: new FormGroup({
           key: new FormControl(''),
         }),
-
-      })
+      }),
     });
   }
 
@@ -70,8 +68,8 @@ export class ProfileComponent implements OnInit {
       },
       error: (error) => {
         this.snackBar.open('Failed to save profile.', 'Close', { duration: 3000 });
-        console.log(error)
-      }
+        console.log(error);
+      },
     });
   }
 
@@ -79,13 +77,15 @@ export class ProfileComponent implements OnInit {
   private loadUserProfile(): void {
     console.log('Loading profile profile...');
     const profileUrl = `${environment.serverUrl}/profile/view`;
-    this.http.get(profileUrl).subscribe((response: any) => {
-      console.log(response.data);
-      this.profileForm.patchValue(response.data);
-    }, error => {
-      console.log(error);
-      this.snackBar.open('Failed to load user profile', 'Close', { duration: 3000 });
-    });
+    this.http.get(profileUrl).subscribe(
+      (response: any) => {
+        console.log(response.data);
+        this.profileForm.patchValue(response.data);
+      },
+      (error) => {
+        console.log(error);
+        this.snackBar.open('Failed to load user profile', 'Close', { duration: 3000 });
+      }
+    );
   }
-
 }

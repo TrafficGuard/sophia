@@ -36,17 +36,17 @@
 
     <ng-container matColumnDef="cost">
       <th mat-header-cell *matHeaderCellDef>Cost</th>
-      <td mat-cell *matCellDef="let element">{{ element.cost | number:'1.2-2' }}</td>
+      <td mat-cell *matCellDef="let element">{{ element.cost | number : '1.2-2' }}</td>
     </ng-container>
 
     <ng-container matColumnDef="budget">
       <th mat-header-cell *matHeaderCellDef>Budget</th>
-      <td mat-cell *matCellDef="let element">{{ element.budget | number:'1.2-2' }}</td>
+      <td mat-cell *matCellDef="let element">{{ element.budget | number : '1.2-2' }}</td>
     </ng-container>
 
     <ng-container matColumnDef="budgetRemaining">
       <th mat-header-cell *matHeaderCellDef>Budget Remaining</th>
-      <td mat-cell *matCellDef="let element">{{ element.budgetRemaining | number:'1.2-2'}}</td>
+      <td mat-cell *matCellDef="let element">{{ element.budgetRemaining | number : '1.2-2' }}</td>
     </ng-container>
 
     <ng-container matColumnDef="tempDir">

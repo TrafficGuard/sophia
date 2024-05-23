@@ -1,6 +1,5 @@
 <div class="mat-elevation-z8">
   <form [formGroup]="profileForm" (ngSubmit)="onSave()" class="profile-form">
-
     <mat-card>
       <mat-card-content>
         <div class="form-row">
@@ -19,13 +18,26 @@
         <div class="form-row">
           <mat-form-field appearance="fill">
             <mat-label>Spend</mat-label>
-            <input matInput type="number" id="hilBudget" placeholder="Enter HIL Spend" formControlName="hilBudget"
-              min="0" step="any" />
+            <input
+              matInput
+              type="number"
+              id="hilBudget"
+              placeholder="Enter HIL Spend"
+              formControlName="hilBudget"
+              min="0"
+              step="any"
+            />
           </mat-form-field>
           <mat-form-field appearance="fill">
             <mat-label>Control loop iterations</mat-label>
-            <input matInput type="number" id="hilCount" placeholder="Enter HIL Count" formControlName="hilCount"
-              min="0" />
+            <input
+              matInput
+              type="number"
+              id="hilCount"
+              placeholder="Enter HIL Count"
+              formControlName="hilCount"
+              min="0"
+            />
           </mat-form-field>
         </div>
 
@@ -58,7 +70,6 @@
         </div>
 
         <div formGroupName="toolConfig">
-
           <div formGroupName="GitLabServer">
             <div class="section-title">GitLab Configuration</div>
             <div class="form-row horizontal-group">
@@ -72,8 +83,12 @@
               </mat-form-field>
               <mat-form-field appearance="fill">
                 <mat-label>Top Level Groups</mat-label>
-                <input matInput id="gitlabTopLevelGroups" placeholder="Enter GitLab Top Level Groups"
-                  formControlName="topLevelGroups" />
+                <input
+                  matInput
+                  id="gitlabTopLevelGroups"
+                  placeholder="Enter GitLab Top Level Groups"
+                  formControlName="topLevelGroups"
+                />
               </mat-form-field>
             </div>
           </div>
@@ -107,7 +122,12 @@
               </mat-form-field>
               <mat-form-field appearance="fill">
                 <mat-label>Slack Webhook URL</mat-label>
-                <input matInput id="slackWebhookUrl" placeholder="Enter Slack Webhook URL" formControlName="webhookUrl" />
+                <input
+                  matInput
+                  id="slackWebhookUrl"
+                  placeholder="Enter Slack Webhook URL"
+                  formControlName="webhookUrl"
+                />
               </mat-form-field>
             </div>
           </div>

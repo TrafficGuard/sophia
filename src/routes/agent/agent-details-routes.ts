@@ -8,7 +8,7 @@ import { AppFastifyInstance } from '../../app';
 import { toolFactory } from '../../functionDefinition/metadata';
 import { toolRegistry } from '../../toolRegistry';
 
-const basePath = '/agent/v1';
+const basePath = '/api/agent/v1';
 export async function agentDetailsRoutes(fastify: AppFastifyInstance) {
 	fastify.get(`${basePath}/list`, {}, async (req, reply) => {
 		const ctxs: AgentContext[] = await fastify.agentStateService.list();

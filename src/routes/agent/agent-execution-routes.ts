@@ -5,7 +5,7 @@ import { send, sendBadRequest } from '#fastify/index';
 import { logger } from '#o11y/logger';
 import { AppFastifyInstance, appContext } from '../../app';
 
-const v1BasePath = '/agent/v1';
+const v1BasePath = '/api/agent/v1';
 export async function agentExecutionRoutes(fastify: AppFastifyInstance) {
 	/** Provides feedback to an agent */
 	fastify.post(

@@ -77,7 +77,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { filter, startWith, map } from 'rxjs/operators';
 import { MatTableDataSource } from '@angular/material/table';
-import {environment} from "@env/environment";
+import { environment } from '@env/environment';
 
 @Component({
   selector: 'app-contexts',

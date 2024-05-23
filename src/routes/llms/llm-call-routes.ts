@@ -3,7 +3,7 @@ import { send } from '#fastify/index';
 import { LLMCall } from '#llm/llmCallService/llmCallService';
 import { AppFastifyInstance } from '../../app';
 
-const basePath = '/llms';
+const basePath = '/api/llms';
 export async function llmCallRoutes(fastify: AppFastifyInstance) {
 	fastify.get(
 		`${basePath}/calls/agent/:agentId`,
