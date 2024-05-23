@@ -60,7 +60,7 @@ export async function initFastify(config: FastifyConfig): Promise<void> {
 	if (config.requestDecorators) registerRequestDecorators(config.requestDecorators);
 	registerRoutes(config.routes);
 	fastifyInstance.register(require('@fastify/static'), {
-		root: join(__dirname, 'public'),
+		root: join(process.cwd(), 'public'),
 		prefix: '/ui/', // optional: default '/'
 		// constraints: { host: 'example.com' } // optional: default {}
 	});
