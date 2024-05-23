@@ -18,8 +18,8 @@
         <div class="section-title">Default Human In The Loop settings</div>
         <div class="form-row">
           <mat-form-field appearance="fill">
-            <mat-label>Budget</mat-label>
-            <input matInput type="number" id="hilBudget" placeholder="Enter HIL Budget" formControlName="hilBudget"
+            <mat-label>Spend</mat-label>
+            <input matInput type="number" id="hilBudget" placeholder="Enter HIL Spend" formControlName="hilBudget"
               min="0" step="any" />
           </mat-form-field>
           <mat-form-field appearance="fill">
@@ -111,7 +111,7 @@
               </mat-form-field>
             </div>
           </div>
-          
+          <div formGroupName="Perplexity">
             <div class="section-title">Perplexity</div>
             <div class="form-row horizontal-group">
               <mat-form-field appearance="fill">
