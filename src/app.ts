@@ -62,8 +62,8 @@ export async function initApp(): Promise<void> {
 
 	try {
 		await initFastify({
-			routes: [
-				gitlabRoutesV1 as RouteDefinition,
+			routes: [gitlabRoutesV1 as RouteDefinition],
+			authenticatedRoutes: [
 				agentDetailsRoutes as RouteDefinition,
 				agentStartRoute as RouteDefinition,
 				agentExecutionRoutes as RouteDefinition,

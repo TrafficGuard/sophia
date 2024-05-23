@@ -86,4 +86,10 @@ export class FileUserService implements UserService {
 	getSingleUser(): User {
 		return this.singleUser;
 	}
+
+	async getUserByEmail(email: string): Promise<User> {
+		const user = (await this.listUsers()).find((user) => user.email === email);
+		if (!user) throw new Error(`No user found with email ${email}`);
+		return user;
+	}
 }

@@ -1,6 +1,13 @@
-import { agentContext } from '#agent/agentContext';
+import { AsyncLocalStorage } from 'async_hooks';
+import { AgentContext, agentContext } from '#agent/agentContext';
 import { User } from '#user/user';
 import { appContext } from '../../app';
+
+const userContextStorage = new AsyncLocalStorage<User>();
+
+export function runWithUser(user: User, fn: () => any) {
+	userContextStorage.run(user, fn);
+}
 
 export function currentUser(): User {
 	const agent = agentContext();

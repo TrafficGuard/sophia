@@ -18,9 +18,13 @@ export class InMemoryUserService implements UserService {
 
 	async getUser(userId: string): Promise<User> {
 		const user = this.users.find((user) => user.id === userId);
-		if (!user) {
-			throw new Error(`No user found with ID ${userId}`);
-		}
+		if (!user) throw new Error(`No user found with ID ${userId}`);
+		return user;
+	}
+
+	async getUserByEmail(email: string): Promise<User> {
+		const user = this.users.find((user) => user.email === email);
+		if (!user) throw new Error(`No user found with email ${email}`);
 		return user;
 	}
 

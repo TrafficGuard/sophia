@@ -16,6 +16,7 @@ interface FastifyRequest extends FastifyRequestBase {
 }
 import fastifyPlugin from 'fastify-plugin';
 import * as HttpStatus from 'http-status-codes';
+import { googleIapMiddleware, singleUserMiddleware } from '#fastify/userMiddleware';
 import { logger } from '#o11y/logger';
 import { loadOnRequestHooks } from './hooks';
 
@@ -39,6 +40,7 @@ export interface FastifyConfig {
 	/** The port to listen on. If not provided looks up from process.env.PORT or else process.env.SERVER_PORT */
 	port?: number;
 	routes: RouteDefinition[];
+	authenticatedRoutes: RouteDefinition[];
 	instanceDecorators?: { [key: string]: any };
 	requestDecorators?: { [key: string]: any };
 	/** Overrides the default url of /health-check */
@@ -59,6 +61,7 @@ export async function initFastify(config: FastifyConfig): Promise<void> {
 	if (config.instanceDecorators) registerInstanceDecorators(config.instanceDecorators);
 	if (config.requestDecorators) registerRequestDecorators(config.requestDecorators);
 	registerRoutes(config.routes);
+	registerAuthenticatedRoutes(config.authenticatedRoutes);
 	fastifyInstance.register(require('@fastify/static'), {
 		root: join(process.cwd(), 'public'),
 		prefix: '/ui/', // optional: default '/'
@@ -157,6 +160,26 @@ function registerRequestDecorators(decorators: { [key: string]: any }) {
 function registerRoutes(routes: RouteDefinition[]) {
 	for (const route of routes) {
 		fastifyInstance.register(route);
+	}
+}
+
+function registerAuthenticatedRoutes(routes: RouteDefinition[]) {
+	let authenticationMiddleware = null;
+	if (process.env.AUTH === 'gcloud_iap') {
+		authenticationMiddleware = googleIapMiddleware;
+		logger.info('Configured Google IAP authentication middleware');
+	} else if (process.env.SINGLE_USER === 'true') {
+		authenticationMiddleware = singleUserMiddleware;
+		logger.info('Configured Single User authentication middleware');
+	} else {
+		throw new Error('No authentication configured. Either set SINGLE_USER=true or provide a valid AUTH env var');
+	}
+
+	for (const route of routes) {
+		fastifyInstance.register(async (fastifyInstance) => {
+			if (authenticationMiddleware) fastifyInstance.addHook('preHandler', authenticationMiddleware);
+			fastifyInstance.register(route);
+		});
 	}
 }
 

@@ -3,6 +3,8 @@ import { User } from '../user';
 export interface UserService {
 	getUser(userId: string): Promise<User>;
 
+	getUserByEmail(email: string): Promise<User | null>;
+
 	createUser(user: Partial<User>): Promise<User>;
 
 	/**

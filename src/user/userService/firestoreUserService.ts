@@ -1,4 +1,5 @@
 import { DocumentSnapshot, Firestore } from '@google-cloud/firestore';
+import { LlmResponse } from '#llm/llmCallService/llmRequestResponse';
 import { logger } from '#o11y/logger';
 import { envVar } from '#utils/env-var';
 import { User } from '../user';
@@ -53,6 +54,20 @@ export class FirestoreUserService implements UserService {
 			...data,
 			id: userId,
 		};
+	}
+
+	async getUserByEmail(email: string): Promise<User> {
+		const querySnapshot = await this.db.collection('Users').where('email', '==', email).get();
+		const users = querySnapshot.docs.map((doc) => {
+			const data = doc.data();
+			return {
+				...data,
+				id: doc.id,
+			} as User;
+		});
+		if (users.length === 0) null;
+		if (users.length > 1) throw new Error(`More than one user with email ${email} found`);
+		return users[0];
 	}
 
 	async createUser(user: Partial<User>): Promise<User> {
