@@ -1,9 +1,8 @@
-import { FastifyRequest } from 'fastify';
 import { runWithUser } from '#user/userService/userContext';
 import { appContext } from '../app';
 
 // Middleware function
-export function singleUserMiddleware(req: any, _res, next): void {
+export function singleUserMiddleware(req: any, _res, next: () => void): void {
 	const user = appContext().userService.getSingleUser();
 	req.user = user;
 	runWithUser(user, () => {
@@ -11,7 +10,7 @@ export function singleUserMiddleware(req: any, _res, next): void {
 	});
 }
 
-export async function googleIapMiddleware(req: any, _res, next): Promise<void> {
+export async function googleIapMiddleware(req: any, _res, next: () => void): Promise<void> {
 	let email = req.headers['x-goog-authenticated-user-email'];
 	if (!email) throw new Error('x-goog-authenticated-user-email header not found');
 	if (Array.isArray(email)) email = email[0];

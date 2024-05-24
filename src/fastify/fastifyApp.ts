@@ -177,7 +177,7 @@ function registerAuthenticatedRoutes(routes: RouteDefinition[]) {
 
 	for (const route of routes) {
 		fastifyInstance.register(async (fastifyInstance) => {
-			if (authenticationMiddleware) fastifyInstance.addHook('preHandler', authenticationMiddleware);
+			fastifyInstance.addHook('preHandler', authenticationMiddleware);
 			fastifyInstance.register(route);
 		});
 	}
