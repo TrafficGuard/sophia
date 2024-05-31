@@ -86,9 +86,17 @@
           </div>
         </mat-expansion-panel>
         -->
-        <mat-list-item *ngIf="agentDetails.error"
-          ><span class="fixed-width-field"><strong>Error:</strong></span> {{ agentDetails.error }}
-        </mat-list-item>
+        <mat-expansion-panel *ngIf="agentDetails.error">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <span class="fixed-width-field"><strong>Error:</strong></span>
+              <span class="system-prompt-preview">{{ agentDetails.error | slice : 0 : 50 }}...</span>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div matExpansionPanelContent>
+            {{ agentDetails.error }}
+          </div>
+        </mat-expansion-panel>
         <mat-list-item *ngIf="agentDetails.planningResponse"
           ><span class="fixed-width-field"><strong>Planning Response:</strong></span>
           {{ agentDetails.planningResponse }}

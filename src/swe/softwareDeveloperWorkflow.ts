@@ -4,7 +4,7 @@ import { SourceControlManagement, getSourceControlManagementTool } from '#functi
 import { UtilFunctions } from '#functions/util';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
-import { execCmd } from '#utils/exec';
+import {execCmd, execCommand, ExecResult, ExecResults} from '#utils/exec';
 import { cacheRetry } from '../cache/cacheRetry';
 import { func } from '../functionDefinition/functions';
 import { funcClass } from '../functionDefinition/metadata';
@@ -35,7 +35,7 @@ export class SoftwareDeveloperWorkflow {
 		const summary = await this.summariseRequirements(requirements);
 
 		// console.log('Summary: ' + summary);
-		const gitLabProject = await this.selectProject(requirements);
+		const gitLabProject = await this.selectProject(summary);
 
 		let repoPath = await getSourceControlManagementTool().cloneProject(gitLabProject.path_with_namespace);
 		// ensure we're setting a relative path. Not sure about this now that setWorkingDirectory will detect the basePath at the start of the path
@@ -48,7 +48,8 @@ export class SoftwareDeveloperWorkflow {
 		logger.info(projectInfo, `Detected project info ${Object.keys(projectInfo).join(', ')}`);
 
 		if (projectInfo.initialise) {
-			await execCmd(projectInfo.initialise);
+			const result: ExecResult = await execCommand(projectInfo.initialise);
+			if(result.exitCode > 0) throw new Error(`${result.stdout} ${result.stderr}`)
 		}
 
 		// Should check we're on the develop branch first, and pull, when creating a branch
@@ -112,10 +113,10 @@ export class SoftwareDeveloperWorkflow {
 		const scm: SourceControlManagement = getSourceControlManagementTool();
 		const projects: any[] = await scm.getProjects();
 		const prompt: string = buildPrompt({
-			information: `The following is a list of our projects:\n${JSON.stringify(projects)}`,
+			information: `The following is a list of our projects in our git server:\n${JSON.stringify(projects)}`,
 			requirements,
 			action:
-				'Select the project object which most closely matches the task requirements and return the object. Output your answer in JSON format and only output JSON',
+				'You task is to only select the project object for the relevant repository which needs to cloned so we can later edit it to complete task requirements. Output your answer in JSON format and only output JSON',
 		});
 
 		return await llms().hard.generateTextAsJson(prompt);

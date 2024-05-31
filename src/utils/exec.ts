@@ -81,13 +81,15 @@ export interface ExecResult {
 
 export async function execCommand(command: string, workingDirectory?: string): Promise<ExecResult> {
 	return withSpan('execCommand', async (span) => {
-		const options: ExecOptions = { cwd: workingDirectory ?? getFileSystem().getWorkingDirectory() };
+		const shell = os.platform() === 'darwin' ? '/bin/zsh' : '/bin/bash';
+		const options: ExecOptions = { cwd: workingDirectory ?? getFileSystem().getWorkingDirectory(), shell};
 		try {
 			logger.info(`${options.cwd} % ${command}`);
 			const { stdout, stderr } = await execAsync(command, options);
 
 			span.setAttributes({
 				cwd: options.cwd as string,
+				shell,
 				command,
 				stdout,
 				stderr,

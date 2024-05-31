@@ -133,7 +133,12 @@ export class GitLabServer implements SourceControlManagement {
 			}
 		}
 
-		return resultProjects;
+		return resultProjects.map(project => {
+			delete project.ci_config_path;
+			delete project.archived;
+			delete project.visibility;
+			return project;
+		});
 	}
 
 	private toGitLabProject(project: ProjectSchema): GitLabProject {
