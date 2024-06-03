@@ -133,10 +133,10 @@ export class GitLabServer implements SourceControlManagement {
 			}
 		}
 
-		return resultProjects.map(project => {
-			delete project.ci_config_path;
-			delete project.archived;
-			delete project.visibility;
+		return resultProjects.map((project) => {
+			project.ci_config_path = undefined;
+			project.archived = undefined;
+			project.visibility = undefined;
 			return project;
 		});
 	}

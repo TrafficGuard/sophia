@@ -4,7 +4,7 @@ import { SourceControlManagement, getSourceControlManagementTool } from '#functi
 import { UtilFunctions } from '#functions/util';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
-import {execCmd, execCommand, ExecResult, ExecResults} from '#utils/exec';
+import { ExecResult, ExecResults, execCmd, execCommand } from '#utils/exec';
 import { cacheRetry } from '../cache/cacheRetry';
 import { func } from '../functionDefinition/functions';
 import { funcClass } from '../functionDefinition/metadata';
@@ -49,7 +49,7 @@ export class SoftwareDeveloperWorkflow {
 
 		if (projectInfo.initialise) {
 			const result: ExecResult = await execCommand(projectInfo.initialise);
-			if(result.exitCode > 0) throw new Error(`${result.stdout} ${result.stderr}`)
+			if (result.exitCode > 0) throw new Error(`${result.stdout} ${result.stderr}`);
 		}
 
 		// Should check we're on the develop branch first, and pull, when creating a branch

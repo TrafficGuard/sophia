@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'async_hooks';
 import { agentContext } from '#agent/agentContext';
 import { User } from '#user/user';
-import {appContext} from "../../app";
+import { appContext } from '../../app';
 
 const userContextStorage = new AsyncLocalStorage<User>();
 
@@ -21,12 +21,12 @@ export function currentUser(): User {
 	const agent = agentContext();
 	if (agent) return agent.user;
 
-	const user = userContextStorage.getStore()
+	const user = userContextStorage.getStore();
 	if (!user) {
 		if (process.env.SINGLE_USER === 'true') {
-			return appContext().userService.getSingleUser()
+			return appContext().userService.getSingleUser();
 		}
-		throw new Error('User has not been set on the userContextStorage')
+		throw new Error('User has not been set on the userContextStorage');
 	}
 	return user;
 }
