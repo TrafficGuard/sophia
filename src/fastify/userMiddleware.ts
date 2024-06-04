@@ -26,7 +26,7 @@ export async function googleIapMiddleware(req: any, _res, next: () => void): Pro
 		user = await appContext().userService.createUser({ email: email });
 	}
 	req.user = user;
-	runWithUser(user, () => {
+	runWithUser(user, async () => {
 		logger.info('IAP runWithUser', user.id);
 		next();
 		logger.info('After next()');
