@@ -1,3 +1,4 @@
+import { logger } from '#o11y/logger';
 import { runWithUser } from '#user/userService/userContext';
 import { appContext } from '../app';
 
@@ -15,6 +16,10 @@ export async function googleIapMiddleware(req: any, _res, next: () => void): Pro
 	if (!email) throw new Error('x-goog-authenticated-user-email header not found');
 	if (Array.isArray(email)) email = email[0];
 	// TODO validate the JWT https://cloud.google.com/iap/docs/signed-headers-howto#securing_iap_headers
+
+	// remove accounts.google.com: prefix
+	email = email.replace('accounts.google.com:', '');
+	logger.debug(`IAP email ${email}`);
 
 	let user = await appContext().userService.getUserByEmail(email);
 	if (!user) {

@@ -21,6 +21,7 @@ export function anthropicVertexLLMRegistry(): Record<string, () => LLM> {
 	return {
 		[`${ANTHROPIC_VERTEX_SERVICE}:claude-3-haiku`]: Claude3_Haiku_Vertex,
 		[`${ANTHROPIC_VERTEX_SERVICE}:claude-3-sonnet`]: Claude3_Sonnet_Vertex,
+		[`${ANTHROPIC_VERTEX_SERVICE}:claude-3-opus`]: Claude3_Opus_Vertex,
 	};
 }
 
@@ -32,14 +33,12 @@ export function Claude3_Haiku_Vertex() {
 	return new AnthropicVertexLLM('claude-3-haiku@20240307', 0.25 / (1_000_000 * 3.5), 1.25 / (1_000_000 * 3.5));
 }
 
-// Coming soon
-// https://console.cloud.google.com/vertex-ai/publishers/anthropic/model-garden/claude-3-opus?project=<projectId>&supportedpurview=project
 export function Claude3_Opus_Vertex() {
 	return new AnthropicVertexLLM('claude-3-opus@20240229', 15 / (1_000_000 * 3.5), 75 / (1_000_000 * 3.5));
 }
 
 export function ClaudeVertexLLMs(): AgentLLMs {
-	const hard = Claude3_Sonnet_Vertex();
+	const hard = Claude3_Opus_Vertex();
 	return {
 		easy: Claude3_Haiku_Vertex(),
 		medium: Claude3_Sonnet_Vertex(),
