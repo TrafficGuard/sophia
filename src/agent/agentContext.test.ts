@@ -7,14 +7,11 @@ import { Toolbox } from '#agent/toolbox';
 import { FileSystem } from '#functions/filesystem';
 import { UtilFunctions } from '#functions/util';
 import { GPT4 } from '#llm/models/openai';
-import { initInMemoryApplicationContext } from '../app';
-
-import { currentUser } from '#user/userService/userContext';
+import { appContext } from '../app';
 
 describe('agentContext', () => {
 	describe('serialisation', () => {
 		it('should be be identical after serialisation and deserialization', async () => {
-			initInMemoryApplicationContext();
 			const llms = {
 				easy: GPT4(),
 				medium: GPT4(),
@@ -28,7 +25,7 @@ describe('agentContext', () => {
 				agentName: 'SWE',
 				llms,
 				toolbox,
-				user: currentUser(),
+				user: appContext().userService.getSingleUser(),
 				initialPrompt: 'question',
 				humanInLoop: getHumanInLoopSettings(),
 			};
