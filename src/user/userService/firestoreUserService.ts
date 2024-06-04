@@ -1,10 +1,10 @@
 import { DocumentSnapshot, Firestore } from '@google-cloud/firestore';
 import { LlmResponse } from '#llm/llmCallService/llmRequestResponse';
 import { logger } from '#o11y/logger';
+import { span } from '#o11y/trace';
 import { envVar } from '#utils/env-var';
 import { User } from '../user';
 import { UserService } from './userService';
-import { span } from '#o11y/trace';
 
 /*** Google Firestore implementation of UserService*/
 export class FirestoreUserService implements UserService {
@@ -44,7 +44,7 @@ export class FirestoreUserService implements UserService {
 		}
 	}
 
-	@span({userId: 0})
+	@span({ userId: 0 })
 	async getUser(userId: string): Promise<User> {
 		const docRef = this.db.doc(`Users/${userId}`);
 		const docSnap: DocumentSnapshot = await docRef.get();
@@ -58,7 +58,7 @@ export class FirestoreUserService implements UserService {
 		};
 	}
 
-	@span({email: 0})
+	@span({ email: 0 })
 	async getUserByEmail(email: string): Promise<User> {
 		const querySnapshot = await this.db.collection('Users').where('email', '==', email).get();
 		const users = querySnapshot.docs.map((doc) => {
@@ -73,7 +73,7 @@ export class FirestoreUserService implements UserService {
 		return users[0];
 	}
 
-	@span({email: args => args[0].email})
+	@span({ email: (args) => args[0].email })
 	async createUser(user: Partial<User>): Promise<User> {
 		const docRef = this.db.collection('Users').doc();
 		// const userId = docRef.id;

@@ -27,8 +27,8 @@ export async function googleIapMiddleware(req: any, _res, next: () => void): Pro
 	}
 	req.user = user;
 	runWithUser(user, () => {
-		logger.info("IAP runWithUser", user.id)
+		logger.info('IAP runWithUser', user.id);
 		next();
-		logger.info("After next()")
+		logger.info('After next()');
 	});
 }
