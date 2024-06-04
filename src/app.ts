@@ -62,14 +62,15 @@ export async function initApp(): Promise<void> {
 
 	try {
 		await initFastify({
-			routes: [gitlabRoutesV1 as RouteDefinition],
-			authenticatedRoutes: [
-				agentDetailsRoutes as RouteDefinition,
+			routes: [
+				gitlabRoutesV1 as RouteDefinition,
 				agentStartRoute as RouteDefinition,
+				agentDetailsRoutes as RouteDefinition,
 				agentExecutionRoutes as RouteDefinition,
 				profileRoute as RouteDefinition,
 				llmRoutes as RouteDefinition,
 				llmCallRoutes as RouteDefinition,
+				// Add your routes below this line
 			],
 			instanceDecorators: applicationContext, // This makes all properties on the ApplicationContext interface available on the fastify instance in the routes
 			requestDecorators: {},

@@ -11,7 +11,12 @@ export function singleUserMiddleware(req: any, _res, next: () => void): void {
 	});
 }
 
-export async function googleIapMiddleware(req: any, _res, next: () => void): Promise<void> {
+export function googleIapMiddleware(req: any, _res, next: () => void) {
+	logger.info(req.raw.url);
+	if (req.raw.url.startsWith('/webhooks/')) {
+		next();
+		return;
+	}
 	let email = req.headers['x-goog-authenticated-user-email'];
 	if (!email) throw new Error('x-goog-authenticated-user-email header not found');
 	if (Array.isArray(email)) email = email[0];
@@ -21,14 +26,10 @@ export async function googleIapMiddleware(req: any, _res, next: () => void): Pro
 	email = email.replace('accounts.google.com:', '');
 	logger.debug(`IAP email ${email}`);
 
-	let user = await appContext().userService.getUserByEmail(email);
-	if (!user) {
-		user = await appContext().userService.createUser({ email: email });
-	}
-	req.user = user;
-	runWithUser(user, async () => {
-		logger.info('IAP runWithUser', user.id);
-		next();
-		logger.info('After next()');
-	});
+	appContext()
+		.userService.getUserByEmail(email)
+		.then((user) => user ?? appContext().userService.createUser({ email: email }))
+		.then((user) => {
+			runWithUser(user, next);
+		});
 }

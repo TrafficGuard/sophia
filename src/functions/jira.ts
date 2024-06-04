@@ -15,21 +15,24 @@ export interface JiraConfig {
 
 @funcClass(__filename)
 export class Jira {
-	instance: AxiosInstance;
+	instance: AxiosInstance | undefined;
 
-	constructor() {
-		const config: JiraConfig = toolConfig(Jira) as JiraConfig;
-		const baseUrl = config.baseUrl;
-		const email = config.email;
-		const apiToken = config.token;
+	private axios(): AxiosInstance {
+		if (!this.instance) {
+			const config: JiraConfig = toolConfig(Jira) as JiraConfig;
+			const baseUrl = config.baseUrl;
+			const email = config.email;
+			const apiToken = config.token;
 
-		this.instance = axios.create({
-			baseURL: baseUrl,
-			headers: {
-				Authorization: `Basic ${Buffer.from(`${email}:${apiToken}`).toString('base64')}`,
-				'Content-Type': 'application/json ',
-			},
-		});
+			this.instance = axios.create({
+				baseURL: baseUrl,
+				headers: {
+					Authorization: `Basic ${Buffer.from(`${email}:${apiToken}`).toString('base64')}`,
+					'Content-Type': 'application/json ',
+				},
+			});
+		}
+		return this.instance;
 	}
 
 	/**
@@ -42,7 +45,7 @@ export class Jira {
 	async getJiraDescription(issueId: string): Promise<string> {
 		try {
 			// logger.info(`Getting jira description for issue ${issueId}`);
-			const response = await this.instance.get(`issue/${issueId}`);
+			const response = await this.axios().get(`issue/${issueId}`);
 			return response.data.fields.description;
 		} catch (error) {
 			logger.error('Error fetching issue description:', error.message);
@@ -59,7 +62,7 @@ export class Jira {
 	// @cacheRetry()
 	// async search(query: string): Promise<string> {
 	// 	try {
-	// 		const response = await this.instance.get(`/issue/picker?query=${encodeURIComponent(query)}`);
+	// 		const response = await this.axios().get(`/issue/picker?query=${encodeURIComponent(query)}`);
 	// 		return response.data.fields.description;
 	// 	} catch (error) {
 	// 		console.error('Error searching issues:', error);

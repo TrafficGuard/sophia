@@ -52,15 +52,24 @@ export function ClaudeVertexLLMs(): AgentLLMs {
  * @see https://github.com/anthropics/anthropic-sdk-typescript/tree/main/packages/vertex-sdk
  */
 class AnthropicVertexLLM extends BaseLLM {
-	client: AnthropicVertex;
+	client: AnthropicVertex | undefined;
 
 	constructor(model: string, inputCostPerChar = 0, outputCostPerChar = 0) {
 		super(ANTHROPIC_VERTEX_SERVICE, model, 200_000, inputCostPerChar, outputCostPerChar);
-		this.client = new AnthropicVertex({
-			projectId: currentUser().llmConfig.vertexProjectId ?? envVar('GCLOUD_PROJECT'),
-			region: currentUser().llmConfig.vertexRegion ?? envVar('GCLOUD_REGION'),
-		});
+		// logger.info(currentUser().llmConfig.vertexProjectId ?? envVar('GCLOUD_PROJECT'));
+		// logger.info(currentUser().llmConfig.vertexRegion ?? envVar('GCLOUD_REGION'));
 	}
+
+	private api(): AnthropicVertex {
+		if (this.client) {
+			this.client = new AnthropicVertex({
+				projectId: currentUser().llmConfig.vertexProjectId ?? envVar('GCLOUD_PROJECT'),
+				region: currentUser().llmConfig.vertexRegion ?? envVar('GCLOUD_REGION'),
+			});
+		}
+		return this.client;
+	}
+
 	// Error when
 	// {"error":{"code":400,"message":"Project `1234567890` is not allowed to use Publisher Model `projects/project-id/locations/us-central1/publishers/anthropic/models/claude-3-haiku@20240307`","status":"FAILED_PRECONDITION"}}
 	@cacheRetry({ backOffMs: 5000 })
@@ -84,7 +93,7 @@ class AnthropicVertexLLM extends BaseLLM {
 
 			let message: Message;
 			try {
-				message = await this.client.messages.create({
+				message = await this.api().messages.create({
 					messages: [
 						{
 							role: 'user',

@@ -8,7 +8,7 @@ export interface RouteInterface {
 }
 
 export function loadOnRequestHooks(fastify: FastifyInstance) {
-	fastify.addHook('onRequest', (request: any, reply: any, done: any) => {
+	fastify.addHook('onRequest', async (request: any, reply: any) => {
 		const routerMethod = request.routerMethod;
 		const routerPath = request.routerPath;
 		if (!(routerMethod && routerPath)) {
@@ -23,9 +23,7 @@ export function loadOnRequestHooks(fastify: FastifyInstance) {
 				version: '',
 				endpoint: 'health-check',
 			} as RouteInterface;
-			done();
 			return;
 		}
-		done();
 	});
 }

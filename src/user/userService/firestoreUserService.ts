@@ -2,6 +2,7 @@ import { DocumentSnapshot, Firestore } from '@google-cloud/firestore';
 import { LlmResponse } from '#llm/llmCallService/llmRequestResponse';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
+import { isSingleUser } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
 import { User } from '../user';
 import { UserService } from './userService';
@@ -20,11 +21,11 @@ export class FirestoreUserService implements UserService {
 	}
 
 	/**
-	 * When running the application in SINGLE_USER mode there is
+	 * When running the application in single user mode there is
 	 * a single user account which is automatically created and logged in.
 	 */
 	async ensureSingleUser(): Promise<void> {
-		if (process.env.SINGLE_USER !== 'true') return;
+		if (!isSingleUser()) return;
 		if (!this.singleUser) {
 			const users = await this.listUsers();
 			if (users.length > 1) throw new Error('More than one user in the database');

@@ -57,28 +57,32 @@ function sanitize(s: string): string {
 
 @funcClass(__filename)
 export class GitLabServer implements SourceControlManagement {
-	api;
+	gitlab;
 	host;
 	config: GitLabConfig;
 
-	constructor() {
-		const config = toolConfig(GitLabServer);
-		this.host = config.host;
-		this.config = {
-			host: this.host ?? envVar('GITLAB_HOST'),
-			token: config.token,
-			topLevelGroups: (config.topLevelGroups ?? envVar('GITLAB_GROUPS')).split(',').map((group) => group.trim()),
-		};
-		this.api = new Gitlab({
-			host: `https://${this.config.host}`,
-			token: this.config.token,
-		});
-	}
-
 	toJSON() {
+		this.api();
 		return {
 			host: this.host,
 		};
+	}
+
+	private api(): any {
+		if (!this.gitlab) {
+			const config = toolConfig(GitLabServer);
+			this.host = config.host;
+			this.config = {
+				host: this.host ?? envVar('GITLAB_HOST'),
+				token: config.token,
+				topLevelGroups: (config.topLevelGroups ?? envVar('GITLAB_GROUPS')).split(',').map((group) => group.trim()),
+			};
+			this.gitlab = new Gitlab({
+				host: `https://${this.config.host}`,
+				token: this.config.token,
+			});
+		}
+		return this.gitlab;
 	}
 
 	// /**
@@ -106,7 +110,7 @@ export class GitLabServer implements SourceControlManagement {
 	async getProjects(): Promise<any[]> {
 		const resultProjects: GitLabProject[] = [];
 		for (const group of this.config.topLevelGroups) {
-			const projects = await this.api.Groups.allProjects(group, {
+			const projects = await this.api().Groups.allProjects(group, {
 				orderBy: 'name',
 				perPage: 100,
 			});
@@ -114,14 +118,14 @@ export class GitLabServer implements SourceControlManagement {
 			projects.sort((a, b) => a.path.localeCompare(b.path));
 			projects.map((project) => this.toGitLabProject(project)).forEach((project) => resultProjects.push(project));
 
-			const descendantGroups = await this.api.Groups.allDescendantGroups(group, {});
+			const descendantGroups = await this.api().Groups.allDescendantGroups(group, {});
 			for (const descendantGroup of descendantGroups) {
 				if (descendantGroup.full_name.includes('Archive')) continue;
 				if (this.config.groupExcludes?.has(descendantGroup.full_path)) continue;
 
 				// console.log(`${descendantGroup.full_path} ==========`);
 				const pageSize = 100;
-				const projects = await this.api.Groups.allProjects(descendantGroup.id, {
+				const projects = await this.api().Groups.allProjects(descendantGroup.id, {
 					orderBy: 'name',
 					perPage: 100,
 				});
@@ -197,6 +201,7 @@ export class GitLabServer implements SourceControlManagement {
 
 		const targetBranch = 'master'; // TODO get from the GitLab project
 
+		// TODO if the user has changed their gitlab token, then need to update the origin URL with it
 		const cmd = `git push --set-upstream origin '${currentBranch}' -o merge_request.create -o merge_request.target='${targetBranch}' -o merge_request.remove_source_branch -o merge_request.title='${sanitize(
 			title,
 		)}'`;
@@ -216,7 +221,7 @@ export class GitLabServer implements SourceControlManagement {
 	// @cacheRetry({ scope: 'execution' })
 	@span()
 	async getMergeRequestDiffs(gitlabProjectId: string | number, mergeRequestIId: number): Promise<string> {
-		const diffs: MergeRequestDiffSchema[] = await this.api.MergeRequests.allDiffs(gitlabProjectId, mergeRequestIId, { perPage: 20 });
+		const diffs: MergeRequestDiffSchema[] = await this.api().MergeRequests.allDiffs(gitlabProjectId, mergeRequestIId, { perPage: 20 });
 		let result = '<git-diffs>';
 
 		for (const fileDiff of diffs) {
@@ -238,12 +243,12 @@ export class GitLabServer implements SourceControlManagement {
 	@cacheRetry()
 	@span()
 	async getDiffs(gitlabProjectId: string | number, mergeRequestIId: number): Promise<MergeRequestDiffSchema[]> {
-		return await this.api.MergeRequests.allDiffs(gitlabProjectId, mergeRequestIId, { perPage: 20 });
+		return await this.api().MergeRequests.allDiffs(gitlabProjectId, mergeRequestIId, { perPage: 20 });
 	}
 
 	@span()
 	async reviewMergeRequest(gitlabProjectId: string | number, mergeRequestIId: number): Promise<MergeRequestDiffSchema[]> {
-		const mergeRequest: ExpandedMergeRequestSchema = await this.api.MergeRequests.show(gitlabProjectId, mergeRequestIId);
+		const mergeRequest: ExpandedMergeRequestSchema = await this.api().MergeRequests.show(gitlabProjectId, mergeRequestIId);
 		const diffs: MergeRequestDiffSchema[] = await this.getDiffs(gitlabProjectId, mergeRequestIId);
 
 		const codeReviewConfigs = await loadCodeReviews();
@@ -288,7 +293,7 @@ export class GitLabServer implements SourceControlManagement {
 					newLine: comment.lineNumber.toString(),
 				};
 
-				await this.api.MergeRequestDiscussions.create(gitlabProjectId, mergeRequestIId, comment.comment, { position });
+				await this.api().MergeRequestDiscussions.create(gitlabProjectId, mergeRequestIId, comment.comment, { position });
 			}
 		}
 		return diffs;
@@ -362,9 +367,9 @@ export class GitLabServer implements SourceControlManagement {
 		if (!projectPath) throw new Error('Parameter "projectPath" must be truthy');
 		if (!jobId) throw new Error('Parameter "jobId" must be truthy');
 
-		const project = await this.api.Projects.show(projectPath);
-		const job = await this.api.Jobs.show(project.id, jobId);
-		const logs = await this.api.Jobs.trace(project.id, job.id);
+		const project = await this.api().Projects.show(projectPath);
+		const job = await this.api().Jobs.show(project.id, jobId);
+		const logs = await this.api().Jobs.trace(project.id, job.id);
 
 		return logs;
 	}

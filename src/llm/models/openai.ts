@@ -36,12 +36,19 @@ export function GPT4o() {
 	return new OpenAI('gpt-4o', 128_000, 5 / (1_000_000 * 4), 15 / (1_000_000 * 4));
 }
 export class OpenAI extends BaseLLM {
-	openai = new OpenAISDK({
-		apiKey: currentUser().llmConfig.openaiKey ?? envVar('OPENAI_API_KEY'),
-	});
+	openAISDK: OpenAISDK | null = null;
 
 	constructor(model: Model, maxInputTokens: number, inputCostPerChar: number, outputCostPerChar: number) {
 		super(OPENAI_SERVICE, model, maxInputTokens, inputCostPerChar, outputCostPerChar);
+	}
+
+	private sdk(): OpenAISDK {
+		if (!this.openAISDK) {
+			this.openAISDK = new OpenAISDK({
+				apiKey: currentUser().llmConfig.openaiKey ?? envVar('OPENAI_API_KEY'),
+			});
+		}
+		return this.openAISDK;
 	}
 
 	@logTextGeneration
@@ -60,7 +67,7 @@ export class OpenAI extends BaseLLM {
 			const llmRequestSave = appContext().llmCallService.saveRequest(userPrompt, systemPrompt);
 			const requestTime = Date.now();
 
-			const stream = await this.openai.chat.completions.create({
+			const stream = await this.sdk().chat.completions.create({
 				model: this.model,
 				response_format: { type: mode === 'json' ? 'json_object' : 'text' },
 				messages: [{ role: 'user', content: prompt }],

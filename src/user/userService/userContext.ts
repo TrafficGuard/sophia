@@ -14,6 +14,10 @@ export function runWithUser(user: User, fn: () => any) {
 	userContextStorage.run(user, fn);
 }
 
+export function isSingleUser(): boolean {
+	return process.env.AUTH === 'single_user';
+}
+
 /**
  * @returns If called in an agent's execution, returns the agent's user, otherwise the user from a web request, or the single user if in single user mode.
  */
@@ -23,7 +27,7 @@ export function currentUser(): User {
 
 	const user = userContextStorage.getStore();
 	if (!user) {
-		if (process.env.SINGLE_USER === 'true') {
+		if (isSingleUser()) {
 			return appContext().userService.getSingleUser();
 		}
 		throw new Error('User has not been set on the userContextStorage');

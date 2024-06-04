@@ -56,10 +56,16 @@ export function ClaudeLLMs(): AgentLLMs {
 }
 
 export class Anthropic extends BaseLLM {
-	anthropic: AnthropicSdk;
+	anthropic: AnthropicSdk | undefined;
 	constructor(model: string, inputCostPerChar = 0, outputCostPerChar = 0) {
 		super(ANTHROPIC_SERVICE, model, 200_000, inputCostPerChar, outputCostPerChar);
-		this.anthropic = new AnthropicSdk({ apiKey: currentUser().llmConfig.anthropicKey ?? envVar('ANTHROPIC_API_KEY') });
+	}
+
+	private sdk(): AnthropicSdk {
+		if (!this.anthropic) {
+			this.anthropic = new AnthropicSdk({ apiKey: currentUser().llmConfig.anthropicKey ?? envVar('ANTHROPIC_API_KEY') });
+		}
+		return this.anthropic;
 	}
 
 	@logTextGeneration
@@ -80,7 +86,7 @@ export class Anthropic extends BaseLLM {
 
 			let message: Message;
 			try {
-				message = await this.anthropic.messages.create({
+				message = await this.sdk().messages.create({
 					max_tokens: 4096,
 					system: systemPrompt,
 					messages: [{ role: 'user', content: prompt }],

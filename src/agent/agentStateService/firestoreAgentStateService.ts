@@ -1,6 +1,7 @@
 import { DocumentSnapshot, Firestore } from '@google-cloud/firestore';
 import { AgentContext, AgentRunningState, deserializeAgentContext, serializeContext } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
+import { span } from '#o11y/trace';
 import { envVar } from '#utils/env-var';
 import { AgentStateService } from './agentStateService';
 
@@ -18,6 +19,7 @@ export class FirestoreAgentStateService implements AgentStateService {
 		});
 	}
 
+	@span()
 	async save(state: AgentContext): Promise<void> {
 		const serialized = serializeContext(state);
 		serialized.lastUpdate = Date.now();
@@ -35,6 +37,7 @@ export class FirestoreAgentStateService implements AgentStateService {
 		await this.save(ctx);
 	}
 
+	@span({ agentId: 0 })
 	async load(agentId: string): Promise<AgentContext | null> {
 		const docRef = this.db.doc(`AgentContext/${agentId}`);
 		const docSnap: DocumentSnapshot = await docRef.get();
@@ -48,11 +51,13 @@ export class FirestoreAgentStateService implements AgentStateService {
 		});
 	}
 
+	@span()
 	async list(): Promise<AgentContext[]> {
 		const querySnapshot = await this.db.collection('AgentContext').get();
 		return await this.deserializeQuery(querySnapshot);
 	}
 
+	@span()
 	async listRunning(): Promise<AgentContext[]> {
 		const querySnapshot = await this.db.collection('AgentContext').where('state', '!=', 'completed').get();
 		return await this.deserializeQuery(querySnapshot);

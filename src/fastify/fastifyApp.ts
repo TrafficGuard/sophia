@@ -40,7 +40,6 @@ export interface FastifyConfig {
 	/** The port to listen on. If not provided looks up from process.env.PORT or else process.env.SERVER_PORT */
 	port?: number;
 	routes: RouteDefinition[];
-	authenticatedRoutes: RouteDefinition[];
 	instanceDecorators?: { [key: string]: any };
 	requestDecorators?: { [key: string]: any };
 	/** Overrides the default url of /health-check */
@@ -61,7 +60,6 @@ export async function initFastify(config: FastifyConfig): Promise<void> {
 	if (config.instanceDecorators) registerInstanceDecorators(config.instanceDecorators);
 	if (config.requestDecorators) registerRequestDecorators(config.requestDecorators);
 	registerRoutes(config.routes);
-	registerAuthenticatedRoutes(config.authenticatedRoutes);
 	fastifyInstance.register(require('@fastify/static'), {
 		root: join(process.cwd(), 'public'),
 		prefix: '/ui/', // optional: default '/'
@@ -119,22 +117,19 @@ async function loadPlugins(config: FastifyConfig) {
 
 function loadHooks() {
 	loadOnRequestHooks(fastifyInstance);
-	// loadPreHandlerHooks(this.app);
 
-	// this.app.after(() => {
-	//   this.app.addHook(
-	//     'preHandler',
-	//     this.app.auth(
-	//       [
-	//         // this.app.facebookAdAuthentication,
-	//         this.app.staticTokenAuthentication,
-	//         this.app.jwtTokenAuthentication,
-	//         this.app.roleBasedRoutePermissionAuthentication,
-	//       ],
-	//       { relation: 'and' }
-	//     )
-	//   );
-	// });
+	// Authentication hook
+	let authenticationMiddleware = null;
+	if (process.env.AUTH === 'gcloud_iap') {
+		authenticationMiddleware = googleIapMiddleware;
+		logger.info('Configured Google IAP authentication middleware');
+	} else if (process.env.AUTH === 'single_user') {
+		authenticationMiddleware = singleUserMiddleware;
+		logger.info('Configured Single User authentication middleware');
+	} else {
+		throw new Error('No valid authentication configured. Set AUTH to single_user or gcloud_iap');
+	}
+	fastifyInstance.addHook('onRequest', authenticationMiddleware);
 }
 
 function registerInstanceDecorators(decorators: { [key: string]: any }) {
@@ -160,26 +155,6 @@ function registerRequestDecorators(decorators: { [key: string]: any }) {
 function registerRoutes(routes: RouteDefinition[]) {
 	for (const route of routes) {
 		fastifyInstance.register(route);
-	}
-}
-
-function registerAuthenticatedRoutes(routes: RouteDefinition[]) {
-	let authenticationMiddleware = null;
-	if (process.env.AUTH === 'gcloud_iap') {
-		authenticationMiddleware = googleIapMiddleware;
-		logger.info('Configured Google IAP authentication middleware');
-	} else if (process.env.SINGLE_USER === 'true') {
-		authenticationMiddleware = singleUserMiddleware;
-		logger.info('Configured Single User authentication middleware');
-	} else {
-		throw new Error('No authentication configured. Either set SINGLE_USER=true or provide a valid AUTH env var');
-	}
-
-	for (const route of routes) {
-		fastifyInstance.register(async (fastifyInstance) => {
-			fastifyInstance.addHook('preHandler', authenticationMiddleware);
-			fastifyInstance.register(route);
-		});
 	}
 }
 
