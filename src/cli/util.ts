@@ -67,7 +67,7 @@ async function main() {
 	// // files = ['README.md','bin/configure']
 	// const xml = await getFileSystem().getMultipleFileContentsAsXml(files);
 	// console.log(xml);
-	// const req = readFileSync('src/test/util-in', 'utf8');
+	// const req = readFileSync('src/cli/util-in', 'utf8');
 	// await new SimpleCodeEditor().makeChanges(req, files);
 
 	// const requirements = "";

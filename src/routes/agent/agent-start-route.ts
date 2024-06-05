@@ -38,7 +38,7 @@ export async function agentStartRoute(fastify: AppFastifyInstance) {
 			const toolbox = new Toolbox();
 			for (const toolName of tools) toolbox.addToolType(toolFactory[toolName]);
 
-			const systemPrompt = readFileSync('src/test/agent-system', 'utf-8');
+			const systemPrompt = readFileSync('src/cli/agent-system', 'utf-8');
 			startAgent({
 				user: currentUser(),
 				agentName: name,

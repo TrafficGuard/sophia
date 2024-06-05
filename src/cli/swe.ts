@@ -6,11 +6,14 @@ import { getHumanInLoopSettings } from '#agent/humanInLoop';
 import { Toolbox } from '#agent/toolbox';
 import '#fastify/trace-init/trace-init';
 import { FileSystem } from '#functions/filesystem';
+import { GitLabServer } from '#functions/scm/gitlab';
 import { GEMINI_1_5_PRO_LLMS, Gemini_1_5_Pro } from '#llm/models/vertexai';
 import { withActiveSpan } from '#o11y/trace';
-import { CodeEditingWorkflow } from '#swe/codeEditingWorkflow';
 import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
-import { ProjectInfo } from '#swe/projectDetection';
+import { appContext } from '../app';
+import { CodeEditingWorkflow } from '../swe/codeEditingWorkflow';
+import { ProjectInfo } from '../swe/projectDetection';
+import { SoftwareDeveloperWorkflow } from '../swe/softwareDeveloperWorkflow';
 
 import { currentUser } from '#user/userService/userContext';
 
@@ -22,15 +25,15 @@ import { currentUser } from '#user/userService/userContext';
 async function main() {
 	const gemini = Gemini_1_5_Pro();
 	const llms: AgentLLMs = GEMINI_1_5_PRO_LLMS();
-
-	//const system = readFileSync('src/test/agent-system', 'utf-8');
-	const initialPrompt = readFileSync('src/test/edit-local-in', 'utf-8');
+	const initialPrompt = readFileSync('src/cli/swe-in', 'utf-8');
+	//const system = readFileSync('src/cli/agent-system', 'utf-8');
 
 	const toolbox = new Toolbox();
 	toolbox.addToolType(FileSystem);
+	toolbox.addToolType(GitLabServer);
 
 	const config: RunAgentConfig = {
-		agentName: 'edit-local',
+		agentName: 'SWE',
 		llms,
 		toolbox,
 		user: currentUser(),
@@ -40,23 +43,11 @@ async function main() {
 	const context: AgentContext = createContext(config);
 	agentContextStorage.enterWith(context);
 
-	// const info = await new DevRequirementsWorkflow().detectProjectInfo();
-
-	const projectInfo: ProjectInfo = {
-		baseDir: process.cwd(),
-		language: 'nodejs',
-		initialise: 'npm install',
-		compile: 'npm run build',
-		format: 'npm run lint && npm run fix',
-		staticAnalysis: null,
-		test: 'npm run test:unit',
-		languageTools: new TypescriptTools(),
-	};
-	await withActiveSpan('edit-local', async (span: Span) => {
+	await withActiveSpan('swe', async (span: Span) => {
 		span.setAttributes({
 			initialPrompt,
 		});
-		await new CodeEditingWorkflow().runCodeEditWorkflow(initialPrompt, projectInfo);
+		await new SoftwareDeveloperWorkflow().runSoftwareDeveloperWorkflow(initialPrompt);
 	});
 }
 

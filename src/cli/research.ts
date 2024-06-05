@@ -37,8 +37,8 @@ const llms: AgentLLMs = {
 };
 
 export async function main() {
-	const systemPrompt = readFileSync('src/test/research-system', 'utf-8');
-	const initialPrompt = readFileSync('src/test/research-in', 'utf-8'); //'Complete the JIRA issue: ABC-123'
+	const systemPrompt = readFileSync('src/cli/research-system', 'utf-8');
+	const initialPrompt = readFileSync('src/cli/research-in', 'utf-8'); //'Complete the JIRA issue: ABC-123'
 
 	const toolbox = new Toolbox();
 	// toolbox.addTool('Jira', new Jira());

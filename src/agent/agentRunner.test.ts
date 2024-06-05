@@ -59,7 +59,7 @@ describe('agentRunner', () => {
 		return user ? { ...defaults, ...user } : defaults;
 	}
 
-	const agentSystemPrompt = readFileSync('src/test/agent-system').toString();
+	const agentSystemPrompt = readFileSync('src/cli/agent-system').toString();
 
 	async function waitForAgent(): Promise<AgentContext> {
 		while ((await appContext().agentStateService.list()).filter((agent) => agent.state === 'agent' || agent.state === 'functions').length > 0) {
