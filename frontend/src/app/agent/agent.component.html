@@ -180,9 +180,19 @@
         </p>
         <p><strong>Response Text:</strong> {{ call.response.responseText }}</p>
 
-        <p *ngIf="extractFunctionCallHistory(call.request.userPromptText)">
-          <strong>Function Call History:</strong> {{ extractFunctionCallHistory(call.request.userPromptText) }}
-        </p>
+        <mat-expansion-panel *ngIf="extractFunctionCallHistory(call.request.userPromptText)">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <strong>Function Call History:</strong>
+              <span *ngIf="!panelOpenState[i]" class="system-prompt-preview">
+                {{ extractFunctionCallHistory(call.request.userPromptText) | slice : 0 : 50 }} ...
+              </span>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div matExpansionPanelContent>
+            {{ extractFunctionCallHistory(call.request.userPromptText) }}
+          </div>
+        </mat-expansion-panel>
         <mat-expansion-panel *ngIf="extractMemoryContent(call.request.userPromptText)">
           <mat-expansion-panel-header>
             <mat-panel-title>
