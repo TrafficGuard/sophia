@@ -183,9 +183,19 @@
         <p *ngIf="extractFunctionCallHistory(call.request.userPromptText)">
           <strong>Function Call History:</strong> {{ extractFunctionCallHistory(call.request.userPromptText) }}
         </p>
-        <p *ngIf="extractMemoryContent(call.request.userPromptText)">
-          <strong>Memory Content:</strong> {{ extractMemoryContent(call.request.userPromptText) }}
-        </p>
+        <mat-expansion-panel *ngIf="extractMemoryContent(call.request.userPromptText)">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <strong>Memory Content:</strong>
+              <span *ngIf="!panelOpenState[i]" class="system-prompt-preview">
+                {{ extractMemoryContent(call.request.userPromptText) | slice : 0 : 50 }} ...
+              </span>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div matExpansionPanelContent>
+            {{ extractMemoryContent(call.request.userPromptText) }}
+          </div>
+        </mat-expansion-panel>
 
         <p><strong>Request Time:</strong> {{ call.response.requestTime | date : 'medium' }}</p>
         <p><strong>First Response Duration:</strong> {{ call.response.firstResponse }} ms</p>
