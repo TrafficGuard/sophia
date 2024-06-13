@@ -22,6 +22,7 @@ export interface LlmResponse {
 	agentId?: string;
 	/** Populated when called by a user through the UI */
 	userId?: string;
+	callStack?: string;
 	responseText: string;
 	/** LLM service/model identifier */
 	llmId: string;

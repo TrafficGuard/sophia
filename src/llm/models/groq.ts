@@ -31,7 +31,7 @@ export function groqGemma7bIt(): LLM {
 }
 
 export function groqLlama3_70B(): LLM {
-	return new GroqLLM(GROQ_SERVICE, 'llama3-70b-8192', 8_192, 0.1 / 1000000, 0.1 / 1000000);
+	return new GroqLLM(GROQ_SERVICE, 'llama3-70b-8192', 8_192, (0.59 / 1_000_000) * 4, (0.79 / 1_000_000) * 4);
 }
 
 export function grokLLMs(): AgentLLMs {
@@ -80,7 +80,7 @@ export class GroqLLM extends BaseLLM {
 				});
 				const responseText = completion.choices[0]?.message?.content || '';
 
-				const timeToFirstToken = Date.now();
+				const timeToFirstToken = Date.now() - requestTime;
 				const finishTime = Date.now();
 				const llmRequest = await llmRequestSave;
 				const llmResponse: CreateLlmResponse = {
@@ -90,6 +90,7 @@ export class GroqLLM extends BaseLLM {
 					requestTime,
 					timeToFirstToken: timeToFirstToken,
 					totalTime: finishTime - requestTime,
+					callStack: agentContext().callStack.join(' > '),
 				};
 				await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
 

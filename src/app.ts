@@ -51,10 +51,10 @@ export function appContext(): ApplicationContext {
  * Creates the applications services and starts the Fastify server.
  */
 export async function initApp(): Promise<void> {
-	// If the process has the argument --db=file then use file based persistence
+	// If the process has the argument --db=file, or DATABASE=file env var, then use file based persistence
 	const args = process.argv.slice(2); // Remove the first two elements (node and script path)
 	const dbArg = args.find((arg) => arg.startsWith('--db='));
-	if (dbArg?.slice(5) === 'file') {
+	if (dbArg?.slice(5) === 'file' || process.env.DATABASE === 'file') {
 		await initFileApplicationContext();
 	} else {
 		await initFirestoreApplicationContext();

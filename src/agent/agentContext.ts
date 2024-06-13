@@ -1,12 +1,13 @@
 import { randomUUID } from 'crypto';
 import { AsyncLocalStorage } from 'async_hooks';
-import { RunAgentConfig } from '#agent/agentRunner';
 import { Toolbox } from '#agent/toolbox';
+import { RunAgentConfig } from '#agent/xmlAgentRunner';
 import { FileSystem } from '#functions/filesystem';
 import { Invoke, Invoked, LLM, TaskLevel } from '#llm/llm';
 import { deserializeLLMs } from '#llm/llmFactory';
 import { logger } from '#o11y/logger';
 import { User } from '#user/user';
+import { currentUser } from '#user/userService/userContext';
 import { appContext } from '../app';
 
 /**
@@ -101,7 +102,7 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		agentId: config.resumeAgentId || randomUUID(),
 		executionId: randomUUID(),
 		name: config.agentName,
-		user: config.user,
+		user: config.user ?? currentUser(),
 		systemPrompt: config.systemPrompt,
 		inputPrompt: '',
 		userPrompt: config.initialPrompt,

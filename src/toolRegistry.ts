@@ -12,5 +12,16 @@ import { SoftwareDeveloperWorkflow } from '#swe/softwareDeveloperWorkflow';
  * Add any tools to be made available here to ensure their function definitions are registered
  */
 export function toolRegistry(): any[] {
-	return [Perplexity, Jira, FileSystem, SoftwareDeveloperWorkflow, CodeEditingWorkflow, GitLabServer, GoogleCloud, Slack, UtilFunctions];
+	return [
+		CodeEditingWorkflow,
+		FileSystem,
+		GitLabServer,
+		GoogleCloud,
+		Jira,
+		Perplexity,
+		Slack,
+		SoftwareDeveloperWorkflow,
+		UtilFunctions,
+		// Add your own tools below this line
+	];
 }

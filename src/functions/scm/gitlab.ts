@@ -1,6 +1,14 @@
 import { existsSync } from 'fs';
 import { join } from 'path';
-import { ExpandedMergeRequestSchema, Gitlab, Jobs, MergeRequestDiffSchema, MergeRequestDiscussionNotePositionOptions, ProjectSchema } from '@gitbeaker/rest';
+import {
+	CommitDiffSchema,
+	ExpandedMergeRequestSchema,
+	Gitlab,
+	Jobs,
+	MergeRequestDiffSchema,
+	MergeRequestDiscussionNotePositionOptions,
+	ProjectSchema,
+} from '@gitbeaker/rest';
 import { getFileSystem, llms } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
@@ -74,7 +82,7 @@ export class GitLabServer implements SourceControlManagement {
 			this.host = config.host;
 			this.config = {
 				host: this.host ?? envVar('GITLAB_HOST'),
-				token: config.token,
+				token: config.token ?? envVar('GITLAB_TOKEN'),
 				topLevelGroups: (config.topLevelGroups ?? envVar('GITLAB_GROUPS')).split(',').map((group) => group.trim()),
 			};
 			this.gitlab = new Gitlab({
@@ -362,14 +370,25 @@ export class GitLabServer implements SourceControlManagement {
 		return { code: currentCode, comments: reviewComments, mrDiff };
 	}
 
-	@func()
+	// @func()
 	async getJobLogs(projectPath: string, jobId: string): Promise<string> {
 		if (!projectPath) throw new Error('Parameter "projectPath" must be truthy');
 		if (!jobId) throw new Error('Parameter "jobId" must be truthy');
 
 		const project = await this.api().Projects.show(projectPath);
 		const job = await this.api().Jobs.show(project.id, jobId);
-		const logs = await this.api().Jobs.trace(project.id, job.id);
+		console.log('pipeline ---------------------------');
+		console.log(job.pipeline);
+		console.log('commit -----------------------------');
+		console.log(job.commit);
+		console.log('diff   -----------------------------');
+		const commitDetails: CommitDiffSchema[] = await this.api().Commits.showDiff(projectPath, job.commit.id);
+		for (const commit of commitDetails) {
+			console.log(commit.diff);
+		}
+
+		console.log('logs -------------------------------');
+		const logs = await this.api().Jobs.showLog(project.id, job.id);
 
 		return logs;
 	}

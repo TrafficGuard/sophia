@@ -1,9 +1,8 @@
 import { readFileSync } from 'fs';
 import { Span } from '@opentelemetry/api';
 import { AgentContext, AgentLLMs, agentContextStorage, createContext } from '#agent/agentContext';
-import { RunAgentConfig } from '#agent/agentRunner';
-import { getHumanInLoopSettings } from '#agent/humanInLoop';
 import { Toolbox } from '#agent/toolbox';
+import { RunAgentConfig } from '#agent/xmlAgentRunner';
 import '#fastify/trace-init/trace-init';
 import { FileSystem } from '#functions/filesystem';
 import { GEMINI_1_5_PRO_LLMS, Gemini_1_5_Pro } from '#llm/models/vertexai';
@@ -13,6 +12,7 @@ import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
 import { ProjectInfo } from '#swe/projectDetection';
 
 import { currentUser } from '#user/userService/userContext';
+import { envVarHumanInLoopSettings } from './cliHumanInLoop';
 
 // Used to test the local repo editing workflow in DevEditWorkflow
 
@@ -35,7 +35,7 @@ async function main() {
 		toolbox,
 		user: currentUser(),
 		initialPrompt,
-		humanInLoop: getHumanInLoopSettings(),
+		humanInLoop: envVarHumanInLoopSettings(),
 	};
 	const context: AgentContext = createContext(config);
 	agentContextStorage.enterWith(context);

@@ -66,7 +66,7 @@ export class MockLLM extends BaseLLM {
 			// remove the first items from this.responses
 			const responseText = this.responses.shift();
 
-			const timeToFirstToken = Date.now();
+			const timeToFirstToken = 1;
 			const finishTime = Date.now();
 			const llmRequest = await llmRequestSave;
 			const llmResponse: CreateLlmResponse = {
@@ -76,6 +76,7 @@ export class MockLLM extends BaseLLM {
 				requestTime,
 				timeToFirstToken: timeToFirstToken,
 				totalTime: finishTime - requestTime,
+				callStack: agentContext().callStack.join(' > '),
 			};
 			await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
 

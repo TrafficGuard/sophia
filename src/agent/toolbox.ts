@@ -1,13 +1,17 @@
+import { Agent } from '#agent/agentFunctions';
 import { Invoke } from '#llm/llm';
 import { logger } from '#o11y/logger';
 import { FunctionDefinition } from '../functionDefinition/functions';
 import { toolFactory } from '../functionDefinition/metadata';
-import { Agent } from './agentFunctions';
 
 export class Toolbox {
 	tools: { [toolName: string]: any } = {
 		Agent: new Agent(),
 	};
+
+	constructor(...toolTypes: any) {
+		this.addToolType(...toolTypes);
+	}
 
 	toJSON() {
 		return {
@@ -41,7 +45,14 @@ export class Toolbox {
 
 	addToolType(...toolTypes: any): void {
 		// Check the prototype of the instantiated tool has the functions metadata
-		for (const toolType of toolTypes) this.tools[toolType.name] = new toolType();
+		for (const toolType of toolTypes) {
+			try {
+				this.tools[toolType.name] = new toolType();
+			} catch (e) {
+				logger.error(`Error instantiating tool from type of ${typeof toolType}`);
+				throw e;
+			}
+		}
 	}
 
 	async invokeTool(invocation: Invoke): Promise<any> {

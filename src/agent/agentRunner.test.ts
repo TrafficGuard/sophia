@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { appContext, initInMemoryApplicationContext } from 'src/app';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK, REQUEST_FEEDBACK_PARAM_NAME } from '#agent/agentFunctions';
+import { Toolbox } from '#agent/toolbox';
 import {
 	RunAgentConfig,
 	SUPERVISOR_CANCELLED_FUNCTION_NAME,
@@ -11,8 +12,7 @@ import {
 	provideFeedback,
 	runAgent,
 	startAgent,
-} from '#agent/agentRunner';
-import { Toolbox } from '#agent/toolbox';
+} from '#agent/xmlAgentRunner';
 import { TEST_FUNC_NOOP, TEST_FUNC_SUM, THROW_ERROR_TEXT, TestFunctions } from '#functions/testFunctions';
 import { MockLLM } from '#llm/models/mock-llm';
 import { User } from '#user/user';

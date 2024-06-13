@@ -1,50 +1,104 @@
 # Setup
 
-Run `source ./bin/configure`
+## Prerequisites
 
-This will:
-- Set up a Python virtual environment and install aider,
-which is used for code editing.
-- Set the node version using nvm, and run `npm install`
-- Install ripgrep
+- [pyenv](https://github.com/pyenv/pyenv) (Run `curl https://pyenv.run | bash`)
+- [nvm](https://github.com/nvm-sh/nvm) (Run `curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash`)
+- [ripgrep](https://github.com/BurntSushi/ripgrep?tab=readme-ov-file#installation)
+- [gcloud](https://cloud.google.com/sdk/docs/install) (optional)
 
-### API KEYS
+## Installation
+```bash
+git clone https://github.com/TrafficGuard/nous.git
+cd nous
+source ./bin/configure
+```
+The configure script will:
 
-You will need an OpenAI key with some credits to use the CodeEditor function, unless [OpenRouter](https://aider.chat/docs/faq.html#accessing-other-llms-with-openrouter]) is configured for an alternative LLM.
+- Ensure the python version in *.python-version* is installed and install [aider](https://aider.chat/).
+- Ensure the node.js version in *.nvmrc* is installed and run `npm install`
+- Initialise the environment variable file at *variables/local.env*
 
-You will want to have use of Claude 3 Opus for the main agent control loop, so signup at Anthropic and get free US$5 credits.
+### Google Cloud setup (optional/recommended)
 
-### Anthropic
-Create an API key at https://console.anthropic.com/settings/keys and update ANTHROPIC_API_KEY in `.env`. 
-You should get US$5 credits on signup.
+When enabled Google Cloud is used for Firestore database persistence, the Gemini AI models, and tracing via OpenTelemetry.
 
-### OpenAI
+A Dockerfile is also provided to deploy application in Cloud Run or on a VM with the container-optimised OS.
 
-Create an API key at https://platform.openai.com/api-keys and update OPENAI_API_KEY in `.env`.
+In the file `variables/local.env` update the `GCLOUD_PROJECT` and `GCLOUD_REGION` variables.
 
-### Jira
+If you have [gcloud](https://cloud.google.com/sdk/docs/install) installed then run `./bin/gcp_setup` which will:
 
-Create an API key at https://id.atlassian.com/manage-profile/security/api-tokens and update JIRA_API_TOKEN in `.env`
+- Enable the [AI platform](https://console.cloud.google.com/apis/library/aiplatform.googleapis.com) and [Firestore](https://console.cloud.google.com/apis/library/firestore.googleapis.com) APIs
+- Create a default [Firestore database](https://console.cloud.google.com/firestore/databases) in native mode.
 
-### GitLab
+Run `gcloud auth application-default login` which will provide credentials for the Google Cloud SDKs. (If the webpage fails to load then ensure port the callback webpage opens with isn't already in use)
 
-Create an API key at https://gitlab.synrgy.mobi/-/user_settings/personal_access_tokens with the api, read_repo and write_repo roles, and update GITLAB_TOKEN in `.env`. You will need to also set GITLAB_HOST (e.g. gitlab.selfhost.com) and GITLAB_GROUPS (JSON array containing the top level groups it will search e.g ["group1", "group2"])
+## Configuration
 
-### GitHub
+*variables/local.env* contains the configuration when running Nous locally.
 
-(Optional) Create a personal token at https://github.com/settings/tokens?type=beta and update GITHUB_TOKEN in `.env`.
+If you have configured Google Cloud then update `TRACE_AGENT_ENABLED` to `true`.
 
-## GCP/Vertex
+The LLM API keys and tool configurations can be set in the environment variables, which provides defaults for any user the app. By default Nous runs in a single user mode.
 
-Ensure you have authenticated the application default credentials with gcloud (`gcloud auth application-default login`)
+Alternately you can run the application and enter the LLM/Tool configuration values in the UI.
 
-(Ensure you don't have anything running on port the callback webpage opens with)
+Quick links to create API keys:
 
-## Google Cloud
+LLMs
+- [Anthropic](https://console.anthropic.com/settings/keys)
+- [OpenAI](https://platform.openai.com/api-keys)
+- [Groq](https://console.groq.com/keys)
+- [Together.ai](https://api.together.ai/settings/api-keys)
+- [Fireworks.ai](https://fireworks.ai/api-keys)
 
-If you are using the glcoud function or Vertex AI you should install the gcloud CLI
+Tools
+- [Perplexity](https://www.perplexity.ai/settings/api)
+- [Jira](https://id.atlassian.com/manage-profile/security/api-tokens)
+- [GitLab.com](https://www.gitab.com/-/user_settings/personal_access_tokens) (Grant api, read_repo and write_repo roles)
+- [GitHub](https://github.com/settings/tokens?type=beta)
 
-https://cloud.google.com/sdk/docs/install
+## Running
 
-Then authenticate the application default credentials by running
-`gcloud auth application-default login`
+### CLI
+
+In the *src/cli* folder are the file chat.ts, agent.ts, swe.ts, code.ts, research.ts, util.ts.
+
+These can be run with `npm run chat`, `npm run agent`, `npm run code`, `npm run swe`, `npm run research`, `npm run util`
+
+`chat`, `agent`, `swe` and `code` read their input from the co-located files. Util is for testing individual pieces of code.
+
+- `chat` does a single completion from an LLM, reading the input from *src/cli/chat-in*
+- `agent` runs the autonomous agent, using the tools configured, reading the input from *src/cli/agent-in*
+- `code` runs the Code Editing agent on the repository, reading the input from *src/cli/code-in*
+- `swe` runs the software engineer agent, which can find a remote repo to clone, edit and create a pull/megre request. Input read from *src/cli/swe-in*
+- `research` runs the autonomous agent with the web research tools configured.
+- `util` used for running any random piece of code to test.
+
+### Server/UI
+
+In one terminal run
+```bash
+npm run start:local
+```
+In a second terminal run
+```bash
+cd frontend
+npm run start
+```
+The UI will be available at [http://localhost:4200](http://localhost:4200)
+
+Documentation for running deployed on Google Cloud will be provided soon.
+
+### Tests
+
+**Unit tests**
+
+`npm run test:unit`
+
+**Integration tests**
+```
+gcloud emulators firestore start --host-port=127.0.0.1:8243
+npm run test:integration
+```

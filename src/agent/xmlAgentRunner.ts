@@ -1,5 +1,7 @@
+import { readFileSync } from 'fs';
 import * as readline from 'readline';
 import { Span, SpanStatusCode } from '@opentelemetry/api';
+import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
 import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateToolDefinitions } from '#agent/agentPromptUtils';
 import { getServiceName } from '#fastify/trace-init/trace-init';
 import { Slack } from '#functions/slack';
@@ -12,14 +14,14 @@ import { envVar } from '#utils/env-var';
 import { appContext } from '../app';
 import { getFunctionDefinitions } from '../functionDefinition/metadata';
 import { AgentContext, AgentLLMs, AgentRunningState, agentContext, agentContextStorage, createContext, llms } from './agentContext';
-import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from './agentFunctions';
 import { Toolbox } from './toolbox';
 
 export const SUPERVISOR_RESUMED_FUNCTION_NAME = 'Supervisor.Resumed';
 export const SUPERVISOR_CANCELLED_FUNCTION_NAME = 'Supervisor.Cancelled';
 
 export interface RunAgentConfig {
-	user: User;
+	/** Uses currentUser() if not provided */
+	user?: User;
 	/** The name of this agent */
 	agentName: string;
 	/** The tools the agent has available to call */
@@ -93,6 +95,8 @@ export async function provideFeedback(agentId: string, executionId: string, feed
 
 export async function startAgent(config: RunAgentConfig): Promise<string> {
 	const agent: AgentContext = createContext(config);
+	// System prompt for the XML function calling autonomous agent
+	agent.systemPrompt = readFileSync('src/agent/xml-agent-system-prompt').toString();
 
 	if (config.initialPrompt?.includes('<user_request>')) {
 		const startIndex = config.initialPrompt.indexOf('<user_request>') + '<user_request>'.length;
@@ -159,7 +163,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 
 		let shouldContinue = true;
 		while (shouldContinue) {
-			shouldContinue = await withActiveSpan('Agent control loop', async (span) => {
+			shouldContinue = await withActiveSpan('Autonomous agent', async (span) => {
 				let completed = false;
 				let requestFeedback = false;
 				let anyInvokeErrors = false;
@@ -292,6 +296,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 		logger.info(message);
 
 		const slackConfig = agent.user.toolConfig[Slack.name];
+		// TODO check for env vars
 		if (slackConfig?.webhookUrl || slackConfig?.token) {
 			try {
 				await new Slack().sendMessage(message);

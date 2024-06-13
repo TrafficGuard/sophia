@@ -2,4 +2,8 @@
 
 ### Setup
 
-The main /bin/configure installs via pip the mkdocs and mkdocs-material packages.
+`./bin/setup`
+
+## Serve
+
+`./bin/serve`

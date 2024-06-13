@@ -1,13 +1,13 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentContext, createContext, deserializeAgentContext, serializeContext } from '#agent/agentContext';
-import { RunAgentConfig, runAgent } from '#agent/agentRunner';
-import { getHumanInLoopSettings } from '#agent/humanInLoop';
 import { Toolbox } from '#agent/toolbox';
+import { RunAgentConfig, runAgent } from '#agent/xmlAgentRunner';
 import { FileSystem } from '#functions/filesystem';
 import { UtilFunctions } from '#functions/util';
 import { GPT4 } from '#llm/models/openai';
 import { appContext } from '../app';
+import { envVarHumanInLoopSettings } from '../cli/cliHumanInLoop';
 
 describe('agentContext', () => {
 	describe('serialisation', () => {
@@ -27,7 +27,7 @@ describe('agentContext', () => {
 				toolbox,
 				user: appContext().userService.getSingleUser(),
 				initialPrompt: 'question',
-				humanInLoop: getHumanInLoopSettings(),
+				humanInLoop: envVarHumanInLoopSettings(),
 			};
 			const agentContext: AgentContext = createContext(config);
 			agentContext.fileSystem.setWorkingDirectory('./workingDir');

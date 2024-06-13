@@ -1,6 +1,6 @@
 import { Type } from '@sinclair/typebox';
 import { AgentContext } from '#agent/agentContext';
-import { cancelAgent, provideFeedback, resumeError, runAgent } from '#agent/agentRunner';
+import { cancelAgent, provideFeedback, resumeError, runAgent } from '#agent/xmlAgentRunner';
 import { send, sendBadRequest } from '#fastify/index';
 import { logger } from '#o11y/logger';
 import { AppFastifyInstance, appContext } from '../../app';

@@ -1,3 +1,4 @@
+# docker compose up --build
 services:
   node:
     container_name: nous
@@ -8,7 +9,7 @@ services:
       context: ./
       dockerfile: Dockerfile
     volumes:
-      - .:/nous
+      # - .:/nous
       # Provides your Google Cloud application default credentials
       - ~/.config/gcloud:/home/nous/.config/gcloud
 #    environment:

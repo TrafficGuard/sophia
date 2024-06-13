@@ -61,7 +61,7 @@ class AnthropicVertexLLM extends BaseLLM {
 	}
 
 	private api(): AnthropicVertex {
-		if (this.client) {
+		if (!this.client) {
 			this.client = new AnthropicVertex({
 				projectId: currentUser().llmConfig.vertexProjectId ?? envVar('GCLOUD_PROJECT'),
 				region: currentUser().llmConfig.vertexRegion ?? envVar('GCLOUD_REGION'),
@@ -126,6 +126,7 @@ class AnthropicVertexLLM extends BaseLLM {
 				requestTime,
 				timeToFirstToken: timeToFirstToken,
 				totalTime: finishTime - requestTime,
+				callStack: agentContext().callStack.join(' > '),
 			};
 			await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
 
@@ -144,6 +145,7 @@ class AnthropicVertexLLM extends BaseLLM {
 				outputCost,
 				cost,
 				outputChars: responseText.length,
+				callStack: agentContext().callStack.join(' > '),
 			});
 
 			if (message.stop_reason === 'max_tokens') {

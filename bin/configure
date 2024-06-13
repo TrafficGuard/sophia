@@ -1,66 +1,21 @@
-# source this file
-([[ -n $ZSH_EVAL_CONTEXT && $ZSH_EVAL_CONTEXT =~ :file$ ]] ||
- [[ -n $KSH_VERSION && $(cd "$(dirname -- "$0")" &&
-    printf '%s' "${PWD%/}/")$(basename -- "$0") != "${.sh.file}" ]] ||
-    [[ -n $BASH_VERSION ]] && (return 0 2>/dev/null)) || {
-    echo "Source this script instead of trying to execute it"
-}
 
-# Ensure pyenv, ripgrep and nvm are installed
+# Python setup ---------------------------------
 
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    sudo apt-get install ripgrep -y
-    if ! command -v pyenv &> /dev/null
-    then
-        echo "pyenv could not be found. To install run:";
-        echo "curl https://pyenv.run | bash";
-        exit 1
-    fi
-    if ! command -v nvm &> /dev/null
-    then
-        echo "nvm could not be found. To install run:";
-        echo "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash";
-        echo "Note the instructions at the end to update your .bashrc/.profile config files"
-        exit 1
-    fi
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-    if ! command -v brew &> /dev/null
-    then
-        echo "brew could not be found. Install from https://brew.sh/"; exit 1
-    fi
-    brew install ripgrep nvm pyenv
-#elif [[ "$OSTYPE" == "cygwin" ]]; then
-        # POSIX compatibility layer and Linux environment emulation for Windows
-#elif [[ "$OSTYPE" == "msys" ]]; then
-        # Lightweight shell and GNU utilities compiled for Windows (part of MinGW)
-#elif [[ "$OSTYPE" == "win32" ]]; then
-        # I'm not sure this can happen.
-else
-    echo "Unsupported OSTYPE $OSTYPE"; exit 1
-fi
-
-# Python setup ------------------------
 pyenv install $(cat .python-version)
+python -m pip install --upgrade pip
+pip install aider-chat youtube-transcript-api
 
-[[ -n $VIRTUAL_ENV ]] || VIRTUAL_ENV="$(pwd)/.venv"
-if [[ -d "$VIRTUAL_ENV" ]]; then
-    echo "Activating python virtual environment"
-    source ./.venv/bin/activate
-else
-    echo "Creating python virtual environment"
-    python3 -m venv .venv
-    source ./.venv/bin/activate
-    python -m pip install --upgrade pip
-    pip install aider-chat mkdocs mkdocs-material
-fi
 
-# Node.js setup ------------------------
+# Node.js setup ---------------------------------
 
 nvm install $(cat .nvmrc)
 nvm use
 npm install
 
-if [[ ! -f ./.env ]]; then
-    echo "Creating .env by copying from .env.example"
-    cp ./.env.example ./.env
+
+# Default environment variables  ----------------
+
+if [[ ! -f ./variables/local.env ]]; then
+    echo "Creating local.env by copying from local.env.example"
+    cp ./variables/local.env.example ./variables/local.env
 fi

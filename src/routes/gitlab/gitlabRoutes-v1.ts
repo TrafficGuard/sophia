@@ -1,14 +1,14 @@
 import { Type } from '@sinclair/typebox';
 import { AgentContext, agentContextStorage, createContext } from '#agent/agentContext';
-import { RunAgentConfig } from '#agent/agentRunner';
-import { getHumanInLoopSettings } from '#agent/humanInLoop';
 import { Toolbox } from '#agent/toolbox';
+import { RunAgentConfig } from '#agent/xmlAgentRunner';
 import { send, sendSuccess } from '#fastify/index';
 import { GitLabServer } from '#functions/scm/gitlab';
 import { GEMINI_1_5_PRO_LLMS } from '#llm/models/vertexai';
 import { logger } from '#o11y/logger';
 import { currentUser } from '#user/userService/userContext';
 import { AppFastifyInstance } from '../../app';
+import { envVarHumanInLoopSettings } from '../../cli/cliHumanInLoop';
 
 const basePath = '/api/webhooks';
 
@@ -33,9 +33,9 @@ export async function gitlabRoutesV1(fastify: AppFastifyInstance) {
 				agentName: `MR review - ${event.object_attributes.title}`,
 				llms: GEMINI_1_5_PRO_LLMS(),
 				toolbox: new Toolbox(),
-				user: currentUser(),
+				user: currentUser(), // TODO need to specify a user for code reviews
 				initialPrompt: '',
-				humanInLoop: getHumanInLoopSettings(),
+				humanInLoop: envVarHumanInLoopSettings(),
 			};
 			const context: AgentContext = createContext(config);
 			agentContextStorage.enterWith(context);

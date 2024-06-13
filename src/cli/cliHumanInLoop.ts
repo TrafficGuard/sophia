@@ -1,10 +1,6 @@
-export interface HumanInLoop {
-	getHumanInLoopSettings();
+import { currentUser } from '#user/userService/userContext';
 
-	waitForInput(): Promise<void>;
-}
-
-export function getHumanInLoopSettings() {
+export function envVarHumanInLoopSettings() {
 	// Human in the loop settings
 	// How often do we require human input to avoid misguided actions and wasting money
 	const hilBudgetRaw = process.env.HIL_BUDGET;

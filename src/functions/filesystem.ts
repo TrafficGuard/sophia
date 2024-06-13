@@ -120,18 +120,32 @@ export class FileSystem {
 
 	/**
 	 * Searches for files on the filesystem (using ripgrep) with contents matching the search regex.
-	 * @param regex the regular expression to search in all the files recursively for
+	 * @param contentsRegex the regular expression to search the content all the files recursively for
 	 * @returns the list of filenames (with postfix :<match_count>) which have contents matching the regular expression.
 	 */
 	@func()
-	async searchFiles(regex: string): Promise<string> {
+	async searchFilesMatchingContents(contentsRegex: string): Promise<string> {
 		// --count Only show count of line matches for each file
 		// const { stdout, stderr, exitCode } = await execCommand(`rg --count ${regex}`);
-		const results = await spawnCommand(`rg --count ${regex}`);
+		const results = await spawnCommand(`rg --count '${contentsRegex}'`);
 		if (results.exitCode > 0) throw new Error(results.stderr);
 		return results.stdout;
 		// if (exitCode > 0) throw new Error(`${stdout}\n${stderr}`);
 		// return stdout;
+	}
+
+	/**
+	 * Searches for files on the filesystem where the filename matches the regex.
+	 * @param fileNameRegex the regular expression to match the filename.
+	 * @returns the list of filenames matching the regular expression.
+	 */
+	@func()
+	async searchFilesMatchingName(fileNameRegex: string): Promise<string> {
+		// --count Only show count of line matches for each file
+		// const { stdout, stderr, exitCode } = await execCommand(`rg --count ${regex}`);
+		const results = await spawnCommand(`find . -print | grep -i '${fileNameRegex}'`);
+		if (results.exitCode > 0) throw new Error(results.stderr);
+		return results.stdout;
 	}
 
 	/**

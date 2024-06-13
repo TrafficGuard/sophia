@@ -87,7 +87,6 @@ import { environment } from '@env/environment';
 export class AgentsComponent implements OnInit {
   agentContexts$: MatTableDataSource<any> = new MatTableDataSource<any>([]); // Observable<AgentContext[]> | undefined;
 
-  public agentContextDataSource = new MatTableDataSource<AgentContext>();
   displayedColumns: string[] = [
     'name',
     'state',

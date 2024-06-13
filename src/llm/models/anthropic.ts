@@ -105,7 +105,7 @@ export class Anthropic extends BaseLLM {
 			// TODO handle if there is a type != text
 			const responseText = message.content.map((content) => content.text).join();
 
-			const timeToFirstToken = Date.now();
+			const timeToFirstToken = Date.now() - requestTime;
 			const finishTime = Date.now();
 
 			const llmRequest = await llmRequestSave;
@@ -116,6 +116,7 @@ export class Anthropic extends BaseLLM {
 				requestTime,
 				timeToFirstToken: timeToFirstToken,
 				totalTime: finishTime - requestTime,
+				callStack: agentContext().callStack.join(' > '),
 			};
 			await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
 

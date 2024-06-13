@@ -43,32 +43,20 @@ Some of the key features include:
 - Function callable tools
     - Filesystem, Jira, Slack, Perplexity, Gitlab
 
-## Documentation
 
-- [Setup](https://github.com/TrafficGuard/nous/tree/preview/docs/docs/setup.md)
-- [Observability](https://github.com/TrafficGuard/nous/tree/preview/docs/docs/observability.md)
-- [Function calling](https://github.com/TrafficGuard/nous/tree/preview/docs/docs/functions.md)
-- [Autonomous AI Agent](https://github.com/TrafficGuard/nous/tree/preview/docs/docs/xml-agent.md)
-- [AI Software Engineer](https://github.com/TrafficGuard/nous/tree/preview/docs/docs/software-engineer.md)
-- [AI Code reviews](https://github.com/TrafficGuard/nous/tree/preview/docs/docs/code-review.md)
-- [Tools](https://github.com/TrafficGuard/nous/tree/preview/docs/docs/tools.md)
-
-## UI examples
-
-### New Agent
+## New Agent
 
 ![New Agent UI](https://public.trafficguard.ai/nous/start.png){ align=left }
 
-### Sample trace
+## Sample trace
 
 ![Sample trace in Google Cloud](https://public.trafficguard.ai/nous/trace.png){ align=left }
 
-### Human in the loop via Slack
+## Human in the loop example
 
 ![Human in the loop example](https://public.trafficguard.ai/nous/feedback.png){ align=left }
 
-## Contributing
+## Contributing 
 
 If you would like to contribute to the codebase, [issues](https://github.com/TrafficGuard/nous/issues) or [pull requests](https://github.com/TrafficGuard/nous/pulls) are always welcome!
 
-Contributed by [TrafficGuard](https://www.trafficguard.ai) - Revenue-driving ad fraud protection.

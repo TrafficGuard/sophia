@@ -1,8 +1,7 @@
 import { readFileSync } from 'fs';
 import { AgentLLMs, agentContextStorage, getFileSystem } from '#agent/agentContext';
-import { RunAgentConfig, runAgent, startAgent } from '#agent/agentRunner';
-import { getHumanInLoopSettings } from '#agent/humanInLoop';
 import { Toolbox } from '#agent/toolbox';
+import { RunAgentConfig, runAgent, startAgent } from '#agent/xmlAgentRunner';
 import '#fastify/trace-init/trace-init';
 import { PUBLIC_WEB } from '#functions/web/web';
 import { ClaudeLLMs } from '#llm/models/anthropic';
@@ -18,6 +17,7 @@ import { MultiLLM } from '#llm/multi-llm';
 import { appContext } from '../app';
 
 import { currentUser } from '#user/userService/userContext';
+import { envVarHumanInLoopSettings } from './cliHumanInLoop';
 
 // Usage:
 // npm run research
@@ -55,7 +55,7 @@ export async function main() {
 		initialPrompt,
 		systemPrompt,
 		toolbox,
-		humanInLoop: getHumanInLoopSettings(),
+		humanInLoop: envVarHumanInLoopSettings(),
 		llms,
 	};
 	await startAgent(config);

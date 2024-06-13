@@ -2,3 +2,19 @@ site_name: Nous
 site_url: https://nous.trafficguard.ai/
 theme:
   name: material
+markdown_extensions:
+  - attr_list
+  - md_in_html
+
+nav:
+  - introduction.md
+  - setup.md
+  - functions.md
+  - observability.md
+  - xml-agent.md
+  - software-engineer.md
+  - code-review.md
+  - tools.md
+
+plugins:
+  - glightbox

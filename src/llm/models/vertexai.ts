@@ -99,7 +99,7 @@ class VertexLLM extends BaseLLM {
 			let responseText = '';
 			let timeToFirstToken = null;
 			for await (const item of streamingResp.stream) {
-				if (!timeToFirstToken) timeToFirstToken = Date.now();
+				if (!timeToFirstToken) timeToFirstToken = Date.now() - requestTime;
 				if (item.candidates[0]?.content?.parts?.length > 0) {
 					responseText += item.candidates[0].content.parts[0].text;
 				}
@@ -114,7 +114,9 @@ class VertexLLM extends BaseLLM {
 				requestTime,
 				timeToFirstToken,
 				totalTime: finishTime - requestTime,
+				callStack: agentContext().callStack.join(' > '),
 			};
+			logger.info(`Call stack: ${agentContext().callStack.join(' > ')}`);
 			try {
 				await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
 			} catch (e) {

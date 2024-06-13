@@ -32,6 +32,7 @@ export class FileUserService implements UserService {
 	}
 
 	async createUser(user: Partial<User>): Promise<User> {
+		logger.debug(`createUser ${user}`);
 		const newUser: User = {
 			id: user.id,
 			email: user.email ?? '',
@@ -88,6 +89,7 @@ export class FileUserService implements UserService {
 	}
 
 	async getUserByEmail(email: string): Promise<User> {
+		logger.debug(`getUserByEmail ${email}`);
 		const user = (await this.listUsers()).find((user) => user.email === email);
 		if (!user) throw new Error(`No user found with email ${email}`);
 		return user;

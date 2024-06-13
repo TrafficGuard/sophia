@@ -9,6 +9,7 @@ import { TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
 import { PinoInstrumentation } from './instrumentation';
 
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { agentContextStorage } from '#agent/agentContext';
 import { setTracer } from '#o11y/trace';
 
 let initialized = false;
@@ -101,7 +102,7 @@ function initTrace(): void {
 		});
 
 		const tracer = trace.getTracer(traceServiceName);
-		setTracer(tracer);
+		setTracer(tracer, agentContextStorage);
 	}
 }
 

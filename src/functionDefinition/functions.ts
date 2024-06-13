@@ -84,7 +84,12 @@ export function func() {
 		return function replacementMethod(this: any, ...args: any[]) {
 			const tracer = getTracer();
 			if (!tracer) {
-				return originalMethod.call(this, ...args);
+				try {
+					agentContext()?.callStack.push(functionName);
+					return originalMethod.call(this, ...args);
+				} finally {
+					agentContext()?.callStack.pop();
+				}
 			}
 			// NOTE - modification, build attributeExtractors from all the arguments
 			if (!this.__functionsObj) throw new Error(`No function definitions found for ${functionName}. Does the class have the @funcClass decorator?`);
@@ -98,9 +103,9 @@ export function func() {
 
 			return tracer.withActiveSpan(functionName, async (span: Span) => {
 				setFunctionSpanAttributes(span, functionName, attributeExtractors, args);
-
 				try {
 					agentContext()?.callStack.push(functionName);
+					span.setAttribute('call', agentContext()?.callStack.join(' > '));
 
 					const result = originalMethod.call(this, ...args);
 					if (typeof result?.then === 'function') await result;

@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { environment } from '@env/environment';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import {formatNumber} from "@angular/common";
 
 export interface LLMCall {
   request: LlmRequest;
@@ -46,6 +47,7 @@ export interface LlmResponse {
   /** Populated when called by a user through the UI */
   userId?: string;
   responseText: string;
+  callStack: string;
   /** LLM service/model identifier */
   llmId: string;
   /** Time of the LLM request */
@@ -265,6 +267,10 @@ export class AgentComponent implements OnInit {
     }
   }
 
+  keys(obj: any) {
+    return Object.keys(obj);
+  }
+
   extractMemoryContent(text: string): string | null {
     const memoryContentRegex = /<memory>(.*?)<\/memory>/s;
     const match = memoryContentRegex.exec(text);
@@ -286,4 +292,6 @@ export class AgentComponent implements OnInit {
     }
     return null;
   }
+
+  protected readonly formatNumber = formatNumber;
 }

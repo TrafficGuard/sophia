@@ -1,7 +1,7 @@
+import { agentContext } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
 import { func } from '../functionDefinition/functions';
 import { funcClass } from '../functionDefinition/metadata';
-import { agentContext } from './agentContext';
 
 export const AGENT_COMPLETED_NAME = 'Agent.completed';
 
@@ -15,8 +15,8 @@ export const REQUEST_FEEDBACK_PARAM_NAME = 'request';
 @funcClass(__filename)
 export class Agent {
 	/**
-	 * Pauses the work and request feedback/interaction from a supervisor when a decision or approval needs to be made before proceeding with the plan.
-	 * @param request {string} Notes on what decision or approval is required
+	 * Request feedback/interaction from a supervisor when a decision or approval needs to be made, or additional details are required, before proceeding with the plan.
+	 * @param request {string} Notes on what additional information/decision is required.
 	 */
 	@func()
 	async requestFeedback(request: string): Promise<void> {

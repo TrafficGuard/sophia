@@ -1,6 +1,8 @@
 /* eslint-disable semi */
 import { Span, Tracer } from '@opentelemetry/api';
 import opentelemetry from '@opentelemetry/api';
+import { AsyncLocalStorage } from 'async_hooks';
+import { AgentContext } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
 import { SugaredTracer, wrapTracer } from './trace/SugaredTracer';
 
@@ -30,12 +32,16 @@ const fakeSpan = {
 } as unknown as Span;
 
 let tracer: SugaredTracer | null = null;
+let agentContextStorage: AsyncLocalStorage<AgentContext>;
 
 /**
  * @param {Tracer} theTracer - Tracer to be set by the trace-init service
+ * @param theAgentContextStorage
  */
-export function setTracer(theTracer: Tracer): void {
+export function setTracer(theTracer: Tracer, theAgentContextStorage: AsyncLocalStorage<AgentContext>): void {
 	tracer = wrapTracer(theTracer);
+	// Having the agentContextStorage() function call in this file was causing a compile failure, so we need to pass in the reference to the storage.
+	agentContextStorage = theAgentContextStorage;
 }
 
 export function getTracer(): SugaredTracer | null {
@@ -65,6 +71,19 @@ export function getActiveSpan(): Span | null {
  * @returns the value from work function
  */
 export function withActiveSpan<T>(spanName: string, func: (span: Span) => T): T {
+	// const functionWithCallStack = (span: Span): T => {
+	// 	try {
+	// 		agentContext()?.callStack.push(spanName)
+	// 		return func(span)
+	// 	} finally {
+	// 		agentContext()?.callStack.pop()
+	// 	}
+	// };
+	//
+	// if (!tracer) return functionWithCallStack(fakeSpan);
+	//
+	// return tracer.withActiveSpan(spanName, functionWithCallStack);
+
 	if (!tracer) return func(fakeSpan);
 
 	return tracer.withActiveSpan(spanName, func);
@@ -102,13 +121,18 @@ export function span(attributeExtractors: SpanAttributeExtractors = {}) {
 	return function spanDecorator(originalMethod: any, context: ClassMethodDecoratorContext): any {
 		const functionName = String(context.name);
 		return function replacementMethod(this: any, ...args: any[]) {
-			if (!tracer) {
-				return originalMethod.call(this, ...args);
+			try {
+				agentContextStorage.getStore()?.callStack.push(functionName);
+				if (!tracer) {
+					return originalMethod.call(this, ...args);
+				}
+				return tracer.withActiveSpan(functionName, (span: Span) => {
+					setFunctionSpanAttributes(span, functionName, attributeExtractors, args);
+					return originalMethod.call(this, ...args);
+				});
+			} finally {
+				agentContextStorage.getStore()?.callStack.pop();
 			}
-			return tracer.withActiveSpan(functionName, (span: Span) => {
-				setFunctionSpanAttributes(span, functionName, attributeExtractors, args);
-				return originalMethod.call(this, ...args);
-			});
 		};
 	};
 }
@@ -133,32 +157,4 @@ export function setFunctionSpanAttributes(span: Span, functionName: string, attr
 			logger.warn(`Invalid attribute extractor for ${functionName}() attribute[${attribute}], must be a number or function`);
 		}
 	}
-}
-
-/**
- * Decorator for creating a span around a function, which can add the function arguments as
- * attributes to the span. The decorator argument object has the keys as the attribute names
- * and the values as either 1) the function args array index 2) a function which takes the args array as its one argument
- * e.g.
- * @spanWithArgAttributes({ bar: 0, baz: (args) => args[1].toSpanAttributeValue() })
- * public foo(bar: string, baz: ComplexType) {}
- *
- *
- * @param attributeExtractors
- * @returns
- */
-export function activeSpan(attributeExtractors: Record<string, number | ((...args: any) => string)> = {}) {
-	// NOTE this has been copied to func() in functions.ts and modified
-	// Any changes should be kept in sync
-	return function spanDecorator(originalMethod: any, context: ClassMethodDecoratorContext): any {
-		const functionName = String(context.name);
-		return function replacementMethod(this: any, ...args: any[]) {
-			if (!tracer) return originalMethod.call(this, ...args);
-
-			return tracer.withActiveSpan(functionName, (span: Span) => {
-				setFunctionSpanAttributes(span, functionName, attributeExtractors, args);
-				return originalMethod.call(this, ...args);
-			});
-		};
-	};
 }

@@ -1,7 +1,8 @@
 import { OpenAI as OpenAISDK } from 'openai';
-import { addCost, agentContext } from '#agent/agentContext';
+import { addCost, agentContext, getFileSystem } from '#agent/agentContext';
 import { CallerId } from '#llm/llmCallService/llmCallService';
 import { CreateLlmResponse } from '#llm/llmCallService/llmRequestResponse';
+import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
@@ -51,6 +52,19 @@ export class OpenAI extends BaseLLM {
 		return this.openAISDK;
 	}
 
+	async generateImage(description: string): Promise<string> {
+		const response = await this.sdk().images.generate({
+			model: 'dall-e-3',
+			prompt: description,
+			n: 1,
+			size: '1792x1024',
+		});
+		const imageUrl = response.data[0].url;
+		logger.info(`Generated image at ${imageUrl}`);
+		// await getFileSystem().writeFile('', imageUrl, 'utf8');
+		return imageUrl;
+	}
+
 	@logTextGeneration
 	async generateText(userPrompt: string, systemPrompt: string, mode?: GenerationMode): Promise<string> {
 		return withActiveSpan('generateText', async (span) => {
@@ -77,7 +91,7 @@ export class OpenAI extends BaseLLM {
 			let timeToFirstToken = null;
 			for await (const chunk of stream) {
 				responseText += chunk.choices[0]?.delta?.content || '';
-				if (!timeToFirstToken) timeToFirstToken = Date.now();
+				if (!timeToFirstToken) timeToFirstToken = Date.now() - requestTime;
 			}
 			const finishTime = Date.now();
 
@@ -89,6 +103,7 @@ export class OpenAI extends BaseLLM {
 				requestTime,
 				timeToFirstToken: timeToFirstToken,
 				totalTime: finishTime - requestTime,
+				callStack: agentContext().callStack.join(' > '),
 			};
 			await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
 

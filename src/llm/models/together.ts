@@ -69,7 +69,7 @@ export class TogetherLLM extends BaseLLM {
 
 				const responseText = completion.choices[0].message.content;
 
-				const timeToFirstToken = Date.now();
+				const timeToFirstToken = Date.now() - requestTime;
 				const finishTime = Date.now();
 
 				const llmRequest = await llmRequestSave;
@@ -80,6 +80,7 @@ export class TogetherLLM extends BaseLLM {
 					requestTime,
 					timeToFirstToken: timeToFirstToken,
 					totalTime: finishTime - requestTime,
+					callStack: agentContext().callStack.join(' > '),
 				};
 				await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
 

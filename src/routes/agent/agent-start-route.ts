@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { Type } from '@sinclair/typebox';
-import { startAgent } from '#agent/agentRunner';
 import { Toolbox } from '#agent/toolbox';
+import { startAgent } from '#agent/xmlAgentRunner';
 import { send } from '#fastify/index';
 import { getLLM } from '#llm/llmFactory';
 import { logger } from '#o11y/logger';
@@ -35,10 +35,18 @@ export async function agentStartRoute(fastify: AppFastifyInstance) {
 
 			logger.info(req.body, `Starting agent ${name}`);
 
+			logger.info(Object.keys(toolFactory));
 			const toolbox = new Toolbox();
-			for (const toolName of tools) toolbox.addToolType(toolFactory[toolName]);
+			for (const toolName of tools) {
+				const tool = toolFactory[toolName];
+				logger.info(`getting tool ${toolName} ${tool}`);
+				if (!tool) {
+					logger.error(`Tool ${toolName} not found in the toolFactory`);
+				} else {
+					toolbox.addToolType(toolFactory[toolName]);
+				}
+			}
 
-			const systemPrompt = readFileSync('src/cli/agent-system', 'utf-8');
 			startAgent({
 				user: currentUser(),
 				agentName: name,
@@ -50,7 +58,6 @@ export async function agentStartRoute(fastify: AppFastifyInstance) {
 					hard: getLLM(llmHard),
 					xhard: getLLM(llmHard),
 				},
-				systemPrompt: systemPrompt,
 				toolbox: toolbox,
 			});
 
