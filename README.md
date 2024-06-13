@@ -1,13 +1,14 @@
-<p style="align-content: center">
+<h1>nous.ai</h1>
+<hr>
+<p align="center">
   <!--<img src="https://public.trafficguard.ai/nous/banner.png" height="300" alt="noos logo"/>-->
-  <b style="font-size: xx-large">nous.ai</b><br/>
-  <em>🤖 An open-source platform for LLM based workflows and autonomous AI agents, in TypeScript 🤖</em>
+  <em>🤖 An open-source platform for autonomous AI agents and LLM based workflows in TypeScript 🤖</em>
 </p>
 <em><b>Nous</b></em>, or Greek νοῦς, sometimes equated to intellect or intelligence, is a concept from classical philosophy for the faculty of the human mind necessary for understanding what is true or real.
 
 In a nutshell <em><b>nous</b></em> is a free, flexible, integrated platform for Node.js/TypeScript agentic and LLM-based applications.
 
-The background for Nous was experimenting with what AI could achieve, or assist with, from a DevOps/Platform engineering perspective.
+Nous started with experimenting how AI could help *get stuff done* from a DevOps/Platform engineering perspective.
 For example handling standard requests (new projects, database schema updates etc), triaging build failures, reviewing code for standards etc.
 
 Through its evolution we designed it as a flexible platform that can be expanded to support the integrations of your choice.
@@ -57,15 +58,15 @@ Some of the key features include:
 
 ### New Agent
 
-![New Agent UI](https://public.trafficguard.ai/nous/start.png){ align=left }
+![New Agent UI](https://public.trafficguard.ai/nous/start.png)
 
 ### Sample trace
 
-![Sample trace in Google Cloud](https://public.trafficguard.ai/nous/trace.png){ align=left }
+![Sample trace in Google Cloud](https://public.trafficguard.ai/nous/trace.png)
 
 ### Human in the loop via Slack
 
-![Human in the loop example](https://public.trafficguard.ai/nous/feedback.png){ align=left }
+![Human in the loop example](https://public.trafficguard.ai/nous/feedback.png)
 
 ## Contributing
 
