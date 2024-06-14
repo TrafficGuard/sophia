@@ -6,6 +6,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { environment } from '@env/environment';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {formatNumber} from "@angular/common";
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 export interface LLMCall {
   request: LlmRequest;
@@ -79,7 +80,8 @@ export class AgentComponent implements OnInit {
     private http: HttpClient,
     private formBuilder: FormBuilder,
     private snackBar: MatSnackBar,
-    private router: Router
+    private router: Router,
+    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit(): void {
