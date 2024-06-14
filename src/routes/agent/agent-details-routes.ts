@@ -43,7 +43,9 @@ export async function agentDetailsRoutes(fastify: AppFastifyInstance) {
 			const agentId = req.params.agentId;
 			const ctx: AgentContext = await fastify.agentStateService.load(agentId);
 			if (!ctx) return sendBadRequest(reply);
-			send(reply, 200, serializeContext(ctx));
+			const serializedContext = serializeContext(ctx);
+			serializedContext.tools = toolRegistry().map((t) => t.name);
+			send(reply, 200, serializedContext);
 		},
 	);
 }
