@@ -5,7 +5,6 @@ import { map } from 'rxjs/operators';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { environment } from '@env/environment';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import {formatNumber} from "@angular/common";
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 export interface LLMCall {
@@ -71,6 +70,7 @@ export class AgentComponent implements OnInit {
   agentDetails: any = null;
   selectedTabIndex: number = 0;
   feedbackForm!: FormGroup;
+  hilForm!: FormGroup;
   errorForm!: FormGroup;
   output: string | null = null;
   isSubmitting: boolean = false;
@@ -106,6 +106,7 @@ export class AgentComponent implements OnInit {
     });
     this.initializeFeedbackForm();
     this.initializeErrorForm();
+    this.initializeHillForm();
   }
 
   private getTabNameFromIndex(index: number): string {
@@ -151,80 +152,107 @@ export class AgentComponent implements OnInit {
     });
   }
 
+  private initializeHillForm(): void {
+    this.hilForm = this.formBuilder.group({
+      feedback: [''],
+    });
+  }
+
   private initializeErrorForm(): void {
     this.errorForm = this.formBuilder.group({
       errorDetails: ['', Validators.required],
     });
   }
 
-  onResumeError(): void {
+  onResumeHil(): void {
+    if (!this.hilForm.valid) return;
     this.isSubmitting = true;
-    if (this.errorForm.valid) {
-      const errorDetails = this.errorForm.get('errorDetails')?.value;
-      this.http
-        .post(`${environment.serverUrl}/agent/v1/resume-error`, {
-          agentId: this.agentId,
-          executionId: this.agentDetails.executionId,
-          feedback: errorDetails,
-        })
-        .subscribe({
-          next: (response) => {
-            console.log('Agent resumed successfully:', response);
-            this.loadAgentDetails(this.agentId!);
-            this.isSubmitting = false;
-            this.loadAgentDetails(this.agentId!);
-          },
-          error: (error) => {
-            this.isSubmitting = false;
-            console.error('Error resuming agent:', error);
-            this.snackBar.open('Error resuming agent', 'Close', { duration: 3000 });
-          },
-        });
-    }
+    const feedback = this.hilForm.get('feedback')?.value;
+    this.http
+      .post(`${environment.serverUrl}/agent/v1/resume-hil`, {
+        agentId: this.agentId,
+        executionId: this.agentDetails.executionId,
+        feedback,
+      })
+      .subscribe({
+        next: (response) => {
+          console.log('Agent resumed successfully:', response);
+          this.loadAgentDetails(this.agentId!);
+          this.isSubmitting = false;
+          this.loadAgentDetails(this.agentId!);
+        },
+        error: (error) => {
+          this.isSubmitting = false;
+          console.error('Error resuming agent:', error);
+          this.snackBar.open('Error resuming agent', 'Close', { duration: 3000 });
+        },
+      });
+  }
+
+  onResumeError(): void {
+    if (!this.errorForm.valid) return;
+    this.isSubmitting = true;
+    const errorDetails = this.errorForm.get('errorDetails')?.value;
+    this.http
+      .post(`${environment.serverUrl}/agent/v1/resume-error`, {
+        agentId: this.agentId,
+        executionId: this.agentDetails.executionId,
+        feedback: errorDetails,
+      })
+      .subscribe({
+        next: (response) => {
+          console.log('Agent resumed successfully:', response);
+          this.loadAgentDetails(this.agentId!);
+          this.isSubmitting = false;
+          this.loadAgentDetails(this.agentId!);
+        },
+        error: (error) => {
+          this.isSubmitting = false;
+          console.error('Error resuming agent:', error);
+          this.snackBar.open('Error resuming agent', 'Close', { duration: 3000 });
+        },
+      });
   }
 
   cancelAgent(): void {
-    if (this.agentId) {
-      this.http
-        .post(`${environment.serverUrl}/agent/v1/cancel`, {
-          agentId: this.agentId,
-          executionId: this.agentDetails.executionId,
-          reason: 'None provided',
-        })
-        .subscribe({
-          next: (response) => {
-            console.log('Agent cancelled successfully:', response);
-            this.loadAgentDetails(this.agentId!);
-          },
-          error: (error) => {
-            console.error('Error cancelling agent:', error);
-            this.snackBar.open('Error cancelling agent', 'Close', { duration: 3000 });
-          },
-        });
-    }
+    this.http
+      .post(`${environment.serverUrl}/agent/v1/cancel`, {
+        agentId: this.agentId,
+        executionId: this.agentDetails.executionId,
+        reason: 'None provided',
+      })
+      .subscribe({
+        next: (response) => {
+          console.log('Agent cancelled successfully:', response);
+          this.loadAgentDetails(this.agentId!);
+        },
+        error: (error) => {
+          console.error('Error cancelling agent:', error);
+          this.snackBar.open('Error cancelling agent', 'Close', { duration: 3000 });
+        },
+      });
   }
 
   onSubmitFeedback(): void {
-    if (this.feedbackForm.valid) {
-      const feedback = this.feedbackForm.get('feedback')?.value;
-      this.http
-        .post(`${environment.serverUrl}/agent/v1/feedback`, {
-          agentId: this.agentId,
-          executionId: this.agentDetails.executionId,
-          feedback: feedback,
-        })
-        .subscribe({
-          next: (response) => {
-            console.log('Feedback submitted successfully:', response);
-            this.loadAgentDetails(this.agentId!);
-            this.feedbackForm.reset();
-          },
-          error: (error) => {
-            console.error('Error submitting feedback:', error);
-            this.snackBar.open('Error submitting feedback', 'Close', { duration: 3000 });
-          },
-        });
-    }
+    if (!this.feedbackForm.valid) return;
+    const feedback = this.feedbackForm.get('feedback')?.value;
+    this.http
+      .post(`${environment.serverUrl}/agent/v1/feedback`, {
+        agentId: this.agentId,
+        executionId: this.agentDetails.executionId,
+        feedback: feedback,
+      })
+      .subscribe({
+        next: (response) => {
+          console.log('Feedback submitted successfully:', response);
+          this.loadAgentDetails(this.agentId!);
+          this.feedbackForm.reset();
+        },
+        error: (error) => {
+          console.error('Error submitting feedback:', error);
+          this.snackBar.open('Error submitting feedback', 'Close', { duration: 3000 });
+        },
+      });
   }
 
   loadLlmCalls(): void {
@@ -295,5 +323,9 @@ export class AgentComponent implements OnInit {
     return null;
   }
 
-  protected readonly formatNumber = formatNumber;
+  convertNewlinesToHtml(text: string): SafeHtml {
+    text ??= '';
+    // sanitize first?
+    return this.sanitizer.bypassSecurityTrustHtml(text.replace(/\\n/g, '<br/>'));
+  }
 }

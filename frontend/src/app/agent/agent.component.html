@@ -39,6 +39,25 @@
       </form>
     </mat-card>
 
+    <mat-card *ngIf="agentDetails.state === 'hil'">
+      <form [formGroup]="hilForm" (ngSubmit)="onResumeHil()">
+        <mat-card-title>Human In Loop check</mat-card-title>
+        <mat-card-content>
+          <mat-form-field appearance="fill" class="full-width">
+            <textarea
+              matInput
+              placeholder="Provide additional details (optional)"
+              formControlName="feedback"
+            ></textarea>
+          </mat-form-field>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-raised-button color="primary" type="submit">Resume</button>
+          <button mat-raised-button color="warn" (click)="cancelAgent()">Cancel Agent</button>
+        </mat-card-actions>
+      </form>
+    </mat-card>
+
     <mat-card>
       <mat-list>
         <mat-list-item *ngIf="agentDetails.agentId"
@@ -143,10 +162,10 @@
             <strong>{{ param.key }}</strong> {{ param.value }}
           </p>
         </div>
-        <strong>{{ invoked.stdout ? 'Output: ' : '' }}</strong
-        >{{ invoked.stdout }}<br *ngIf="invoked.stdout" />
-        <strong>{{ invoked.stderr ? 'Errors: ' : '' }}</strong
-        >{{ invoked.stderr }}
+        <strong>{{ invoked.stdout ? 'Output: ' : '' }}</strong>
+        <div [innerHTML]="convertNewlinesToHtml(invoked.stdout)"></div>
+        <strong>{{ invoked.stderr ? 'Errors: ' : '' }}</strong>
+        <div [innerHTML]="convertNewlinesToHtml(invoked.stderr)"></div>
       </mat-card-content>
     </mat-card>
     <div *ngIf="agentDetails.functionCallHistory.length === 0">
@@ -156,7 +175,7 @@
 
   <mat-tab label="LLM Calls">
     <mat-card *ngFor="let call of llmCalls; let i = index">
-      <mat-card-title>Call ID: {{ call.response.callStack }}</mat-card-title>
+      <mat-card-title>Call ID: {{ call.response.callStack }}<a href="https://console.cloud.google.com/firestore/databases/daniel/data/panel/LlmResponse/{{ call.response.id }}?project=tg-infra-dev">gcp</a></mat-card-title>
       <mat-card-content>
         <p><strong>LLM:</strong> {{ call.response.llmId }} &nbsp;&nbsp; <strong>Request Time:</strong> {{ call.response.requestTime | date : 'medium' }}. &nbsp;&nbsp; <strong>Total Time:</strong> {{ (call.response.totalTime / 1000).toFixed(1) }}s</p>
         <mat-expansion-panel *ngIf="call.request.systemPromptId">
