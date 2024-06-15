@@ -77,7 +77,7 @@
           ><span class="fixed-width-field"><strong>User ID:</strong></span> {{ agentDetails.userId }}
         </mat-list-item>
         <mat-list-item
-          ><span class="fixed-width-field"><strong>State:</strong></span> {{ agentDetails.state }}
+          ><span class="fixed-width-field"><strong>State:</strong></span> {{ displayState(agentDetails.state) }}
         </mat-list-item>
         <mat-list-item *ngIf="agentDetails.state === 'completed'"
           ><span class="fixed-width-field"><strong>Output:</strong></span> {{ output }}
@@ -120,12 +120,19 @@
           ><span class="fixed-width-field"><strong>Planning Response:</strong></span>
           {{ agentDetails.planningResponse }}
         </mat-list-item>
+
+        <mat-list-item class="tools-row">
+          <span class="fixed-width-field"><strong>Tools:</strong></span>
+          <div class="tools-column">{{ agentDetails.toolbox.tools.sort().join(', ') }}</div>
+        </mat-list-item>
+
         <mat-list-item class="llm-row">
           <span class="fixed-width-field"><strong>LLMS:</strong></span>
           <div class="llm-column"><strong>Easy:</strong> {{ agentDetails.llms.easy }}</div>
           <div class="llm-column"><strong>Medium:</strong> {{ agentDetails.llms.medium }}</div>
           <div class="llm-column"><strong>Hard:</strong> {{ agentDetails.llms.hard }}</div>
         </mat-list-item>
+        
         <mat-list-item
           ><span class="fixed-width-field"><strong>Cost:</strong></span> ${{ agentDetails.cost | number : '1.2-2' }}
         </mat-list-item>
@@ -138,7 +145,7 @@
           }}
         </mat-list-item>
         <mat-list-item
-          ><span class="fixed-width-field"><strong>Temp Dir:</strong></span> {{ agentDetails.tempDir }}
+          ><span class="fixed-width-field"><strong>Working Directory:</strong></span> {{ agentDetails.fileSystem.workingDirectory }}
         </mat-list-item>
       </mat-list>
     </mat-card>
@@ -175,7 +182,7 @@
 
   <mat-tab label="LLM Calls">
     <mat-card *ngFor="let call of llmCalls; let i = index">
-      <mat-card-title>Call ID: {{ call.response.callStack }}<a href="https://console.cloud.google.com/firestore/databases/daniel/data/panel/LlmResponse/{{ call.response.id }}?project=tg-infra-dev">gcp</a></mat-card-title>
+      <mat-card-title>Call ID: {{ call.response.callStack }}<a href="{{ llmCallUrl(call.response) }}">gcp</a></mat-card-title>
       <mat-card-content>
         <p><strong>LLM:</strong> {{ call.response.llmId }} &nbsp;&nbsp; <strong>Request Time:</strong> {{ call.response.requestTime | date : 'medium' }}. &nbsp;&nbsp; <strong>Total Time:</strong> {{ (call.response.totalTime / 1000).toFixed(1) }}s</p>
         <mat-expansion-panel *ngIf="call.request.systemPromptId">

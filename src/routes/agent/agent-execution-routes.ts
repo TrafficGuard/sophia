@@ -1,6 +1,6 @@
 import { Type } from '@sinclair/typebox';
 import { AgentContext } from '#agent/agentContext';
-import { cancelAgent, provideFeedback, resumeError, runAgent } from '#agent/xmlAgentRunner';
+import {cancelAgent, provideFeedback, resumeError, resumeHil, runAgent} from '#agent/xmlAgentRunner';
 import { send, sendBadRequest } from '#fastify/index';
 import { logger } from '#o11y/logger';
 import { AppFastifyInstance, appContext } from '../../app';
@@ -44,6 +44,27 @@ export async function agentExecutionRoutes(fastify: AppFastifyInstance) {
 			const { agentId, executionId, feedback } = req.body;
 
 			await resumeError(agentId, executionId, feedback);
+
+			send(reply, 200);
+		},
+	);
+
+	/** Resumes an agent in the hil (human in the loop) state */
+	fastify.post(
+		`${v1BasePath}/resume-hil`,
+		{
+			schema: {
+				body: Type.Object({
+					agentId: Type.String(),
+					executionId: Type.String(),
+					feedback: Type.String(),
+				}),
+			},
+		},
+		async (req, reply) => {
+			const { agentId, executionId, feedback } = req.body;
+
+			await resumeHil(agentId, executionId, feedback);
 
 			send(reply, 200);
 		},

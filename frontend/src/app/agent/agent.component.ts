@@ -6,6 +6,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { environment } from '@env/environment';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { AgentContext, AgentRunningState } from '@app/agents/agents.component';
 
 export interface LLMCall {
   request: LlmRequest;
@@ -162,6 +163,25 @@ export class AgentComponent implements OnInit {
     this.errorForm = this.formBuilder.group({
       errorDetails: ['', Validators.required],
     });
+  }
+
+  displayState(state: AgentRunningState): string {
+    switch(state) {
+      case 'agent':
+        return 'Agent control loop';
+      case 'functions':
+        return 'Calling functions';
+       case 'error':
+         return 'Error';
+        case 'hil':
+          return 'Human-in-the-loop check';
+        case 'feedback':
+          return 'Agent requested feedback';
+        case 'completed':
+          return 'Completed'
+        default:
+          return state
+    }
   }
 
   onResumeHil(): void {
@@ -327,5 +347,13 @@ export class AgentComponent implements OnInit {
     text ??= '';
     // sanitize first?
     return this.sanitizer.bypassSecurityTrustHtml(text.replace(/\\n/g, '<br/>'));
+  }
+
+  agentUrl(agent: AgentContext): string {
+    return `https://console.cloud.google.com/firestore/databases/${environment.firestoreDb || '(default)'}/data/panel/AgentContext/${agent.agentId}?project=${environment.gcpProject}`
+  }
+
+  llmCallUrl(llmResponse: LlmResponse): string {
+    return `https://console.cloud.google.com/firestore/databases/${environment.firestoreDb || '(default)'}/data/panel/LlmResponse/${llmResponse.id}?project=${environment.gcpProject}`
   }
 }

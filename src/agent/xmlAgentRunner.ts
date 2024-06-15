@@ -64,8 +64,30 @@ export async function resumeError(agentId: string, executionId: string, feedback
 		stdout: feedback,
 		parameters: {},
 	});
+	agent.error = undefined
 	agent.state = 'agent';
 	agent.inputPrompt += `\nSupervisor note: ${feedback}`;
+	await appContext().agentStateService.save(agent);
+	return runAgent(agent);
+}
+
+/**
+ * Resume an agent that was in the Human-in-the-loop state
+ */
+export async function resumeHil(agentId: string, executionId: string, feedback: string): Promise<string> {
+	const agent = await appContext().agentStateService.load(agentId);
+	if (agent.executionId !== executionId) {
+		throw new Error('Invalid executionId. Agent has already been resumed');
+	}
+	if(feedback.trim().length) {
+		agent.functionCallHistory.push({
+			tool_name: SUPERVISOR_RESUMED_FUNCTION_NAME,
+			stdout: feedback,
+			parameters: {},
+		});
+		agent.inputPrompt += `\nSupervisor note: ${feedback}`;
+	}
+	agent.state = 'agent';
 	await appContext().agentStateService.save(agent);
 	return runAgent(agent);
 }

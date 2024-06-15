@@ -188,6 +188,8 @@ export class FirestoreLlmCallService implements LlmCallService {
 				requestTime: llmResponse.requestTime,
 				timeToFirstToken: llmResponse.timeToFirstToken,
 				totalTime: llmResponse.totalTime,
+				callStack: llmResponse.callStack,
+				userId: llmResponse.userId
 			};
 			if (caller.agentId) responseProps.agentId = caller.agentId;
 			if (caller.userId) responseProps.agentId = caller.userId;
