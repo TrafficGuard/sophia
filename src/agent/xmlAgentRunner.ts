@@ -64,7 +64,7 @@ export async function resumeError(agentId: string, executionId: string, feedback
 		stdout: feedback,
 		parameters: {},
 	});
-	agent.error = undefined
+	agent.error = undefined;
 	agent.state = 'agent';
 	agent.inputPrompt += `\nSupervisor note: ${feedback}`;
 	await appContext().agentStateService.save(agent);
@@ -79,7 +79,7 @@ export async function resumeHil(agentId: string, executionId: string, feedback: 
 	if (agent.executionId !== executionId) {
 		throw new Error('Invalid executionId. Agent has already been resumed');
 	}
-	if(feedback.trim().length) {
+	if (feedback.trim().length) {
 		agent.functionCallHistory.push({
 			tool_name: SUPERVISOR_RESUMED_FUNCTION_NAME,
 			stdout: feedback,

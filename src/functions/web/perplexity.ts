@@ -1,6 +1,7 @@
 import { logger } from '#o11y/logger';
 
 import OpenAI from 'openai';
+import { agentContext } from '#agent/agentContext';
 import { currentUser, toolConfig } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
 import { cacheRetry } from '../../cache/cacheRetry';
@@ -18,10 +19,11 @@ export class Perplexity {
 	/**
 	 * Calls the Perplexity AI search API to provide an AI summarised query grounded with update-to-date web searches
 	 * @param query the natural language query
+	 * @param saveToMemory if the response should be saved to the agent memory.
 	 */
 	@cacheRetry()
 	@func()
-	async search(query: string): Promise<string> {
+	async search(query: string, saveToMemory: boolean): Promise<string> {
 		try {
 			const perplexity = new OpenAI({
 				apiKey: toolConfig(Perplexity).key ?? envVar('PERPLEXITY_KEY'),
@@ -34,10 +36,15 @@ export class Perplexity {
 				messages: [{ role: 'user', content: query }],
 				stream: false,
 			});
-			return response.choices[0].message?.content;
-
+			const content = response.choices[0].message?.content;
+			// TODO Add perplexity costs. This is output tokens, do we get charged for their input tokens?
 			// $0.60/MIL + $5/1000
 			// 5 / 1000
+			if (saveToMemory) {
+				const key = `Perplexity-${query.replaceAll(' ', '_').replaceAll(/\W/g, '')}`;
+				agentContext().memory[key] = content;
+			}
+			return content;
 		} catch (e) {
 			log.error(e, `query: ${query}`);
 			throw e;
