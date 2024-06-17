@@ -25,9 +25,9 @@ export const VERTEX_SERVICE = 'vertex';
 
 export function vertexLLMRegistry(): Record<string, () => LLM> {
 	return {
-		[`${VERTEX_SERVICE}:gemini-1.5-pro-preview-0409`]: Gemini_1_5_Pro,
+		[`${VERTEX_SERVICE}:gemini-1.5-pro-001`]: Gemini_1_5_Pro,
 		[`${VERTEX_SERVICE}:gemini-experimental`]: Gemini_1_5_Experimental,
-		[`${VERTEX_SERVICE}:gemini-1.5-flash-preview-0514`]: Gemini_1_5_Flash,
+		[`${VERTEX_SERVICE}:gemini-1.5-flash-001`]: Gemini_1_5_Flash,
 
 		[`${VERTEX_SERVICE}:gemini-1.5-pro`]: Gemini_1_5_Pro,
 		[`${VERTEX_SERVICE}:gemini-1.5-flash`]: Gemini_1_5_Flash,
@@ -39,16 +39,16 @@ export function vertexLLMRegistry(): Record<string, () => LLM> {
 // https://cloud.google.com/vertex-ai/generative-ai/pricing
 
 // gemini-1.5-pro-latest
-export function Gemini_1_5_Pro() {
-	return new VertexLLM(VERTEX_SERVICE, 'gemini-1.5-pro-preview-0409', 1_000_000, 0.00125 / 1000, 0.00375 / 1000);
+export function Gemini_1_5_Pro(version = '001') {
+	return new VertexLLM(VERTEX_SERVICE, `gemini-1.5-pro-${version}`, 1_000_000, 0.00125 / 1000, 0.00375 / 1000);
 }
 
 export function Gemini_1_5_Experimental() {
 	return new VertexLLM(VERTEX_SERVICE, 'gemini-experimental', 1_000_000, 0.0036 / 1000, 0.018 / 1000);
 }
 
-export function Gemini_1_5_Flash() {
-	return new VertexLLM(VERTEX_SERVICE, 'gemini-1.5-flash-preview-0514', 1_000_000, 0.000125 / 1000, 0.000375 / 1000);
+export function Gemini_1_5_Flash(version = '001') {
+	return new VertexLLM(VERTEX_SERVICE, `gemini-1.5-flash-${version}`, 1_000_000, 0.000125 / 1000, 0.000375 / 1000);
 }
 
 /**
