@@ -65,32 +65,36 @@ function sanitize(s: string): string {
 
 @funcClass(__filename)
 export class GitLabServer implements SourceControlManagement {
-	gitlab;
-	host;
-	config: GitLabConfig;
+	_gitlab;
+	_config: GitLabConfig;
 
 	toJSON() {
 		this.api();
 		return {
-			host: this.host,
+			host: this.config().host,
 		};
 	}
 
-	private api(): any {
-		if (!this.gitlab) {
-			const config = toolConfig(GitLabServer);
-			this.host = config.host;
-			this.config = {
-				host: this.host ?? envVar('GITLAB_HOST'),
-				token: config.token ?? envVar('GITLAB_TOKEN'),
-				topLevelGroups: (config.topLevelGroups ?? envVar('GITLAB_GROUPS')).split(',').map((group) => group.trim()),
+	private config(): GitLabConfig {
+		if (!this._config) {
+			const userConfig = toolConfig(GitLabServer);
+			this._config = {
+				host: userConfig.host || envVar('GITLAB_HOST'),
+				token: userConfig.token || envVar('GITLAB_TOKEN'),
+				topLevelGroups: (userConfig.topLevelGroups || envVar('GITLAB_GROUPS')).split(',').map((group: string) => group.trim()),
 			};
-			this.gitlab = new Gitlab({
-				host: `https://${this.config.host}`,
-				token: this.config.token,
+		}
+		return this._config;
+	}
+
+	private api(): any {
+		if (!this._gitlab) {
+			this._gitlab = new Gitlab({
+				host: `https://${this.config().host}`,
+				token: this.config().token,
 			});
 		}
-		return this.gitlab;
+		return this._gitlab;
 	}
 
 	// /**
@@ -117,7 +121,7 @@ export class GitLabServer implements SourceControlManagement {
 	@cacheRetry({ scope: 'global' })
 	async getProjects(): Promise<any[]> {
 		const resultProjects: GitLabProject[] = [];
-		for (const group of this.config.topLevelGroups) {
+		for (const group of this.config().topLevelGroups) {
 			const projects = await this.api().Groups.allProjects(group, {
 				orderBy: 'name',
 				perPage: 100,
@@ -129,7 +133,7 @@ export class GitLabServer implements SourceControlManagement {
 			const descendantGroups = await this.api().Groups.allDescendantGroups(group, {});
 			for (const descendantGroup of descendantGroups) {
 				if (descendantGroup.full_name.includes('Archive')) continue;
-				if (this.config.groupExcludes?.has(descendantGroup.full_path)) continue;
+				if (this.config().groupExcludes?.has(descendantGroup.full_path)) continue;
 
 				// console.log(`${descendantGroup.full_path} ==========`);
 				const pageSize = 100;
@@ -171,7 +175,7 @@ export class GitLabServer implements SourceControlManagement {
 	/**
 	 * Clones a project from GitLab to the file system. To use this project the function FileSystem.setWorkingDirectory must be called after with the returned value
 	 * @param projectPathWithNamespace the full project path in GitLab
-	 * @returns the path in the FileSystem containing the repository files
+	 * @returns the path in the FileSystem containing the repository files.
 	 */
 	@func()
 	async cloneProject(projectPathWithNamespace: string): Promise<string> {
@@ -189,7 +193,7 @@ export class GitLabServer implements SourceControlManagement {
 			// checkExecResult(result, `Failed to pull ${path}`);
 		} else {
 			logger.info(`Cloning project: ${projectPathWithNamespace} to ${path}`);
-			const command = `git clone https://oauth2:${this.config.token}@${this.config.host}/${projectPathWithNamespace}.git ${path}`;
+			const command = `git clone https://oauth2:${this.config().token}@${this.config().host}/${projectPathWithNamespace}.git ${path}`;
 			const result = await execCmd(command);
 			checkExecResult(result, `Failed to clone ${projectPathWithNamespace}`);
 		}
