@@ -18,7 +18,7 @@ ai-in
 ai-out
 .npmrc
 .nous/
-src/test/*-in
-src/test/*-out
+src/cli/*-in
+src/cli/*-out
 ng-starter/
 tg/
