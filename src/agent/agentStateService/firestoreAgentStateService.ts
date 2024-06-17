@@ -53,13 +53,14 @@ export class FirestoreAgentStateService implements AgentStateService {
 
 	@span()
 	async list(): Promise<AgentContext[]> {
-		const querySnapshot = await this.db.collection('AgentContext').get();
+		const querySnapshot = await this.db.collection('AgentContext').orderBy('lastUpdate', 'desc').get();
 		return await this.deserializeQuery(querySnapshot);
 	}
 
 	@span()
 	async listRunning(): Promise<AgentContext[]> {
-		const querySnapshot = await this.db.collection('AgentContext').where('state', '!=', 'completed').get();
+		// Needs an index TODO https://cloud.google.com/firestore/docs/query-data/multiple-range-fields
+		const querySnapshot = await this.db.collection('AgentContext').where('state', '!=', 'completed').orderBy('lastUpdate', 'desc').get();
 		return await this.deserializeQuery(querySnapshot);
 	}
 
