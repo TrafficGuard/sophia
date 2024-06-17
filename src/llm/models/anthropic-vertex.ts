@@ -115,8 +115,8 @@ class AnthropicVertexLLM extends BaseLLM {
 			if (!message.content.length) throw new Error(`Response Message did not have any content: ${JSON.stringify(message)}`);
 			const responseText = message.content[0].text;
 
-			const timeToFirstToken = Date.now();
 			const finishTime = Date.now();
+			const timeToFirstToken = finishTime - requestTime;
 
 			const llmRequest = await llmRequestSave;
 			const llmResponse: CreateLlmResponse = {
