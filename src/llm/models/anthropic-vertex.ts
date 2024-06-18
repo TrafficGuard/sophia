@@ -112,8 +112,8 @@ class AnthropicVertexLLM extends BaseLLM {
 			}
 
 			// appCtx().
-			if (!message.content.length) throw new Error(`Response Message did not have any content: ${JSON.stringify(message)}`);
-			const responseText = message.content[0].text;
+
+			const responseText = message.content[0]?.text;
 
 			const finishTime = Date.now();
 			const timeToFirstToken = finishTime - requestTime;
@@ -147,6 +147,8 @@ class AnthropicVertexLLM extends BaseLLM {
 				outputChars: responseText.length,
 				callStack: agentContext().callStack.join(' > '),
 			});
+
+			if (!message.content.length) throw new Error(`Response Message did not have any content: ${JSON.stringify(message)}`);
 
 			if (message.stop_reason === 'max_tokens') {
 				// TODO we can replay with request with the current response appended so the LLM can complete it
