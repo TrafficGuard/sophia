@@ -8,6 +8,7 @@ import { openAiLLMRegistry } from '#llm/models/openai';
 import { togetherLLMRegistry } from '#llm/models/together';
 import { vertexLLMRegistry } from '#llm/models/vertexai';
 import { deepseekLLMRegistry } from '#llm/models/deepseek';
+import { deepseekLLMRegistry } from '#llm/models/deepseek';
 
 export const LLM_REGISTRY: Record<string, () => LLM> = {
 	...anthropicVertexLLMRegistry(),
@@ -17,6 +18,7 @@ export const LLM_REGISTRY: Record<string, () => LLM> = {
 	...openAiLLMRegistry(),
 	...togetherLLMRegistry(),
 	...vertexLLMRegistry(),
+	...deepseekLLMRegistry(),
 	...deepseekLLMRegistry(),
 };
 
