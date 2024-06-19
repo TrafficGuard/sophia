@@ -185,7 +185,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 
 		let shouldContinue = true;
 		while (shouldContinue) {
-			shouldContinue = await withActiveSpan('Autonomous agent', async (span) => {
+			shouldContinue = await withActiveSpan('Agent', async (span) => {
 				let completed = false;
 				let requestFeedback = false;
 				let anyInvokeErrors = false;
@@ -283,7 +283,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 							agent.functionCallHistory.push({
 								tool_name: invoker.tool_name,
 								parameters: invoker.parameters,
-								stdout: agent.error,
+								stderr: agent.error,
 							});
 							// How to handle tool invocation errors? Give the agent a chance to re-try or try something different, or always human in loop?
 						}
