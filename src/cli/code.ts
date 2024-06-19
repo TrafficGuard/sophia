@@ -17,20 +17,19 @@ import { envVarHumanInLoopSettings } from './cliHumanInLoop';
 // Used to test the local repo editing workflow in DevEditWorkflow
 
 // Usage:
-// npm run edit-local
+// npm run code
 
 async function main() {
 	const gemini = Gemini_1_5_Pro();
 	const llms: AgentLLMs = GEMINI_1_5_PRO_LLMS();
 
-	//const system = readFileSync('src/cli/agent-system', 'utf-8');
-	const initialPrompt = readFileSync('src/cli/edit-local-in', 'utf-8');
+	const initialPrompt = readFileSync('src/cli/code-in', 'utf-8');
 
 	const toolbox = new Toolbox();
 	toolbox.addToolType(FileSystem);
 
 	const config: RunAgentConfig = {
-		agentName: 'edit-local',
+		agentName: 'code',
 		llms,
 		toolbox,
 		user: currentUser(),
@@ -52,6 +51,7 @@ async function main() {
 		test: 'npm run test:unit',
 		languageTools: new TypescriptTools(),
 	};
+
 	await withActiveSpan('edit-local', async (span: Span) => {
 		span.setAttributes({
 			initialPrompt,
