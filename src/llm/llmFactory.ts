@@ -2,13 +2,12 @@ import { AgentLLMs } from '#agent/agentContext';
 import { LLM } from '#llm/llm';
 import { anthropicLLMRegistry } from '#llm/models/anthropic';
 import { anthropicVertexLLMRegistry } from '#llm/models/anthropic-vertex';
+import { deepseekLLMRegistry } from '#llm/models/deepseek';
 import { fireworksLLMRegistry } from '#llm/models/fireworks';
 import { groqLLMRegistry } from '#llm/models/groq';
 import { openAiLLMRegistry } from '#llm/models/openai';
 import { togetherLLMRegistry } from '#llm/models/together';
 import { vertexLLMRegistry } from '#llm/models/vertexai';
-import { deepseekLLMRegistry } from '#llm/models/deepseek';
-import { deepseekLLMRegistry } from '#llm/models/deepseek';
 
 export const LLM_REGISTRY: Record<string, () => LLM> = {
 	...anthropicVertexLLMRegistry(),
@@ -18,7 +17,6 @@ export const LLM_REGISTRY: Record<string, () => LLM> = {
 	...openAiLLMRegistry(),
 	...togetherLLMRegistry(),
 	...vertexLLMRegistry(),
-	...deepseekLLMRegistry(),
 	...deepseekLLMRegistry(),
 };
 
