@@ -17,6 +17,8 @@ import { MultiLLM } from '../multi-llm';
 
 export const ANTHROPIC_VERTEX_SERVICE = 'anthropic-vertex';
 
+// https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/use-claude#anthropic_claude_region_availability
+
 export function anthropicVertexLLMRegistry(): Record<string, () => LLM> {
 	return {
 		[`${ANTHROPIC_VERTEX_SERVICE}:claude-3-haiku`]: Claude3_Haiku_Vertex,
@@ -64,7 +66,7 @@ class AnthropicVertexLLM extends BaseLLM {
 		if (!this.client) {
 			this.client = new AnthropicVertex({
 				projectId: currentUser().llmConfig.vertexProjectId ?? envVar('GCLOUD_PROJECT'),
-				region: currentUser().llmConfig.vertexRegion ?? envVar('GCLOUD_REGION'),
+				region: envVar('GCLOUD_CLAUDE_REGION') ?? currentUser().llmConfig.vertexRegion ?? envVar('GCLOUD_REGION'),
 			});
 		}
 		return this.client;
