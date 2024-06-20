@@ -67,7 +67,9 @@ export interface LlmResponse {
 export class AgentComponent implements OnInit {
   llmCalls: LLMCall[] = [];
   agentId: string | null = null;
-  panelOpenState: boolean[] = [];
+  llmCallSystemPromptOpenState: boolean[] = [];
+  llmCallFunctionCallsOpenState: boolean[] = [];
+  llmCallMemoryOpenState: boolean[] = [];
   agentDetails: any = null;
   selectedTabIndex: number = 0;
   feedbackForm!: FormGroup;
@@ -323,9 +325,9 @@ export class AgentComponent implements OnInit {
 
   extractMemoryContent(text: string): string | null {
     const memoryContentRegex = /<memory>(.*?)<\/memory>/s;
-    const match = memoryContentRegex.exec(text);
-    if (match && match[1]) {
-      return match[1];
+    const match: RegExpExecArray | null = memoryContentRegex.exec(text);
+    if (match && match[0]) {
+      return match[0];
     }
     return null;
   }
@@ -346,7 +348,7 @@ export class AgentComponent implements OnInit {
   convertNewlinesToHtml(text: string): SafeHtml {
     text ??= '';
     // sanitize first?
-    return this.sanitizer.bypassSecurityTrustHtml(text.replace(/\\n/g, '<br/>'));
+    return this.sanitizer.bypassSecurityTrustHtml(text.replaceAll('\\n', '<br/>').replaceAll('\\t', '&nbsp;&nbsp;&nbsp;&nbsp;'));
   }
 
   agentUrl(agent: AgentContext): string {

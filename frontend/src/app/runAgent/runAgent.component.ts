@@ -42,7 +42,7 @@ export class RunAgentComponent implements OnInit {
         medium: 'anthropic:claude-3-sonnet',
         hard: 'anthropic:claude-3-opus',
       },
-      gemini: { easy: 'vertex:gemini-1.5-flash', medium: 'vertex:gemini-1.5-pro', hard: 'vertex:gemini-1.5-pro' },
+      gemini: { easy: 'vertex:gemini-1.5-flash', medium: 'vertex:gemini-1.5-flash', hard: 'vertex:gemini-1.5-pro' },
       openai: { easy: 'openai:gpt-4o', medium: 'openai:gpt-4o', hard: 'openai:gpt-4o' },
     };
     const selection = presets[preset];
@@ -81,6 +81,22 @@ export class RunAgentComponent implements OnInit {
       .subscribe((llms) => {
         this.llms = llms;
       });
+      this.loadUserProfile();
+  }
+
+  private loadUserProfile(): void {
+    const profileUrl = `${environment.serverUrl}/profile/view`;
+    this.http.get(profileUrl).subscribe(
+      (response: any) => {
+        console.log(response.data);
+        this.runAgentForm.controls['budget'].setValue(response.data.hilBudget);
+        this.runAgentForm.controls['count'].setValue(response.data.hilCount);
+      },
+      (error) => {
+        console.log(error);
+        this.snackBar.open('Failed to load user profile', 'Close', { duration: 3000 });
+      }
+    );
   }
 
   // ... rest of the component

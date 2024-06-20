@@ -42,9 +42,8 @@ export interface RunAgentConfig {
 
 export async function cancelAgent(agentId: string, executionId: string, feedback: string): Promise<void> {
 	const agent = await appContext().agentStateService.load(agentId);
-	if (agent.executionId !== executionId) {
-		throw new Error('Invalid executionId. Agent has already been cancelled/resumed');
-	}
+	if (agent.executionId !== executionId) throw new Error('Invalid executionId. Agent has already been cancelled/resumed');
+
 	agent.functionCallHistory.push({
 		tool_name: SUPERVISOR_CANCELLED_FUNCTION_NAME,
 		stdout: feedback,
@@ -76,16 +75,14 @@ export async function resumeError(agentId: string, executionId: string, feedback
  */
 export async function resumeHil(agentId: string, executionId: string, feedback: string): Promise<string> {
 	const agent = await appContext().agentStateService.load(agentId);
-	if (agent.executionId !== executionId) {
-		throw new Error('Invalid executionId. Agent has already been resumed');
-	}
+	if (agent.executionId !== executionId) throw new Error('Invalid executionId. Agent has already been resumed');
+
 	if (feedback.trim().length) {
 		agent.functionCallHistory.push({
 			tool_name: SUPERVISOR_RESUMED_FUNCTION_NAME,
 			stdout: feedback,
 			parameters: {},
 		});
-		agent.inputPrompt += `\nSupervisor note: ${feedback}`;
 	}
 	agent.state = 'agent';
 	await appContext().agentStateService.save(agent);
@@ -94,9 +91,8 @@ export async function resumeHil(agentId: string, executionId: string, feedback: 
 
 export async function provideFeedback(agentId: string, executionId: string, feedback: string): Promise<string> {
 	const agent = await appContext().agentStateService.load(agentId);
-	if (agent.executionId !== executionId) {
-		throw new Error('Invalid executionId. Agent has already been provided feedback');
-	}
+	if (agent.executionId !== executionId) throw new Error('Invalid executionId. Agent has already been provided feedback');
+
 	// The last function call should be the feedback
 	const invoked: Invoked = agent.functionCallHistory.slice(-1)[0];
 	if (invoked.tool_name !== AGENT_REQUEST_FEEDBACK) throw new Error(`Expected the last function call to be ${AGENT_REQUEST_FEEDBACK}`);
@@ -157,14 +153,13 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 
 	// Human in the loop settings
 	// How often do we require human input to avoid misguided actions and wasting money
-	const hilBudgetRaw = process.env.HIL_BUDGET;
-	const hilCountRaw = process.env.HIL_COUNT;
-	let hilBudget = hilBudgetRaw ? parseFloat(hilBudgetRaw) : 0;
-	const hilCount = hilCountRaw ? parseInt(hilCountRaw) : 0;
-	// Default to $5 budget to avoid accidents
+	let hilBudget = agent.hilBudget;
+	let hilCount = agent.hilCount;
+	
+	// Default to $2 budget to avoid accidents
 	if (!hilCount && !hilBudget) {
-		logger.info('Default Human in the Loop budget to $5');
-		hilBudget = 5;
+		logger.info('Default Human in the Loop budget to $2');
+		hilBudget = 2;
 	}
 
 	let countSinceHil = 0;
@@ -185,7 +180,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 
 		let shouldContinue = true;
 		while (shouldContinue) {
-			shouldContinue = await withActiveSpan('Agent', async (span) => {
+			shouldContinue = await withActiveSpan('XmlAgent', async (span) => {
 				let completed = false;
 				let requestFeedback = false;
 				let anyInvokeErrors = false;

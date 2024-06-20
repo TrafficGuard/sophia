@@ -16,9 +16,9 @@
     "importHelpers": true,
     "strict": true,
     "suppressImplicitAnyIndexErrors": true,
-    "target": "es2020",
+    "target": "es2021",
     "typeRoots": ["node_modules/@types"],
-    "lib": ["es2020", "dom"],
+    "lib": ["es2021", "dom"],
     "baseUrl": "./",
     "paths": {
       "@app/*": ["src/app/*"],

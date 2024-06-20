@@ -89,7 +89,7 @@
               <span class="system-prompt-preview">{{ agentDetails.userPrompt | slice : 0 : 50 }}...</span>
             </mat-panel-title>
           </mat-expansion-panel-header>
-          <div matExpansionPanelContent>
+          <div matExpansionPanelContent style="white-space: pre;">
             {{ agentDetails.userPrompt }}
           </div>
         </mat-expansion-panel>
@@ -112,7 +112,7 @@
               <span class="system-prompt-preview">{{ agentDetails.error | slice : 0 : 50 }}...</span>
             </mat-panel-title>
           </mat-expansion-panel-header>
-          <div matExpansionPanelContent>
+          <div matExpansionPanelContent style="white-space: pre;">
             {{ agentDetails.error }}
           </div>
         </mat-expansion-panel>
@@ -155,7 +155,7 @@
     <div *ngIf="agentDetails.memory">
       <mat-card *ngFor="let entry of agentDetails.memory | keyvalue">
         <mat-card-title>{{ entry.key }}</mat-card-title>
-        <mat-card-content>{{ entry.value }}</mat-card-content>
+        <mat-card-content><div style="white-space: pre;">{{ entry.value }}</div></mat-card-content>
       </mat-card>
     </div>
   </mat-tab>
@@ -182,55 +182,59 @@
 
   <mat-tab label="LLM Calls">
     <mat-card *ngFor="let call of llmCalls; let i = index">
-      <mat-card-title>Call ID: {{ call.response.callStack }}<a href="{{ llmCallUrl(call.response) }}">gcp</a></mat-card-title>
+      <mat-card-title id="{{ call.response.id }}">Call ID: {{ call.response.callStack }}<a href="{{ llmCallUrl(call.response) }}" style="font-size: x-small;">gcp</a></mat-card-title>
       <mat-card-content>
         <p><strong>LLM:</strong> {{ call.response.llmId }} &nbsp;&nbsp; <strong>Request Time:</strong> {{ call.response.requestTime | date : 'medium' }}. &nbsp;&nbsp; <strong>Total Time:</strong> {{ (call.response.totalTime / 1000).toFixed(1) }}s</p>
+        
         <mat-expansion-panel *ngIf="call.request.systemPromptId">
           <mat-expansion-panel-header>
             <mat-panel-title>
               <strong
                 >System Prompt:
-                <span *ngIf="!panelOpenState[i]" class="system-prompt-preview"
+                <span *ngIf="!llmCallSystemPromptOpenState[i]" class="system-prompt-preview"
                   >{{ call.request.systemPrompt?.text | slice : 0 : 50 }} ...</span
                 ></strong
               >
             </mat-panel-title>
           </mat-expansion-panel-header>
-          <div matExpansionPanelContent>
+          <div matExpansionPanelContent style="white-space: pre;">
             {{ call.request.systemPrompt?.text }}
           </div>
         </mat-expansion-panel>
+
         <mat-expansion-panel *ngIf="extractFunctionCallHistory(call.request.userPromptText)">
           <mat-expansion-panel-header>
             <mat-panel-title>
-              <strong>Function Call History:</strong>
-              <span *ngIf="!panelOpenState[i]" class="system-prompt-preview">
-                {{ extractFunctionCallHistory(call.request.userPromptText) | slice : 0 : 50 }} ...
+              <strong>Function Call History: </strong>
+              <span *ngIf="!llmCallFunctionCallsOpenState[i]" class="system-prompt-preview">
+                {{ extractFunctionCallHistory(call.request.userPromptText) | slice : 0 : 150 }} ...
               </span>
             </mat-panel-title>
           </mat-expansion-panel-header>
-          <div matExpansionPanelContent>
+          <div matExpansionPanelContent style="white-space: pre;">
             {{ extractFunctionCallHistory(call.request.userPromptText) }}
           </div>
         </mat-expansion-panel>
+
         <mat-expansion-panel *ngIf="extractMemoryContent(call.request.userPromptText)">
           <mat-expansion-panel-header>
             <mat-panel-title>
-              <strong>Memory Contents:</strong>
-              <span *ngIf="!panelOpenState[i]" class="system-prompt-preview">
-                {{ keys(extractMemoryContent(call.request.userPromptText)).join(' ') }}
+              <strong>Memory Contents: </strong>
+              <span *ngIf="!llmCallMemoryOpenState[i]" class="system-prompt-preview">
+                {{ extractMemoryContent(call.request.userPromptText) | slice : 0 : 150 }}
               </span>
             </mat-panel-title>
           </mat-expansion-panel-header>
-          <div matExpansionPanelContent>
+          <div matExpansionPanelContent style="white-space: pre;">
             {{ extractMemoryContent(call.request.userPromptText) }}
           </div>
         </mat-expansion-panel>
+
         <p>
           <strong>User Prompt:</strong>
-          {{ removeFunctionCallHistory(removeMemoryContent(call.request.userPromptText)) }}
+          <span [innerHTML]="convertNewlinesToHtml(removeFunctionCallHistory(removeMemoryContent(call.request.userPromptText)))"></span>
         </p>
-        <p><strong>Response Text:</strong> {{ call.response.responseText }}</p>
+        <p><strong>Response Text:</strong><br/><span style="white-space: pre;"> {{ call.response.responseText }}</span></p>
 
         <!--
         <p><strong>LLM Response ID:</strong> {{ call.response.id }}</p>

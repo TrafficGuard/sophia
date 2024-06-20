@@ -116,15 +116,17 @@ export class FirestoreLlmCallService implements LlmCallService {
 		// Retrieve SystemPrompt entities and map them by id
 		const systemPromptsMap = await this.getSystemPromptsMap(Array.from(systemPromptIds));
 		// Construct LlmCall objects by associating each response with its corresponding request and system prompt
-		return llmResponses.map((llmResponse) => {
-			const request = requests.find((llmRequest) => llmRequest.id === llmResponse.llmRequestId);
-			if (request) {
-				request.systemPrompt = systemPromptsMap.get(request.systemPromptId);
-			} else {
-				logger.warn(`Couldn't find request with id ${llmResponse.llmRequestId}`);
-			}
-			return { request, response: llmResponse };
-		});
+		return llmResponses
+			.map((llmResponse) => {
+				const request = requests.find((llmRequest) => llmRequest.id === llmResponse.llmRequestId);
+				if (request) {
+					request.systemPrompt = systemPromptsMap.get(request.systemPromptId);
+				} else {
+					logger.warn(`Couldn't find request with id ${llmResponse.llmRequestId}`);
+				}
+				return { request, response: llmResponse };
+			})
+			.sort((a, b) => (a.response.requestTime < b.response.requestTime ? 1 : -1));
 	}
 
 	async saveRequest(userPrompt: string, systemPrompt?: string, variationSourceId?: number, variationNote?: string): Promise<LlmRequest> {

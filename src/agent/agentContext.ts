@@ -51,6 +51,9 @@ export interface AgentContext {
 	error?: string;
 	planningResponse?: string;
 	invoking: Invoke[];
+
+	hilBudget;
+	hilCount;
 	/** Total cost of running this agent */
 	cost: number;
 	/** Budget allocated until human intervention is required. This may be increased when the agent is running */
@@ -109,6 +112,8 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		state: 'agent',
 		functionCallHistory: [],
 		callStack: [],
+		hilBudget: config.humanInLoop?.budget ?? (process.env.HIL_BUDGET ? parseFloat(process.env.HIL_BUDGET) : 0),
+		hilCount: config.humanInLoop?.count ?? (process.env.HIL_COUNT ? parseFloat(process.env.HIL_COUNT) : 0),
 		budget: 0,
 		budgetRemaining: 0,
 		cost: 0,

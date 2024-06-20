@@ -25,8 +25,8 @@ export class Agent {
 	}
 
 	/**
-	 * Notifies that the task has completed and there is no more work to be done, or that no more useful progress can be made with the functions.
-	 * @param note {string} A short note explaining why the work/task is complete or cannot continue.
+	 * Notifies that the user request has completed and there is no more work to be done, or that no more useful progress can be made with the functions.
+	 * @param note {string} A detailed description that answers/completes the user request.
 	 */
 	@func()
 	async completed(note: string): Promise<void> {

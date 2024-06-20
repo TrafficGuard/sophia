@@ -15,18 +15,24 @@ export const DEEPSEEK_SERVICE = 'deepseek';
 
 export function deepseekLLMRegistry(): Record<string, () => LLM> {
 	return {
-		[`${DEEPSEEK_SERVICE}:deepseek-model`]: () => deepseekModel(),
+		[`${DEEPSEEK_SERVICE}:deepseek-coder`]: () => deepseekCoder(),
+		[`${DEEPSEEK_SERVICE}:deepseek-chat`]: () => deepseekChat(),
 	};
 }
 
-// TODO get the model ids for deepseek and deepseek-code
-export function deepseekModel(): LLM {
+export function deepseekCoder(): LLM {
 	// TODO Need to adjust for tokens https://platform.deepseek.com/api-docs/faq#how-to-calculate-token-usage-offline
-	return new DeepseekLLM('deepseek-model', 32000, 0.14 / 1_000_000, 0.28 / 1_000_000);
+	return new DeepseekLLM('deepseek-coder', 32000, 0.14 / 1_000_000, 0.28 / 1_000_000);
+}
+
+export function deepseekChat(): LLM {
+	// TODO Need to adjust for tokens https://platform.deepseek.com/api-docs/faq#how-to-calculate-token-usage-offline
+	return new DeepseekLLM('deepseek-chat', 32000, 0.14 / 1_000_000, 0.28 / 1_000_000);
 }
 
 /**
  * Deepseek models
+ * @see https://platform.deepseek.com/api-docs/api/create-chat-completion
  */
 export class DeepseekLLM extends BaseLLM {
 	client: any;
@@ -36,7 +42,7 @@ export class DeepseekLLM extends BaseLLM {
 		this.client = axios.create({
 			baseURL: 'https://api.deepseek.com',
 			headers: {
-				Authorization: `Bearer ${currentUser().llmConfig.deepseekKey ?? envVar('DEEPSEEK_API_KEY')}`,
+				Authorization: `Bearer ${currentUser().llmConfig.deepseekKey ?? envVar('DEEPSEEK_KEY')}`,
 			},
 		});
 	}
@@ -57,18 +63,21 @@ export class DeepseekLLM extends BaseLLM {
 			const llmRequestSave = appContext().llmCallService.saveRequest(userPrompt, systemPrompt);
 			const requestTime = Date.now();
 
+			const messages = [];
+			if (systemPrompt) {
+				messages.push({
+					role: 'system',
+					content: systemPrompt,
+				});
+			}
+			messages.push({
+				role: 'user',
+				content: userPrompt,
+			});
+
 			try {
 				const response = await this.client.post('/chat/completions', {
-					messages: [
-						{
-							role: 'system',
-							content: systemPrompt,
-						},
-						{
-							role: 'user',
-							content: userPrompt,
-						},
-					],
+					messages,
 					model: this.model,
 				});
 
@@ -76,7 +85,6 @@ export class DeepseekLLM extends BaseLLM {
 
 				const timeToFirstToken = Date.now() - requestTime;
 				const finishTime = Date.now();
-
 				const llmRequest = await llmRequestSave;
 				const llmResponse: CreateLlmResponse = {
 					llmId: this.getId(),
