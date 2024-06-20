@@ -154,8 +154,8 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 	// Human in the loop settings
 	// How often do we require human input to avoid misguided actions and wasting money
 	let hilBudget = agent.hilBudget;
-	let hilCount = agent.hilCount;
-	
+	const hilCount = agent.hilCount;
+
 	// Default to $2 budget to avoid accidents
 	if (!hilCount && !hilBudget) {
 		logger.info('Default Human in the Loop budget to $2');
