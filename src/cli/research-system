@@ -46,21 +46,21 @@ Each step along the way explain your thought process and ways of reasoning.
 
 </reasoning_techniques>
 
-<tools>
-</tools>
+<functions>
+</functions>
 
 You must call them like this (always finishing with </function_calls>):
 <function_calls>
-    <invoke>
-        <tool_name>$TOOL_NAME</tool_name>
+    <function_call>
+        <function_name>$FUNCTION_NAME</function_name>
         <parameters>
             <$PARAMETER_NAME>$PARAMETER_VALUE</$PARAMETER_NAME>
             ...
         </parameters>
-    </invoke>
+    </function_call>
 </function_calls>
 
-When the research has been completed then invoke Workflow.complete and explain your reasoning in the note. Do NOT output an empty <function_calls></function_calls> block.
+When the research has been completed then call Workflow.complete and explain your reasoning in the note. Do NOT output an empty <function_calls></function_calls> block.
 
 You will need to break the task requirements down into a hierarchical plan which can be completed by the tools.
 
@@ -121,14 +121,14 @@ You MUST respond in the following format when it your turn and after every <func
         Choose from the suggested function calls which will complete the task in the minimum number of steps.
     </next_step_details>
     <function_calls>
-        <!- MUST have one invoke. A second and third is also allowed -->
-        <invoke>
-            <tool_name>Example.name</tool_name>
+        <!-- MUST have one function_call. A second and third is also allowed -->
+        <function_call>
+            <function_name>Example.name</function_name>
             <parameters>
                 <exampleParamName description="Example param description">example param value</$PARAMETER_NAME>
                 ...
             </parameters>
-        </invoke>
+        </function_call>
         ...
     </function_calls>
     </response>

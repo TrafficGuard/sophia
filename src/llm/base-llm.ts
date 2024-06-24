@@ -67,10 +67,9 @@ export abstract class BaseLLM implements LLM {
 	}
 
 	formatFunctionResult(toolName: string, result: any): string {
-		// TODO include the params
 		return `<function_results>
         <result>
-        <tool_name>${toolName}</tool_name>
+        <function_name>${toolName}</function_name>
         <stdout>${CDATA_START}
         ${JSON.stringify(result)}
         ${CDATA_END}</stdout>
@@ -79,9 +78,9 @@ export abstract class BaseLLM implements LLM {
         `;
 	}
 
-	formatFunctionError(error: any): string {
-		// TODO include the params
+	formatFunctionError(toolName: string, error: any): string {
 		return `<function_results>
+		<function_name>${toolName}</function_name>
         <error>${CDATA_START}
         ${JSON.stringify(error)}
         ${CDATA_END}</error>

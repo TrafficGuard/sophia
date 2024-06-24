@@ -29,16 +29,16 @@ export function buildFunctionCallHistoryPrompt(): string {
 		}
 		let output = '';
 		if (call.stdoutSummary) {
-			output += `<output-summary>${call.stdoutSummary}</output-summary>\n`;
+			output += `<output_summary>${call.stdoutSummary}</output_summary>\n`;
 		} else if (call.stdout) {
 			output += `<output>${call.stdout}</output>\n`;
 		}
 		if (call.stderrSummary) {
-			output += `<error-summary>${call.stderrSummary}</error-summary>\n`;
+			output += `<error_summary>${call.stderrSummary}</error_summary>\n`;
 		} else if (call.stderr) {
 			output += `<error>${call.stderr}</error>\n`;
 		}
-		result += `<function_call>\n ${call.tool_name}({${params}})\n ${output}</function_call>\n`;
+		result += `<function_call>\n ${call.function_name}({${params}})\n ${output}</function_call>\n`;
 	}
 	result += '</function_call_history>\n';
 	return result;
@@ -46,14 +46,14 @@ export function buildFunctionCallHistoryPrompt(): string {
 
 /**
  * Update the system prompt to include all the function definitions available to the agent.
- * Requires the system prompt to contain <tools></tools>
+ * Requires the system prompt to contain <functions></functions>
  * @param systemPrompt {string} the initial system prompt
  * @param functionDefinitions {string} the function definitions
  * @returns the updated system prompt
  */
 export function updateToolDefinitions(systemPrompt: string, functionDefinitions: string): string {
-	const regex = /<tools>[\s\S]*?<\/tools>/g;
-	const updatedPrompt = systemPrompt.replace(regex, `<tools>${functionDefinitions}</tools>`);
+	const regex = /<functions>[\s\S]*?<\/functions>/g;
+	const updatedPrompt = systemPrompt.replace(regex, `<functions>${functionDefinitions}</functions>`);
 	if (!updatedPrompt.includes(functionDefinitions)) throw new Error('Unable to update tool definitions. Regex replace failed');
 	return updatedPrompt;
 }

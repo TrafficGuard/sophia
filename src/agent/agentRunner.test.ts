@@ -18,9 +18,9 @@ import { sleep } from '#utils/async-utils';
 import { AgentContext, AgentLLMs } from './agentContext';
 
 const REQUEST_FEEDBACK_VALUE = 'question is...';
-const REQUEST_FEEDBACK_FUNCTION_CALL = `<plan>Requesting feedback</plan>\n<function_calls><function_call><tool_name>${AGENT_REQUEST_FEEDBACK}</tool_name><parameters><${REQUEST_FEEDBACK_PARAM_NAME}>${REQUEST_FEEDBACK_VALUE}</${REQUEST_FEEDBACK_PARAM_NAME}></parameters></function_call></function_calls>`;
-const COMPLETE_FUNCTION_CALL = `<plan>Ready to complete</plan>\n<function_calls><function_call><tool_name>${AGENT_COMPLETED_NAME}</tool_name><parameters></parameters></function_call></function_calls>`;
-const NOOP_FUNCTION_CALL = `<plan>I'm going to call the noop function</plan>\n<function_calls><function_call><tool_name>${TEST_FUNC_NOOP}</tool_name><parameters></parameters></function_call></function_calls>`;
+const REQUEST_FEEDBACK_FUNCTION_CALL = `<plan>Requesting feedback</plan>\n<function_calls><function_call><function_name>${AGENT_REQUEST_FEEDBACK}</function_name><parameters><${REQUEST_FEEDBACK_PARAM_NAME}>${REQUEST_FEEDBACK_VALUE}</${REQUEST_FEEDBACK_PARAM_NAME}></parameters></function_call></function_calls>`;
+const COMPLETE_FUNCTION_CALL = `<plan>Ready to complete</plan>\n<function_calls><function_call><function_name>${AGENT_COMPLETED_NAME}</function_name><parameters></parameters></function_call></function_calls>`;
+const NOOP_FUNCTION_CALL = `<plan>I'm going to call the noop function</plan>\n<function_calls><function_call><function_name>${TEST_FUNC_NOOP}</function_name><parameters></parameters></function_call></function_calls>`;
 
 describe.only('agentRunner', () => {
 	initInMemoryApplicationContext();
@@ -37,7 +37,7 @@ describe.only('agentRunner', () => {
 		const defaults: RunAgentConfig = {
 			agentName: 'test',
 			initialPrompt: 'test prompt',
-			systemPrompt: '<tools></tools>',
+			systemPrompt: '<functions></functions>',
 			llms,
 			toolbox,
 			user: createUser(),
@@ -84,7 +84,7 @@ describe.only('agentRunner', () => {
 		it('should be able to call a function with multiple parameters', async () => {
 			toolbox.addToolType(TestFunctions);
 			mockLLM.addResponse(
-				`<plan>call sum</plan><function_calls><function_call><tool_name>${TEST_FUNC_SUM}</tool_name><parameters><num1>3</num1><num2>6</num2></parameters></function_call></function_calls>`,
+				`<plan>call sum</plan><function_calls><function_call><function_name>${TEST_FUNC_SUM}</function_name><parameters><num1>3</num1><num2>6</num2></parameters></function_call></function_calls>`,
 			);
 			mockLLM.addResponse(COMPLETE_FUNCTION_CALL);
 			await startAgent(runConfig({ initialPrompt: 'Add 3 and 6', toolbox }));
@@ -161,7 +161,7 @@ describe.only('agentRunner', () => {
 			toolbox.addTool(new TestFunctions(), 'TestFunctions');
 
 			const toolName = 'TestFunctions.throwError';
-			const response = `<function_calls><function_call><tool_name>${toolName}</tool_name><parameters></parameters></function_call></function_calls>`;
+			const response = `<function_calls><function_call><function_name>${toolName}</function_name><parameters></parameters></function_call></function_calls>`;
 			mockLLM.setResponse(response);
 
 			const id = await startAgent(runConfig({ toolbox }));
@@ -183,7 +183,7 @@ describe.only('agentRunner', () => {
 				agent = await waitForAgent();
 
 				expect(agent.state).to.equal('completed');
-				const functionCallResult = agent.functionCallHistory.find((call) => call.tool_name === AGENT_REQUEST_FEEDBACK);
+				const functionCallResult = agent.functionCallHistory.find((call) => call.function_name === AGENT_REQUEST_FEEDBACK);
 				expect(functionCallResult.stdout).to.equal('the feedback');
 			});
 		});
@@ -193,7 +193,7 @@ describe.only('agentRunner', () => {
 		it('should cancel the agent with note as output of the Supervisor.cancelled function call', async () => {
 			toolbox.addToolType(TestFunctions);
 			const toolName = 'TestFunctions.throwError';
-			const response = `<function_calls><function_call><tool_name>${toolName}</tool_name><parameters></parameters></function_call></function_calls>`;
+			const response = `<function_calls><function_call><function_name>${toolName}</function_name><parameters></parameters></function_call></function_calls>`;
 			mockLLM.setResponse(response);
 			await startAgent(runConfig({ toolbox }));
 			let agent = await waitForAgent();
@@ -202,7 +202,7 @@ describe.only('agentRunner', () => {
 			agent = await waitForAgent();
 
 			expect(agent.state).to.equal('completed');
-			const functionCallResult = agent.functionCallHistory.find((call) => call.tool_name === SUPERVISOR_CANCELLED_FUNCTION_NAME);
+			const functionCallResult = agent.functionCallHistory.find((call) => call.function_name === SUPERVISOR_CANCELLED_FUNCTION_NAME);
 			expect(functionCallResult.stdout).to.equal('cancelled');
 		});
 	});

@@ -7,7 +7,7 @@ Each step along the way explain your thought process and ways of reasoning.
    <reasoning>How can I simplify the problem so that it is easier to solve?</reasoning>
    <reasoning>What are the key assumptions underlying this problem?</reasoning>
    <reasoning>How can I break down this problem into smaller, more manageable parts?</reasoning>
-    <reasoning>What is the core issue or problem that needs to be addressed?</reasoning>
+   <reasoning>What is the core issue or problem that needs to be addressed?</reasoning>
    <reasoning>Are there any potential solutions or strategies that have been tried before? If yes, what were the outcomes and lessons learned?</reasoning>
    <reasoning>Are there any relevant data or information that can provide insights into the problem? If yes, what data sources are available, and how can they be analyzed?</reasoning>
    <reasoning>What kinds of solution typically are produced for this kind of problem specification?</reasoning>
@@ -16,13 +16,13 @@ Each step along the way explain your thought process and ways of reasoning.
    <reasoning>What are the various sub-types of an item/concept, and which sub-types are relevant?</reasoning>
 </reasoning_techniques>
 
-<tools>
-</tools>
+<functions>
+</functions>
 
 You must call them like this (always finishing with </function_calls>):
 <function_calls>
     <function_call>
-        <tool_name>$TOOL_NAME</tool_name>
+        <function_name>$FUNCTION_NAME</function_name>
         <parameters>
             <$PARAMETER_NAME>$PARAMETER_VALUE</$PARAMETER_NAME>
             ...
@@ -73,13 +73,13 @@ The plan should be minimal and focus only on completing the user request.
 </next_step_details>
 <function_calls>
 <function_call>
-  <tool_name>PublicWeb.getWebPage</tool_name>
+  <function_name>PublicWeb.getWebPage</function_name>
   <parameters>
     <url>https://docs.github.com/docs/new-runner-token-design</url>
   </parameters>
 </function_call>
 <function_call>
-  <tool_name>PublicWeb.getWebPage</tool_name>
+  <function_name>PublicWeb.getWebPage</function_name>
   <parameters>
     <url>https://blog.github.com/new-runner-registration</url>
   </parameters>
@@ -106,18 +106,18 @@ You MUST respond in the format as per in this example, including the opening and
         <next_step_details>
             Provide a concise details of the most probable next steps of the plan (i.e. function tool call) to take with reasoning.
             Then applying logic reasoning, taking into account all of the provided context, explain which are the most appropriate choice(s).
-            List the possible functions from the <tools> section which are relevant to complete the next step, along with the parameter descriptions.
+            List the possible functions from the <functions> section which are relevant to complete the next step, along with the parameter descriptions.
             Select the function(s) to best complete the next step. You may call more than one function. Call the Agent.requestFeedback if more details/decisions are required, or Agent.completed if the request is complete.
         </next_step_details>
         <function_calls>
           <function_call>
-            <tool_name>ToolGroup1.toolName1</tool_name>
+            <function_name>ToolGroup1.toolName1</function_name>
             <parameters>
               <key>value</url>
             </parameters>
           </function_call>
           <function_call>
-            <tool_name>ToolGroup2.toolName2</tool_name>
+            <function_name>ToolGroup2.toolName2</function_name>
             <parameters>
               <key2>value2</url>
             </parameters>

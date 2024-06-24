@@ -47,7 +47,7 @@ export async function cancelAgent(agentId: string, executionId: string, feedback
 	if (agent.executionId !== executionId) throw new Error('Invalid executionId. Agent has already been cancelled/resumed');
 
 	agent.functionCallHistory.push({
-		tool_name: SUPERVISOR_CANCELLED_FUNCTION_NAME,
+		function_name: SUPERVISOR_CANCELLED_FUNCTION_NAME,
 		stdout: feedback,
 		parameters: {},
 	});
@@ -61,7 +61,7 @@ export async function resumeError(agentId: string, executionId: string, feedback
 		throw new Error('Invalid executionId. Agent has already been resumed');
 	}
 	agent.functionCallHistory.push({
-		tool_name: SUPERVISOR_RESUMED_FUNCTION_NAME,
+		function_name: SUPERVISOR_RESUMED_FUNCTION_NAME,
 		stdout: feedback,
 		parameters: {},
 	});
@@ -81,7 +81,7 @@ export async function resumeHil(agentId: string, executionId: string, feedback: 
 
 	if (feedback.trim().length) {
 		agent.functionCallHistory.push({
-			tool_name: SUPERVISOR_RESUMED_FUNCTION_NAME,
+			function_name: SUPERVISOR_RESUMED_FUNCTION_NAME,
 			stdout: feedback,
 			parameters: {},
 		});
@@ -97,7 +97,7 @@ export async function provideFeedback(agentId: string, executionId: string, feed
 
 	// The last function call should be the feedback
 	const result: FunctionCallResult = agent.functionCallHistory.slice(-1)[0];
-	if (result.tool_name !== AGENT_REQUEST_FEEDBACK) throw new Error(`Expected the last function call to be ${AGENT_REQUEST_FEEDBACK}`);
+	if (result.function_name !== AGENT_REQUEST_FEEDBACK) throw new Error(`Expected the last function call to be ${AGENT_REQUEST_FEEDBACK}`);
 	result.stdout = feedback;
 	agent.state = 'agent';
 	await appContext().agentStateService.save(agent);
@@ -244,11 +244,11 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 					for (const functionCall of functionCalls) {
 						try {
 							const toolResponse = await toolbox.invokeTool(functionCall);
-							let functionResult = agentLLM.formatFunctionResult(functionCall.tool_name, toolResponse);
+							let functionResult = agentLLM.formatFunctionResult(functionCall.function_name, toolResponse);
 							if (functionResult.startsWith('<response>')) functionResult = functionResult.slice(10);
 							// The trailing </response> will be removed as it's a stop word for the LLMs
-							functionResults.push(agentLLM.formatFunctionResult(functionCall.tool_name, toolResponse));
-							// currentPrompt += `\n${llm.formatFunctionResult(functionCall.tool_name, toolResponse)}`;
+							functionResults.push(agentLLM.formatFunctionResult(functionCall.function_name, toolResponse));
+							// currentPrompt += `\n${llm.formatFunctionResult(functionCall.function_name, toolResponse)}`;
 							const toolResponsString = JSON.stringify(toolResponse);
 
 							// To mimnimise the function call history size becoming too large (i.e. expensive)
@@ -256,19 +256,19 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 							const outputSummary = toolResponsString?.length > FUNCTION_OUTPUT_SUMMARIZE_LENGTH ? await summariseLongFunctionOutput(functionCall) : undefined;
 
 							agent.functionCallHistory.push({
-								tool_name: functionCall.tool_name,
+								function_name: functionCall.function_name,
 								parameters: functionCall.parameters,
 								stdout: JSON.stringify(toolResponse),
 								stdoutSummary: outputSummary,
 							});
 							// Should check if completed or requestFeedback then there's no more function calls
-							if (functionCall.tool_name === AGENT_COMPLETED_NAME) {
+							if (functionCall.function_name === AGENT_COMPLETED_NAME) {
 								logger.info('Task completed');
 								agent.state = 'completed';
 								completed = true;
 								break;
 							}
-							if (functionCall.tool_name === AGENT_REQUEST_FEEDBACK) {
+							if (functionCall.function_name === AGENT_REQUEST_FEEDBACK) {
 								logger.info('Feedback requested');
 								agent.state = 'feedback';
 								requestFeedback = true;
@@ -280,11 +280,11 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 							logger.error(e, 'Tool error');
 							agent.error = e.toString();
 							await agentStateService.save(agent);
-							functionResults.push(agentLLM.formatFunctionError(functionCall.tool_name, e));
-							// currentPrompt += `\n${llm.formatFunctionError(functionCalls.tool_name, e)}`;
+							functionResults.push(agentLLM.formatFunctionError(functionCall.function_name, e));
+							// currentPrompt += `\n${llm.formatFunctionError(functionCalls.function_name, e)}`;
 
 							agent.functionCallHistory.push({
-								tool_name: functionCall.tool_name,
+								function_name: functionCall.function_name,
 								parameters: functionCall.parameters,
 								stderr: agent.error,
 							});
@@ -292,7 +292,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 						}
 					}
 					// Function invocations are complete
-					span.setAttribute('functionCalls', functionCalls.map((functionCall) => functionCall.tool_name).join(', '));
+					span.setAttribute('functionCalls', functionCalls.map((functionCall) => functionCall.function_name).join(', '));
 
 					// This section is duplicated in the provideFeedback function
 					agent.invoking = [];
@@ -335,7 +335,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 
 async function summariseLongFunctionOutput(functionResult: FunctionCallResult): Promise<string> {
 	const errorPrefix = functionResult.stderr ? 'error-' : '';
-	const prompt = `<function_name>${functionResult.tool_name}</function_name><${errorPrefix}output>\n${
+	const prompt = `<function_name>${functionResult.function_name}</function_name><${errorPrefix}output>\n${
 		functionResult.stdout ?? functionResult.stderr
 	}</${errorPrefix}output>
 	For the above function call summarise the output into a paragraph that captures key details about the output content, which might include identifiers, content summary, content structure and examples. Only responsd with the summary`;

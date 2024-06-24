@@ -73,19 +73,19 @@ describe('responseParsers', () => {
 	describe('parseFunctionCallsXml', () => {
 		it('Should parse XML string and return a function call object with parameters as either ', async () => {
 			const xmlString = `<function_calls>
-                <invoke>
-                    <tool_name>testTool</tool_name>
+                <function_call>
+                    <function_name>testTool</function_name>
                     <parameters>
                         <param1>value1</param1>
                         <param2>value2</param2>
                     </parameters>
-                </invoke>
-                <invoke>
-                    <tool_name>testTool2</tool_name>
+                </function_call>
+                <function_call>
+                    <function_name>testTool2</function_name>
                     <parameters>
                         <param1>value3</param1>
                     </parameters>
-                </invoke>
+                </function_call>
             </function_calls>`;
 
 			const parsedData = parseFunctionCallsXml(xmlString);
@@ -93,7 +93,7 @@ describe('responseParsers', () => {
 			expect(parsedData.functionCalls).to.have.lengthOf(2);
 
 			expect(parsedData.functionCalls[0]).to.deep.equal({
-				tool_name: 'testTool',
+				function_name: 'testTool',
 				parameters: {
 					param1: 'value1',
 					param2: 'value2',
@@ -101,7 +101,7 @@ describe('responseParsers', () => {
 			});
 
 			expect(parsedData.functionCalls[1]).to.deep.equal({
-				tool_name: 'testTool2',
+				function_name: 'testTool2',
 				parameters: {
 					param1: 'value3',
 				},
@@ -113,29 +113,29 @@ describe('responseParsers', () => {
 			<planning_output>
 				<!-- this is ignored -->
 				<function_calls>
-					<invoke>
-						<tool_name>testTool</tool_name>
+					<function_call>
+						<function_name>testTool</function_name>
 						<parameters>
 							<abc>xyz</abc>
 						</parameters>
-					</invoke>
+					</function_call>
 				</function_calls>
 			</planning_output>
 			
 			<function_calls>
-                <invoke>
-                    <tool_name>testTool</tool_name>
+                <function_call>
+                    <function_name>testTool</function_name>
                     <parameters>
                         <param1>value1</param1>
                         <param2>value2</param2>
                     </parameters>
-                </invoke>
-                <invoke>
-                    <tool_name>testTool2</tool_name>
+                </function_call>
+                <function_call>
+                    <function_name>testTool2</function_name>
                     <parameters>
                         <param1>value3</param1>
                     </parameters>
-                </invoke>
+                </function_call>
             </function_calls>`;
 
 			const parsedData = parseFunctionCallsXml(xmlString);
@@ -143,7 +143,7 @@ describe('responseParsers', () => {
 			expect(parsedData.functionCalls).to.have.lengthOf(2);
 
 			expect(parsedData.functionCalls[0]).to.deep.equal({
-				tool_name: 'testTool',
+				function_name: 'testTool',
 				parameters: {
 					param1: 'value1',
 					param2: 'value2',
@@ -151,7 +151,7 @@ describe('responseParsers', () => {
 			});
 
 			expect(parsedData.functionCalls[1]).to.deep.equal({
-				tool_name: 'testTool2',
+				function_name: 'testTool2',
 				parameters: {
 					param1: 'value3',
 				},

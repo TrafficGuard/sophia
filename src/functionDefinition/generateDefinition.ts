@@ -136,7 +136,7 @@ export function generateDefinition(sourceFilePath: string): [string, any] {
 				: '';
 			const toolDescription = `
             <tool_description>
-                <tool_name>${className}.${methodName}</tool_name>
+                <function_name>${className}.${methodName}</function_name>
                 <description>${methodDescription}</description>${parameters}${returnsXml}
             </tool_description>`;
 			objDefinition[methodName] = {

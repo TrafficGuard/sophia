@@ -132,7 +132,7 @@
           <div class="llm-column"><strong>Medium:</strong> {{ agentDetails.llms.medium }}</div>
           <div class="llm-column"><strong>Hard:</strong> {{ agentDetails.llms.hard }}</div>
         </mat-list-item>
-        
+
         <mat-list-item
           ><span class="fixed-width-field"><strong>Cost:</strong></span> ${{ agentDetails.cost | number : '1.2-2' }}
         </mat-list-item>
@@ -162,7 +162,7 @@
 
   <mat-tab label="Function Calls">
     <mat-card *ngFor="let invoked of agentDetails.functionCallHistory; let i = index">
-      <mat-card-title>{{ invoked.tool_name }}</mat-card-title>
+      <mat-card-title>{{ invoked.function_name }}</mat-card-title>
       <mat-card-content>
         <div *ngFor="let param of invoked.parameters | keyvalue">
           <p>
@@ -170,9 +170,9 @@
           </p>
         </div>
         <strong>{{ invoked.stdout ? 'Output: ' : '' }}</strong>
-        <div [innerHTML]="convertNewlinesToHtml(invoked.stdout)"></div>
+        <div [innerHTML]="convertNewlinesToHtml(invoked.stdoutSummary ?? invoked.stdout)"></div>
         <strong>{{ invoked.stderr ? 'Errors: ' : '' }}</strong>
-        <div [innerHTML]="convertNewlinesToHtml(invoked.stderr)"></div>
+        <div [innerHTML]="convertNewlinesToHtml(invoked.stderrSummary ?? invoked.stderr)"></div>
       </mat-card-content>
     </mat-card>
     <div *ngIf="agentDetails.functionCallHistory.length === 0">
@@ -185,7 +185,7 @@
       <mat-card-title id="{{ call.response.id }}">Call ID: {{ call.response.callStack }}<a href="{{ llmCallUrl(call.response) }}" style="font-size: x-small;">gcp</a></mat-card-title>
       <mat-card-content>
         <p><strong>LLM:</strong> {{ call.response.llmId }} &nbsp;&nbsp; <strong>Request Time:</strong> {{ call.response.requestTime | date : 'medium' }}. &nbsp;&nbsp; <strong>Total Time:</strong> {{ (call.response.totalTime / 1000).toFixed(1) }}s</p>
-        
+
         <mat-expansion-panel *ngIf="call.request.systemPromptId">
           <mat-expansion-panel-header>
             <mat-panel-title>

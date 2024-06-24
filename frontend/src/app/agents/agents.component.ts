@@ -16,7 +16,7 @@ interface LLM {
 export type AgentLLMs = Record<TaskLevel, LLM>;
 
 export interface Invoke {
-  tool_name: string;
+  function_name: string;
   parameters: { [key: string]: any };
 }
 

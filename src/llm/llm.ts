@@ -70,7 +70,7 @@ export interface FunctionCalls {
 }
 
 export interface FunctionCall {
-	tool_name: string;
+	function_name: string;
 	parameters: { [key: string]: any };
 }
 
