@@ -1,5 +1,5 @@
 import { Agent } from '#agent/agentFunctions';
-import { Invoke } from '#llm/llm';
+import { FunctionCall } from '#llm/llm';
 import { logger } from '#o11y/logger';
 import { FunctionDefinition } from '../functionDefinition/functions';
 import { toolFactory } from '../functionDefinition/metadata';
@@ -55,8 +55,8 @@ export class Toolbox {
 		}
 	}
 
-	async invokeTool(invocation: Invoke): Promise<any> {
-		const [toolName, methodName] = invocation.tool_name.split('.');
+	async invokeTool(functionCall: FunctionCall): Promise<any> {
+		const [toolName, methodName] = functionCall.tool_name.split('.');
 		const tool = this.tools[toolName];
 		if (!tool) throw new Error(`Tool ${toolName} does not exist`);
 		const method = tool[methodName];
@@ -66,7 +66,7 @@ export class Toolbox {
 		if (typeof method !== 'function') throw new Error(`Tool error: ${toolName}.${methodName} is not a function. Is a ${typeof method}`);
 
 		// console.log(`Invoking ${invocation.tool_name} with ${JSON.stringify(invocation.parameters)}`);
-		const args = Object.values(invocation.parameters);
+		const args = Object.values(functionCall.parameters);
 		let result: any;
 		if (args.length === 0) {
 			result = await method.call(tool);
@@ -81,11 +81,11 @@ export class Toolbox {
 				logger.info(funcDef);
 			}
 			const args: any[] = new Array(funcDef.parameters.length);
-			for (const [paramName, paramValue] of Object.entries(invocation.parameters)) {
+			for (const [paramName, paramValue] of Object.entries(functionCall.parameters)) {
 				const paramDef = funcDef.parameters.find((paramDef) => paramDef.name === paramName);
 				if (!paramDef)
 					throw new Error(
-						`Invalid parameter name: ${paramName} for tool ${invocation.tool_name}. Valid parameters are: ${funcDef.parameters
+						`Invalid parameter name: ${paramName} for tool ${functionCall.tool_name}. Valid parameters are: ${funcDef.parameters
 							.map((paramDef) => paramDef.name)
 							.join(', ')}`,
 					);

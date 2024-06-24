@@ -21,13 +21,13 @@ Each step along the way explain your thought process and ways of reasoning.
 
 You must call them like this (always finishing with </function_calls>):
 <function_calls>
-    <invoke>
+    <function_call>
         <tool_name>$TOOL_NAME</tool_name>
         <parameters>
             <$PARAMETER_NAME>$PARAMETER_VALUE</$PARAMETER_NAME>
             ...
         </parameters>
-    </invoke>
+    </function_call>
 </function_calls>
 
 As you work through a task you may move forwards and backwards through the phases of:
@@ -72,18 +72,18 @@ The plan should be minimal and focus only on completing the user request.
        url {string} The web page URL (https://...)
 </next_step_details>
 <function_calls>
-<invoke>
+<function_call>
   <tool_name>PublicWeb.getWebPage</tool_name>
   <parameters>
     <url>https://docs.github.com/docs/new-runner-token-design</url>
   </parameters>
-</invoke>
-<invoke>
+</function_call>
+<function_call>
   <tool_name>PublicWeb.getWebPage</tool_name>
   <parameters>
     <url>https://blog.github.com/new-runner-registration</url>
   </parameters>
-</invoke>
+</function_call>
 </function_calls>
 </example>
 
@@ -107,21 +107,21 @@ You MUST respond in the format as per in this example, including the opening and
             Provide a concise details of the most probable next steps of the plan (i.e. function tool call) to take with reasoning.
             Then applying logic reasoning, taking into account all of the provided context, explain which are the most appropriate choice(s).
             List the possible functions from the <tools> section which are relevant to complete the next step, along with the parameter descriptions.
-            Select the function(s) to best complete the next step. You may invoke more than one function. Call the Agent.requestFeedback if more details/decisions are required, or Agent.completed if the request is complete.
+            Select the function(s) to best complete the next step. You may call more than one function. Call the Agent.requestFeedback if more details/decisions are required, or Agent.completed if the request is complete.
         </next_step_details>
         <function_calls>
-          <invoke>
+          <function_call>
             <tool_name>ToolGroup1.toolName1</tool_name>
             <parameters>
               <key>value</url>
             </parameters>
-          </invoke>
-          <invoke>
+          </function_call>
+          <function_call>
             <tool_name>ToolGroup2.toolName2</tool_name>
             <parameters>
               <key2>value2</url>
             </parameters>
-          </invoke>
+          </function_call>
         </function_calls>
     </response>
 </example>

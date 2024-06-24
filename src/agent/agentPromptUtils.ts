@@ -28,10 +28,14 @@ export function buildFunctionCallHistoryPrompt(): string {
 			params += `\n  "${name}": "${value}",\n`;
 		}
 		let output = '';
-		if (call.stdout) {
+		if (call.stdoutSummary) {
+			output += `<output-summary>${call.stdoutSummary}</output-summary>\n`;
+		} else if (call.stdout) {
 			output += `<output>${call.stdout}</output>\n`;
 		}
-		if (call.stderr) {
+		if (call.stderrSummary) {
+			output += `<error-summary>${call.stderrSummary}</error-summary>\n`;
+		} else if (call.stderr) {
 			output += `<error>${call.stderr}</error>\n`;
 		}
 		result += `<function_call>\n ${call.tool_name}({${params}})\n ${output}</function_call>\n`;

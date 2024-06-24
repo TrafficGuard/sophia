@@ -3,7 +3,8 @@ import { logger } from '#o11y/logger';
 import { FunctionCalls } from './llm';
 
 /**
- * Extracts the function call details from an LLM response
+ * Extracts the function call details from an LLM response.
+ * The XML will be in the format described in the xml-agent-system-prompt files
  * @param response
  * @returns the function call parameters
  */
@@ -16,15 +17,15 @@ export function parseFunctionCallsXml(response: string): FunctionCalls {
 	// TODO if XML parsing fails because of a syntax error we could have a fallback using a LLM to parse the result
 	const doc = parser.parseFromString(xmlString, 'text/xml');
 
-	const functionCalls: FunctionCalls = { invoke: [] };
+	const functionCallsHolder: FunctionCalls = { functionCalls: [] };
 
-	const invokes = doc.getElementsByTagName('invoke');
-	for (let i = 0; i < invokes.length; i++) {
-		const invoke = invokes[i];
+	const functionCalls = doc.getElementsByTagName('function_call');
+	for (let i = 0; i < functionCalls.length; i++) {
+		const functionCall = functionCalls[i];
 
-		const toolName = invoke.getElementsByTagName('tool_name')[0].textContent;
+		const toolName = functionCall.getElementsByTagName('tool_name')[0].textContent;
 		const parameters: { [key: string]: string } = {};
-		const params = invoke.getElementsByTagName('parameters')[0];
+		const params = functionCall.getElementsByTagName('parameters')[0];
 		if (params) {
 			const nodeList: NodeList = params.childNodes;
 			for (const node of Object.values(nodeList)) {
@@ -46,13 +47,13 @@ export function parseFunctionCallsXml(response: string): FunctionCalls {
 				}
 			}
 		}
-		functionCalls.invoke.push({
+		functionCallsHolder.functionCalls.push({
 			tool_name: toolName,
 			parameters: parameters,
 		});
 	}
 
-	return functionCalls;
+	return functionCallsHolder;
 }
 
 /**

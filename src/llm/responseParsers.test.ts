@@ -90,9 +90,9 @@ describe('responseParsers', () => {
 
 			const parsedData = parseFunctionCallsXml(xmlString);
 
-			expect(parsedData.invoke).to.have.lengthOf(2);
+			expect(parsedData.functionCalls).to.have.lengthOf(2);
 
-			expect(parsedData.invoke[0]).to.deep.equal({
+			expect(parsedData.functionCalls[0]).to.deep.equal({
 				tool_name: 'testTool',
 				parameters: {
 					param1: 'value1',
@@ -100,7 +100,7 @@ describe('responseParsers', () => {
 				},
 			});
 
-			expect(parsedData.invoke[1]).to.deep.equal({
+			expect(parsedData.functionCalls[1]).to.deep.equal({
 				tool_name: 'testTool2',
 				parameters: {
 					param1: 'value3',
@@ -140,9 +140,9 @@ describe('responseParsers', () => {
 
 			const parsedData = parseFunctionCallsXml(xmlString);
 
-			expect(parsedData.invoke).to.have.lengthOf(2);
+			expect(parsedData.functionCalls).to.have.lengthOf(2);
 
-			expect(parsedData.invoke[0]).to.deep.equal({
+			expect(parsedData.functionCalls[0]).to.deep.equal({
 				tool_name: 'testTool',
 				parameters: {
 					param1: 'value1',
@@ -150,7 +150,7 @@ describe('responseParsers', () => {
 				},
 			});
 
-			expect(parsedData.invoke[1]).to.deep.equal({
+			expect(parsedData.functionCalls[1]).to.deep.equal({
 				tool_name: 'testTool2',
 				parameters: {
 					param1: 'value3',

@@ -3,7 +3,7 @@ import { AsyncLocalStorage } from 'async_hooks';
 import { Toolbox } from '#agent/toolbox';
 import { RunAgentConfig } from '#agent/xmlAgentRunner';
 import { FileSystem } from '#functions/filesystem';
-import { Invoke, Invoked, LLM, TaskLevel } from '#llm/llm';
+import { FunctionCall, FunctionCallResult, LLM, TaskLevel } from '#llm/llm';
 import { deserializeLLMs } from '#llm/llmFactory';
 import { logger } from '#o11y/logger';
 import { User } from '#user/user';
@@ -45,12 +45,12 @@ export interface AgentContext {
 	systemPrompt: string;
 	/* Track what functions we've called into */
 	callStack: string[];
-	functionCallHistory: Invoked[];
+	functionCallHistory: FunctionCallResult[];
 
 	// These three fields are mutable for when saving state as the agent does work
 	error?: string;
 	planningResponse?: string;
-	invoking: Invoke[];
+	invoking: FunctionCall[];
 
 	hilBudget;
 	hilCount;

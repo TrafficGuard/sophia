@@ -1,6 +1,8 @@
 import { logger } from '#o11y/logger';
 import { BaseLLM } from './base-llm';
 
+// https://github.com/AgentOps-AI/tokencost/blob/main/tokencost/model_prices.json
+
 export interface LLM {
 	generateText(prompt: string, systemPrompt?: string, type?: 'text' | 'json' | 'result' | 'function'): Promise<string>;
 	/* Generates a response that is expected to be in JSON format, and returns the object */
@@ -64,17 +66,22 @@ export interface FunctionResponse {
 }
 
 export interface FunctionCalls {
-	invoke: Invoke[];
+	functionCalls: FunctionCall[];
 }
 
-export interface Invoke {
+export interface FunctionCall {
 	tool_name: string;
 	parameters: { [key: string]: any };
 }
 
-export interface Invoked extends Invoke {
+/**
+ * A completed FunctionCall with the output/error.
+ */
+export interface FunctionCallResult extends FunctionCall {
 	stdout?: string;
+	stdoutSummary?: string;
 	stderr?: string;
+	stderrSummary?: string;
 }
 
 export function combinePrompts(userPrompt: string, systemPrompt?: string): string {

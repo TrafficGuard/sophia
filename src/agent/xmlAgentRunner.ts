@@ -5,7 +5,7 @@ import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from '#agent/agentFuncti
 import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateToolDefinitions } from '#agent/agentPromptUtils';
 import { getServiceName } from '#fastify/trace-init/trace-init';
 import { Slack } from '#functions/slack';
-import { FunctionResponse, Invoked } from '#llm/llm';
+import { FunctionCallResult, FunctionResponse } from '#llm/llm';
 import { logger } from '#o11y/logger';
 import { startSpan, withActiveSpan } from '#o11y/trace';
 import { User } from '#user/user';
@@ -18,6 +18,8 @@ import { Toolbox } from './toolbox';
 
 export const SUPERVISOR_RESUMED_FUNCTION_NAME = 'Supervisor.Resumed';
 export const SUPERVISOR_CANCELLED_FUNCTION_NAME = 'Supervisor.Cancelled';
+
+const FUNCTION_OUTPUT_SUMMARIZE_LENGTH = 1000;
 
 export interface RunAgentConfig {
 	/** Uses currentUser() if not provided */
@@ -94,9 +96,9 @@ export async function provideFeedback(agentId: string, executionId: string, feed
 	if (agent.executionId !== executionId) throw new Error('Invalid executionId. Agent has already been provided feedback');
 
 	// The last function call should be the feedback
-	const invoked: Invoked = agent.functionCallHistory.slice(-1)[0];
-	if (invoked.tool_name !== AGENT_REQUEST_FEEDBACK) throw new Error(`Expected the last function call to be ${AGENT_REQUEST_FEEDBACK}`);
-	invoked.stdout = feedback;
+	const result: FunctionCallResult = agent.functionCallHistory.slice(-1)[0];
+	if (result.tool_name !== AGENT_REQUEST_FEEDBACK) throw new Error(`Expected the last function call to be ${AGENT_REQUEST_FEEDBACK}`);
+	result.stdout = feedback;
 	agent.state = 'agent';
 	await appContext().agentStateService.save(agent);
 
@@ -183,7 +185,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 			shouldContinue = await withActiveSpan('XmlAgent', async (span) => {
 				let completed = false;
 				let requestFeedback = false;
-				let anyInvokeErrors = false;
+				let anyFunctionCallErrors = false;
 				let controlError = false;
 				try {
 					if (hilCount && countSinceHil === hilCount) {
@@ -215,80 +217,86 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 						llmResponse = await agentLLM.generateTextExpectingFunctions(retryPrompt, systemPromptWithFunctions);
 					}
 					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + userRequestXml + llmResponse.textResponse;
-					const invokers = llmResponse.functions.invoke;
+					const functionCalls = llmResponse.functions.functionCalls;
 
-					if (!invokers.length) {
+					if (!functionCalls.length) {
 						// Re-try once with an addition to the prompt that there was no function calls,
-						// and it should call one of the Workflow functions to finish if it's not sure what to do next.
+						// and it should call one of the Agent functions to finish if it's not sure what to do next.
 						const retryPrompt = `${currentPrompt}
 						Note: Your previous response did not contain a function call.  If you are able to answer/complete the question/task, then call the ${AGENT_COMPLETED_NAME} function with the appropriate response.
 						If you are unsure what to do next then call the ${AGENT_REQUEST_FEEDBACK} function with a clarifying question.`;
 						const functionCallResponse: FunctionResponse = await agentLLM.generateTextExpectingFunctions(retryPrompt, systemPromptWithFunctions);
 						// retrying
 						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + userRequestXml + functionCallResponse.textResponse;
-						const invokers = functionCallResponse.functions.invoke;
-						if (!invokers.length) {
+						const functionCalls = functionCallResponse.functions.functionCalls;
+						if (!functionCalls.length) {
 							throw new Error('Found no function invocations');
 						}
 					}
 
 					agent.state = 'functions';
 					agent.inputPrompt = currentPrompt;
-					agent.invoking.push(...invokers);
+					agent.invoking.push(...functionCalls);
 					await agentStateService.save(agent);
 
 					const functionResults = [];
 
-					for (const invoker of invokers) {
+					for (const functionCall of functionCalls) {
 						try {
-							const toolResponse = await toolbox.invokeTool(invoker);
-							let functionResult = agentLLM.formatFunctionResult(invoker.tool_name, toolResponse);
+							const toolResponse = await toolbox.invokeTool(functionCall);
+							let functionResult = agentLLM.formatFunctionResult(functionCall.tool_name, toolResponse);
 							if (functionResult.startsWith('<response>')) functionResult = functionResult.slice(10);
 							// The trailing </response> will be removed as it's a stop word for the LLMs
-							functionResults.push(agentLLM.formatFunctionResult(invoker.tool_name, toolResponse));
-							// currentPrompt += `\n${llm.formatFunctionResult(invoker.tool_name, toolResponse)}`;
+							functionResults.push(agentLLM.formatFunctionResult(functionCall.tool_name, toolResponse));
+							// currentPrompt += `\n${llm.formatFunctionResult(functionCall.tool_name, toolResponse)}`;
+							const toolResponsString = JSON.stringify(toolResponse);
+
+							// To mimnimise the function call history size becoming too large (i.e. expensive)
+							// we'll create a summary for responses which are quite long
+							const outputSummary = toolResponsString?.length > FUNCTION_OUTPUT_SUMMARIZE_LENGTH ? await summariseLongFunctionOutput(functionCall) : undefined;
 
 							agent.functionCallHistory.push({
-								tool_name: invoker.tool_name,
-								parameters: invoker.parameters,
+								tool_name: functionCall.tool_name,
+								parameters: functionCall.parameters,
 								stdout: JSON.stringify(toolResponse),
+								stdoutSummary: outputSummary,
 							});
-							// Should check if completed or requestFeedback then there's no more invokers
-							if (invoker.tool_name === AGENT_COMPLETED_NAME) {
+							// Should check if completed or requestFeedback then there's no more function calls
+							if (functionCall.tool_name === AGENT_COMPLETED_NAME) {
 								logger.info('Task completed');
 								agent.state = 'completed';
 								completed = true;
 								break;
 							}
-							if (invoker.tool_name === AGENT_REQUEST_FEEDBACK) {
+							if (functionCall.tool_name === AGENT_REQUEST_FEEDBACK) {
 								logger.info('Feedback requested');
 								agent.state = 'feedback';
 								requestFeedback = true;
 								break;
 							}
 						} catch (e) {
-							anyInvokeErrors = true;
+							anyFunctionCallErrors = true;
 							agent.state = 'error';
 							logger.error(e, 'Tool error');
 							agent.error = e.toString();
 							await agentStateService.save(agent);
-							functionResults.push(agentLLM.formatFunctionError(invoker.tool_name, e));
-							// currentPrompt += `\n${llm.formatFunctionError(invoker.tool_name, e)}`;
+							functionResults.push(agentLLM.formatFunctionError(functionCall.tool_name, e));
+							// currentPrompt += `\n${llm.formatFunctionError(functionCalls.tool_name, e)}`;
 
 							agent.functionCallHistory.push({
-								tool_name: invoker.tool_name,
-								parameters: invoker.parameters,
+								tool_name: functionCall.tool_name,
+								parameters: functionCall.parameters,
 								stderr: agent.error,
 							});
 							// How to handle tool invocation errors? Give the agent a chance to re-try or try something different, or always human in loop?
 						}
 					}
 					// Function invocations are complete
-					span.setAttribute('functionCalls', invokers.map((invoker) => invoker.tool_name).join(', '));
+					span.setAttribute('functionCalls', functionCalls.map((functionCall) => functionCall.tool_name).join(', '));
 
 					// This section is duplicated in the provideFeedback function
 					agent.invoking = [];
-					if (!anyInvokeErrors && !completed && !requestFeedback) agent.state = 'agent';
+					if (!anyFunctionCallErrors && !completed && !requestFeedback) agent.state = 'agent';
 					currentPrompt = `${userRequestXml}\n${llmResponse.textResponse}\n${functionResults.join('\n')}`;
 					agent.inputPrompt = currentPrompt;
 					await agentStateService.save(agent);
@@ -302,7 +310,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 					await agentStateService.save(agent);
 				}
 				// return if the control loop should continue
-				return !(completed || requestFeedback || anyInvokeErrors || controlError);
+				return !(completed || requestFeedback || anyFunctionCallErrors || controlError);
 			});
 		}
 
@@ -325,6 +333,16 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 	return agent.agentId;
 }
 
+async function summariseLongFunctionOutput(functionResult: FunctionCallResult): Promise<string> {
+	const errorPrefix = functionResult.stderr ? 'error-' : '';
+	const prompt = `<function_name>${functionResult.tool_name}</function_name><${errorPrefix}output>\n${
+		functionResult.stdout ?? functionResult.stderr
+	}</${errorPrefix}output>
+	For the above function call summarise the output into a paragraph that captures key details about the output content, which might include identifiers, content summary, content structure and examples. Only responsd with the summary`;
+	const summary = await llms().easy.generateText(prompt);
+	return summary;
+}
+
 function notificationMessage(agent: AgentContext): string {
 	switch (agent.state) {
 		case 'error':
@@ -340,8 +358,8 @@ function notificationMessage(agent: AgentContext): string {
 }
 
 function getLastFunctionCallArg(agent: AgentContext) {
-	const invoked: Invoked = agent.functionCallHistory.slice(-1)[0];
-	return Object.values(invoked.parameters)[0];
+	const result: FunctionCallResult = agent.functionCallHistory.slice(-1)[0];
+	return Object.values(result.parameters)[0];
 }
 
 class HumanInLoopReturn extends Error {}
