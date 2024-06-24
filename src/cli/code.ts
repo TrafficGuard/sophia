@@ -7,14 +7,14 @@ import '#fastify/trace-init/trace-init';
 import { FileSystem } from '#functions/filesystem';
 import { GEMINI_1_5_PRO_LLMS, Gemini_1_5_Pro } from '#llm/models/vertexai';
 import { withActiveSpan } from '#o11y/trace';
-import { CodeEditingWorkflow } from '#swe/codeEditingWorkflow';
+import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
 import { ProjectInfo } from '#swe/projectDetection';
 
 import { currentUser } from '#user/userService/userContext';
 import { envVarHumanInLoopSettings } from './cliHumanInLoop';
 
-// Used to test the local repo editing workflow in DevEditWorkflow
+// Used to test the local repo editing workflow in CodeEditingAgent
 
 // Usage:
 // npm run code
@@ -56,7 +56,7 @@ async function main() {
 		span.setAttributes({
 			initialPrompt,
 		});
-		await new CodeEditingWorkflow().runCodeEditWorkflow(initialPrompt, projectInfo);
+		await new CodeEditingAgent().runCodeEditWorkflow(initialPrompt, projectInfo);
 	});
 }
 

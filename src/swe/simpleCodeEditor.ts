@@ -3,7 +3,7 @@ import { CDATA_END, CDATA_START } from '#utils/xml-utils';
 import { func } from '../functionDefinition/functions';
 import { funcClass } from '../functionDefinition/metadata';
 import { LLM } from '../llm/llm';
-import { buildPrompt } from './codeEditingWorkflow';
+import { buildPrompt } from './codeEditingAgent';
 
 @funcClass(__filename)
 export class SimpleCodeEditor {

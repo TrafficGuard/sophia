@@ -10,9 +10,9 @@ import { GEMINI_1_5_PRO_LLMS, Gemini_1_5_Pro } from '#llm/models/vertexai';
 import { withActiveSpan } from '#o11y/trace';
 import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
 import { appContext } from '../app';
-import { CodeEditingWorkflow } from '../swe/codeEditingWorkflow';
+import { CodeEditingAgent } from '../swe/codeEditingAgent';
 import { ProjectInfo } from '../swe/projectDetection';
-import { SoftwareDeveloperWorkflow } from '../swe/softwareDeveloperWorkflow';
+import { SoftwareDeveloperAgent } from '../swe/softwareDeveloperAgent';
 
 import { currentUser } from '#user/userService/userContext';
 import { envVarHumanInLoopSettings } from './cliHumanInLoop';
@@ -43,7 +43,7 @@ async function main() {
 		span.setAttributes({
 			initialPrompt: config.initialPrompt,
 		});
-		await new SoftwareDeveloperWorkflow().runSoftwareDeveloperWorkflow(config.initialPrompt);
+		await new SoftwareDeveloperAgent().runSoftwareDeveloperWorkflow(config.initialPrompt);
 	});
 }
 

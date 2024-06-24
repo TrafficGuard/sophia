@@ -12,9 +12,9 @@ import { GEMINI_1_5_PRO_LLMS, Gemini_1_5_Pro } from '#llm/models/vertexai';
 import { MultiLLM } from '#llm/multi-llm';
 import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
 import { appContext } from '../app';
-import { CodeEditingWorkflow } from '../swe/codeEditingWorkflow';
+import { CodeEditingAgent } from '../swe/codeEditingAgent';
 import { SimpleCodeEditor } from '../swe/simpleCodeEditor';
-import { SoftwareDeveloperWorkflow } from '../swe/softwareDeveloperWorkflow';
+import { SoftwareDeveloperAgent } from '../swe/softwareDeveloperAgent';
 
 import { GoogleCloud } from '#functions/google-cloud';
 import { Jira } from '#functions/jira';
@@ -40,7 +40,7 @@ export async function main() {
 		agentName: 'cil-agent',
 		initialPrompt: readFileSync('src/cli/agent-in', 'utf-8'),
 		user: currentUser(),
-		toolbox: new Toolbox(SoftwareDeveloperWorkflow, FileSystem, PublicWeb, Perplexity),
+		toolbox: new Toolbox(SoftwareDeveloperAgent, FileSystem, PublicWeb, Perplexity),
 		humanInLoop: envVarHumanInLoopSettings(),
 		llms: ClaudeVertexLLMs(),
 	};

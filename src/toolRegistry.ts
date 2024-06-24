@@ -5,22 +5,22 @@ import { GitLabServer } from '#functions/scm/gitlab';
 import { Slack } from '#functions/slack';
 import { UtilFunctions } from '#functions/util';
 import { Perplexity } from '#functions/web/perplexity';
-import { CodeEditingWorkflow } from '#swe/codeEditingWorkflow';
-import { SoftwareDeveloperWorkflow } from '#swe/softwareDeveloperWorkflow';
+import { CodeEditingAgent } from '#swe/codeEditingAgent';
+import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
 
 /**
  * Add any tools to be made available here to ensure their function definitions are registered
  */
 export function toolRegistry(): any[] {
 	return [
-		CodeEditingWorkflow,
+		CodeEditingAgent,
 		FileSystem,
 		GitLabServer,
 		GoogleCloud,
 		Jira,
 		Perplexity,
 		Slack,
-		SoftwareDeveloperWorkflow,
+		SoftwareDeveloperAgent,
 		UtilFunctions,
 		// Add your own tools below this line
 	];

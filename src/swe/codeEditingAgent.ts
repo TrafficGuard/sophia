@@ -27,7 +27,7 @@ interface ErrorAnalysis {
 }
 
 @funcClass(__filename)
-export class CodeEditingWorkflow {
+export class CodeEditingAgent {
 	//* @param projectInfo details of the project, lang/runtime etc
 	/**
 	 * Runs a workflow which edits the code repository to implement the requirements, and committing changes to version control.

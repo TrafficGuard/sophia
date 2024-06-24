@@ -8,7 +8,7 @@ import { ExecResult, ExecResults, execCmd, execCommand } from '#utils/exec';
 import { cacheRetry } from '../cache/cacheRetry';
 import { func } from '../functionDefinition/functions';
 import { funcClass } from '../functionDefinition/metadata';
-import { CodeEditingWorkflow } from './codeEditingWorkflow';
+import { CodeEditingAgent } from './codeEditingAgent';
 import { ProjectInfo, detectProjectInfo } from './projectDetection';
 import { basePrompt } from './prompt';
 
@@ -25,7 +25,7 @@ export function buildPrompt(args: {
  * Assumes the SCM is set on the workflow context
  */
 @funcClass(__filename)
-export class SoftwareDeveloperWorkflow {
+export class SoftwareDeveloperAgent {
 	/**
 	 * Runs the main workflow for implementing requirements. This will look up the appropriate project in GitLab, clone it, make the changes, compile and test if applicable, commit and create a pull/merge request to review.
 	 * @param requirements the requirements for the changes.
@@ -59,7 +59,7 @@ export class SoftwareDeveloperWorkflow {
 
 		let error: any;
 		try {
-			await new CodeEditingWorkflow().runCodeEditWorkflow(`${requirements}\n\n${summary}`, projectInfo);
+			await new CodeEditingAgent().runCodeEditWorkflow(`${requirements}\n\n${summary}`, projectInfo);
 		} catch (e) {
 			logger.error(e);
 			error = e;
