@@ -1,5 +1,6 @@
 import { join } from 'path';
 import { getFileSystem } from '#agent/agentContext';
+import { currentUser } from '#user/userService/userContext';
 import { execCommand } from '#utils/exec';
 import { cacheRetry } from '../cache/cacheRetry';
 import { func } from '../functionDefinition/functions';
@@ -25,7 +26,21 @@ export class CodeEditor {
 		await getFileSystem().writeFile(messageFilePath, requirements);
 		// A blank entry was getting here which would cause Aider to error
 		filesToEdit = filesToEdit.filter((file) => file?.trim().length);
-		const cmd = `aider --skip-check-update --yes --message-file=${messageFilePath} ${filesToEdit.map((file) => `"${file}"`).join(' ')}`;
+
+		// https://aider.chat/docs/llms.html
+		let modelArg = '';
+		if (currentUser().llmConfig.anthropicKey) {
+			modelArg = '--sonnet';
+		} else if (currentUser().llmConfig.deepseekKey) {
+			modelArg = '--model deepseek/deepseek-coder';
+		} else if (currentUser().llmConfig.openaiKey) {
+			// default to gpt4o
+			modelArg = '';
+		} else {
+			throw new Error('Aider code editing requires a key for Anthropic, Deepseek or OpenAI');
+		}
+
+		const cmd = `aider --skip-check-update --yes ${modelArg} --message-file=${messageFilePath} ${filesToEdit.map((file) => `"${file}"`).join(' ')}`;
 
 		const { stdout, stderr, exitCode } = await execCommand(cmd);
 		if (exitCode > 0) throw new Error(`${stdout} ${stderr}`);

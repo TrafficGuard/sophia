@@ -42,7 +42,7 @@ export class DeepseekLLM extends BaseLLM {
 		this.client = axios.create({
 			baseURL: 'https://api.deepseek.com',
 			headers: {
-				Authorization: `Bearer ${currentUser().llmConfig.deepseekKey ?? envVar('DEEPSEEK_KEY')}`,
+				Authorization: `Bearer ${currentUser().llmConfig.deepseekKey ?? envVar('DEEPSEEK_API_KEY')}`,
 			},
 		});
 	}

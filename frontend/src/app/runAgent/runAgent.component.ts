@@ -34,13 +34,13 @@ export class RunAgentComponent implements OnInit {
     const presets = {
       'claude-vertex': {
         easy: 'anthropic-vertex:claude-3-haiku',
-        medium: 'anthropic-vertex:claude-3-sonnet',
-        hard: 'anthropic-vertex:claude-3-opus',
+        medium: 'anthropic-vertex:claude-3-5-sonnet',
+        hard: 'anthropic-vertex:claude-3-5-sonnet',
       },
       claude: {
         easy: 'anthropic:claude-3-haiku',
-        medium: 'anthropic:claude-3-sonnet',
-        hard: 'anthropic:claude-3-opus',
+        medium: 'anthropic:claude-3-5-sonnet',
+        hard: 'anthropic:claude-3-5-sonnet',
       },
       gemini: { easy: 'vertex:gemini-1.5-flash', medium: 'vertex:gemini-1.5-flash', hard: 'vertex:gemini-1.5-pro' },
       openai: { easy: 'openai:gpt-4o', medium: 'openai:gpt-4o', hard: 'openai:gpt-4o' },
