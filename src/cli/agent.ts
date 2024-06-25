@@ -1,8 +1,8 @@
 import '#fastify/trace-init/trace-init';
 
 import { readFileSync } from 'fs';
+import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentLLMs, getFileSystem } from '#agent/agentContext';
-import { Toolbox } from '#agent/toolbox';
 import { RunAgentConfig, runAgent, startAgent } from '#agent/xmlAgentRunner';
 import { FileSystem } from '#functions/filesystem';
 import { Claude3_Opus, ClaudeLLMs } from '#llm/models/anthropic';
@@ -40,7 +40,7 @@ export async function main() {
 		agentName: 'cil-agent',
 		initialPrompt: readFileSync('src/cli/agent-in', 'utf-8'),
 		user: currentUser(),
-		toolbox: new Toolbox(SoftwareDeveloperAgent, FileSystem, PublicWeb, Perplexity),
+		functions: new LlmFunctions(SoftwareDeveloperAgent, FileSystem, PublicWeb, Perplexity),
 		humanInLoop: envVarHumanInLoopSettings(),
 		llms: ClaudeVertexLLMs(),
 	};

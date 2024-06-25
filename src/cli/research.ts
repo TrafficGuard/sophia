@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
+import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentLLMs, agentContextStorage, getFileSystem } from '#agent/agentContext';
-import { Toolbox } from '#agent/toolbox';
 import { RunAgentConfig, runAgent, startAgent } from '#agent/xmlAgentRunner';
 import '#fastify/trace-init/trace-init';
 import { PUBLIC_WEB } from '#functions/web/web';
@@ -40,21 +40,15 @@ export async function main() {
 	const systemPrompt = readFileSync('src/cli/research-system', 'utf-8');
 	const initialPrompt = readFileSync('src/cli/research-in', 'utf-8'); //'Complete the JIRA issue: ABC-123'
 
-	const toolbox = new Toolbox();
-	// toolbox.addTool('Jira', new Jira());
-	// toolbox.addTool('GoogleCloud', new GoogleCloud());
-	// toolbox.addTool('UtilFunctions', new UtilFunctions());
-	// toolbox.addTool(getFileSystem(), 'FileSystem');
-	// toolbox.addTool(new NpmPackages(), 'NpmPackages');
-	toolbox.addTool(PUBLIC_WEB, 'PublicWeb');
-	// toolbox.addToolType(WebResearcher);
+	const functions = new LlmFunctions();
+	functions.addFunctionClassInstance(PUBLIC_WEB, 'PublicWeb');
 
 	const config: RunAgentConfig = {
 		agentName: 'researcher',
 		user: currentUser(),
 		initialPrompt,
 		systemPrompt,
-		toolbox,
+		functions,
 		humanInLoop: envVarHumanInLoopSettings(),
 		llms,
 	};

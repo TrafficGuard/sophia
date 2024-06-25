@@ -13,13 +13,12 @@ import { getFileSystem, llms } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
 import { ICodeReview, loadCodeReviews } from '#swe/codeReview/codeReviewParser';
-import { toolConfig } from '#user/userService/userContext';
+import { functionConfig } from '#user/userService/userContext';
 import { allSettledAndFulFilled } from '#utils/async-utils';
 import { envVar } from '#utils/env-var';
 import { checkExecResult, execCmd, execCommand } from '#utils/exec';
 import { cacheRetry } from '../../cache/cacheRetry';
-import { func } from '../../functionDefinition/functions';
-import { funcClass } from '../../functionDefinition/metadata';
+import { func, funcClass } from '../../functionDefinition/functionDecorators';
 import { UtilFunctions } from '../util';
 import { SourceControlManagement } from './sourceControlManagement';
 
@@ -77,11 +76,11 @@ export class GitLabServer implements SourceControlManagement {
 
 	private config(): GitLabConfig {
 		if (!this._config) {
-			const userConfig = toolConfig(GitLabServer);
+			const config = functionConfig(GitLabServer);
 			this._config = {
-				host: userConfig.host || envVar('GITLAB_HOST'),
-				token: userConfig.token || envVar('GITLAB_TOKEN'),
-				topLevelGroups: (userConfig.topLevelGroups || envVar('GITLAB_GROUPS')).split(',').map((group: string) => group.trim()),
+				host: config.host || envVar('GITLAB_HOST'),
+				token: config.token || envVar('GITLAB_TOKEN'),
+				topLevelGroups: (config.topLevelGroups || envVar('GITLAB_GROUPS')).split(',').map((group: string) => group.trim()),
 			};
 		}
 		return this._config;

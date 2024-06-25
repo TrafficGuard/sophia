@@ -66,10 +66,10 @@ export abstract class BaseLLM implements LLM {
 		return `${this.service}:${this.model}`;
 	}
 
-	formatFunctionResult(toolName: string, result: any): string {
+	formatFunctionResult(functionName: string, result: any): string {
 		return `<function_results>
         <result>
-        <function_name>${toolName}</function_name>
+        <function_name>${functionName}</function_name>
         <stdout>${CDATA_START}
         ${JSON.stringify(result)}
         ${CDATA_END}</stdout>
@@ -78,9 +78,9 @@ export abstract class BaseLLM implements LLM {
         `;
 	}
 
-	formatFunctionError(toolName: string, error: any): string {
+	formatFunctionError(functionName: string, error: any): string {
 		return `<function_results>
-		<function_name>${toolName}</function_name>
+		<function_name>${functionName}</function_name>
         <error>${CDATA_START}
         ${JSON.stringify(error)}
         ${CDATA_END}</error>

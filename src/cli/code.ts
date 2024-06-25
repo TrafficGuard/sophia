@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { Span } from '@opentelemetry/api';
+import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext, AgentLLMs, agentContextStorage, createContext } from '#agent/agentContext';
-import { Toolbox } from '#agent/toolbox';
 import { RunAgentConfig } from '#agent/xmlAgentRunner';
 import '#fastify/trace-init/trace-init';
 import { FileSystem } from '#functions/filesystem';
@@ -25,13 +25,13 @@ async function main() {
 
 	const initialPrompt = readFileSync('src/cli/code-in', 'utf-8');
 
-	const toolbox = new Toolbox();
-	toolbox.addToolType(FileSystem);
+	const functions = new LlmFunctions();
+	functions.addFunctionClass(FileSystem);
 
 	const config: RunAgentConfig = {
 		agentName: 'code',
 		llms,
-		toolbox,
+		functions,
 		user: currentUser(),
 		initialPrompt,
 		humanInLoop: envVarHumanInLoopSettings(),

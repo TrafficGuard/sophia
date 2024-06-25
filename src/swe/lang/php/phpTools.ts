@@ -1,5 +1,4 @@
-import { func } from '../../../functionDefinition/functions';
-import { funcClass } from '../../../functionDefinition/metadata';
+import { func, funcClass } from '../../../functionDefinition/functionDecorators';
 import { LanguageTools } from '../languageTools';
 
 @funcClass(__filename)

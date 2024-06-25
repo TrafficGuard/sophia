@@ -36,16 +36,16 @@ export interface LLM {
 
 	/**
 	 * Formats the output of a successful function call
-	 * @param toolName
+	 * @param functionName
 	 * @param result
 	 */
-	formatFunctionResult(toolName: string, result: any): string;
+	formatFunctionResult(functionName: string, result: any): string;
 	/**
 	 * Formats the output of a failed function call
-	 * @param toolName
+	 * @param functionName
 	 * @param error
 	 */
-	formatFunctionError(toolName: string, error: any): string;
+	formatFunctionError(functionName: string, error: any): string;
 	/** The maximum number of input tokens */
 	getMaxInputTokens(): number;
 }

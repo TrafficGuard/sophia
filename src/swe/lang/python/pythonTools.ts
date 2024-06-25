@@ -1,5 +1,5 @@
 import { execCommand } from '#utils/exec';
-import { funcClass } from '../../../functionDefinition/metadata';
+import { funcClass } from '../../../functionDefinition/functionDecorators';
 import { LanguageTools } from '../languageTools';
 
 @funcClass(__filename)

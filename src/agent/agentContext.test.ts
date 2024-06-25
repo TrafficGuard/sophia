@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext, createContext, deserializeAgentContext, serializeContext } from '#agent/agentContext';
-import { Toolbox } from '#agent/toolbox';
 import { RunAgentConfig, runAgent } from '#agent/xmlAgentRunner';
 import { FileSystem } from '#functions/filesystem';
 import { UtilFunctions } from '#functions/util';
@@ -18,20 +18,20 @@ describe('agentContext', () => {
 				hard: GPT4(),
 				xhard: GPT4(),
 			};
-			const toolbox = new Toolbox();
-			toolbox.addToolType(FileSystem);
+			const functions = new LlmFunctions();
+			functions.addFunctionClass(FileSystem);
 
 			const config: RunAgentConfig = {
 				agentName: 'SWE',
 				llms,
-				toolbox,
+				functions,
 				user: appContext().userService.getSingleUser(),
 				initialPrompt: 'question',
 				humanInLoop: envVarHumanInLoopSettings(),
 			};
 			const agentContext: AgentContext = createContext(config);
 			agentContext.fileSystem.setWorkingDirectory('./workingDir');
-			agentContext.toolbox.addToolType(UtilFunctions);
+			agentContext.functions.addFunctionClass(UtilFunctions);
 			agentContext.memory.memory_key = 'memory_value';
 			const serialized = serializeContext(agentContext);
 			const serializedToString: string = JSON.stringify(serialized);

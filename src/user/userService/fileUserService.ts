@@ -40,7 +40,7 @@ export class FileUserService implements UserService {
 			hilBudget: user.hilBudget ?? 0,
 			hilCount: user.hilCount ?? 0,
 			llmConfig: user.llmConfig ?? { anthropicKey: '', openaiKey: '', groqKey: '', togetheraiKey: '' },
-			toolConfig: {},
+			functionConfig: {},
 		};
 		mkdirSync(this.usersDirectory, { recursive: true });
 		writeFileSync(`${this.usersDirectory}/${user.id}.json`, JSON.stringify(newUser));

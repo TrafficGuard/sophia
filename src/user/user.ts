@@ -29,8 +29,8 @@ export interface User {
 	// jiraConfig: JiraConfig;
 	//
 	// perplexityKey: string;
-
-	toolConfig: Record<string, Record<string, any>>;
+	/** Configuration for the function callable integrations */
+	functionConfig: Record<string, Record<string, any>>;
 
 	// googleCustomSearchEngineId: string;
 	// googleCustomSearchKey: string;

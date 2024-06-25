@@ -3,8 +3,7 @@ import { getFileSystem } from '#agent/agentContext';
 import { currentUser } from '#user/userService/userContext';
 import { execCommand } from '#utils/exec';
 import { cacheRetry } from '../cache/cacheRetry';
-import { func } from '../functionDefinition/functions';
-import { funcClass } from '../functionDefinition/metadata';
+import { func, funcClass } from '../functionDefinition/functionDecorators';
 
 @funcClass(__filename)
 export class CodeEditor {

@@ -1,6 +1,5 @@
 import { llms } from '#agent/agentContext';
-import { func } from '../functionDefinition/functions';
-import { funcClass } from '../functionDefinition/metadata';
+import { func, funcClass } from '../functionDefinition/functionDecorators';
 
 @funcClass(__filename)
 export class UtilFunctions {

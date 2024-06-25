@@ -10,7 +10,7 @@ const singleUser: User = {
 	llmConfig: {},
 	id: SINGLE_USER_ID,
 	email: 'user@domain.com',
-	toolConfig: {},
+	functionConfig: {},
 };
 
 export class InMemoryUserService implements UserService {
@@ -51,7 +51,7 @@ export class InMemoryUserService implements UserService {
 			hilBudget: user.hilBudget ?? 0,
 			hilCount: user.hilCount ?? 0,
 			llmConfig: user.llmConfig ?? { anthropicKey: '', openaiKey: '', groqKey: '', togetheraiKey: '' },
-			toolConfig: {},
+			functionConfig: {},
 		};
 		this.users.push(newUser);
 		return Promise.resolve(newUser);

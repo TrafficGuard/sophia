@@ -7,7 +7,7 @@
   }
 }
 
-.tool-item {
+.function-item {
   display: flex;
   align-items: center;
   padding-right: 5px;
@@ -20,15 +20,10 @@
 .presets a {
   padding-right: 5px;
 }
-.tools-grid {
+.functions-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(auto, max-content));
   gap: 10px;
-}
-
-.tool-item {
-  display: flex;
-  align-items: center;
 }
 
 .promptField,

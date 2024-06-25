@@ -11,7 +11,7 @@ import { environment } from '@env/environment';
   styleUrls: ['./runAgent.component.scss'],
 })
 export class RunAgentComponent implements OnInit {
-  tools: string[] = [];
+  functions: string[] = [];
   llms: string[] = [];
   runAgentForm: FormGroup;
   isSubmitting: boolean = false;
@@ -56,18 +56,18 @@ export class RunAgentComponent implements OnInit {
 
   ngOnInit(): void {
     this.http
-      .get<{ data: string[] }>(`${environment.serverUrl}/agent/v1/tools`)
+      .get<{ data: string[] }>(`${environment.serverUrl}/agent/v1/functions`)
       .pipe(
         map((response) => {
           console.log(response);
           return (response.data as string[]).filter((name) => name !== 'Agent');
         })
       )
-      .subscribe((tools) => {
-        this.tools = tools.sort();
-        // Dynamically add form controls for each tool
-        tools.forEach((tool, index) => {
-          (this.runAgentForm as FormGroup).addControl('tool' + index, new FormControl(false));
+      .subscribe((functions) => {
+        this.functions = functions.sort();
+        // Dynamically add form controls for each function
+        functions.forEach((tool, index) => {
+          (this.runAgentForm as FormGroup).addControl('function' + index, new FormControl(false));
         });
       });
     this.http
@@ -104,8 +104,8 @@ export class RunAgentComponent implements OnInit {
     if (!this.runAgentForm.valid) return;
     // Implement the logic to handle form submission
     console.log('Form submitted', this.runAgentForm.value);
-    const selectedTools: string[] = this.tools
-      .filter((_, index) => this.runAgentForm.value['tool' + index])
+    const selectedFunctions: string[] = this.functions
+      .filter((_, index) => this.runAgentForm.value['function' + index])
       .map((tool, _) => tool);
     this.http
       .post(`${environment.serverUrl}/agent/v1/start`, {
@@ -113,7 +113,7 @@ export class RunAgentComponent implements OnInit {
         userPrompt: this.runAgentForm.value.userPrompt,
         // type: this.runAgentForm.value.type,
         // systemPrompt: this.runAgentForm.value.systemPrompt,
-        tools: selectedTools,
+        functions: selectedFunctions,
         budget: this.runAgentForm.value.budget,
         count: this.runAgentForm.value.count,
         llmEasy: this.runAgentForm.value.llmEasy,

@@ -34,7 +34,7 @@ export class FirestoreUserService implements UserService {
 			} else {
 				this.singleUser = await this.createUser({
 					email: process.env.SINGLE_USER_EMAIL,
-					toolConfig: {},
+					functionConfig: {},
 					llmConfig: {},
 					enabled: true,
 					hilCount: 5,

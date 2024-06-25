@@ -15,6 +15,7 @@ import { FileFunctionCacheService } from './cache/fileFunctionCacheService';
 import { FirestoreCacheService } from './cache/firestoreFunctionCacheService';
 import { FunctionCacheService } from './cache/functionCacheService';
 import { TypeBoxFastifyInstance, initFastify } from './fastify';
+import { functionRegistry } from './functionRegistry';
 import { agentDetailsRoutes } from './routes/agent/agent-details-routes';
 import { agentExecutionRoutes } from './routes/agent/agent-execution-routes';
 import { agentStartRoute } from './routes/agent/agent-start-route';
@@ -22,7 +23,6 @@ import { gitlabRoutesV1 } from './routes/gitlab/gitlabRoutes-v1';
 import { llmCallRoutes } from './routes/llms/llm-call-routes';
 import { llmRoutes } from './routes/llms/llm-routes';
 import { profileRoute } from './routes/profile/profile-route';
-import { toolRegistry } from './toolRegistry';
 
 export interface ApplicationContext {
 	agentStateService: AgentStateService;
@@ -35,8 +35,8 @@ export interface AppFastifyInstance extends TypeBoxFastifyInstance, ApplicationC
 
 let applicationContext: ApplicationContext;
 
-// Ensures the tools are registered
-toolRegistry();
+// Ensures the functions are registered
+functionRegistry();
 
 /**
  * @return the main application context

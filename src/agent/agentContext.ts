@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { AsyncLocalStorage } from 'async_hooks';
-import { Toolbox } from '#agent/toolbox';
+import { LlmFunctions } from '#agent/LlmFunctions';
 import { RunAgentConfig } from '#agent/xmlAgentRunner';
 import { FileSystem } from '#functions/filesystem';
 import { FunctionCall, FunctionCallResult, LLM, TaskLevel } from '#llm/llm';
@@ -64,8 +64,8 @@ export interface AgentContext {
 	llms: AgentLLMs;
 	/** Working filesystem */
 	fileSystem?: FileSystem | null;
-	/** The tools/functions available to the agent */
-	toolbox: Toolbox;
+	/** The functions available to the agent */
+	functions: LlmFunctions;
 	/** Memory persisted over the agent's control loop iterations */
 	memory: Record<string, string>;
 
@@ -119,7 +119,7 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		cost: 0,
 		llms: config.llms,
 		fileSystem: new FileSystem(),
-		toolbox: config.toolbox,
+		functions: config.functions,
 		memory: {},
 		invoking: [],
 		lastUpdate: Date.now(),
@@ -184,7 +184,7 @@ export async function deserializeAgentContext(serialized: Record<string, any>): 
 	}
 
 	context.fileSystem = new FileSystem().fromJSON(serialized.fileSystem);
-	context.toolbox = new Toolbox().fromJSON(serialized.toolbox);
+	context.functions = new LlmFunctions().fromJSON(serialized.functions ?? serialized.toolbox); // toolbox for backward compat
 	context.memory = serialized.memory;
 	context.user = await appContext().userService.getUser(serialized.user);
 	context.llms = deserializeLLMs(serialized.llms);

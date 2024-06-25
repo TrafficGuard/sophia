@@ -16,7 +16,7 @@ Nous comes with a Software Engineer agent which has a workflow of:
 
 The workflow is not tied to GitLab as it uses the SourceCodeManagement interface. 
 Once the GitHub implementation is complete it can be substituted by selecting 
-the GitHub tool instead of Gitlab when starting an agent.
+the GitHub class instead of Gitlab when starting an agent.
 
 The following two steps are encapsulated within a Code Editing agent for flexibility in using it directly when editing a local repository, or embedding in alternative software engineer agents with different workflows.
 - Select files to edit.

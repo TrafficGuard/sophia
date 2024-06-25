@@ -40,9 +40,9 @@ Run `gcloud auth application-default login` which will provide credentials for t
 
 If you have configured Google Cloud then update `TRACE_AGENT_ENABLED` to `true`.
 
-The LLM API keys and tool configurations can be set in the environment variables, which provides defaults for any user the app. By default Nous runs in a single user mode.
+The LLM API keys and integration configurations can be set in the environment variables, which provides defaults for any user the app. By default Nous runs in a single user mode.
 
-Alternately you can run the application and enter the LLM/Tool configuration values in the UI.
+Alternately you can run the application and enter the LLM/integration configuration values in the UI.
 
 Quick links to create API keys:
 
@@ -53,7 +53,7 @@ LLMs
 - [Together.ai](https://api.together.ai/settings/api-keys)
 - [Fireworks.ai](https://fireworks.ai/api-keys)
 
-Tools
+Function callable integrations
 - [Perplexity](https://www.perplexity.ai/settings/api)
 - [Jira](https://id.atlassian.com/manage-profile/security/api-tokens)
 - [GitLab.com](https://www.gitab.com/-/user_settings/personal_access_tokens) (Grant api, read_repo and write_repo roles)
@@ -70,10 +70,10 @@ These can be run with `npm run chat`, `npm run agent`, `npm run code`, `npm run 
 `chat`, `agent`, `swe` and `code` read their input from the co-located files. Util is for testing individual pieces of code.
 
 - `chat` does a single completion from an LLM, reading the input from *src/cli/chat-in*
-- `agent` runs the autonomous agent, using the tools configured, reading the input from *src/cli/agent-in*
+- `agent` runs the autonomous agent, using the functions configured, reading the input from *src/cli/agent-in*
 - `code` runs the Code Editing agent on the repository, reading the input from *src/cli/code-in*
-- `swe` runs the software engineer agent, which can find a remote repo to clone, edit and create a pull/megre request. Input read from *src/cli/swe-in*
-- `research` runs the autonomous agent with the web research tools configured.
+- `swe` runs the software engineer agent, which can find a remote repo to clone, edit and create a pull/merge request. Input read from *src/cli/swe-in*
+- `research` runs the autonomous agent with the web research functions configured.
 - `util` used for running any random piece of code to test.
 
 ### Server/UI

@@ -14,7 +14,7 @@ nav:
   - xml-agent.md
   - software-engineer.md
   - code-review.md
-  - tools.md
+  - integrations.md
 
 plugins:
   - glightbox

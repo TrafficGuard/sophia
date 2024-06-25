@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import * as readline from 'readline';
 import { Span, SpanStatusCode } from '@opentelemetry/api';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
-import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateToolDefinitions } from '#agent/agentPromptUtils';
+import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateFunctionDefinitions } from '#agent/agentPromptUtils';
 import { getServiceName } from '#fastify/trace-init/trace-init';
 import { Slack } from '#functions/slack';
 import { FunctionCallResult, FunctionResponse } from '#llm/llm';
@@ -12,9 +12,9 @@ import { User } from '#user/user';
 import { sleep } from '#utils/async-utils';
 import { envVar } from '#utils/env-var';
 import { appContext } from '../app';
-import { getFunctionDefinitions } from '../functionDefinition/metadata';
+import { getFunctionDefinitions } from '../functionDefinition/functions';
+import { LlmFunctions } from './LlmFunctions';
 import { AgentContext, AgentLLMs, AgentRunningState, agentContext, agentContextStorage, createContext, llms } from './agentContext';
-import { Toolbox } from './toolbox';
 
 export const SUPERVISOR_RESUMED_FUNCTION_NAME = 'Supervisor.Resumed';
 export const SUPERVISOR_CANCELLED_FUNCTION_NAME = 'Supervisor.Cancelled';
@@ -26,8 +26,8 @@ export interface RunAgentConfig {
 	user?: User;
 	/** The name of this agent */
 	agentName: string;
-	/** The tools the agent has available to call */
-	toolbox: Toolbox;
+	/** The functions the agent has available to call */
+	functions: LlmFunctions;
 	/** The initial prompt */
 	initialPrompt: string;
 	/** The agent system prompt */
@@ -140,18 +140,18 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 
 	// TODO only do this if FileSystem is selected by the user
 	// The filesystem will always be on on the context for programmatic usage
-	agent.toolbox.addTool(agent.fileSystem, 'FileSystem');
+	agent.functions.addFunctionClassInstance(agent.fileSystem, 'FileSystem');
 
 	const agentLLM = llms().hard;
 
 	const userRequestXml = `<user_request>${agent.userPrompt}</user_request>\n`;
 	let currentPrompt = agent.inputPrompt;
 
-	const toolbox = agent.toolbox;
+	const functions = agent.functions;
 
-	const systemPrompt = updateToolDefinitions(agent.systemPrompt, getFunctionDefinitions(toolbox.getTools()));
-	const functionDefinitions = getFunctionDefinitions(toolbox.getTools());
-	const systemPromptWithFunctions = updateToolDefinitions(systemPrompt, functionDefinitions);
+	const systemPrompt = updateFunctionDefinitions(agent.systemPrompt, getFunctionDefinitions(functions.getFunctionClasses()));
+	const functionDefinitions = getFunctionDefinitions(functions.getFunctionClasses());
+	const systemPromptWithFunctions = updateFunctionDefinitions(systemPrompt, functionDefinitions);
 
 	// Human in the loop settings
 	// How often do we require human input to avoid misguided actions and wasting money
@@ -177,7 +177,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 			agentId: agent.agentId,
 			executionId: agent.executionId,
 			parentId: agent.parentAgentId,
-			tools: agent.toolbox.getToolNames(),
+			functions: agent.functions.getFunctionClassNames(),
 		});
 
 		let shouldContinue = true;
@@ -243,22 +243,22 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 
 					for (const functionCall of functionCalls) {
 						try {
-							const toolResponse = await toolbox.invokeTool(functionCall);
-							let functionResult = agentLLM.formatFunctionResult(functionCall.function_name, toolResponse);
+							const functionResponse = await functions.callFunction(functionCall);
+							let functionResult = agentLLM.formatFunctionResult(functionCall.function_name, functionResponse);
 							if (functionResult.startsWith('<response>')) functionResult = functionResult.slice(10);
 							// The trailing </response> will be removed as it's a stop word for the LLMs
-							functionResults.push(agentLLM.formatFunctionResult(functionCall.function_name, toolResponse));
-							// currentPrompt += `\n${llm.formatFunctionResult(functionCall.function_name, toolResponse)}`;
-							const toolResponsString = JSON.stringify(toolResponse);
+							functionResults.push(agentLLM.formatFunctionResult(functionCall.function_name, functionResponse));
+							const functionResponseString = JSON.stringify(functionResponse);
 
-							// To mimnimise the function call history size becoming too large (i.e. expensive)
+							// To minimise the function call history size becoming too large (i.e. expensive)
 							// we'll create a summary for responses which are quite long
-							const outputSummary = toolResponsString?.length > FUNCTION_OUTPUT_SUMMARIZE_LENGTH ? await summariseLongFunctionOutput(functionCall) : undefined;
+							const outputSummary =
+								functionResponseString?.length > FUNCTION_OUTPUT_SUMMARIZE_LENGTH ? await summariseLongFunctionOutput(functionCall) : undefined;
 
 							agent.functionCallHistory.push({
 								function_name: functionCall.function_name,
 								parameters: functionCall.parameters,
-								stdout: JSON.stringify(toolResponse),
+								stdout: JSON.stringify(functionResponse),
 								stdoutSummary: outputSummary,
 							});
 							// Should check if completed or requestFeedback then there's no more function calls
@@ -277,7 +277,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 						} catch (e) {
 							anyFunctionCallErrors = true;
 							agent.state = 'error';
-							logger.error(e, 'Tool error');
+							logger.error(e, 'Function error');
 							agent.error = e.toString();
 							await agentStateService.save(agent);
 							functionResults.push(agentLLM.formatFunctionError(functionCall.function_name, e));
@@ -288,7 +288,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 								parameters: functionCall.parameters,
 								stderr: agent.error,
 							});
-							// How to handle tool invocation errors? Give the agent a chance to re-try or try something different, or always human in loop?
+							// How to handle function call errors? Give the agent a chance to re-try or try something different, or always human in loop?
 						}
 					}
 					// Function invocations are complete
@@ -320,7 +320,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 		message += `\n${uiUrl}/agent/${agent.agentId}`;
 		logger.info(message);
 
-		const slackConfig = agent.user.toolConfig[Slack.name];
+		const slackConfig = agent.user.functionConfig[Slack.name];
 		// TODO check for env vars
 		if (slackConfig?.webhookUrl || slackConfig?.token) {
 			try {

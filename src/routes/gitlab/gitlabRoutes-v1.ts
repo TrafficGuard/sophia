@@ -1,6 +1,6 @@
 import { Type } from '@sinclair/typebox';
+import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext, agentContextStorage, createContext } from '#agent/agentContext';
-import { Toolbox } from '#agent/toolbox';
 import { RunAgentConfig } from '#agent/xmlAgentRunner';
 import { send, sendSuccess } from '#fastify/index';
 import { GitLabServer } from '#functions/scm/gitlab';
@@ -32,7 +32,7 @@ export async function gitlabRoutesV1(fastify: AppFastifyInstance) {
 			const config: RunAgentConfig = {
 				agentName: `MR review - ${event.object_attributes.title}`,
 				llms: GEMINI_1_5_PRO_LLMS(),
-				toolbox: new Toolbox(),
+				functions: new LlmFunctions(),
 				user: currentUser(), // TODO need to specify a user for code reviews
 				initialPrompt: '',
 				humanInLoop: envVarHumanInLoopSettings(),

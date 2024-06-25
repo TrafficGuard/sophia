@@ -51,27 +51,27 @@ The `@func` annotation also adds OpenTelemetry tracing to the function call.
 
 Function arguments must simple types or serializable to JSON. If an argument is an array type the runtime will convert a string that is a JSON array to an array object, otherwise it will split it by the newline character.
 
-## Agent function toolbox
+## Agent functions
 
 Currently functions can only be made available as a group of all the functions defined in a class.
-This is done by creating a Toolbox with the applicable function class references.
+This is done by creating a FunctionSet with the applicable function class references.
 
 ```typescript
 const config: RunAgentConfig = {
     agentName: 'ABC-123 discovery',
     llms: GPT(),
-    toolbox: new Toolbox(GitLabServer, Jira),
+    functions: new FunctionSet(GitLabServer, Jira),
     initialPrompt: "What project in GitLab has the code to complete Jira ABC-123?",
 };
 // runAgent()
 ```
-Each iteration of the autonomous agent control loop updates the system prompt with the available tools in the toolbox,
-so its possibly to dynamically change which tools are available in a long-running agent.
+Each iteration of the autonomous agent control loop updates the system prompt with the available functions,
+so its possibly to dynamically change which functions are available in a long-running agent.
 
 
 ## Application registration
 
-To ensure the all functions have been registered when the application is running, add the tool to the array in `toolRegistry.ts`.
-This is required by the web interface for the tool selection list to be complete and for the `npm run functions` command to pre-build all the definitions.
+To ensure the all functions have been registered when the application is running, add the function class to the array in `functionRegistry.ts`.
+This is required by the web interface for the function selection list to be complete and for the `npm run functions` command to pre-build all the definitions.
 
 ## Cache/Retry

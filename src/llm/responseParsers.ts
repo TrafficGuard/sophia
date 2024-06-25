@@ -23,7 +23,7 @@ export function parseFunctionCallsXml(response: string): FunctionCalls {
 	for (let i = 0; i < functionCalls.length; i++) {
 		const functionCall = functionCalls[i];
 
-		const toolName = functionCall.getElementsByTagName('function_name')[0].textContent;
+		const functionName = functionCall.getElementsByTagName('function_name')[0].textContent;
 		const parameters: { [key: string]: string } = {};
 		const params = functionCall.getElementsByTagName('parameters')[0];
 		if (params) {
@@ -48,7 +48,7 @@ export function parseFunctionCallsXml(response: string): FunctionCalls {
 			}
 		}
 		functionCallsHolder.functionCalls.push({
-			function_name: toolName,
+			function_name: functionName,
 			parameters: parameters,
 		});
 	}

@@ -2,11 +2,10 @@ import { logger } from '#o11y/logger';
 
 import OpenAI from 'openai';
 import { agentContext } from '#agent/agentContext';
-import { currentUser, toolConfig } from '#user/userService/userContext';
+import { currentUser, functionConfig } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
 import { cacheRetry } from '../../cache/cacheRetry';
-import { func } from '../../functionDefinition/functions';
-import { funcClass } from '../../functionDefinition/metadata';
+import { func, funcClass } from '../../functionDefinition/functionDecorators';
 
 const log = logger.child({ class: 'Perplexity' });
 
@@ -26,7 +25,7 @@ export class Perplexity {
 	async search(query: string, saveToMemory: boolean): Promise<string> {
 		try {
 			const perplexity = new OpenAI({
-				apiKey: toolConfig(Perplexity).key ?? envVar('PERPLEXITY_KEY'),
+				apiKey: functionConfig(Perplexity).key ?? envVar('PERPLEXITY_KEY'),
 				baseURL: 'https://api.perplexity.ai',
 			});
 

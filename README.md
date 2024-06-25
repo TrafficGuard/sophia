@@ -41,18 +41,18 @@ Some of the key features include:
     - Configurable code review guidelines
 - Supports multiple LLMs/Services
     - GPT, Gemini, Groq, Claude (Anthropic and Vertex), Fireworks, Together.ai
-- Function callable tools
+- Function callable integrations
     - Filesystem, Jira, Slack, Perplexity, Gitlab
 
 ## Documentation
 
-- [Setup](https://github.com/TrafficGuard/nous/tree/preview/docs/docs/setup.md)
-- [Observability](https://github.com/TrafficGuard/nous/tree/preview/docs/docs/observability.md)
-- [Function calling](https://github.com/TrafficGuard/nous/tree/preview/docs/docs/functions.md)
-- [Autonomous AI Agent](https://github.com/TrafficGuard/nous/tree/preview/docs/docs/xml-agent.md)
-- [AI Software Engineer](https://github.com/TrafficGuard/nous/tree/preview/docs/docs/software-engineer.md)
-- [AI Code reviews](https://github.com/TrafficGuard/nous/tree/preview/docs/docs/code-review.md)
-- [Tools](https://github.com/TrafficGuard/nous/tree/preview/docs/docs/tools.md)
+- [Setup](https://github.com/TrafficGuard/nous/tree/main/docs/docs/setup.md)
+- [Observability](https://github.com/TrafficGuard/nous/tree/main/docs/docs/observability.md)
+- [Function calling](https://github.com/TrafficGuard/nous/tree/main/docs/docs/functions.md)
+- [Autonomous AI Agent](https://github.com/TrafficGuard/nous/tree/main/docs/docs/xml-agent.md)
+- [AI Software Engineer](https://github.com/TrafficGuard/nous/tree/main/docs/docs/software-engineer.md)
+- [AI Code reviews](https://github.com/TrafficGuard/nous/tree/main/docs/docs/code-review.md)
+- [Function integrations](https://github.com/TrafficGuard/nous/tree/main/docs/docs/integrations.md)
 
 ## UI examples
 

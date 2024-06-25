@@ -4,8 +4,6 @@ import { JSDOM } from 'jsdom';
 import { agentContextStorage, getFileSystem, llms } from '#agent/agentContext';
 import { execCommand } from '#utils/exec';
 import { cacheRetry } from '../../cache/cacheRetry';
-import { func } from '../../functionDefinition/functions';
-import { funcClass } from '../../functionDefinition/metadata';
 const { getJson } = require('serpapi');
 import { readFileSync } from 'fs';
 import { fileExistsAsync, fileExistsSync } from 'tsconfig-paths/lib/filesystem';
@@ -13,6 +11,7 @@ import { sleep } from '#utils/async-utils';
 const puppeteer = require('puppeteer');
 import { Browser } from 'puppeteer';
 import { logger } from '#o11y/logger';
+import { func, funcClass } from '../../functionDefinition/functionDecorators';
 
 // For Node.js
 const TurndownService = require('turndown');

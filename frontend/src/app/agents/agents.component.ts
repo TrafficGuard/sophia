@@ -68,8 +68,8 @@ export interface AgentContext {
   fileSystem?: FileSystem | null;
   /** Directory for cloning repositories etc */
   tempDir: string;
-  /** The tools/functions available to the agent */
-  toolbox: string[];
+  /** The functions available to the agent */
+  functions: string[];
   /** Memory persisted over the agent's control loop iterations */
   memory: Map<string, string>;
 }

@@ -1,14 +1,14 @@
 import { readFileSync } from 'fs';
 import { Type } from '@sinclair/typebox';
-import { Toolbox } from '#agent/toolbox';
+import { LlmFunctions } from '#agent/LlmFunctions';
 import { startAgent } from '#agent/xmlAgentRunner';
 import { send } from '#fastify/index';
 import { getLLM } from '#llm/llmFactory';
 import { logger } from '#o11y/logger';
 import { AppFastifyInstance } from '../../app';
-import { toolFactory } from '../../functionDefinition/metadata';
 
 import { currentUser } from '#user/userService/userContext';
+import { functionFactory } from '../../functionDefinition/functionDecorators';
 
 const v1BasePath = '/api/agent/v1';
 export async function agentStartRoute(fastify: AppFastifyInstance) {
@@ -20,7 +20,7 @@ export async function agentStartRoute(fastify: AppFastifyInstance) {
 				body: Type.Object({
 					name: Type.String(),
 					userPrompt: Type.String(),
-					tools: Type.Array(Type.String()),
+					functions: Type.Array(Type.String()),
 					// type: Type.String(),
 					budget: Type.Number({ minimum: 0 }),
 					count: Type.Integer({ minimum: 0 }),
@@ -31,19 +31,18 @@ export async function agentStartRoute(fastify: AppFastifyInstance) {
 			},
 		},
 		async (req, reply) => {
-			const { name, userPrompt, tools, budget, count, llmEasy, llmMedium, llmHard } = req.body;
+			const { name, userPrompt, functions, budget, count, llmEasy, llmMedium, llmHard } = req.body;
 
 			logger.info(req.body, `Starting agent ${name}`);
 
-			logger.info(Object.keys(toolFactory));
-			const toolbox = new Toolbox();
-			for (const toolName of tools) {
-				const tool = toolFactory[toolName];
-				logger.info(`getting tool ${toolName} ${tool}`);
-				if (!tool) {
-					logger.error(`Tool ${toolName} not found in the toolFactory`);
+			logger.info(Object.keys(functionFactory));
+			const llmFunctions = new LlmFunctions();
+			for (const functionClassName of functions) {
+				const functionClass = functionFactory[functionClassName];
+				if (!functionClass) {
+					logger.error(`Function class ${functionClassName} not found in the functionFactory`);
 				} else {
-					toolbox.addToolType(toolFactory[toolName]);
+					llmFunctions.addFunctionClass(functionFactory[functionClassName]);
 				}
 			}
 
@@ -58,7 +57,7 @@ export async function agentStartRoute(fastify: AppFastifyInstance) {
 					hard: getLLM(llmHard),
 					xhard: getLLM(llmHard),
 				},
-				toolbox: toolbox,
+				functions: llmFunctions,
 			});
 
 			send(reply, 200);

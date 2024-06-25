@@ -18,7 +18,7 @@ CREATE TABLE agent_execution (
     system_prompt TEXT,
     memory TEXT,
     llm_config JSONB,
-    toolbox_state JSONB,
+    functions JSONB,
     filesystem_state JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP

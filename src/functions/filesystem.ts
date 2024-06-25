@@ -4,6 +4,7 @@ import path, { join } from 'path';
 import { promisify } from 'util';
 import ignore from 'ignore';
 import Pino from 'pino';
+import { agentContext } from '#agent/agentContext';
 import { Git } from '#functions/scm/git';
 import { VersionControlSystem } from '#functions/scm/versionControlSystem';
 import { UtilFunctions } from '#functions/util';
@@ -11,8 +12,8 @@ import { logger } from '#o11y/logger';
 import { execCmd, execCommand, spawnCommand } from '#utils/exec';
 import { CDATA_END, CDATA_START } from '#utils/xml-utils';
 import { needsCDATA } from '#utils/xml-utils';
-import { func, parseArrayParameterValue } from '../functionDefinition/functions';
-import { funcClass } from '../functionDefinition/metadata';
+import { func, funcClass } from '../functionDefinition/functionDecorators';
+import { parseArrayParameterValue } from '../functionDefinition/functionUtils';
 const fs = {
 	readFile: promisify(readFile),
 	stat: promisify(stat),
@@ -110,12 +111,15 @@ export class FileSystem {
 	/**
 	 * Returns the file contents of all the files recursively under the provided directory path
 	 * @param dirPath the directory to return all the files contents under
+	 * @param storeToMemory if the file contents should be stored to memory. The key will be in the format file-contents-<FileSystem.workingDirectory>-<dirPath>
 	 * @returns the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
 	 */
 	@func()
-	async getFileContentsRecursivelyAsXml(dirPath: string): Promise<string> {
+	async getFileContentsRecursivelyAsXml(dirPath: string, storeToMemory: boolean): Promise<string> {
 		const filenames = await this.listFilesRecursively(dirPath);
-		return await this.getMultipleFileContentsAsXml(filenames);
+		const contents = await this.getMultipleFileContentsAsXml(filenames);
+		if (storeToMemory) agentContext().memory[`file-contents-${join(this.getWorkingDirectory(), dirPath)}`] = contents;
+		return contents;
 	}
 
 	/**

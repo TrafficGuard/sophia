@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { appContext, initInMemoryApplicationContext } from 'src/app';
+import { LlmFunctions } from '#agent/LlmFunctions';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK, REQUEST_FEEDBACK_PARAM_NAME } from '#agent/agentFunctions';
-import { Toolbox } from '#agent/toolbox';
 import {
 	RunAgentConfig,
 	SUPERVISOR_CANCELLED_FUNCTION_NAME,
@@ -31,7 +31,7 @@ describe.only('agentRunner', () => {
 		hard: mockLLM,
 		xhard: mockLLM,
 	};
-	let toolbox = new Toolbox();
+	let functions = new LlmFunctions();
 
 	function runConfig(runConfig?: Partial<RunAgentConfig>): RunAgentConfig {
 		const defaults: RunAgentConfig = {
@@ -39,7 +39,7 @@ describe.only('agentRunner', () => {
 			initialPrompt: 'test prompt',
 			systemPrompt: '<functions></functions>',
 			llms,
-			toolbox,
+			functions,
 			user: createUser(),
 		};
 		return runConfig ? { ...defaults, ...runConfig } : defaults;
@@ -52,7 +52,7 @@ describe.only('agentRunner', () => {
 			hilCount: 0,
 			id: '',
 			llmConfig: {},
-			toolConfig: {},
+			functionConfig: {},
 		};
 		return user ? { ...defaults, ...user } : defaults;
 	}
@@ -77,17 +77,17 @@ describe.only('agentRunner', () => {
 			hard: mockLLM,
 			xhard: mockLLM,
 		};
-		toolbox = new Toolbox();
+		functions = new LlmFunctions();
 	});
 
 	describe('test function calling', () => {
 		it('should be able to call a function with multiple parameters', async () => {
-			toolbox.addToolType(TestFunctions);
+			functions.addFunctionClass(TestFunctions);
 			mockLLM.addResponse(
 				`<plan>call sum</plan><function_calls><function_call><function_name>${TEST_FUNC_SUM}</function_name><parameters><num1>3</num1><num2>6</num2></parameters></function_call></function_calls>`,
 			);
 			mockLLM.addResponse(COMPLETE_FUNCTION_CALL);
-			await startAgent(runConfig({ initialPrompt: 'Add 3 and 6', toolbox }));
+			await startAgent(runConfig({ initialPrompt: 'Add 3 and 6', functions: functions }));
 			const agent = await waitForAgent();
 			// spy on sum
 			expect(agent.error).to.be.undefined;
@@ -97,19 +97,19 @@ describe.only('agentRunner', () => {
 
 	describe('Agent.complete usage', () => {
 		it('should be able to complete on the initial function call', async () => {
-			toolbox.addToolType(TestFunctions);
+			functions.addFunctionClass(TestFunctions);
 			mockLLM.addResponse(COMPLETE_FUNCTION_CALL);
-			await startAgent(runConfig({ toolbox }));
+			await startAgent(runConfig({ functions }));
 			const agent = await waitForAgent();
 			expect(agent.error).to.be.undefined;
 			expect(agent.state).to.equal('completed');
 		});
 
 		it('should be able to complete on the second function call', async () => {
-			toolbox.addToolType(TestFunctions);
+			functions.addFunctionClass(TestFunctions);
 			mockLLM.addResponse(NOOP_FUNCTION_CALL);
 			mockLLM.addResponse(COMPLETE_FUNCTION_CALL);
-			await startAgent(runConfig({ toolbox }));
+			await startAgent(runConfig({ functions }));
 			const agent = await waitForAgent();
 			expect(agent.error).to.be.undefined;
 			expect(agent.state).to.equal('completed');
@@ -119,7 +119,7 @@ describe.only('agentRunner', () => {
 	describe('Agent.requestFeedback usage', () => {
 		it('should be able to request feedback', async () => {
 			mockLLM.addResponse(REQUEST_FEEDBACK_FUNCTION_CALL);
-			await startAgent(runConfig({ toolbox }));
+			await startAgent(runConfig({ functions }));
 			const agent = await waitForAgent();
 			expect(agent.functionCallHistory.length).to.equal(1);
 			expect(agent.state).to.equal('feedback');
@@ -134,23 +134,23 @@ describe.only('agentRunner', () => {
 
 	describe('user/initial prompt handling', () => {
 		it('the initial prompt should set on the agent after multiple function calls', async () => {
-			toolbox.addToolType(TestFunctions);
+			functions.addFunctionClass(TestFunctions);
 			mockLLM.addResponse(NOOP_FUNCTION_CALL);
 			mockLLM.addResponse(NOOP_FUNCTION_CALL);
 			mockLLM.addResponse(COMPLETE_FUNCTION_CALL);
 			const initialPrompt = 'Initial prompt test';
-			await startAgent(runConfig({ initialPrompt, toolbox }));
+			await startAgent(runConfig({ initialPrompt, functions: functions }));
 			const agent = await waitForAgent();
 			expect(agent.userPrompt).to.equal(initialPrompt);
 		});
 
 		it('should extract the user request when <user_request></user_request> exists in the prompt', async () => {
-			toolbox.addToolType(TestFunctions);
+			functions.addFunctionClass(TestFunctions);
 			mockLLM.addResponse(NOOP_FUNCTION_CALL);
 			mockLLM.addResponse(NOOP_FUNCTION_CALL);
 			mockLLM.addResponse(COMPLETE_FUNCTION_CALL);
 			const initialPrompt = 'Initial request test';
-			await startAgent(runConfig({ initialPrompt: `<user_request>${initialPrompt}</user_request>`, toolbox }));
+			await startAgent(runConfig({ initialPrompt: `<user_request>${initialPrompt}</user_request>`, functions: functions }));
 			const agent = await waitForAgent();
 			expect(agent.userPrompt).to.equal(initialPrompt);
 		});
@@ -158,13 +158,13 @@ describe.only('agentRunner', () => {
 
 	describe('Function call throws an error', () => {
 		it('should end the agent in the error state with the exception message in the error field', async () => {
-			toolbox.addTool(new TestFunctions(), 'TestFunctions');
+			functions.addFunctionClassInstance(new TestFunctions(), 'TestFunctions');
 
-			const toolName = 'TestFunctions.throwError';
-			const response = `<function_calls><function_call><function_name>${toolName}</function_name><parameters></parameters></function_call></function_calls>`;
+			const functionName = 'TestFunctions.throwError';
+			const response = `<function_calls><function_call><function_name>${functionName}</function_name><parameters></parameters></function_call></function_calls>`;
 			mockLLM.setResponse(response);
 
-			const id = await startAgent(runConfig({ toolbox }));
+			const id = await startAgent(runConfig({ functions }));
 			const ctx = await appContext().agentStateService.load(id);
 			expect(ctx.state).to.equal('error');
 			expect(ctx.error).to.include(THROW_ERROR_TEXT);
@@ -175,7 +175,7 @@ describe.only('agentRunner', () => {
 		describe('Feedback provided', () => {
 			it('should resume the agent with the feedback', async () => {
 				mockLLM.addResponse(REQUEST_FEEDBACK_FUNCTION_CALL);
-				const id = await startAgent(runConfig({ toolbox }));
+				const id = await startAgent(runConfig({ functions }));
 				let agent = await waitForAgent();
 
 				mockLLM.addResponse(COMPLETE_FUNCTION_CALL);
@@ -191,11 +191,11 @@ describe.only('agentRunner', () => {
 
 	describe('Cancel errored agent', () => {
 		it('should cancel the agent with note as output of the Supervisor.cancelled function call', async () => {
-			toolbox.addToolType(TestFunctions);
-			const toolName = 'TestFunctions.throwError';
-			const response = `<function_calls><function_call><function_name>${toolName}</function_name><parameters></parameters></function_call></function_calls>`;
+			functions.addFunctionClass(TestFunctions);
+			const functionName = 'TestFunctions.throwError';
+			const response = `<function_calls><function_call><function_name>${functionName}</function_name><parameters></parameters></function_call></function_calls>`;
 			mockLLM.setResponse(response);
-			await startAgent(runConfig({ toolbox }));
+			await startAgent(runConfig({ functions }));
 			let agent = await waitForAgent();
 
 			await cancelAgent(agent.agentId, agent.executionId, 'cancelled');

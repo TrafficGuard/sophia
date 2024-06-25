@@ -3,7 +3,7 @@
 Nous provides an agent which can perform work autonomously by a control loop which plans and calls functions.
 
 The system prompt instructs the LLM to break down the task into steps which can be completed by the functions, 
-and then output a structured XML response. The XML part of the response is parsed to execute the function call to a tool/agent.
+and then output a structured XML response. The XML part of the response is parsed to execute the function call to an integration/agent.
 
 This custom prompt and parsing allows function calling on any sufficiently capable LLM. However, given the reasoning
 capabilities required for optimal plan generation and function selection, the best results will be from using the 
@@ -31,6 +31,6 @@ Having a human in the loop is essential for any agent to handle a few cases:
 - **Error handling** - Transient errors, configuration errors, balance exceeded errors and more can be fixed and then resume the agent. With some errors you may be able to give the agent guidance for a change in plan, or to search for a solution with Perplexity etc.
 - **Verification** - Manually verify function calls that could result in data loss, unwanted modifications etc.
 
-Currently, if the Slack tool is available, a message will be sent when a human-in-the-loop event occurs.
+Currently, if the Slack function is available, a message will be sent when a human-in-the-loop event occurs.
 
 ![Agent feedback request](https://public.trafficguard.ai/nous/feedback.png){ align=left }

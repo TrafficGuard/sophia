@@ -1,8 +1,7 @@
 import { getFileSystem } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
 import { execCommand } from '#utils/exec';
-import { func } from '../../../functionDefinition/functions';
-import { funcClass } from '../../../functionDefinition/metadata';
+import { func, funcClass } from '../../../functionDefinition/functionDecorators';
 import { LanguageTools } from '../languageTools';
 
 @funcClass(__filename)

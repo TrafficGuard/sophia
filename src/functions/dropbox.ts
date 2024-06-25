@@ -1,9 +1,7 @@
-import { func } from '../functionDefinition/functions';
-import { funcClass } from '../functionDefinition/metadata';
-
 import { Dropbox } from 'dropbox';
 
-import { toolConfig } from '#user/userService/userContext';
+import { functionConfig } from '#user/userService/userContext';
+import { func, funcClass } from '../functionDefinition/functionDecorators';
 
 /**
  * AI generated. Not tested.
@@ -13,7 +11,7 @@ class DropboxClient {
 	private dbx: Dropbox;
 
 	constructor() {
-		this.dbx = new Dropbox({ accessToken: toolConfig(DropboxClient).token });
+		this.dbx = new Dropbox({ accessToken: functionConfig(DropboxClient).token });
 	}
 
 	@func()

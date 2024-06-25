@@ -36,9 +36,9 @@ export function currentUser(): User {
 }
 
 /**
- * Gets the current users configuration for tool
- * @param toolType The tool class
+ * Gets the current users configuration for a function class
+ * @param functionClass The function class
  */
-export function toolConfig(toolType: any): Record<string, any> {
-	return currentUser().toolConfig[toolType.name] ?? {};
+export function functionConfig(functionClass: any): Record<string, any> {
+	return currentUser().functionConfig[functionClass.name] ?? {};
 }

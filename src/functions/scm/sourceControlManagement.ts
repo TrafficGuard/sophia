@@ -13,10 +13,10 @@ export interface SourceControlManagement {
 }
 
 export function getSourceControlManagementTool(): SourceControlManagement {
-	const toolbox = agentContext().toolbox;
-	const scm = toolbox.getTools().find((tool) => typeof tool.getProjects === 'function' && typeof tool.cloneProject === 'function');
+	const functions = agentContext().functions;
+	const scm = functions.getFunctionClasses().find((func) => typeof func.getProjects === 'function' && typeof func.cloneProject === 'function');
 	if (!scm) {
-		throw new Error(`A SourceControlManagement tool needs to be available. Could not find one in ${toolbox.getToolNames().join(',')}`);
+		throw new Error(`A SourceControlManagement function class needs to be available. Could not find one in ${functions.getFunctionClassNames().join(',')}`);
 	}
 	return scm;
 }

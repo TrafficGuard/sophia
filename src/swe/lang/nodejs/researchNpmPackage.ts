@@ -2,8 +2,7 @@ import { agentContext, getFileSystem } from '#agent/agentContext';
 import { PublicWeb } from '#functions/web/web';
 import { logger } from '#o11y/logger';
 import { cacheRetry } from '../../../cache/cacheRetry';
-import { func } from '../../../functionDefinition/functions';
-import { funcClass } from '../../../functionDefinition/metadata';
+import { func, funcClass } from '../../../functionDefinition/functionDecorators';
 
 export interface NpmPackageInfo {
 	docUrl: string;

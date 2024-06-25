@@ -40,7 +40,7 @@ Some of the key features include:
     - Configurable code review guidelines
 - Supports multiple LLMs/Services
     - GPT, Gemini, Groq, Claude (Anthropic and Vertex), Fireworks, Together.ai
-- Function callable tools
+- Function callable integrations
     - Filesystem, Jira, Slack, Perplexity, Gitlab
 
 

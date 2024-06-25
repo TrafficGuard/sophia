@@ -1,9 +1,8 @@
 import axios, { AxiosResponse } from 'axios';
 import { logger } from '#o11y/logger';
-import { func } from '../functionDefinition/functions';
-import { funcClass } from '../functionDefinition/metadata';
 
-import { currentUser, toolConfig } from '#user/userService/userContext';
+import { currentUser, functionConfig } from '#user/userService/userContext';
+import { func, funcClass } from '../functionDefinition/functionDecorators';
 
 export interface SlackConfig {
 	token: string;
@@ -19,7 +18,7 @@ export class Slack {
 	 */
 	@func()
 	async sendMessage(message: string): Promise<void> {
-		const config = toolConfig(Slack) as SlackConfig;
+		const config = functionConfig(Slack) as SlackConfig;
 		const webhookUrl = config.webhookUrl;
 		const token = config.token;
 		const userId = config.userId;

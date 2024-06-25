@@ -1,6 +1,5 @@
 import { llms } from '#agent/agentContext';
-import { func } from '../functionDefinition/functions';
-import { funcClass } from '../functionDefinition/metadata';
+import { func, funcClass } from '../functionDefinition/functionDecorators';
 
 export const THROW_ERROR_TEXT = 'FunctionErrorText';
 export const TEST_FUNC_SUM = 'TestFunctions.sum';

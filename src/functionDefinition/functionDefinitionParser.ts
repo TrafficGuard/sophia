@@ -7,7 +7,7 @@ import { FunctionDefinition, FunctionParameter } from './functions';
 
 const CACHED_BASE_PATH = '.nous/functions/';
 
-export function generateDefinition(sourceFilePath: string): [string, any] {
+export function functionDefinitionParser(sourceFilePath: string): [string, any] {
 	const cwd = process.cwd();
 	let cachedPath = path.relative(cwd, sourceFilePath);
 	// trim the .ts file extension
@@ -134,11 +134,11 @@ export function generateDefinition(sourceFilePath: string): [string, any] {
 				? `
                 <returns>${returns}</returns>`
 				: '';
-			const toolDescription = `
-            <tool_description>
+			const functionDescription = `
+            <function_description>
                 <function_name>${className}.${methodName}</function_name>
                 <description>${methodDescription}</description>${parameters}${returnsXml}
-            </tool_description>`;
+            </function_description>`;
 			objDefinition[methodName] = {
 				class: className,
 				name: methodName,
@@ -147,7 +147,7 @@ export function generateDefinition(sourceFilePath: string): [string, any] {
 				returns,
 			};
 
-			definition += `${toolDescription}\n`;
+			definition += `${functionDescription}\n`;
 		});
 	});
 

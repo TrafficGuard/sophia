@@ -1,8 +1,7 @@
 import { SourceControlManagement } from '#functions/scm/sourceControlManagement';
-import { toolConfig } from '#user/userService/userContext';
+import { functionConfig } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
-import { func } from '../../functionDefinition/functions';
-import { funcClass } from '../../functionDefinition/metadata';
+import { func, funcClass } from '../../functionDefinition/functionDecorators';
 
 export interface GitHubConfig {
 	token: string;
@@ -13,7 +12,7 @@ export class GitHub implements SourceControlManagement {
 	token;
 
 	constructor() {
-		this.token = toolConfig(GitHub).token ?? envVar('GITHUB_TOKEN');
+		this.token = functionConfig(GitHub).token ?? envVar('GITHUB_TOKEN');
 	}
 
 	@func()

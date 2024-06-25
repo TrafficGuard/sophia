@@ -9,9 +9,9 @@ import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
 
 /**
- * Add any tools to be made available here to ensure their function definitions are registered
+ * Add any function classes to be made available here to ensure their function definitions are registered
  */
-export function toolRegistry(): any[] {
+export function functionRegistry(): any[] {
 	return [
 		CodeEditingAgent,
 		FileSystem,
@@ -22,6 +22,6 @@ export function toolRegistry(): any[] {
 		Slack,
 		SoftwareDeveloperAgent,
 		UtilFunctions,
-		// Add your own tools below this line
+		// Add your own classes below this line
 	];
 }

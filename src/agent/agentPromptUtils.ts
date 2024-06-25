@@ -51,9 +51,9 @@ export function buildFunctionCallHistoryPrompt(): string {
  * @param functionDefinitions {string} the function definitions
  * @returns the updated system prompt
  */
-export function updateToolDefinitions(systemPrompt: string, functionDefinitions: string): string {
+export function updateFunctionDefinitions(systemPrompt: string, functionDefinitions: string): string {
 	const regex = /<functions>[\s\S]*?<\/functions>/g;
 	const updatedPrompt = systemPrompt.replace(regex, `<functions>${functionDefinitions}</functions>`);
-	if (!updatedPrompt.includes(functionDefinitions)) throw new Error('Unable to update tool definitions. Regex replace failed');
+	if (!updatedPrompt.includes(functionDefinitions)) throw new Error('Unable to update function definitions. Regex replace failed');
 	return updatedPrompt;
 }

@@ -5,13 +5,15 @@ import * as fs from 'fs/promises';
 import { logger } from '#o11y/logger';
 import { CacheScope, FunctionCacheService } from './functionCacheService';
 
+const DEFAULT_PATH = '.nous/functions';
+
 /**
  * Temporary file based cache. Need to get a database cache working, ideally with implementation in Postgres and Datastore initially
  */
 export class FileFunctionCacheService implements FunctionCacheService {
 	private baseFolderPath: string;
 
-	constructor(baseFolderPath = '.nous/functions') {
+	constructor(baseFolderPath = DEFAULT_PATH) {
 		this.baseFolderPath = baseFolderPath;
 	}
 
@@ -22,7 +24,7 @@ export class FileFunctionCacheService implements FunctionCacheService {
 	}
 	fromJSON(obj: any): this {
 		if (obj?.baseFolderPath) this.baseFolderPath = obj.baseFolderPath;
-		else this.baseFolderPath = './cache/tools';
+		else this.baseFolderPath = DEFAULT_PATH;
 		return this;
 	}
 

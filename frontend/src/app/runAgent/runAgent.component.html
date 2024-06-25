@@ -64,11 +64,11 @@
           <a href="#" (click)="setPreset('openai')">GPT</a>
         </div>
 
-        <div class="section-title">Tools</div>
+        <div class="section-title">Functions</div>
 
-        <div class="form-row tools-grid">
-          <div *ngFor="let tool of tools; let i = index" class="tool-item">
-            <mat-checkbox [formControlName]="'tool' + i">{{ tool }}</mat-checkbox>
+        <div class="form-row functions-grid">
+          <div *ngFor="let func of functions; let i = index" class="function-item">
+            <mat-checkbox [formControlName]="'function' + i">{{ func }}</mat-checkbox>
           </div>
         </div>
 

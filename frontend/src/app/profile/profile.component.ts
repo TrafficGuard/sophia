@@ -29,7 +29,7 @@ export class ProfileComponent implements OnInit {
         togetheraiKey: new FormControl(''),
         fireworksKey: new FormControl(''),
       }),
-      toolConfig: new FormGroup({
+      functionConfig: new FormGroup({
         GitHub: new FormGroup({
           token: new FormControl(''),
         }),

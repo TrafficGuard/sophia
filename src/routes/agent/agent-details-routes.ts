@@ -5,8 +5,8 @@ import { send, sendBadRequest, sendSuccess } from '#fastify/index';
 import { sendHTML } from '#fastify/responses';
 import { logger } from '#o11y/logger';
 import { AppFastifyInstance } from '../../app';
-import { toolFactory } from '../../functionDefinition/metadata';
-import { toolRegistry } from '../../toolRegistry';
+import { functionFactory } from '../../functionDefinition/functionDecorators';
+import { functionRegistry } from '../../functionRegistry';
 
 const basePath = '/api/agent/v1';
 export async function agentDetailsRoutes(fastify: AppFastifyInstance) {
@@ -16,11 +16,11 @@ export async function agentDetailsRoutes(fastify: AppFastifyInstance) {
 		send(reply as FastifyReply, 200, response);
 	});
 
-	fastify.get(`${basePath}/tools`, {}, async (req, reply) => {
+	fastify.get(`${basePath}/functions`, {}, async (req, reply) => {
 		send(
 			reply as FastifyReply,
 			200,
-			toolRegistry().map((t) => t.name),
+			functionRegistry().map((t) => t.name),
 		);
 	});
 
@@ -44,7 +44,7 @@ export async function agentDetailsRoutes(fastify: AppFastifyInstance) {
 			const ctx: AgentContext = await fastify.agentStateService.load(agentId);
 			if (!ctx) return sendBadRequest(reply);
 			const serializedContext = serializeContext(ctx);
-			serializedContext.tools = toolRegistry().map((t) => t.name);
+			serializedContext.functions = functionRegistry().map((f) => f.name);
 			send(reply, 200, serializedContext);
 		},
 	);

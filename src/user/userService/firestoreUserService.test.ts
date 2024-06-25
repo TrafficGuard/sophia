@@ -30,7 +30,7 @@ describe('FirestoreUserService', () => {
 				groqKey: '',
 				togetheraiKey: '',
 			},
-			toolConfig: {},
+			functionConfig: {},
 			// gitlabConfig: {
 			// 	host: '',
 			// 	token: '',

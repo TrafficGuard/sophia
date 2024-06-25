@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { Span } from '@opentelemetry/api';
+import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext, AgentLLMs, agentContextStorage, createContext } from '#agent/agentContext';
-import { Toolbox } from '#agent/toolbox';
 import { RunAgentConfig } from '#agent/xmlAgentRunner';
 import '#fastify/trace-init/trace-init';
 import { FileSystem } from '#functions/filesystem';
@@ -26,14 +26,14 @@ async function main() {
 	const gemini = Gemini_1_5_Pro();
 	const llms: AgentLLMs = GEMINI_1_5_PRO_LLMS();
 
-	const toolbox = new Toolbox();
-	toolbox.addToolType(FileSystem);
-	toolbox.addToolType(GitLabServer);
+	const functions = new LlmFunctions();
+	functions.addFunctionClass(FileSystem);
+	functions.addFunctionClass(GitLabServer);
 
 	const config: RunAgentConfig = {
 		agentName: 'SWE',
 		llms,
-		toolbox,
+		functions,
 		initialPrompt: readFileSync('src/cli/swe-in', 'utf-8'),
 	};
 	const context: AgentContext = createContext(config);

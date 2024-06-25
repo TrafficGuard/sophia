@@ -1,6 +1,6 @@
 import { appContext } from './app';
-import { toolRegistry } from './toolRegistry';
+import { functionRegistry } from './functionRegistry';
 
 // Pre-build the definitions for faster startup time
 appContext(); // Init the in-memory context
-toolRegistry();
+functionRegistry();
