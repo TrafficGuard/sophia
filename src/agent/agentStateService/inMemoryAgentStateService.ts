@@ -34,4 +34,8 @@ export class InMemoryAgentStateService implements AgentStateService {
 	async listRunning(): Promise<AgentContext[]> {
 		return (await this.list()).filter((agent) => agent.state !== 'completed');
 	}
+
+	async delete(ids: string[]): Promise<void> {
+		for (const id of ids) this.stateMap.delete(id);
+	}
 }

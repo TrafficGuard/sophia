@@ -2,10 +2,8 @@ import { Type } from '@sinclair/typebox';
 import { FastifyReply } from 'fastify';
 import { AgentContext, serializeContext } from '#agent/agentContext';
 import { send, sendBadRequest, sendSuccess } from '#fastify/index';
-import { sendHTML } from '#fastify/responses';
 import { logger } from '#o11y/logger';
 import { AppFastifyInstance } from '../../app';
-import { functionFactory } from '../../functionDefinition/functionDecorators';
 import { functionRegistry } from '../../functionRegistry';
 
 const basePath = '/api/agent/v1';
@@ -61,10 +59,8 @@ export async function agentDetailsRoutes(fastify: AppFastifyInstance) {
 		async (req, reply) => {
 			const { agentIds } = req.body;
 			try {
-				for (const agentId of agentIds) {
-					await fastify.agentStateService.delete(agentId);
-				}
-				sendSuccess(reply, { message: 'Agents deleted successfully' });
+				await fastify.agentStateService.delete(agentIds);
+				sendSuccess(reply, 'Agents deleted successfully');
 			} catch (error) {
 				logger.error('Error deleting agents:', error);
 				sendBadRequest(reply, 'Error deleting agents');

@@ -1,9 +1,9 @@
 <div class="mat-elevation-z8">
-  <div class="table-actions" style="text-align: left;width: 100%">
+  <mat-toolbar>
     <button mat-raised-button color="warn" (click)="deleteSelectedAgents()" [disabled]="selection.isEmpty()">
       Delete Selected
     </button>
-  </div>
+  </mat-toolbar>
   <table mat-table [dataSource]="agentContexts$">
     <!-- Checkbox Column -->
     <ng-container matColumnDef="select">
