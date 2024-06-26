@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { SelectionModel } from '@angular/cdk/collections';
+import { MatSnackBar } from '@angular/material/snack-bar';
 export type TaskLevel = 'easy' | 'medium' | 'hard' | 'xhard';
 
 interface LLM {
@@ -85,9 +87,11 @@ import { environment } from '@env/environment';
   styleUrls: ['./agents.component.scss'],
 })
 export class AgentsComponent implements OnInit {
-  agentContexts$: MatTableDataSource<any> = new MatTableDataSource<any>([]); // Observable<AgentContext[]> | undefined;
+  agentContexts$: MatTableDataSource<AgentContext> = new MatTableDataSource<AgentContext>([]);
+  selection = new SelectionModel<AgentContext>(true, []);
 
   displayedColumns: string[] = [
+    'select',
     'name',
     'state',
     'userPrompt',
@@ -100,25 +104,54 @@ export class AgentsComponent implements OnInit {
     'tempDir',
   ];
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private snackBar: MatSnackBar) {}
 
   ngOnInit(): void {
+    this.loadAgentContexts();
+  }
+
+  loadAgentContexts(): void {
     this.http
       .get<{ data: AgentContext[] }>(`${environment.serverUrl}/agent/v1/list`)
       .pipe(
         filter((contexts) => contexts !== null),
-        map((contexts) => {
-          console.log(contexts);
-          return contexts.data;
-        })
+        map((contexts) => contexts.data)
       )
       .subscribe((contexts) => {
-        // this.agentContextDataSource.data = contexts;
-        // this.agentContexts$ = new  MatTableDataSource(contexts)
-        console.log('subscribe');
-        console.log(contexts);
         this.agentContexts$.data = contexts;
+        this.selection.clear();
       });
-    // new CdkTableDataSourceInput<AgentContext>().connect(this.agentContexts$);
+  }
+
+  isAllSelected() {
+    const numSelected = this.selection.selected.length;
+    const numRows = this.agentContexts$.data.length;
+    return numSelected === numRows;
+  }
+
+  masterToggle() {
+    this.isAllSelected() ?
+      this.selection.clear() :
+      this.agentContexts$.data.forEach(row => this.selection.select(row));
+  }
+
+  deleteSelectedAgents() {
+    const selectedAgentIds = this.selection.selected.map(agent => agent.agentId);
+    if (selectedAgentIds.length === 0) {
+      this.snackBar.open('No agents selected for deletion', 'Close', { duration: 3000 });
+      return;
+    }
+
+    this.http.post(`${environment.serverUrl}/agent/v1/delete`, { agentIds: selectedAgentIds })
+      .subscribe({
+        next: () => {
+          this.snackBar.open('Agents deleted successfully', 'Close', { duration: 3000 });
+          this.loadAgentContexts();
+        },
+        error: (error) => {
+          console.error('Error deleting agents:', error);
+          this.snackBar.open('Error deleting agents', 'Close', { duration: 3000 });
+        }
+      });
   }
 }

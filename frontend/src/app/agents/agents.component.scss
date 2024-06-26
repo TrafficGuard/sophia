@@ -6,3 +6,12 @@ th.mat-header-cell.user-prompt,
 td.mat-cell.user-prompt {
   min-width: 100px;
 }
+.table-actions {
+  padding: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mat-column-select {
+  overflow: initial;
+}

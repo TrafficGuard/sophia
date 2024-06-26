@@ -1,6 +1,25 @@
 <div class="mat-elevation-z8">
+  <div class="table-actions">
+    <button mat-raised-button color="warn" (click)="deleteSelectedAgents()" [disabled]="selection.isEmpty()">
+      Delete Selected
+    </button>
+  </div>
   <table mat-table [dataSource]="agentContexts$">
-    <!-- Column definitions -->
+    <!-- Checkbox Column -->
+    <ng-container matColumnDef="select">
+      <th mat-header-cell *matHeaderCellDef>
+        <mat-checkbox (change)="$event ? masterToggle() : null"
+                      [checked]="selection.hasValue() && isAllSelected()"
+                      [indeterminate]="selection.hasValue() && !isAllSelected()">
+        </mat-checkbox>
+      </th>
+      <td mat-cell *matCellDef="let row">
+        <mat-checkbox (click)="$event.stopPropagation()"
+                      (change)="$event ? selection.toggle(row) : null"
+                      [checked]="selection.isSelected(row)">
+        </mat-checkbox>
+      </td>
+    </ng-container>
 
     <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef>Name</th>
