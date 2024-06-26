@@ -14,7 +14,7 @@ export class FirestoreAgentStateService implements AgentStateService {
 	constructor() {
 		this.db = new Firestore({
 			projectId: process.env.FIRESTORE_EMULATOR_HOST ? undefined : envVar('GCLOUD_PROJECT'),
-			databaseId: process.env.FIRESTORE_DATABASE_ID,
+			databaseId: process.env.FIRESTORE_DATABASE,
 			ignoreUndefinedProperties: true,
 		});
 	}
@@ -91,6 +91,7 @@ export class FirestoreAgentStateService implements AgentStateService {
 			const docRef = this.db.doc(`AgentContext/${id}`);
 			batch.delete(docRef);
 		}
+		// TODO delete LlmCalls and FunctionCache entries for the agent
 		await batch.commit();
 	}
 }

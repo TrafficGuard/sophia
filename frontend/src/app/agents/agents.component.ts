@@ -1,6 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { SelectionModel } from '@angular/cdk/collections';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { HttpClient } from '@angular/common/http';
+import { filter, map } from 'rxjs/operators';
+import { MatTableDataSource } from '@angular/material/table';
+import { environment } from '@env/environment';
+
 export type TaskLevel = 'easy' | 'medium' | 'hard' | 'xhard';
 
 interface LLM {
@@ -17,12 +22,12 @@ interface LLM {
  */
 export type AgentLLMs = Record<TaskLevel, LLM>;
 
-export interface Invoke {
+export interface FunctionCall {
   function_name: string;
   parameters: { [key: string]: any };
 }
 
-export interface Invoked extends Invoke {
+export interface FunctionCallResult extends FunctionCall {
   stdout?: string;
   stderr?: string;
 }
@@ -51,12 +56,12 @@ export interface AgentContext {
   state: AgentRunningState;
   inputPrompt: string;
   systemPrompt: string;
-  functionCallHistory: Invoked[];
+  functionCallHistory: FunctionCallResult[];
 
   // These three fields are mutable for when saving state as the agent does work
   error?: string;
   planningResponse?: string;
-  invoking: Invoke[];
+  invoking: FunctionCall[];
   /** Total cost of running this agent */
   cost: number;
   /** Budget allocated until human intervention is required. This may be increased when the agent is running */
@@ -75,10 +80,7 @@ export interface AgentContext {
   /** Memory persisted over the agent's control loop iterations */
   memory: Map<string, string>;
 }
-import { HttpClient } from '@angular/common/http';
-import { filter, map } from 'rxjs/operators';
-import { MatTableDataSource } from '@angular/material/table';
-import { environment } from '@env/environment';
+
 
 @Component({
   selector: 'app-contexts',
@@ -105,14 +107,15 @@ export class AgentsComponent implements OnInit {
     this.loadAgentContexts();
   }
 
-  loadAgentContexts(): void {
-    this.http
+  loadAgentContexts(showReloadToast: boolean = false): void {
+    const sub = this.http
       .get<{ data: AgentContext[] }>(`${environment.serverUrl}/agent/v1/list`)
       .pipe(
         filter((contexts) => contexts !== null),
         map((contexts) => contexts.data)
       )
       .subscribe((contexts) => {
+        this.snackBar.open('Agents refreshed', 'Close', { duration: 1000 });
         this.agentContexts$.data = contexts;
         this.selection.clear();
       });
@@ -151,7 +154,6 @@ export class AgentsComponent implements OnInit {
   }
 
   refreshAgents() {
-    this.loadAgentContexts();
-    this.snackBar.open('Agents refreshed', 'Close', { duration: 3000 });
+    this.loadAgentContexts(true);
   }
 }

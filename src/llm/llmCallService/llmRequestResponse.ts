@@ -11,6 +11,7 @@ export interface LlmRequest {
 	variationSource?: LlmRequest;
 }
 
+// New fields need to be added in FirestoreLlmCallService.getLlmResponsesByAgentId
 export interface LlmResponse {
 	/** UUID */
 	id: string;

@@ -43,7 +43,7 @@ export class FirestoreCacheService implements FunctionCacheService {
 	constructor() {
 		this.db = new Firestore({
 			projectId: process.env.FIRESTORE_EMULATOR_HOST ? undefined : process.env.GCLOUD_PROJECT,
-			databaseId: process.env.FIRESTORE_DATABASE_ID,
+			databaseId: process.env.FIRESTORE_DATABASE,
 			ignoreUndefinedProperties: true,
 		});
 	}

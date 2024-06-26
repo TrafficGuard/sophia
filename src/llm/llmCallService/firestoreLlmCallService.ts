@@ -37,7 +37,7 @@ export class FirestoreLlmCallService implements LlmCallService {
 	constructor() {
 		this.db = new Firestore({
 			projectId: process.env.FIRESTORE_EMULATOR_HOST ? undefined : envVar('GCLOUD_PROJECT'),
-			databaseId: process.env.FIRESTORE_DATABASE_ID,
+			databaseId: process.env.FIRESTORE_DATABASE,
 			ignoreUndefinedProperties: true,
 		});
 	}
@@ -61,6 +61,7 @@ export class FirestoreLlmCallService implements LlmCallService {
 				totalTime: data.totalTime,
 				agentId: data.agentId,
 				userId: data.userId,
+				callStack: data.callStack,
 			};
 			return llmResponse;
 		});
