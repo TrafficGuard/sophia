@@ -48,4 +48,27 @@ export async function agentDetailsRoutes(fastify: AppFastifyInstance) {
 			send(reply, 200, serializedContext);
 		},
 	);
+
+	fastify.post(
+		`${basePath}/delete`,
+		{
+			schema: {
+				body: Type.Object({
+					agentIds: Type.Array(Type.String()),
+				}),
+			},
+		},
+		async (req, reply) => {
+			const { agentIds } = req.body;
+			try {
+				for (const agentId of agentIds) {
+					await fastify.agentStateService.delete(agentId);
+				}
+				sendSuccess(reply, { message: 'Agents deleted successfully' });
+			} catch (error) {
+				logger.error('Error deleting agents:', error);
+				sendBadRequest(reply, 'Error deleting agents');
+			}
+		},
+	);
 }
