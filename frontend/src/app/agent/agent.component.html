@@ -83,7 +83,7 @@
           <mat-expansion-panel-header>
             <mat-panel-title>
               <span class="fixed-width-field"><strong>Output:</strong></span>
-              <span class="system-prompt-preview">{{ output | slice : 0 : 50 }}</span>
+              <span class="expansion-preview">{{ output | slice : 0 : 50 }}</span>
             </mat-panel-title>
           </mat-expansion-panel-header>
           <div matExpansionPanelContent style="white-space: pre;">
@@ -95,7 +95,7 @@
           <mat-expansion-panel-header>
             <mat-panel-title>
               <span class="fixed-width-field"><strong>User Prompt:</strong></span>
-              <span class="system-prompt-preview">{{ agentDetails.userPrompt | slice : 0 : 50 }}</span>
+              <span class="expansion-preview">{{ agentDetails.userPrompt | slice : 0 : 50 }}</span>
             </mat-panel-title>
           </mat-expansion-panel-header>
           <div matExpansionPanelContent style="white-space: pre;">
@@ -118,7 +118,7 @@
           <mat-expansion-panel-header>
             <mat-panel-title>
               <span class="fixed-width-field"><strong>Error:</strong></span>
-              <span class="system-prompt-preview">{{ agentDetails.error | slice : 0 : 50 }}...</span>
+              <span class="expansion-preview">{{ agentDetails.error | slice : 0 : 50 }}...</span>
             </mat-panel-title>
           </mat-expansion-panel-header>
           <div matExpansionPanelContent style="white-space: pre;">
@@ -200,7 +200,7 @@
             <mat-panel-title>
               <strong
                 >System Prompt:
-                <span *ngIf="!llmCallSystemPromptOpenState[i]" class="system-prompt-preview"
+                <span *ngIf="!llmCallSystemPromptOpenState[i]" class="expansion-preview"
                   >{{ call.request.systemPrompt?.text | slice : 0 : 50 }} ...</span
                 ></strong
               >
@@ -215,7 +215,7 @@
           <mat-expansion-panel-header>
             <mat-panel-title>
               <strong>Function Call History: </strong>
-              <span *ngIf="!llmCallFunctionCallsOpenState[i]" class="system-prompt-preview">
+              <span *ngIf="!llmCallFunctionCallsOpenState[i]" class="expansion-preview">
                 {{ extractFunctionCallHistory(call.request.userPromptText) | slice : 0 : 150 }} ...
               </span>
             </mat-panel-title>
@@ -229,7 +229,7 @@
           <mat-expansion-panel-header>
             <mat-panel-title>
               <strong>Memory Contents: </strong>
-              <span *ngIf="!llmCallMemoryOpenState[i]" class="system-prompt-preview">
+              <span *ngIf="!llmCallMemoryOpenState[i]" class="expansion-preview">
                 {{ extractMemoryContent(call.request.userPromptText) | slice : 0 : 150 }}
               </span>
             </mat-panel-title>
