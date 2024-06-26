@@ -11,4 +11,10 @@ export interface AgentStateService {
 	listRunning(): Promise<AgentContext[]>;
 
 	clear(): void;
+
+	/**
+	 * Delete agents by their IDs
+	 * @param ids Array of agent IDs to delete
+	 */
+	delete(ids: string[]): Promise<void>;
 }

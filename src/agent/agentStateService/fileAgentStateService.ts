@@ -41,4 +41,15 @@ export class FileAgentStateService implements AgentStateService {
 	}
 
 	clear(): void {}
+
+	async delete(ids: string[]): Promise<void> {
+		for (const id of ids) {
+			try {
+				const filePath = `./.nous/agents/${id}.json`;
+				await fs.promises.unlink(filePath);
+			} catch (error) {
+				logger.warn(`Failed to delete agent ${id}: ${error.message}`);
+			}
+		}
+	}
 }
