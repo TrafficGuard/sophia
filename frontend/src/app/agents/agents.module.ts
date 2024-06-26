@@ -6,6 +6,7 @@ import { FlexLayoutModule } from '@angular/flex-layout';
 import { MaterialModule } from '@app/material.module';
 import { AgentsRoutingModule } from './agents-routing.module';
 import { AgentsComponent } from './agents.component';
+import { MatToolbarModule } from '@angular/material/toolbar';
 
 @NgModule({
   imports: [
