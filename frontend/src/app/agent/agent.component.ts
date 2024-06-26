@@ -315,6 +315,11 @@ export class AgentComponent implements OnInit {
         const completed = this.agentDetails.functionCallHistory.slice(-1)[0];
         this.output = this.agentDetails.error ?? Object.values(completed.parameters);
       }
+      // Initialize expanded states for stdout and stderr
+      this.agentDetails.functionCallHistory.forEach((invoked: any) => {
+        invoked.stdoutExpanded = false;
+        invoked.stderrExpanded = false;
+      });
     });
   }
 
