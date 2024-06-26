@@ -8,7 +8,14 @@ import { AgentsRoutingModule } from './agents-routing.module';
 import { AgentsComponent } from './agents.component';
 
 @NgModule({
-  imports: [CommonModule, TranslateModule, FlexLayoutModule, MaterialModule, AgentsRoutingModule],
+  imports: [
+    CommonModule,
+    TranslateModule,
+    FlexLayoutModule,
+    MaterialModule,
+    AgentsRoutingModule,
+    MatToolbarModule
+  ],
   declarations: [AgentsComponent],
 })
 export class AgentsModule {}
