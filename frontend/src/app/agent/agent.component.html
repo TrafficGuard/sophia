@@ -79,11 +79,11 @@
         <mat-list-item
           ><span class="fixed-width-field"><strong>State:</strong></span> {{ displayState(agentDetails.state) }}
         </mat-list-item>
-        <mat-expansion-panel *ngIf="agentDetails.state === 'completed'">
+        <mat-expansion-panel *ngIf="agentDetails.state === 'completed'" (opened)="outputExpanded = true" (closed)="outputExpanded = false">
           <mat-expansion-panel-header>
             <mat-panel-title>
               <span class="fixed-width-field"><strong>Output:</strong></span>
-              <span class="expansion-preview">{{ output | slice : 0 : 50 }}</span>
+              <span class="expansion-preview" [ngClass]="{'hidden': outputExpanded}">{{ output | slice : 0 : 50 }}</span>
             </mat-panel-title>
           </mat-expansion-panel-header>
           <div matExpansionPanelContent style="white-space: pre;">

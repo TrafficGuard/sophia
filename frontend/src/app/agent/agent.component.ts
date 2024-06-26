@@ -82,6 +82,7 @@ export class AgentComponent implements OnInit {
   systemPromptExpanded: boolean = false;
   functionCallHistoryExpanded: boolean = false;
   memoryContentsExpanded: boolean = false;
+  outputExpanded: boolean = false;
 
   constructor(
     private route: ActivatedRoute,
