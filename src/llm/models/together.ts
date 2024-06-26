@@ -52,18 +52,21 @@ export class TogetherLLM extends BaseLLM {
 			const llmRequestSave = appContext().llmCallService.saveRequest(userPrompt, systemPrompt);
 			const requestTime = Date.now();
 
+			const messages = [];
+			if (systemPrompt) {
+				messages.push({
+					role: 'system',
+					content: systemPrompt,
+				});
+			}
+			messages.push({
+				role: 'user',
+				content: userPrompt,
+			});
+
 			try {
 				const completion: OpenAI.ChatCompletion = await this.client.chat.completions.create({
-					messages: [
-						{
-							role: 'system',
-							content: systemPrompt,
-						},
-						{
-							role: 'user',
-							content: userPrompt,
-						},
-					],
+					messages,
 					model: this.model,
 				});
 

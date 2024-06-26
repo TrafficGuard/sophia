@@ -81,10 +81,22 @@ export class OpenAI extends BaseLLM {
 			const llmRequestSave = appContext().llmCallService.saveRequest(userPrompt, systemPrompt);
 			const requestTime = Date.now();
 
+			const messages = [];
+			if (systemPrompt) {
+				messages.push({
+					role: 'system',
+					content: systemPrompt,
+				});
+			}
+			messages.push({
+				role: 'user',
+				content: userPrompt,
+			});
+
 			const stream = await this.sdk().chat.completions.create({
 				model: this.model,
 				response_format: { type: mode === 'json' ? 'json_object' : 'text' },
-				messages: [{ role: 'user', content: prompt }],
+				messages,
 				stream: true,
 			});
 			let responseText = '';
