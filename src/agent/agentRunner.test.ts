@@ -158,7 +158,7 @@ describe.only('agentRunner', () => {
 
 	describe('Function call throws an error', () => {
 		it('should end the agent in the error state with the exception message in the error field', async () => {
-			functions.addFunctionClassInstance(new TestFunctions(), 'TestFunctions');
+			functions.addFunctionInstance(new TestFunctions(), 'TestFunctions');
 
 			const functionName = 'TestFunctions.throwError';
 			const response = `<function_calls><function_call><function_name>${functionName}</function_name><parameters></parameters></function_call></function_calls>`;

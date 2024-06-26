@@ -11,7 +11,7 @@ import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
 /**
  * Add any function classes to be made available here to ensure their function definitions are registered
  */
-export function functionRegistry(): any[] {
+export function functionRegistry(): Array<new () => any> {
 	return [
 		CodeEditingAgent,
 		FileSystem,

@@ -1,3 +1,4 @@
+import { functionRegistry } from 'src/functionRegistry';
 import { agentContext } from '#agent/agentContext';
 
 /**
@@ -12,11 +13,22 @@ export interface SourceControlManagement {
 	getJobLogs(projectPath: string, jobId: string): Promise<string>;
 }
 
+function isScmObject(obj: Record<string, any>): boolean {
+	return obj && typeof obj.getProjects === 'function' && typeof obj.cloneProject === 'function';
+}
+
+/**
+ * Gets the function class implementing SourceControlManagement.
+ * It first searches the agents functions, then falls back to searching the function registry.
+ */
 export function getSourceControlManagementTool(): SourceControlManagement {
-	const functions = agentContext().functions;
-	const scm = functions.getFunctionClasses().find((func) => typeof func.getProjects === 'function' && typeof func.cloneProject === 'function');
-	if (!scm) {
-		throw new Error(`A SourceControlManagement function class needs to be available. Could not find one in ${functions.getFunctionClassNames().join(',')}`);
-	}
-	return scm;
+	const scm = agentContext().functions.getFunctionInstances().find(isScmObject) as SourceControlManagement;
+	if (scm) return scm;
+
+	const scms = functionRegistry()
+		.map((ctor) => new ctor())
+		.filter(isScmObject);
+	if (scms.length === 0) throw new Error('No function classes found which implement SourceControlManagement');
+	if (scms.length > 1) throw new Error('More than one function classes found implementing SourceControlManagement');
+	return scms[0]();
 }

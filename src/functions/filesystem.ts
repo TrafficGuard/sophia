@@ -22,6 +22,18 @@ const fs = {
 };
 
 type FileFilter = (filename: string) => boolean;
+
+/**
+ * Provides functions for LLMs to access the file system. As these functions are automatically included in the
+ * OpenTelemetry tracing, it's recommended that most file system access should use the functions here for observability.
+ *
+ * The FileSystem is constructed with the basePath property which is like a virtual root.
+ * Then the workingDirectory property is relative to the basePath.
+ *
+ * The functions which list/search filenames should return the paths relative to the workingDirectory.
+ *
+ * By default, the basePath is the current working directory of the process.
+ */
 @funcClass(__filename)
 export class FileSystem {
 	/** The path relative to the basePath */
@@ -74,9 +86,10 @@ export class FileSystem {
 	}
 
 	/**
-	 * Set the working directory, relative to the basePath if starting with /, else relative to the current working directory.
+	 * Set the working directory, relative to the filesystem's basePath if starting with "/", otherwise relative to the current working directory.
 	 * @param dir the new working directory
 	 */
+	@func()
 	setWorkingDirectory(dir: string): void {
 		this.log.info(`setWorkingDirectory ${dir}`);
 		if (`/${dir}`.startsWith(this.basePath)) dir = `/${dir}`;

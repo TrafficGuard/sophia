@@ -5,53 +5,56 @@ import { FunctionDefinition } from '../functionDefinition/functions';
 
 import { functionFactory } from '../functionDefinition/functionDecorators';
 
+/**
+ * Holds the instances of the classes with function callable methods.
+ */
 export class LlmFunctions {
-	functionClasses: { [functionClassName: string]: any } = {
+	functionInstances: { [functionClassName: string]: object } = {
 		Agent: new Agent(),
 	};
 
-	constructor(...functionClasses: any) {
+	constructor(...functionClasses: Array<new () => any>) {
 		this.addFunctionClass(...functionClasses);
 	}
 
 	toJSON() {
 		return {
-			functionClasses: Object.keys(this.functionClasses),
+			functionClasses: Object.keys(this.functionInstances),
 		};
 	}
 
 	fromJSON(obj: any): this {
 		const functionClassNames = (obj.functionClasses ?? obj.tools) as string[]; // obj.tools for backward compat with dev version
 		for (const functionClassName of functionClassNames) {
-			if (functionFactory[functionClassName]) this.functionClasses[functionClassName] = new functionFactory[functionClassName]();
+			if (functionFactory[functionClassName]) this.functionInstances[functionClassName] = new functionFactory[functionClassName]();
 			else logger.warn(`${functionClassName} not found`);
 		}
 		return this;
 	}
 
-	getFunctionClasses(): Array<any> {
-		return Object.values(this.functionClasses);
+	getFunctionInstances(): Array<object> {
+		return Object.values(this.functionInstances);
 	}
 
 	getFunctionClassNames(): string[] {
-		return Object.keys(this.functionClasses);
+		return Object.keys(this.functionInstances);
 	}
 
 	getFunctionDefinitions(): Array<FunctionDefinition> {
-		return this.getFunctionClasses().map((classRef) => Object.getPrototypeOf(classRef).__functionsObj);
+		return this.getFunctionInstances().map((classRef) => Object.getPrototypeOf(classRef).__functionsObj);
 	}
 
-	addFunctionClassInstance(functionClassInstance: any, name: string): void {
-		this.functionClasses[name] = functionClassInstance;
+	addFunctionInstance(functionClassInstance: object, name: string): void {
+		this.functionInstances[name] = functionClassInstance;
 	}
 
-	addFunctionClass(...functionClassTypes: any): void {
+	addFunctionClass(...functionClasses: Array<new () => any>): void {
 		// Check the prototype of the instantiated function class has the functions metadata
-		for (const functionClassType of functionClassTypes) {
+		for (const functionClass of functionClasses) {
 			try {
-				this.functionClasses[functionClassType.name] = new functionClassType();
+				this.functionInstances[functionClass.name] = new functionClass();
 			} catch (e) {
-				logger.error(`Error instantiating function class from type of ${typeof functionClassType}`);
+				logger.error(`Error instantiating function class from type of ${typeof functionClass}`);
 				throw e;
 			}
 		}
@@ -59,15 +62,12 @@ export class LlmFunctions {
 
 	async callFunction(functionCall: FunctionCall): Promise<any> {
 		const [functionClass, functionName] = functionCall.function_name.split('.');
-		const functions = this.functionClasses[functionClass];
+		const functions = this.functionInstances[functionClass];
 		if (!functions) throw new Error(`Function class ${functionClass} does not exist`);
 		const func = functions[functionName];
-		if (!func) {
-			throw new Error(`Function ${functionClass}.${functionName} does not exist`);
-		}
+		if (!func) throw new Error(`Function ${functionClass}.${functionName} does not exist`);
 		if (typeof func !== 'function') throw new Error(`Function error: ${functionClass}.${functionName} is not a function. Is a ${typeof func}`);
 
-		// console.log(`Invoking ${invocation.function_name} with ${JSON.stringify(invocation.parameters)}`);
 		const args = Object.values(functionCall.parameters);
 		let result: any;
 		if (args.length === 0) {

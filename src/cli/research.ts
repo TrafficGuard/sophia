@@ -41,7 +41,7 @@ export async function main() {
 	const initialPrompt = readFileSync('src/cli/research-in', 'utf-8'); //'Complete the JIRA issue: ABC-123'
 
 	const functions = new LlmFunctions();
-	functions.addFunctionClassInstance(PUBLIC_WEB, 'PublicWeb');
+	functions.addFunctionInstance(PUBLIC_WEB, 'PublicWeb');
 
 	const config: RunAgentConfig = {
 		agentName: 'researcher',

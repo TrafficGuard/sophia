@@ -140,7 +140,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 
 	// TODO only do this if FileSystem is selected by the user
 	// The filesystem will always be on on the context for programmatic usage
-	agent.functions.addFunctionClassInstance(agent.fileSystem, 'FileSystem');
+	agent.functions.addFunctionInstance(agent.fileSystem, 'FileSystem');
 
 	const agentLLM = llms().hard;
 
@@ -149,8 +149,8 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 
 	const functions = agent.functions;
 
-	const systemPrompt = updateFunctionDefinitions(agent.systemPrompt, getFunctionDefinitions(functions.getFunctionClasses()));
-	const functionDefinitions = getFunctionDefinitions(functions.getFunctionClasses());
+	const systemPrompt = updateFunctionDefinitions(agent.systemPrompt, getFunctionDefinitions(functions.getFunctionInstances()));
+	const functionDefinitions = getFunctionDefinitions(functions.getFunctionInstances());
 	const systemPromptWithFunctions = updateFunctionDefinitions(systemPrompt, functionDefinitions);
 
 	// Human in the loop settings
