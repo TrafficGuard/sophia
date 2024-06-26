@@ -178,10 +178,24 @@
             <strong>{{ param.key }}</strong> {{ param.value }}
           </p>
         </div>
-        <strong>{{ invoked.stdout ? 'Output: ' : '' }}</strong>
-        <div [innerHTML]="convertNewlinesToHtml(invoked.stdoutSummary ?? invoked.stdout)"></div>
-        <strong>{{ invoked.stderr ? 'Errors: ' : '' }}</strong>
-        <div [innerHTML]="convertNewlinesToHtml(invoked.stderrSummary ?? invoked.stderr)"></div>
+        <mat-expansion-panel *ngIf="invoked.stdout" (opened)="invoked.stdoutExpanded = true" (closed)="invoked.stdoutExpanded = false">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <strong>Output:</strong>
+              <span class="expansion-preview" [ngClass]="{'hidden': invoked.stdoutExpanded}">{{ (invoked.stdoutSummary ?? invoked.stdout) | slice : 0 : 150 }}</span>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div matExpansionPanelContent [innerHTML]="convertNewlinesToHtml(invoked.stdoutSummary ?? invoked.stdout)"></div>
+        </mat-expansion-panel>
+        <mat-expansion-panel *ngIf="invoked.stderr" (opened)="invoked.stderrExpanded = true" (closed)="invoked.stderrExpanded = false">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <strong>Errors:</strong>
+              <span class="expansion-preview" [ngClass]="{'hidden': invoked.stderrExpanded}">{{ (invoked.stderrSummary ?? invoked.stderr) | slice : 0 : 150 }}</span>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div matExpansionPanelContent [innerHTML]="convertNewlinesToHtml(invoked.stderrSummary ?? invoked.stderr)"></div>
+        </mat-expansion-panel>
       </mat-card-content>
     </mat-card>
     <div *ngIf="agentDetails.functionCallHistory.length === 0">
@@ -203,9 +217,7 @@
               </strong>
             </mat-panel-title>
           </mat-expansion-panel-header>
-          <div matExpansionPanelContent style="white-space: pre;">
-            {{ call.request.systemPrompt?.text }}
-          </div>
+          <div matExpansionPanelContent style="white-space: pre;">{{ call.request.systemPrompt?.text }}</div>
         </mat-expansion-panel>
 
         <mat-expansion-panel *ngIf="extractFunctionCallHistory(call.request.userPromptText)" (opened)="functionCallHistoryExpanded = true" (closed)="functionCallHistoryExpanded = false">
@@ -217,9 +229,7 @@
               </span>
             </mat-panel-title>
           </mat-expansion-panel-header>
-          <div matExpansionPanelContent style="white-space: pre;">
-            {{ extractFunctionCallHistory(call.request.userPromptText) }}
-          </div>
+          <div matExpansionPanelContent style="white-space: pre;">{{ extractFunctionCallHistory(call.request.userPromptText) }}</div>
         </mat-expansion-panel>
 
         <mat-expansion-panel *ngIf="extractMemoryContent(call.request.userPromptText)" (opened)="memoryContentsExpanded = true" (closed)="memoryContentsExpanded = false">

@@ -338,7 +338,7 @@ export class AgentComponent implements OnInit {
     const memoryContentRegex = /<memory>(.*?)<\/memory>/s;
     const match: RegExpExecArray | null = memoryContentRegex.exec(text);
     if (match && match[0]) {
-      return match[0];
+      return match[0].trim();
     }
     return null;
   }
@@ -351,7 +351,7 @@ export class AgentComponent implements OnInit {
     const functionCallHistoryRegex = /<function_call_history>(.*?)<\/function_call_history>/s;
     const match = functionCallHistoryRegex.exec(text);
     if (match && match[1]) {
-      return match[1];
+      return match[1].trim();
     }
     return null;
   }
