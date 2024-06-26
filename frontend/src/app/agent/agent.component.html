@@ -93,9 +93,9 @@
 
         <mat-expansion-panel (opened)="userPromptExpanded = true" (closed)="userPromptExpanded = false">
           <mat-expansion-panel-header>
-            <mat-panel-title [ngClass]="{'hidden-title': userPromptExpanded}">
+            <mat-panel-title>
               <span class="fixed-width-field"><strong>User Prompt:</strong></span>
-              <span class="expansion-preview">{{ agentDetails.userPrompt | slice : 0 : 50 }}</span>
+              <span class="expansion-preview" [ngClass]="{'hidden': userPromptExpanded}">{{ agentDetails.userPrompt | slice : 0 : 50 }}</span>
             </mat-panel-title>
           </mat-expansion-panel-header>
           <div matExpansionPanelContent style="white-space: pre;">
