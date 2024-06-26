@@ -79,14 +79,23 @@
         <mat-list-item
           ><span class="fixed-width-field"><strong>State:</strong></span> {{ displayState(agentDetails.state) }}
         </mat-list-item>
-        <mat-list-item *ngIf="agentDetails.state === 'completed'"
-          ><span class="fixed-width-field"><strong>Output:</strong></span> {{ output }}
-        </mat-list-item>
+        <mat-expansion-panel *ngIf="agentDetails.state === 'completed'">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <span class="fixed-width-field"><strong>Output:</strong></span>
+              <span class="system-prompt-preview">{{ output | slice : 0 : 50 }}</span>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div matExpansionPanelContent style="white-space: pre;">
+            {{ output }}
+          </div>
+        </mat-expansion-panel>
+
         <mat-expansion-panel>
           <mat-expansion-panel-header>
             <mat-panel-title>
               <span class="fixed-width-field"><strong>User Prompt:</strong></span>
-              <span class="system-prompt-preview">{{ agentDetails.userPrompt | slice : 0 : 50 }}...</span>
+              <span class="system-prompt-preview">{{ agentDetails.userPrompt | slice : 0 : 50 }}</span>
             </mat-panel-title>
           </mat-expansion-panel-header>
           <div matExpansionPanelContent style="white-space: pre;">
