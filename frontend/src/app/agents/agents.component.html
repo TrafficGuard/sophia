@@ -1,7 +1,10 @@
 <div class="mat-elevation-z8">
   <mat-toolbar>
     <button mat-raised-button color="warn" (click)="deleteSelectedAgents()" [disabled]="selection.isEmpty()">
-      Delete Selected
+      Delete
+    </button>
+    <button style="margin-left: 2em" mat-raised-button color="primary" routerLink="/runAgent" routerLinkActive="active">
+      New Agent
     </button>
   </mat-toolbar>
   <table mat-table [dataSource]="agentContexts$">
@@ -35,7 +38,7 @@
 
     <ng-container matColumnDef="userPrompt">
       <th mat-header-cell *matHeaderCellDef>User Prompt</th>
-      <td mat-cell *matCellDef="let element">{{ element.userPrompt }}</td>
+      <td mat-cell *matCellDef="let element">{{ element.userPrompt | slice : 0 : 150 }}</td>
     </ng-container>
 
     <ng-container matColumnDef="systemPrompt">
@@ -43,36 +46,15 @@
       <td mat-cell *matCellDef="let element">{{ element.systemPrompt }}</td>
     </ng-container>
 
-    <ng-container matColumnDef="error">
-      <th mat-header-cell *matHeaderCellDef>Error</th>
-      <td mat-cell *matCellDef="let element">{{ element.error | slice : 0 : 50 }}...</td>
-    </ng-container>
-
-    <ng-container matColumnDef="planningResponse">
-      <th mat-header-cell *matHeaderCellDef>Planning Response</th>
-      <td mat-cell *matCellDef="let element">{{ element.planningResponse }}</td>
+    <ng-container matColumnDef="output">
+      <th mat-header-cell *matHeaderCellDef>Error/Completed Output</th>
+      <td mat-cell *matCellDef="let element">{{ (element.state === 'error' ? element.error : element.completed) | slice : 0 : 150 }}</td>
     </ng-container>
 
     <ng-container matColumnDef="cost">
       <th mat-header-cell *matHeaderCellDef>Cost</th>
       <td mat-cell *matCellDef="let element">{{ element.cost | number : '1.2-2' }}</td>
     </ng-container>
-
-    <ng-container matColumnDef="budget">
-      <th mat-header-cell *matHeaderCellDef>Budget</th>
-      <td mat-cell *matCellDef="let element">{{ element.budget | number : '1.2-2' }}</td>
-    </ng-container>
-
-    <ng-container matColumnDef="budgetRemaining">
-      <th mat-header-cell *matHeaderCellDef>Budget Remaining</th>
-      <td mat-cell *matCellDef="let element">{{ element.budgetRemaining | number : '1.2-2' }}</td>
-    </ng-container>
-
-    <ng-container matColumnDef="tempDir">
-      <th mat-header-cell *matHeaderCellDef>Temp Dir</th>
-      <td mat-cell *matCellDef="let element">{{ element.tempDir }}</td>
-    </ng-container>
-    <!-- ... other column definitions ... -->
 
     <!-- Header and Row Definitions -->
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>

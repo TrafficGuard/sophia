@@ -10,6 +10,7 @@
       <mat-toolbar color="primary">
         <span translate>APP_NAME</span>
         <div fxFlex></div>
+        <!--
         <div>
           <button mat-icon-button [matMenuTriggerFor]="userMenu">
             <mat-icon>person</mat-icon>
@@ -23,21 +24,14 @@
             </mat-list>
             <button mat-menu-item (click)="logout()" translate>Logout</button>
           </mat-menu>
+
         </div>
         <app-language-selector [icon]="true"></app-language-selector>
+        -->
       </mat-toolbar>
       <nav>
         <mat-list>
           <mat-divider></mat-divider>
-          <a mat-list-item routerLink="/home" routerLinkActive="active" (click)="isMobile && sidenav.close()">
-            <span translate>Home</span>
-          </a>
-          <!--
-          <mat-divider></mat-divider>
-          <a mat-list-item routerLink="/about" routerLinkActive="active" (click)="isMobile && sidenav.close()">
-            <span translate>About</span>
-          </a>
-          -->
           <mat-divider></mat-divider>
           <a mat-list-item routerLink="/profile" routerLinkActive="active" (click)="isMobile && sidenav.close()">
             <span translate>Profile</span>

@@ -76,8 +76,7 @@ export interface AgentContext {
   memory: Map<string, string>;
 }
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { filter, startWith, map } from 'rxjs/operators';
+import { filter, map } from 'rxjs/operators';
 import { MatTableDataSource } from '@angular/material/table';
 import { environment } from '@env/environment';
 
@@ -96,12 +95,8 @@ export class AgentsComponent implements OnInit {
     'state',
     'userPrompt',
     //'systemPrompt',
-    'error',
-    'planningResponse',
+    'output',
     'cost',
-    'budget',
-    'budgetRemaining',
-    'tempDir',
   ];
 
   constructor(private http: HttpClient, private snackBar: MatSnackBar) {}
