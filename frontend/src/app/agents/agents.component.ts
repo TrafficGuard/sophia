@@ -149,4 +149,9 @@ export class AgentsComponent implements OnInit {
         }
       });
   }
+
+  refreshAgents() {
+    this.loadAgentContexts();
+    this.snackBar.open('Agents refreshed', 'Close', { duration: 3000 });
+  }
 }
