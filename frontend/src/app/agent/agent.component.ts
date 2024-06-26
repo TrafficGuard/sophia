@@ -78,6 +78,11 @@ export class AgentComponent implements OnInit {
   output: string | null = null;
   isSubmitting: boolean = false;
 
+  userPromptExpanded: boolean = false;
+  systemPromptExpanded: boolean = false;
+  functionCallHistoryExpanded: boolean = false;
+  memoryContentsExpanded: boolean = false;
+
   constructor(
     private route: ActivatedRoute,
     private http: HttpClient,

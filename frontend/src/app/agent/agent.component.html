@@ -91,9 +91,9 @@
           </div>
         </mat-expansion-panel>
 
-        <mat-expansion-panel>
+        <mat-expansion-panel (opened)="userPromptExpanded = true" (closed)="userPromptExpanded = false">
           <mat-expansion-panel-header>
-            <mat-panel-title>
+            <mat-panel-title [ngClass]="{'hidden-title': userPromptExpanded}">
               <span class="fixed-width-field"><strong>User Prompt:</strong></span>
               <span class="expansion-preview">{{ agentDetails.userPrompt | slice : 0 : 50 }}</span>
             </mat-panel-title>
@@ -195,15 +195,12 @@
       <mat-card-content>
         <p><strong>LLM:</strong> {{ call.response.llmId }} &nbsp;&nbsp; <strong>Request Time:</strong> {{ call.response.requestTime | date : 'medium' }}. &nbsp;&nbsp; <strong>Total Time:</strong> {{ (call.response.totalTime / 1000).toFixed(1) }}s</p>
 
-        <mat-expansion-panel *ngIf="call.request.systemPromptId">
+        <mat-expansion-panel *ngIf="call.request.systemPromptId" (opened)="systemPromptExpanded = true" (closed)="systemPromptExpanded = false">
           <mat-expansion-panel-header>
-            <mat-panel-title>
-              <strong
-                >System Prompt:
-                <span *ngIf="!llmCallSystemPromptOpenState[i]" class="expansion-preview"
-                  >{{ call.request.systemPrompt?.text | slice : 0 : 50 }} ...</span
-                ></strong
-              >
+            <mat-panel-title [ngClass]="{'hidden-title': systemPromptExpanded}">
+              <strong>System Prompt:
+                <span *ngIf="!systemPromptExpanded" class="expansion-preview">{{ call.request.systemPrompt?.text | slice : 0 : 50 }} ...</span>
+              </strong>
             </mat-panel-title>
           </mat-expansion-panel-header>
           <div matExpansionPanelContent style="white-space: pre;">
@@ -211,11 +208,11 @@
           </div>
         </mat-expansion-panel>
 
-        <mat-expansion-panel *ngIf="extractFunctionCallHistory(call.request.userPromptText)">
+        <mat-expansion-panel *ngIf="extractFunctionCallHistory(call.request.userPromptText)" (opened)="functionCallHistoryExpanded = true" (closed)="functionCallHistoryExpanded = false">
           <mat-expansion-panel-header>
-            <mat-panel-title>
+            <mat-panel-title [ngClass]="{'hidden-title': functionCallHistoryExpanded}">
               <strong>Function Call History: </strong>
-              <span *ngIf="!llmCallFunctionCallsOpenState[i]" class="expansion-preview">
+              <span *ngIf="!functionCallHistoryExpanded" class="expansion-preview">
                 {{ extractFunctionCallHistory(call.request.userPromptText) | slice : 0 : 150 }} ...
               </span>
             </mat-panel-title>
@@ -225,11 +222,11 @@
           </div>
         </mat-expansion-panel>
 
-        <mat-expansion-panel *ngIf="extractMemoryContent(call.request.userPromptText)">
+        <mat-expansion-panel *ngIf="extractMemoryContent(call.request.userPromptText)" (opened)="memoryContentsExpanded = true" (closed)="memoryContentsExpanded = false">
           <mat-expansion-panel-header>
-            <mat-panel-title>
+            <mat-panel-title [ngClass]="{'hidden-title': memoryContentsExpanded}">
               <strong>Memory Contents: </strong>
-              <span *ngIf="!llmCallMemoryOpenState[i]" class="expansion-preview">
+              <span *ngIf="!memoryContentsExpanded" class="expansion-preview">
                 {{ extractMemoryContent(call.request.userPromptText) | slice : 0 : 150 }}
               </span>
             </mat-panel-title>
