@@ -2,16 +2,22 @@
 <hr>
 <p align="center">
   <!--<img src="https://public.trafficguard.ai/nous/banner.png" height="300" alt="noos logo"/>-->
-  <em>🤖 An open-source platform for autonomous AI agents and LLM based workflows in TypeScript 🤖</em>
+  <em>🤖 An open-source TypeScript platform for autonomous AI agents and LLM based workflows  🤖</em>
 </p>
-<em><b>Nous</b></em>, or Greek νοῦς, sometimes equated to intellect or intelligence, is a concept from classical philosophy for the faculty of the human mind necessary for understanding what is true or real.
+<em><b>Nous</b></em> (Greek: νοῦς) is a term from classical philosophy often associated with intellect or intelligence, represents the human mind's capacity to comprehend truth and reality.
 
-In a nutshell <em><b>nous</b></em> is a free, flexible, integrated platform for Node.js/TypeScript agentic and LLM-based applications.
+## Our Vision
 
-Nous started with experimenting how AI could help *get stuff done* from a DevOps/Platform engineering perspective.
-For example handling standard requests (new projects, database schema updates etc), triaging build failures, reviewing code for standards etc.
+Nous was born from a simple yet ambitious goal: to harness AI's potential to **enhance real-world productivity**, initially in DevOps and Platform Engineering space. We envisioned a tool that could:
 
-Through its evolution we designed it as a flexible platform that can be expanded to support the integrations of your choice.
+- Automate requests using natural language prompts (e.g., new projects, infrastructure-as-code changes)
+- Intelligently triage build failures, support requests and production incidents
+- Review code for compliance with standards and best practices
+- Assist with large/complex refactorings
+
+Through its evolution we designed it as a flexible platform for the TypeScript community to expand and support the use cases and integrations of your choice.
+
+## Features
 
 Some of the key features include:
 
@@ -19,15 +25,19 @@ Some of the key features include:
     - Reasoning/planning inspired from Google's [Self-Discover](https://arxiv.org/abs/2402.03620) paper
     - Custom XML-based function calling on any sufficiently capable LLM
     - Memory and function history for complex workflows
-- Agent/LLM function definitions auto-generated from source code.
+- LLM function definitions auto-generated from source code.
+- Function callable integrations
+  - Filesystem, Jira, Slack, Perplexity, Gitlab and more.
+- Supports multiple LLMs/Services
+  - OpenAI GPT, Anthropic Claude (native and Vertex), Gemini, Groq, Fireworks, Together.ai, DeepSeek
+- Web interface
 - Human-in-the-loop for:
     - Budget control
     - Agent initiated questions
     - Error handling
-- Web interface
 - Flexible deployment options
     - Run locally from the command line or through the web UI
-    - Scale-to-zero deployment on Firestore & Cloud Run for a low-cost personal assistant always available via mobile
+    - Scale-to-zero deployment on Firestore & Cloud Run, enabling a low-cost personal assistant always available via mobile
     - Multi-user SSO enterprise deployment ([Google Cloud IAP](https://cloud.google.com/security/products/iap))
 - Observability with OpenTelemetry tracing
 - Software Engineer Agent
@@ -35,14 +45,10 @@ Some of the key features include:
     - Auto-detection of project initialization, compile, test and lint
     - -> Code Editing Agent
         - Selects files to edit
-        - Code editing with compile, lint, test, fix loop (delegates to [Aider](https://aider.chat/))
+        - Code editing with compile, lint, test, fix loop (delegates to [Aider](https://aider.chat/)) with search and actions to fix compile issues.
     - Create merge request
 - Code Review agent
     - Configurable code review guidelines
-- Supports multiple LLMs/Services
-    - GPT, Gemini, Groq, Claude (Anthropic and Vertex), Fireworks, Together.ai
-- Function callable integrations
-    - Filesystem, Jira, Slack, Perplexity, Gitlab
 
 ## Documentation
 
@@ -53,6 +59,8 @@ Some of the key features include:
 - [AI Software Engineer](https://github.com/TrafficGuard/nous/tree/main/docs/docs/software-engineer.md)
 - [AI Code reviews](https://github.com/TrafficGuard/nous/tree/main/docs/docs/code-review.md)
 - [Function integrations](https://github.com/TrafficGuard/nous/tree/main/docs/docs/integrations.md)
+
+[Discord](https://discord.gg/5WMQ4jKB)
 
 ## UI examples
 
