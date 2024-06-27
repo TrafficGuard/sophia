@@ -369,4 +369,8 @@ export class AgentComponent implements OnInit {
   llmCallUrl(llmResponse: LlmResponse): string {
     return `https://console.cloud.google.com/firestore/databases/${environment.firestoreDb || '(default)'}/data/panel/LlmResponse/${llmResponse.id}?project=${environment.gcpProject}`
   }
+
+  traceUrl(agent: AgentContext): string {
+    return `https://console.cloud.google.com/firestore/databases/${environment.firestoreDb || '(default)'}/data/panel/LlmResponse/${agent.id}?project=${environment.gcpProject}`
+  }
 }

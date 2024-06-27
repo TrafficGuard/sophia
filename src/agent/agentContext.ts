@@ -30,6 +30,8 @@ export interface AgentContext {
 	agentId: string;
 	/** Id of the running execution. This changes after the control loop restarts after an exit due to pausing, human in loop etc */
 	executionId: string;
+	/** Current OpenTelemetry traceId */
+	traceId: string;
 	/** User provided name */
 	name: string;
 	parentAgentId?: string;
@@ -104,6 +106,7 @@ export function createContext(config: RunAgentConfig): AgentContext {
 	return {
 		agentId: config.resumeAgentId || randomUUID(),
 		executionId: randomUUID(),
+		traceId: '',
 		name: config.agentName,
 		user: config.user ?? currentUser(),
 		systemPrompt: config.systemPrompt,
