@@ -171,6 +171,8 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 	await agentStateService.save(agent);
 
 	await withActiveSpan(agent.name, async (span: Span) => {
+		agent.traceId = span.spanContext().traceId;
+
 		span.setAttributes({
 			initialPrompt: agent.inputPrompt,
 			'service.name': getServiceName(),
