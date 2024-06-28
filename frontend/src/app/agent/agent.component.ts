@@ -371,6 +371,6 @@ export class AgentComponent implements OnInit {
   }
 
   traceUrl(agent: AgentContext): string {
-    return `https://console.cloud.google.com/firestore/databases/${environment.firestoreDb || '(default)'}/data/panel/LlmResponse/${agent.id}?project=${environment.gcpProject}`
+    return `https://console.cloud.google.com/traces/list?referrer=search&project=${environment.gcpProject}&supportedpurview=project&pageState=(%22traceIntervalPicker%22:(%22groupValue%22:%22P1D%22,%22customValue%22:null))&tid=${agent.traceId}`
   }
 }

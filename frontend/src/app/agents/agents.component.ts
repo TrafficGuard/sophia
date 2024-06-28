@@ -46,6 +46,7 @@ export interface AgentContext {
   agentId: string;
   /** Id of the running execution. This changes after the control loop restarts after an exit due to pausing, human in loop etc */
   executionId: string;
+  traceId: string;
   name: string;
   parentAgentId?: string;
   isRetry: boolean;
