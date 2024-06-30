@@ -246,10 +246,19 @@
           </div>
         </mat-expansion-panel>
 
-        <p>
-          <strong>User Prompt:</strong>
-          <span style="white-space: pre;">{{removeFunctionCallHistory(removeMemoryContent(call.request.userPromptText))}}</span>
-        </p>
+        <mat-expansion-panel (opened)="call.userPromptExpanded = true" (closed)="call.userPromptExpanded = false">
+          <mat-expansion-panel-header>
+            <mat-panel-title [ngClass]="{'hidden-title': call.userPromptExpanded}">
+              <strong>User Prompt: </strong>
+              <span *ngIf="!call.userPromptExpanded" class="expansion-preview">
+                {{ removeFunctionCallHistory(removeMemoryContent(call.request.userPromptText)) | slice : 0 : 150 }} ...
+              </span>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div matExpansionPanelContent style="white-space: pre;">
+            {{removeFunctionCallHistory(removeMemoryContent(call.request.userPromptText))}}
+          </div>
+        </mat-expansion-panel>
         <p><strong>Response Text:</strong><br/><span style="white-space: pre;"> {{ call.response.responseText }}</span></p>
 
         <!--

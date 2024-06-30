@@ -11,6 +11,7 @@ import { AgentContext, AgentRunningState } from '@app/agents/agents.component';
 export interface LLMCall {
   request: LlmRequest;
   response: LlmResponse;
+  userPromptExpanded?: boolean;
 }
 export interface LlmRequest {
   id: number;
