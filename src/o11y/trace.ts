@@ -1,35 +1,29 @@
 /* eslint-disable semi */
-import { Span, Tracer } from '@opentelemetry/api';
+import { Span, SpanContext, Tracer } from '@opentelemetry/api';
 import opentelemetry from '@opentelemetry/api';
 import { AsyncLocalStorage } from 'async_hooks';
 import { AgentContext } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
 import { SugaredTracer, wrapTracer } from './trace/SugaredTracer';
 
-/**
- * Dummy tracer for when tracing is not enabled. As we use more trace methods we will need to fill out this stub further.
- */
-const dummyTracer = {
-	startSpan: () => {
-		const span: Partial<Span> = {};
-		span.end = () => undefined;
-		span.setAttribute = () => span as Span;
-		span.setAttributes = () => span as Span;
-		span.recordException = () => undefined;
-		span.setStatus = () => span as Span;
-		span.addEvent = () => span as Span;
-		return span;
-	},
-};
-
-const fakeSpan = {
+const _fakeSpan: Partial<Span> = {
 	end: () => {},
 	setAttribute: () => fakeSpan,
 	setAttributes: () => fakeSpan,
 	recordException: () => undefined,
 	setStatus: () => fakeSpan,
 	addEvent: () => fakeSpan,
-} as unknown as Span;
+	spanContext: () => ({ traceId: '' }) as SpanContext,
+};
+
+const fakeSpan = _fakeSpan as Span;
+
+/**
+ * Dummy tracer for when tracing is not enabled. As we use more trace methods we will need to fill out this stub further.
+ */
+const dummyTracer = {
+	startSpan: () => fakeSpan,
+};
 
 let tracer: SugaredTracer | null = null;
 let agentContextStorage: AsyncLocalStorage<AgentContext>;
