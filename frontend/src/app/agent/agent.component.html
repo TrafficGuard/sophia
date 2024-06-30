@@ -185,7 +185,7 @@
               <span class="expansion-preview" [ngClass]="{'hidden': invoked.stdoutExpanded}">{{ (invoked.stdoutSummary ?? invoked.stdout) | slice : 0 : 150 }}</span>
             </mat-panel-title>
           </mat-expansion-panel-header>
-          <div matExpansionPanelContent [innerHTML]="convertNewlinesToHtml(invoked.stdoutSummary ?? invoked.stdout)"></div>
+          <div matExpansionPanelContent style="white-space: pre;" [innerHTML]="convertNewlinesToHtml(invoked.stdoutSummary ?? invoked.stdout)"></div>
         </mat-expansion-panel>
         <mat-expansion-panel *ngIf="invoked.stderr" (opened)="invoked.stderrExpanded = true" (closed)="invoked.stderrExpanded = false">
           <mat-expansion-panel-header>
@@ -194,7 +194,7 @@
               <span class="expansion-preview" [ngClass]="{'hidden': invoked.stderrExpanded}">{{ (invoked.stderrSummary ?? invoked.stderr) | slice : 0 : 150 }}</span>
             </mat-panel-title>
           </mat-expansion-panel-header>
-          <div matExpansionPanelContent [innerHTML]="convertNewlinesToHtml(invoked.stderrSummary ?? invoked.stderr)"></div>
+          <div matExpansionPanelContent style="white-space: pre;" [innerHTML]="convertNewlinesToHtml(invoked.stderrSummary ?? invoked.stderr)"></div>
         </mat-expansion-panel>
       </mat-card-content>
     </mat-card>
