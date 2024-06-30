@@ -7,8 +7,8 @@ import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
 import { appContext } from '../../app';
-import { BaseLLM, GenerationMode } from '../base-llm';
-import { LLM, combinePrompts, logTextGeneration } from '../llm';
+import { BaseLLM } from '../base-llm';
+import { GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../llm';
 
 // https://platform.openai.com/docs/models/gpt-4-and-gpt-4-turbo
 export const OPENAI_SERVICE = 'openai';
@@ -66,7 +66,7 @@ export class OpenAI extends BaseLLM {
 	}
 
 	@logTextGeneration
-	async generateText(userPrompt: string, systemPrompt: string, mode?: GenerationMode): Promise<string> {
+	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
 		return withActiveSpan('generateText', async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 
@@ -95,7 +95,7 @@ export class OpenAI extends BaseLLM {
 
 			const stream = await this.sdk().chat.completions.create({
 				model: this.model,
-				response_format: { type: mode === 'json' ? 'json_object' : 'text' },
+				response_format: { type: opts.type === 'json' ? 'json_object' : 'text' },
 				messages,
 				stream: true,
 			});

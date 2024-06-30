@@ -3,15 +3,36 @@ import { BaseLLM } from './base-llm';
 
 // https://github.com/AgentOps-AI/tokencost/blob/main/tokencost/model_prices.json
 
-export interface LLM {
-	generateText(prompt: string, systemPrompt?: string, type?: 'text' | 'json' | 'result' | 'function'): Promise<string>;
-	/* Generates a response that is expected to be in JSON format, and returns the object */
-	generateTextAsJson(prompt: string): Promise<any>;
+export interface GenerateTextOptions {
+	type?: 'text' | 'json';
+	/** Identifier used in trace spans, UI etc */
+	id?: string;
 	/**
-	 * Generates a response that is expected to have the <result></result> element, and returns the text in it.
-	 * This useful when you want to LLM to output discovery, reasoning, etc. to improve the answer, but only want the final result.
+	 * Temperature controls the randomness in token selection. Valid values are between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. Defaults to 1
+	 * We generally recommend altering this or top_p but not both.
+	 */
+	temperature?: number;
+	/**
+	 * Top-p changes how the model selects tokens for output. Tokens are selected from most probable to least until the sum of their probabilities equals the top-p value. For example, if tokens A, B, and C have a probability of .3, .2, and .1 and the top-p value is .5, then the model will select either A or B as the next token (using temperature).
+	 */
+	topP?: number;
+}
+
+export type GenerateJsonOptions = Omit<GenerateTextOptions, 'type'>;
+
+export interface LLM {
+	/* Generates text from a LLM */
+	generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string>;
+
+	/* Generates a response that is expected to be in JSON format, and returns the object */
+	generateTextAsJson(userPrompt: string, systemPrompt?: string, opts?: GenerateJsonOptions): Promise<any>;
+
+	/**
+	 * Generates a response that is expected to have the <result></result> element, and returns the text inside it.
+	 * This useful when you want to LLM to output discovery, reasoning, etc. to improve the answer, and only want the final result returned.
 	 */
 	generateTextWithResult(prompt: string, systemPrompt?: string): Promise<string>;
+
 	/**
 	 * Generates a response expecting to contain the <function_call> element matching the FunctionResponse type
 	 * @param prompt
@@ -40,12 +61,14 @@ export interface LLM {
 	 * @param result
 	 */
 	formatFunctionResult(functionName: string, result: any): string;
+
 	/**
 	 * Formats the output of a failed function call
 	 * @param functionName
 	 * @param error
 	 */
 	formatFunctionError(functionName: string, error: any): string;
+
 	/** The maximum number of input tokens */
 	getMaxInputTokens(): number;
 }

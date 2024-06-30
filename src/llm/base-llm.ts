@@ -1,13 +1,11 @@
 import { CDATA_END, CDATA_START } from '#utils/xml-utils';
-import { FunctionResponse, LLM } from './llm';
+import { FunctionResponse, GenerateJsonOptions, GenerateTextOptions, LLM } from './llm';
 import { extractJsonResult, extractStringResult, parseFunctionCallsXml } from './responseParsers';
 
 export interface SerializedLLM {
 	service: string;
 	model: string;
 }
-
-export type GenerationMode = 'text' | 'json';
 
 export abstract class BaseLLM implements LLM {
 	constructor(
@@ -31,12 +29,12 @@ export abstract class BaseLLM implements LLM {
 		return extractStringResult(response);
 	}
 
-	async generateTextAsJson(prompt: string, systemPrompt?: string): Promise<any> {
-		const response = await this.generateText(prompt, systemPrompt, 'json');
+	async generateTextAsJson(prompt: string, systemPrompt?: string, opts?: GenerateJsonOptions): Promise<any> {
+		const response = await this.generateText(prompt, systemPrompt, opts ? { type: 'json', ...opts } : { type: 'json' });
 		return extractJsonResult(response);
 	}
 
-	abstract generateText(prompt: string, systemPrompt?: string, mode?: GenerationMode): Promise<string>;
+	abstract generateText(prompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string>;
 
 	getMaxInputTokens(): number {
 		return this.maxInputTokens;
