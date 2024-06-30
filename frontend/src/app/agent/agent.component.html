@@ -248,7 +248,7 @@
 
         <p>
           <strong>User Prompt:</strong>
-          <span [innerHTML]="convertNewlinesToHtml(removeFunctionCallHistory(removeMemoryContent(call.request.userPromptText)))"></span>
+          <span style="white-space: pre;">{{removeFunctionCallHistory(removeMemoryContent(call.request.userPromptText))}}</span>
         </p>
         <p><strong>Response Text:</strong><br/><span style="white-space: pre;"> {{ call.response.responseText }}</span></p>
 
