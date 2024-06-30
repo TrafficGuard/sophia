@@ -259,7 +259,19 @@
             {{removeFunctionCallHistory(removeMemoryContent(call.request.userPromptText))}}
           </div>
         </mat-expansion-panel>
-        <p><strong>Response Text:</strong><br/><span style="white-space: pre;"> {{ call.response.responseText }}</span></p>
+        <mat-expansion-panel (opened)="call.responseTextExpanded = true" (closed)="call.responseTextExpanded = false">
+          <mat-expansion-panel-header>
+            <mat-panel-title [ngClass]="{'hidden-title': call.responseTextExpanded}">
+              <strong>Response Text: </strong>
+              <span *ngIf="!call.responseTextExpanded" class="expansion-preview">
+                {{ call.response.responseText | slice : 0 : 150 }} ...
+              </span>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div matExpansionPanelContent style="white-space: pre;">
+            {{ call.response.responseText }}
+          </div>
+        </mat-expansion-panel>
 
         <!--
         <p><strong>LLM Response ID:</strong> {{ call.response.id }}</p>

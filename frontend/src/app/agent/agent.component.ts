@@ -12,6 +12,7 @@ export interface LLMCall {
   request: LlmRequest;
   response: LlmResponse;
   userPromptExpanded?: boolean;
+  responseTextExpanded?: boolean;
 }
 export interface LlmRequest {
   id: number;
