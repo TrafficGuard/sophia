@@ -1,5 +1,5 @@
-site_name: Nous
-site_url: https://nous.trafficguard.ai/
+site_name: nous.ai
+site_url: https://nous-docs.trafficguard.ai/
 theme:
   name: material
 markdown_extensions:
@@ -7,7 +7,7 @@ markdown_extensions:
   - md_in_html
 
 nav:
-  - introduction.md
+  - index.md
   - setup.md
   - functions.md
   - observability.md
