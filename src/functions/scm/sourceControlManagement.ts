@@ -14,7 +14,7 @@ export interface SourceControlManagement {
 }
 
 function isScmObject(obj: Record<string, any>): boolean {
-	return obj && typeof obj.getProjects === 'function' && typeof obj.cloneProject === 'function';
+	return obj && typeof obj.getProjects === 'function' && typeof obj.cloneProject === 'function' && typeof obj.createMergeRequest === 'function';
 }
 
 /**
@@ -30,5 +30,5 @@ export function getSourceControlManagementTool(): SourceControlManagement {
 		.filter(isScmObject);
 	if (scms.length === 0) throw new Error('No function classes found which implement SourceControlManagement');
 	if (scms.length > 1) throw new Error('More than one function classes found implementing SourceControlManagement');
-	return scms[0]();
+	return scms[0];
 }
