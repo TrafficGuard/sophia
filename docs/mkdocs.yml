@@ -2,6 +2,9 @@ site_name: nous.ai
 site_url: https://nous-docs.trafficguard.ai/
 theme:
   name: material
+  palette:
+    primary: black
+
 markdown_extensions:
   - attr_list
   - md_in_html

@@ -1,7 +1,8 @@
-<p style="align-content: center">
-  <!--<img src="https://public.trafficguard.ai/nous/banner.png" height="300" alt="noos logo"/>-->
-  <b style="font-size: xx-large">nous.ai</b><br/>
-  <em>🤖 An open-source platform for LLM based workflows and autonomous AI agents, in TypeScript 🤖</em>
+<p align="center">
+  <img src="https://public.trafficguard.ai/nous/banner.png" height="300" alt="nous logo"/>
+</p>
+<p align="center">
+  <em>The open-source TypeScript platform for autonomous AI agents and LLM based workflows</em>
 </p>
 <em><b>Nous</b></em> (Greek: νοῦς) is a term from classical philosophy often associated with intellect or intelligence, represents the human mind's capacity to comprehend truth and reality.
 
