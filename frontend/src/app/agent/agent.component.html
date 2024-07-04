@@ -86,9 +86,7 @@
               <span class="expansion-preview" [ngClass]="{'hidden': outputExpanded}">{{ output | slice : 0 : 50 }}</span>
             </mat-panel-title>
           </mat-expansion-panel-header>
-          <div matExpansionPanelContent style="white-space: pre;">
-            {{ output }}
-          </div>
+          <div matExpansionPanelContent style="white-space: pre;">{{ output }}</div>
         </mat-expansion-panel>
 
         <mat-expansion-panel (opened)="userPromptExpanded = true" (closed)="userPromptExpanded = false">
@@ -98,9 +96,7 @@
               <span class="expansion-preview" [ngClass]="{'hidden': userPromptExpanded}">{{ agentDetails.userPrompt | slice : 0 : 50 }}</span>
             </mat-panel-title>
           </mat-expansion-panel-header>
-          <div matExpansionPanelContent style="white-space: pre;">
-            {{ agentDetails.userPrompt }}
-          </div>
+          <div matExpansionPanelContent style="white-space: pre;">{{ agentDetails.userPrompt }}</div>
         </mat-expansion-panel>
         <!--
         <mat-expansion-panel>
@@ -121,9 +117,7 @@
               <span class="expansion-preview">{{ agentDetails.error | slice : 0 : 50 }}...</span>
             </mat-panel-title>
           </mat-expansion-panel-header>
-          <div matExpansionPanelContent style="white-space: pre;">
-            {{ agentDetails.error }}
-          </div>
+          <div matExpansionPanelContent style="white-space: pre;">{{ agentDetails.error }}</div>
         </mat-expansion-panel>
         <mat-list-item *ngIf="agentDetails.planningResponse"
           ><span class="fixed-width-field"><strong>Planning Response:</strong></span>
@@ -241,9 +235,7 @@
               </span>
             </mat-panel-title>
           </mat-expansion-panel-header>
-          <div matExpansionPanelContent style="white-space: pre;">
-            {{ extractMemoryContent(call.request.userPromptText) }}
-          </div>
+          <div matExpansionPanelContent style="white-space: pre;">{{ extractMemoryContent(call.request.userPromptText) }}</div>
         </mat-expansion-panel>
 
         <mat-expansion-panel (opened)="call.userPromptExpanded = true" (closed)="call.userPromptExpanded = false">
@@ -255,9 +247,7 @@
               </span>
             </mat-panel-title>
           </mat-expansion-panel-header>
-          <div matExpansionPanelContent style="white-space: pre;">
-            {{removeFunctionCallHistory(removeMemoryContent(call.request.userPromptText))}}
-          </div>
+          <div matExpansionPanelContent style="white-space: pre;">{{removeFunctionCallHistory(removeMemoryContent(call.request.userPromptText))}}</div>
         </mat-expansion-panel>
         <mat-expansion-panel (opened)="call.responseTextExpanded = true" (closed)="call.responseTextExpanded = false">
           <mat-expansion-panel-header>
@@ -268,9 +258,7 @@
               </span>
             </mat-panel-title>
           </mat-expansion-panel-header>
-          <div matExpansionPanelContent style="white-space: pre;">
-            {{ call.response.responseText }}
-          </div>
+          <div matExpansionPanelContent style="white-space: pre;">{{ call.response.responseText }}</div>
         </mat-expansion-panel>
 
         <!--
