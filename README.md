@@ -50,15 +50,20 @@ Some of the key features include:
 - Code Review agent
     - Configurable code review guidelines
 
-## Documentation
 
-- [Setup](https://github.com/TrafficGuard/nous/tree/main/docs/docs/setup.md)
-- [Observability](https://github.com/TrafficGuard/nous/tree/main/docs/docs/observability.md)
-- [Function calling](https://github.com/TrafficGuard/nous/tree/main/docs/docs/functions.md)
-- [Autonomous AI Agent](https://github.com/TrafficGuard/nous/tree/main/docs/docs/xml-agent.md)
-- [AI Software Engineer](https://github.com/TrafficGuard/nous/tree/main/docs/docs/software-engineer.md)
-- [AI Code reviews](https://github.com/TrafficGuard/nous/tree/main/docs/docs/code-review.md)
-- [Function integrations](https://github.com/TrafficGuard/nous/tree/main/docs/docs/integrations.md)
+## Automated LLM function definition
+
+![New Agent UI](https://public.trafficguard.ai/nous/jira-function-def.png)
+
+## Documentation
+- [Home](https://nous-docs.trafficguard.ai/)
+- [Setup](https://nous-docs.trafficguard.ai/setup/)
+- [Observability](https://nous-docs.trafficguard.ai/observability/)
+- [Function calling](https://nous-docs.trafficguard.ai/functions/)
+- [Autonomous AI Agent](https://nous-docs.trafficguard.ai/xml-agent/)
+- [AI Software Engineer](https://nous-docs.trafficguard.ai/software-engineer/)
+- [AI Code reviews](https://nous-docs.trafficguard.ai/code-review/)
+- [Function integrations](https://nous-docs.trafficguard.ai/integrations/)
 
 [Discord](https://discord.gg/5WMQ4jKB)
 
