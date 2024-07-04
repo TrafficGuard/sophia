@@ -33,7 +33,7 @@ export class ProfileComponent implements OnInit {
         GitHub: new FormGroup({
           token: new FormControl(''),
         }),
-        GitLabServer: new FormGroup({
+        GitLab: new FormGroup({
           host: new FormControl(''),
           token: new FormControl(''),
           topLevelGroups: new FormControl(''),

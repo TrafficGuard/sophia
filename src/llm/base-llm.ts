@@ -24,8 +24,8 @@ export abstract class BaseLLM implements LLM {
 		};
 	}
 
-	async generateTextWithResult(prompt: string, systemPrompt?: string): Promise<string> {
-		const response = await this.generateText(prompt, systemPrompt);
+	async generateTextWithResult(prompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
+		const response = await this.generateText(prompt, systemPrompt, opts);
 		return extractStringResult(response);
 	}
 

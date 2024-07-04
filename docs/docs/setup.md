@@ -12,6 +12,8 @@
 git clone https://github.com/TrafficGuard/nous.git
 cd nous
 source ./bin/configure
+cd frontend
+npm install
 ```
 The configure script will:
 
@@ -21,7 +23,7 @@ The configure script will:
 
 ### Google Cloud setup (optional/recommended)
 
-When enabled Google Cloud is used for Firestore database persistence, the Gemini AI models, and tracing via OpenTelemetry.
+When enabled Google Cloud is used for Firestore database persistence, the Gemini AI models, Anthropic Claude on Vertex, and tracing via OpenTelemetry.
 
 A Dockerfile is also provided to deploy application in Cloud Run or on a VM with the container-optimised OS.
 
@@ -33,6 +35,11 @@ If you have [gcloud](https://cloud.google.com/sdk/docs/install) installed then r
 - Create a default [Firestore database](https://console.cloud.google.com/firestore/databases) in native mode.
 
 Run `gcloud auth application-default login` which will provide credentials for the Google Cloud SDKs. (If the webpage fails to load then ensure port the callback webpage opens with isn't already in use)
+
+To use Anthropic Claude through the Vertex API you will need to first enable the Claude models from the Model Garden. Make sure to click Accept on the final screen.
+
+Model garden links - [3.5 Sonnet](https://console.cloud.google.com/vertex-ai/publishers/anthropic/model-garden/claude-3-5-sonnet?supportedpurview=project)
+[3.0 Haiku](https://console.cloud.google.com/vertex-ai/publishers/anthropic/model-garden/claude-3-haiku?supportedpurview=project)
 
 ## Configuration
 
@@ -76,7 +83,7 @@ These can be run with `npm run chat`, `npm run agent`, `npm run code`, `npm run 
 - `research` runs the autonomous agent with the web research functions configured.
 - `util` used for running any random piece of code to test.
 
-### Server/UI
+### Local server & UI
 
 In one terminal run
 ```bash
@@ -85,7 +92,7 @@ npm run start:local
 In a second terminal run
 ```bash
 cd frontend
-npm run start
+npm run start:local
 ```
 The UI will be available at [http://localhost:4200](http://localhost:4200)
 

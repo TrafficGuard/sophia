@@ -9,7 +9,8 @@ export interface SourceControlManagement {
 
 	cloneProject(projectPathWithNamespace: string): Promise<string>;
 
-	createMergeRequest(title: string, description: string): Promise<string>;
+	createMergeRequest(title: string, description: string, sourceBranch: string, targetBranch: string): Promise<string>;
+
 	getJobLogs(projectPath: string, jobId: string): Promise<string>;
 }
 

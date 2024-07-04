@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { GitLabServer, getStartingLineNumber } from './gitlab';
+import { GitLab, getStartingLineNumber } from './gitlab';
 
 describe('GitLab', () => {
 	describe('diff', () => {
@@ -11,7 +11,7 @@ describe('GitLab', () => {
 	});
 
 	// describe('getJobLogs', () => {
-	// 	let gitLabServer: GitLabServer;
+	// 	let gitLab: GitLab;
 	// 	let apiStub: sinon.SinonStubbedInstance<Gitlab>;
 	//
 	// 	beforeEach(() => {
@@ -31,7 +31,7 @@ describe('GitLab', () => {
 	// 		apiStub.Jobs.show.resolves(job);
 	// 		apiStub.Jobs.trace.resolves(logs);
 	//
-	// 		const result = await gitLabServer.getJobLogs(projectPath, jobId);
+	// 		const result = await gitLab.getJobLogs(projectPath, jobId);
 	// 		expect(result).to.equal(logs);
 	// 	});
 	// });

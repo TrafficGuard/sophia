@@ -3,7 +3,7 @@ import { join } from 'path';
 import {
 	CommitDiffSchema,
 	ExpandedMergeRequestSchema,
-	Gitlab,
+	Gitlab as GitlabApi,
 	Jobs,
 	MergeRequestDiffSchema,
 	MergeRequestDiscussionNotePositionOptions,
@@ -63,7 +63,7 @@ function sanitize(s: string): string {
 }
 
 @funcClass(__filename)
-export class GitLabServer implements SourceControlManagement {
+export class GitLab implements SourceControlManagement {
 	_gitlab;
 	_config: GitLabConfig;
 
@@ -76,7 +76,7 @@ export class GitLabServer implements SourceControlManagement {
 
 	private config(): GitLabConfig {
 		if (!this._config) {
-			const config = functionConfig(GitLabServer);
+			const config = functionConfig(GitLab);
 			this._config = {
 				host: config.host || envVar('GITLAB_HOST'),
 				token: config.token || envVar('GITLAB_TOKEN'),
@@ -88,7 +88,7 @@ export class GitLabServer implements SourceControlManagement {
 
 	private api(): any {
 		if (!this._gitlab) {
-			this._gitlab = new Gitlab({
+			this._gitlab = new GitlabApi({
 				host: `https://${this.config().host}`,
 				token: this.config().token,
 			});
@@ -203,16 +203,17 @@ export class GitLabServer implements SourceControlManagement {
 	 * Creates a Merge request
 	 * @param title {string} The title of the merge request
 	 * @param description {string} The description of the merge request
+	 * @param targetBranch {string} The branch to merge to
+	 * @return the merge request URL if available, else null
 	 */
 	@func()
-	async createMergeRequest(title: string, description: string): Promise<string> {
+	async createMergeRequest(title: string, description: string, targetBranch: string): Promise<string | null> {
 		// TODO lookup project details from project list
 		// get main branch. If starts with feature and dev develop exists, then that
 		const currentBranch: string = await getFileSystem().vcs.getBranchName();
 
-		const targetBranch = 'master'; // TODO get from the GitLab project
-
 		// TODO if the user has changed their gitlab token, then need to update the origin URL with it
+		// TODO description -o merge_request.description='${sanitize(description)}' need to remove new line characters
 		const cmd = `git push --set-upstream origin '${currentBranch}' -o merge_request.create -o merge_request.target='${targetBranch}' -o merge_request.remove_source_branch -o merge_request.title='${sanitize(
 			title,
 		)}'`;
@@ -220,10 +221,11 @@ export class GitLabServer implements SourceControlManagement {
 		if (exitCode > 0) throw new Error(`${stdout}\n${stderr}`);
 
 		const url = await new UtilFunctions().processText(stdout, 'Respond only with the URL where the merge request is.');
-		if (!URL.canParse(url)) {
-			throw new Error(`LLM did not extract MR url. Returned ${url}`);
+
+		if (URL.canParse(url) && url.includes(this.config().host)) {
+			return url;
 		}
-		return url;
+		return null;
 	}
 
 	/**
@@ -368,7 +370,7 @@ export class GitLabServer implements SourceControlManagement {
 		</json>
 		</example>
 		`;
-		const reviewComments = (await llms().medium.generateTextAsJson(prompt)) as Array<{ lineNumber: number; comment: string }>;
+		const reviewComments = (await llms().medium.generateTextAsJson(prompt, null, { id: 'reviewDiff' })) as Array<{ lineNumber: number; comment: string }>;
 
 		return { code: currentCode, comments: reviewComments, mrDiff };
 	}

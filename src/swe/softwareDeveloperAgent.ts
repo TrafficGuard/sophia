@@ -33,8 +33,8 @@ export class SoftwareDeveloperAgent {
 	async runSoftwareDeveloperWorkflow(requirements: string): Promise<void> {
 		const summary = await this.summariseRequirements(requirements);
 
-		// console.log('Summary: ' + summary);
 		const gitLabProject = await this.selectProject(summary);
+		const targetBranch = gitLabProject.default_branch;
 
 		let repoPath = await getSourceControlManagementTool().cloneProject(gitLabProject.path_with_namespace);
 		// ensure we're setting a relative path. Not sure about this now that setWorkingDirectory will detect the basePath at the start of the path
@@ -73,15 +73,21 @@ export class SoftwareDeveloperAgent {
 			`<requirement>\n${requirements}\n</requirement><mr_description>\n${mrDescription}\n</mr_description>`,
 			'From this Merge Request description, generate a title for the Merge Request',
 		);
-		await getSourceControlManagementTool().createMergeRequest(mrTitle, mrDescription);
+		await getSourceControlManagementTool().createMergeRequest(mrTitle, mrDescription, branchName, targetBranch);
 	}
 
 	@cacheRetry({ scope: 'agent' })
 	@span()
 	async createBranchName(requirements: string, issueId?: string): Promise<string> {
 		// We always want the agent to use the same branch name when its resumed/retrying, so we cache it in the agent scope
-		return llms().medium.generateTextWithResult(`<requirements>${requirements}</requirement>\n
-		From the requirements generate a Git branch name (up to about 10 words/200 characters maximum) to make the changes on. Seperate words with dashes. Output your response in <result></result>`);
+		let branchName = await llms().medium.generateTextWithResult(
+			`<requirements>${requirements}</requirement>\n
+		From the requirements generate a Git branch name (up to about 10 words/200 characters maximum) to make the changes on. Seperate words with dashes. Output your response in <result></result>`,
+			null,
+			{ id: 'createBranchName' },
+		);
+		if (issueId) branchName = `${issueId}-${branchName}`;
+		return branchName;
 	}
 
 	/**
@@ -98,15 +104,15 @@ export class SoftwareDeveloperAgent {
 		This may include items such as:
 		- Changes to business logic
 		- Changes to configurations
-		- Key details such as project Ids, file names, class names, resource names, configuration values etc.
+		- Key details such as identifiers, file names, class names, resource names, configuration values etc.
 		- Assumptions
 		
 		Do not provide implementation details, only a summary`,
 		});
-		return llms().hard.generateText(prompt);
+		return llms().hard.generateText(prompt, null, { id: 'summariseRequirements' });
 	}
 
-	@cacheRetry()
+	@cacheRetry({ scope: 'agent' })
 	@span()
 	async selectProject(requirements: string): Promise<GitLabProject> {
 		const scm: SourceControlManagement = getSourceControlManagementTool();
@@ -118,7 +124,7 @@ export class SoftwareDeveloperAgent {
 				'You task is to only select the project object for the relevant repository which needs to cloned so we can later edit it to complete task requirements. Output your answer in JSON format and only output JSON',
 		});
 
-		return await llms().hard.generateTextAsJson(prompt);
+		return await llms().hard.generateTextAsJson(prompt, null, { id: 'selectProject' });
 	}
 
 	// @cacheRetry()
@@ -139,7 +145,7 @@ async function reviewChanges(projectPath: string, requirements: string) {
 			'If there should be changes to the code to match the original style then output the updated diff with the fixes.',
 	});
 
-	const response = await llms().hard.generateText(prompt);
+	const response = await llms().hard.generateText(prompt, null, { id: 'reviewChanges' });
 }
 
 export async function selectFiles(filenames: string[], summary: string): Promise<string[]> {
@@ -149,6 +155,6 @@ export async function selectFiles(filenames: string[], summary: string): Promise
 		action:
 			'From the requirements select the files which might be possibly required to complete the task. Output your answer in the JSON format:\n{\n files: ["file1", "file2", "file3"]\n}. Output only the JSON, nothing else.',
 	});
-	const response = await llms().medium.generateTextAsJson(prompt);
+	const response = await llms().medium.generateTextAsJson(prompt, null, { id: 'selectFiles' });
 	return response.files;
 }

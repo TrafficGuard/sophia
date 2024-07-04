@@ -52,7 +52,7 @@ The file paths MUST exist in the <project_map /> file_contents path attributes.
 </example>
 </task>
 `;
-	const response = (await llms().medium.generateTextAsJson(prompt)) as SelectFilesResponse;
+	const response = (await llms().medium.generateTextAsJson(prompt, null, { id: 'selectFilesToEdit' })) as SelectFilesResponse;
 	const primaryFiles = response.primaryFiles.map((entry) => entry.path);
 	const secondaryFiles = response.secondaryFiles.map((entry) => entry.path);
 	// TODO should validate the files exists, if not re-run with additional prompting

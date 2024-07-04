@@ -3,7 +3,7 @@ import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext, agentContextStorage, createContext } from '#agent/agentContext';
 import { RunAgentConfig } from '#agent/xmlAgentRunner';
 import { send, sendSuccess } from '#fastify/index';
-import { GitLabServer } from '#functions/scm/gitlab';
+import { GitLab } from '#functions/scm/gitlab';
 import { GEMINI_1_5_PRO_LLMS } from '#llm/models/vertexai';
 import { logger } from '#o11y/logger';
 import { currentUser } from '#user/userService/userContext';
@@ -40,9 +40,7 @@ export async function gitlabRoutesV1(fastify: AppFastifyInstance) {
 			const context: AgentContext = createContext(config);
 			agentContextStorage.enterWith(context);
 
-			new GitLabServer()
-				.reviewMergeRequest(event.project.id, event.object_attributes.id)
-				.catch((error) => logger.error(error, 'Error reviewing merge request'));
+			new GitLab().reviewMergeRequest(event.project.id, event.object_attributes.id).catch((error) => logger.error(error, 'Error reviewing merge request'));
 
 			send(reply, 200);
 		},

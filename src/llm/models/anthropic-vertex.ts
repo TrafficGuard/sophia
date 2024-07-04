@@ -14,6 +14,7 @@ import { envVar } from '#utils/env-var';
 import { appContext } from '../../app';
 import { RetryableError, cacheRetry } from '../../cache/cacheRetry';
 import { MultiLLM } from '../multi-llm';
+import TextBlock = Anthropic.TextBlock;
 
 export const ANTHROPIC_VERTEX_SERVICE = 'anthropic-vertex';
 
@@ -83,13 +84,13 @@ class AnthropicVertexLLM extends BaseLLM {
 	@logTextGeneration
 	async generateText(userPrompt: string, systemPrompt?: string): Promise<string> {
 		return withActiveSpan('generateText', async (span) => {
-			const prompt = combinePrompts(userPrompt, systemPrompt);
+			const combinedPrompt = combinePrompts(userPrompt, systemPrompt);
 			const maxTokens = 4096;
 
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
 			span.setAttributes({
 				userPrompt,
-				inputChars: prompt.length,
+				inputChars: combinedPrompt.length,
 				model: this.model,
 				caller: agentContext().callStack.at(-1) ?? '',
 			});
@@ -101,10 +102,11 @@ class AnthropicVertexLLM extends BaseLLM {
 			let message: Message;
 			try {
 				message = await this.api().messages.create({
+					system: systemPrompt,
 					messages: [
 						{
 							role: 'user',
-							content: prompt,
+							content: userPrompt,
 						},
 					],
 					model: this.model,
@@ -120,7 +122,7 @@ class AnthropicVertexLLM extends BaseLLM {
 
 			// appCtx().
 
-			const responseText = message.content[0]?.text;
+			const responseText = (message.content[0] as TextBlock).text;
 
 			const finishTime = Date.now();
 			const timeToFirstToken = finishTime - requestTime;

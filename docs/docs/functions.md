@@ -60,7 +60,7 @@ This is done by creating a FunctionSet with the applicable function class refere
 const config: RunAgentConfig = {
     agentName: 'ABC-123 discovery',
     llms: GPT(),
-    functions: new FunctionSet(GitLabServer, Jira),
+    functions: new FunctionSet(GitLab, Jira),
     initialPrompt: "What project in GitLab has the code to complete Jira ABC-123?",
 };
 // runAgent()

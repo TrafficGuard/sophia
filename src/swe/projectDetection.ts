@@ -120,7 +120,7 @@ Then the output would be:
 </output>
 </example>
 </task_requirements>`;
-	const projectDetections = (await llms().medium.generateTextAsJson(prompt)) as ProjectDetections;
+	const projectDetections = (await llms().medium.generateTextAsJson(prompt, null, { id: 'projectInfoFileSelection' })) as ProjectDetections;
 	logger.info(projectDetections, 'Project detections');
 	if (!projectDetections.projects.length) throw new Error(`Could not detect a software project within ${fileSystem.getWorkingDirectory()}`);
 
@@ -131,7 +131,8 @@ Then the output would be:
 	const projectDetectionFiles = projectDetection.files.filter((filename) => !filename.includes('package-lock.json') && !filename.includes('yarn.lock'));
 	const infoFilesContents = await fileSystem.getMultipleFileContentsAsXml(projectDetectionFiles);
 
-	const infoResponse = await llms().medium.generateTextAsJson(`${infoFilesContents}.\n 
+	const infoResponse = await llms().medium.generateTextAsJson(
+		`${infoFilesContents}.\n 
 		Your task is to determine the shell commands to compile, lint/format, and unit test the ${projectDetection.language} project from the files provided.
 		There may be multiple shell commands to chain together, eg. To lint and format the project might require "npm run prettier && npm run eslint".
 		
@@ -148,7 +149,10 @@ Explain your reasoning, then output a Markdown JSON block, with the JSON in this
         }
     ]
 }
-`);
+`,
+		null,
+		{ id: 'detectProjectInfo' },
+	);
 	projectDetection.files = undefined;
 	const projectInfo: ProjectInfo = {
 		...projectDetection,

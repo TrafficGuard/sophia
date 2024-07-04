@@ -79,6 +79,15 @@ export interface ExecResult {
 	exitCode: number;
 }
 
+export function failOnError(result: ExecResult): void {
+	if (result.exitCode > 0) {
+		let message = result.stdout ?? '';
+		if (message && result.stderr) message += '\n';
+		if (result.stderr) message += result.stderr;
+		throw new Error(message);
+	}
+}
+
 export async function execCommand(command: string, workingDirectory?: string): Promise<ExecResult> {
 	return withSpan('execCommand', async (span) => {
 		const shell = os.platform() === 'darwin' ? '/bin/zsh' : '/bin/bash';

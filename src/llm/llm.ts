@@ -31,7 +31,7 @@ export interface LLM {
 	 * Generates a response that is expected to have the <result></result> element, and returns the text inside it.
 	 * This useful when you want to LLM to output discovery, reasoning, etc. to improve the answer, and only want the final result returned.
 	 */
-	generateTextWithResult(prompt: string, systemPrompt?: string): Promise<string>;
+	generateTextWithResult(prompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string>;
 
 	/**
 	 * Generates a response expecting to contain the <function_call> element matching the FunctionResponse type

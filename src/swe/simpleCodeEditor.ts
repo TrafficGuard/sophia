@@ -35,7 +35,7 @@ export class SimpleCodeEditor {
 			${CDATA_END}</file_contents>
 			`,
 		});
-		const response = await llms().hard.generateText(prompt);
+		const response = await llms().hard.generateText(prompt, null, { id: 'makeChanges' });
 		// const response = readFileSync('response.txt', 'utf8');
 		const changes = parseMakeChangesResponse(response);
 		//   console.log(changes);

@@ -4,7 +4,7 @@ import { RunAgentConfig } from '#agent/xmlAgentRunner';
 import '#fastify/trace-init/trace-init';
 import { FileSystem } from '#functions/filesystem';
 import { Jira } from '#functions/jira';
-import { GitLabServer } from '#functions/scm/gitlab';
+import { GitLab } from '#functions/scm/gitlab';
 import { Slack } from '#functions/slack';
 import { Claude3_Opus, ClaudeLLMs } from '#llm/models/anthropic';
 import { Claude3_5_Sonnet_Vertex, Claude3_Haiku_Vertex, Claude3_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';

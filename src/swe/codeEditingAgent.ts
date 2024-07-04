@@ -51,13 +51,17 @@ export class CodeEditingAgent {
 			...filesResponse.secondaryFiles.map((selected) => selected.path),
 		];
 
-		const implementationRequirements = await llms().hard.generateText(`${await fileSystem.getMultipleFileContentsAsXml(initialSelectedFiles)}
+		const implementationRequirements = await llms().hard.generateText(
+			`${await fileSystem.getMultipleFileContentsAsXml(initialSelectedFiles)}
 		<requirements>${requirements}</requirements>
 		You are a senior software engineer. Your job is to review the provided user requirements against the code provided and produce an implementation design specification to give to a junior developer to implement the changes in the provided files.
 		Do not provide any details of verification commands etc as the CI/CD build will run integration tests. Only detail the changes required in the files for the pull request.
 		Check if any of the requirements have already been correctly implemented in the code as to not duplicate work.
 		Look at the existing style of the code when producing the requirements.
-		`);
+		`,
+			null,
+			{ id: 'implementationSpecification' },
+		);
 
 		logger.info(`projectPath ${projectPath}`);
 		logger.info(initialSelectedFiles, 'Initial selected files');
@@ -148,6 +152,8 @@ Respond ONLY as JSON that MUST be in the format of this example:
 </response_example>`,
 				requirements,
 			}),
+			null,
+			{ id: 'analyzeCompileErrors' },
 		)) as ErrorAnalysis;
 		if (response.command) {
 			const { exitCode, stdout, stderr } = await execCommand(response.command);
@@ -243,7 +249,7 @@ Respond ONLY as JSON that MUST be in the format of this example:
 			action:
 				'You will respond ONLY in JSON. From the requirements quietly consider which the files may be required to complete the task. You MUST output your answer ONLY as JSON in the format of this example:\n<example>\n{\n files: ["file1", "file2", "file3"]\n}\n</example>',
 		});
-		const response = await llms().hard.generateTextAsJson(prompt);
+		const response = await llms().hard.generateTextAsJson(prompt, null, { id: 'extractFilenames' });
 		return response.files;
 	}
 }
@@ -262,5 +268,5 @@ async function reviewChanges(requirements: string): Promise<string> {
 			'If there should be changes to the code to match the original style then output the updated diff with the fixes.',
 	});
 
-	return await llms().hard.generateText(prompt);
+	return await llms().hard.generateText(prompt, null, { id: 'reviewCodeChanges' });
 }

@@ -341,7 +341,7 @@ async function summariseLongFunctionOutput(functionResult: FunctionCallResult): 
 		functionResult.stdout ?? functionResult.stderr
 	}</${errorPrefix}output>
 	For the above function call summarise the output into a paragraph that captures key details about the output content, which might include identifiers, content summary, content structure and examples. Only responsd with the summary`;
-	const summary = await llms().easy.generateText(prompt);
+	const summary = await llms().easy.generateText(prompt, null, { id: 'summariseFunctionOutput' });
 	return summary;
 }
 

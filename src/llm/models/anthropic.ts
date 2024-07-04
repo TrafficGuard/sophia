@@ -13,6 +13,7 @@ import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { appContext } from '../../app';
 import { RetryableError } from '../../cache/cacheRetry';
+import TextBlock = AnthropicSdk.TextBlock;
 
 export const ANTHROPIC_SERVICE = 'anthropic';
 
@@ -103,7 +104,7 @@ export class Anthropic extends BaseLLM {
 			}
 
 			// TODO handle if there is a type != text
-			const responseText = message.content.map((content) => content.text).join();
+			const responseText = message.content.map((content) => (content as TextBlock).text).join();
 
 			const timeToFirstToken = Date.now() - requestTime;
 			const finishTime = Date.now();
