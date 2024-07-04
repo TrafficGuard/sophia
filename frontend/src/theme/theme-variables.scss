@@ -7,15 +7,36 @@
 
 // You can also read https://medium.com/@tomastrajan/the-complete-guide-to-angular-material-themes-4d165a9d24d1
 // for more insight about Angular Material theming.
+@use '@angular/material' as mat;
+
+@include mat.core();
+/*
+// Define a dark theme
+$dark-primary: mat.define-palette(mat.$indigo-palette);
+$dark-accent: mat.define-palette(mat.$blue-grey-palette);
+$dark-dark: mat.define-palette(mat.$grey-palette);
+$dark-theme: mat.define-dark-theme((
+  color: (
+    primary: $dark-primary,
+    accent: $dark-accent,
+    dark: $dark-dark,
+  )
+));
+
+// Apply the dark theme by default
+@include mat.core-theme($dark-theme);
+@include mat.button-theme($dark-theme);
+//*/
 
 @import "~@angular/material/theming";
 
 // Define the palettes for your theme using the Material Design palettes available in palette.scss
 // (imported above). For each palette, you can optionally specify a default, lighter, and darker
 // hue.
-$app-primary: mat-palette($mat-blue);
+$app-primary: mat-palette($mat-indigo, 700, 600, 500);
 // stylelint-disable-next-line value-keyword-case
-$app-accent: mat-palette($mat-pink, A200, A100, A400);
+//$app-accent: mat-palette($mat-pink, A200, A100, A400);
+$app-accent: mat-palette($mat-grey, 900, 700, 600);
 
 // The warn palette is optional (defaults to red).
 $app-warn: mat-palette($mat-red);
