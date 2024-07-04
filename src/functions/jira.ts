@@ -36,18 +36,16 @@ export class Jira {
 
 	/**
 	 * Gets the description of a JIRA issue
-	 * @param {string} issueId the issue id (e.g XYZ-123)
+	 * @param {string} issueId the issue id (e.g. XYZ-123)
 	 * @returns {Promise<string>} the issue description
 	 */
 	@func()
-	// @cacheRetry({ scope: 'global', ttlSeconds: 60 * 10 })
 	async getJiraDescription(issueId: string): Promise<string> {
 		try {
-			// logger.info(`Getting jira description for issue ${issueId}`);
 			const response = await this.axios().get(`issue/${issueId}`);
 			return response.data.fields.description;
 		} catch (error) {
-			logger.error('Error fetching issue description:', error.message);
+			logger.error(error, `Error fetching Jira ${issueId} description:`);
 			throw error;
 		}
 	}

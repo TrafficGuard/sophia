@@ -79,13 +79,18 @@ export interface ExecResult {
 	exitCode: number;
 }
 
-export function failOnError(result: ExecResult): void {
-	if (result.exitCode > 0) {
-		let message = result.stdout ?? '';
-		if (message && result.stderr) message += '\n';
-		if (result.stderr) message += result.stderr;
-		throw new Error(message);
-	}
+/**
+ * Throws an error if the ExecResult exit code is not zero
+ * @param userMessage The error message prepended to the stdout and stderr
+ * @param execResult
+ */
+export function failOnError(userMessage: string, execResult: ExecResult): void {
+	if (execResult.exitCode === 0) return;
+	let errorMessage = userMessage;
+	errorMessage += `\n${execResult.stdout}` ?? '';
+	if (execResult.stdout && execResult.stderr) errorMessage += '\n';
+	if (execResult.stderr) errorMessage += execResult.stderr;
+	throw new Error(errorMessage);
 }
 
 export async function execCommand(command: string, workingDirectory?: string): Promise<ExecResult> {

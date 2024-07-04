@@ -1,9 +1,9 @@
+import util from 'util';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
 import { execCmd, execCommand } from '#utils/exec';
 import { FileSystem } from '../filesystem';
 import { VersionControlSystem } from './versionControlSystem';
-const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 
 export class Git implements VersionControlSystem {
@@ -11,6 +11,11 @@ export class Git implements VersionControlSystem {
 	previousBranch: string | undefined;
 
 	constructor(private fileSystem: FileSystem) {}
+
+	async clone(repoURL: string, commitOrBranch = ''): Promise<void> {
+		const { exitCode, stdout, stderr } = await execCommand(`git clone ${repoURL} ${commitOrBranch}`);
+		if (exitCode > 0) throw new Error(`${stdout}\n${stderr}`);
+	}
 
 	/**
 	 * Adds all files which are already tracked by version control to the index and commits.

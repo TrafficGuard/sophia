@@ -223,6 +223,7 @@ export class GitLab implements SourceControlManagement {
 		const url = await new UtilFunctions().processText(stdout, 'Respond only with the URL where the merge request is.');
 
 		if (URL.canParse(url) && url.includes(this.config().host)) {
+			// TODO add the current user as a reviewer
 			return url;
 		}
 		return null;

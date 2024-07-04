@@ -64,23 +64,18 @@ export function getActiveSpan(): Span | null {
  * @param func - Function which performs the work in the span
  * @returns the value from work function
  */
-export function withActiveSpan<T>(spanName: string, func: (span: Span) => T): T {
-	// const functionWithCallStack = (span: Span): T => {
-	// 	try {
-	// 		agentContext()?.callStack.push(spanName)
-	// 		return func(span)
-	// 	} finally {
-	// 		agentContext()?.callStack.pop()
-	// 	}
-	// };
-	//
-	// if (!tracer) return functionWithCallStack(fakeSpan);
-	//
-	// return tracer.withActiveSpan(spanName, functionWithCallStack);
+export async function withActiveSpan<T>(spanName: string, func: (span: Span) => T): Promise<T> {
+	const functionWithCallStack = async (span: Span): Promise<T> => {
+		try {
+			agentContextStorage?.getStore()?.callStack.push(spanName);
+			return await func(span);
+		} finally {
+			agentContextStorage?.getStore()?.callStack.pop();
+		}
+	};
 
-	if (!tracer) return func(fakeSpan);
-
-	return tracer.withActiveSpan(spanName, func);
+	if (!tracer) return functionWithCallStack(fakeSpan);
+	return tracer.withActiveSpan(spanName, functionWithCallStack);
 }
 
 /**
@@ -110,22 +105,22 @@ type SpanAttributeExtractors = Record<string, SpanAttributeExtractor>;
  * @returns
  */
 export function span(attributeExtractors: SpanAttributeExtractors = {}) {
-	// NOTE this has been copied to func() in functions.ts and modified
+	// NOTE this has been copied to func() in functionDecorators.ts and modified
 	// Any changes should be kept in sync
 	return function spanDecorator(originalMethod: any, context: ClassMethodDecoratorContext): any {
 		const functionName = String(context.name);
-		return function replacementMethod(this: any, ...args: any[]) {
+		return async function replacementMethod(this: any, ...args: any[]) {
 			try {
-				agentContextStorage.getStore()?.callStack.push(functionName);
+				agentContextStorage?.getStore()?.callStack.push(functionName);
 				if (!tracer) {
-					return originalMethod.call(this, ...args);
+					return await originalMethod.call(this, ...args);
 				}
-				return tracer.withActiveSpan(functionName, (span: Span) => {
+				return tracer.withActiveSpan(functionName, async (span: Span) => {
 					setFunctionSpanAttributes(span, functionName, attributeExtractors, args);
-					return originalMethod.call(this, ...args);
+					return await originalMethod.call(this, ...args);
 				});
 			} finally {
-				agentContextStorage.getStore()?.callStack.pop();
+				agentContextStorage?.getStore()?.callStack.pop();
 			}
 		};
 	};

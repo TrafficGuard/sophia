@@ -122,8 +122,8 @@ export function logTextGeneration(originalMethod: any, context: ClassMethodDecor
 	return async function replacementMethod(this: BaseLLM, ...args: any[]) {
 		// system prompt
 		if (args.length > 1) {
-			// logger.info('= SYSTEM PROMPT ==========================================');
-			// logger.info(args[1]);
+			logger.info('= SYSTEM PROMPT ==========================================');
+			logger.info(args[1]);
 		}
 		logger.info('= USER PROMPT ====================================================================================================');
 		logger.info(args[0]);

@@ -52,7 +52,6 @@ export function func() {
 			return tracer.withActiveSpan(functionName, async (span: Span) => {
 				setFunctionSpanAttributes(span, functionName, attributeExtractors, args);
 				try {
-					console.log(`Push ${functionName}`);
 					agentContext()?.callStack.push(functionName);
 					span.setAttribute('call', agentContext()?.callStack.join(' > '));
 
@@ -65,7 +64,6 @@ export function func() {
 					}
 					return result;
 				} finally {
-					console.log(`Pop ${functionName}`);
 					agentContext()?.callStack.pop();
 				}
 			});
