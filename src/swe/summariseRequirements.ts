@@ -5,7 +5,7 @@ export async function summariseRequirements(requirements: string): Promise<strin
 	const prompt = buildPrompt({
 		information: '',
 		requirements: `The following is the provided requirements of the task:\n<requirements>\n${requirements}\n</requirements>\n`,
-		action: `Summarise the requirements into the actions that need to be taken from the perspective of a software developer who needs is doing the implemention. 
+		action: `Summarise the requirements into the actions that need to be taken from the perspective of a software developer who needs is doing the implementation. 
 		This may include items such as:
 		- Changes to business logic
 		- Changes to configurations

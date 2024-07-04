@@ -1,6 +1,8 @@
+import { existsSync } from 'node:fs';
+import { join } from 'path';
 import { getFileSystem } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
-import { execCommand } from '#utils/exec';
+import { ExecResult, execCommand } from '#utils/exec';
 import { func, funcClass } from '../../../functionDefinition/functionDecorators';
 import { LanguageTools } from '../languageTools';
 
@@ -38,11 +40,19 @@ export class TypescriptTools implements LanguageTools {
 		return getFileSystem().formatFileContentsAsXml(dtsFiles);
 	}
 
+	@func()
 	async installPackage(packageName: string): Promise<void> {
-		// TODO if lock files exists for other package managers, then use them
 		// TODO check Snyk etc for any major vulnerability
+		let result: ExecResult;
 
-		const result = await execCommand(`npm install ${packageName}`);
+		if (existsSync(join(getFileSystem().getWorkingDirectory(), 'yarn.lock'))) {
+			result = await execCommand(`yarn add ${packageName}`);
+		} else if (existsSync(join(getFileSystem().getWorkingDirectory(), 'pnpm-lock.yaml'))) {
+			result = await execCommand(`pnpm install ${packageName}`);
+		} else {
+			result = await execCommand(`npm install ${packageName}`);
+		}
+
 		if (result.exitCode > 0) throw new Error(`${result.stdout}\n${result.stderr}`);
 	}
 }
