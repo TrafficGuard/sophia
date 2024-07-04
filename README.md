@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://public.trafficguard.ai/nous/banner.png" height="300" alt="nous logo"/>
+  <img src="https://public.trafficguard.ai/nous/banner.png" alt="nous logo"/>
 </p>
 <p align="center">
   <em>The open-source TypeScript platform for autonomous AI agents and LLM based workflows </em>
