@@ -3,7 +3,7 @@ import { AgentLLMs, addCost, agentContext } from '#agent/agentContext';
 import { envVar } from '#utils/env-var';
 import { BaseLLM } from '../base-llm';
 import { MaxTokensError } from '../errors';
-import { LLM, combinePrompts, logTextGeneration } from '../llm';
+import { GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../llm';
 import { MultiLLM } from '../multi-llm';
 import Message = AnthropicSdk.Message;
 import { CallerId } from '#llm/llmCallService/llmCallService';
@@ -20,7 +20,7 @@ export const ANTHROPIC_SERVICE = 'anthropic';
 export function anthropicLLMRegistry(): Record<string, () => LLM> {
 	return {
 		[`${ANTHROPIC_SERVICE}:claude-3-haiku`]: Claude3_Haiku,
-		[`${ANTHROPIC_SERVICE}:claude-3-sonnet`]: Claude3_Sonnet,
+		[`${ANTHROPIC_SERVICE}:claude-3-sonnet`]: Claude3_5_Sonnet,
 		[`${ANTHROPIC_SERVICE}:claude-3-opus`]: Claude3_Opus,
 	};
 }
@@ -28,38 +28,38 @@ export function anthropicLLMRegistry(): Record<string, () => LLM> {
 // https://docs.anthropic.com/en/docs/glossary#tokens
 // For Claude, a token approximately represents 3.5 English characters
 export function Claude3_Opus() {
-	return new Anthropic('claude-3-opus-20240229', 15 / (1_000_000 * 3.5), 75 / (1_000_000 * 3.5));
+	return new Anthropic('Claude 3 Opus', 'claude-3-opus-20240229', 15 / (1_000_000 * 3.5), 75 / (1_000_000 * 3.5));
 }
 
-export function Claude3_Sonnet() {
-	return new Anthropic('claude-3-sonnet-20240229', 3 / (1_000_000 * 3.5), 15 / (1_000_000 * 3.5));
+export function Claude3_5_Sonnet() {
+	return new Anthropic('Claude 3.5 Sonnet', 'claude-3-5-sonnet-20240620', 3 / (1_000_000 * 3.5), 15 / (1_000_000 * 3.5));
 }
 
 export function Claude3_Haiku() {
-	return new Anthropic('claude-3-haiku-20240307', 0.25 / (1_000_000 * 3.5), 1.25 / (1_000_000 * 3.5));
+	return new Anthropic('Claude 3 Haiku', 'claude-3-haiku-20240307', 0.25 / (1_000_000 * 3.5), 1.25 / (1_000_000 * 3.5));
 }
 
 export function anthropicLLmFromModel(model: string): LLM | null {
-	if (model.startsWith('claude-3-sonnet-')) return Claude3_Sonnet();
+	if (model.startsWith('claude-3-5-sonnet-')) return Claude3_5_Sonnet();
 	if (model.startsWith('claude-3-haiku-')) return Claude3_Haiku();
 	if (model.startsWith('claude-3-opus-')) return Claude3_Opus();
 	return null;
 }
 
 export function ClaudeLLMs(): AgentLLMs {
-	const opus = Claude3_Opus();
+	const sonnet35 = Claude3_5_Sonnet();
 	return {
 		easy: Claude3_Haiku(),
-		medium: Claude3_Sonnet(),
-		hard: opus,
-		xhard: new MultiLLM([opus], 5),
+		medium: sonnet35,
+		hard: sonnet35,
+		xhard: new MultiLLM([sonnet35], 5),
 	};
 }
 
 export class Anthropic extends BaseLLM {
 	anthropic: AnthropicSdk | undefined;
-	constructor(model: string, inputCostPerChar = 0, outputCostPerChar = 0) {
-		super(ANTHROPIC_SERVICE, model, 200_000, inputCostPerChar, outputCostPerChar);
+	constructor(displayName: string, model: string, inputCostPerChar = 0, outputCostPerChar = 0) {
+		super(displayName, ANTHROPIC_SERVICE, model, 200_000, inputCostPerChar, outputCostPerChar);
 	}
 
 	private sdk(): AnthropicSdk {
@@ -70,8 +70,8 @@ export class Anthropic extends BaseLLM {
 	}
 
 	@logTextGeneration
-	async generateText(userPrompt: string, systemPrompt?: string): Promise<string> {
-		return withActiveSpan('generateText', async (span) => {
+	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
+		return withActiveSpan(`generateText ${opts?.id}`, async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);

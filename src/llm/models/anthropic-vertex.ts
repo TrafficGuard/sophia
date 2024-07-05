@@ -3,7 +3,7 @@ import { AnthropicVertex } from '@anthropic-ai/vertex-sdk';
 import { AgentLLMs, addCost, agentContext } from '#agent/agentContext';
 import { BaseLLM } from '../base-llm';
 import { MaxTokensError } from '../errors';
-import { LLM, combinePrompts, logTextGeneration } from '../llm';
+import { GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../llm';
 import Message = Anthropic.Message;
 import { CallerId } from '#llm/llmCallService/llmCallService';
 import { CreateLlmResponse } from '#llm/llmCallService/llmRequestResponse';
@@ -30,19 +30,19 @@ export function anthropicVertexLLMRegistry(): Record<string, () => LLM> {
 }
 
 export function Claude3_Sonnet_Vertex() {
-	return new AnthropicVertexLLM('claude-3-sonnet@20240229', 3 / (1_000_000 * 3.5), 15 / (1_000_000 * 3.5));
+	return new AnthropicVertexLLM('Claude 3 Sonnet (Vertex)', 'claude-3-sonnet@20240229', 3 / (1_000_000 * 3.5), 15 / (1_000_000 * 3.5));
 }
 
 export function Claude3_5_Sonnet_Vertex() {
-	return new AnthropicVertexLLM('claude-3-5-sonnet@20240620', 3 / (1_000_000 * 3.5), 15 / (1_000_000 * 3.5));
+	return new AnthropicVertexLLM('Claude 3.5 Sonnet (Vertex)', 'claude-3-5-sonnet@20240620', 3 / (1_000_000 * 3.5), 15 / (1_000_000 * 3.5));
 }
 
 export function Claude3_Haiku_Vertex() {
-	return new AnthropicVertexLLM('claude-3-haiku@20240307', 0.25 / (1_000_000 * 3.5), 1.25 / (1_000_000 * 3.5));
+	return new AnthropicVertexLLM('Claude 3 Haiku (Vertex)', 'claude-3-haiku@20240307', 0.25 / (1_000_000 * 3.5), 1.25 / (1_000_000 * 3.5));
 }
 
 export function Claude3_Opus_Vertex() {
-	return new AnthropicVertexLLM('claude-3-opus@20240229', 15 / (1_000_000 * 3.5), 75 / (1_000_000 * 3.5));
+	return new AnthropicVertexLLM('Claude 3 Opus (Vertex)', 'claude-3-opus@20240229', 15 / (1_000_000 * 3.5), 75 / (1_000_000 * 3.5));
 }
 
 export function ClaudeVertexLLMs(): AgentLLMs {
@@ -51,7 +51,7 @@ export function ClaudeVertexLLMs(): AgentLLMs {
 		easy: Claude3_Haiku_Vertex(),
 		medium: hard,
 		hard: hard,
-		xhard: new MultiLLM([hard], 5),
+		xhard: hard,
 	};
 }
 
@@ -62,10 +62,8 @@ export function ClaudeVertexLLMs(): AgentLLMs {
 class AnthropicVertexLLM extends BaseLLM {
 	client: AnthropicVertex | undefined;
 
-	constructor(model: string, inputCostPerChar = 0, outputCostPerChar = 0) {
-		super(ANTHROPIC_VERTEX_SERVICE, model, 200_000, inputCostPerChar, outputCostPerChar);
-		// logger.info(currentUser().llmConfig.vertexProjectId ?? envVar('GCLOUD_PROJECT'));
-		// logger.info(currentUser().llmConfig.vertexRegion ?? envVar('GCLOUD_REGION'));
+	constructor(displayName: string, model: string, inputCostPerChar = 0, outputCostPerChar = 0) {
+		super(displayName, ANTHROPIC_VERTEX_SERVICE, model, 200_000, inputCostPerChar, outputCostPerChar);
 	}
 
 	private api(): AnthropicVertex {
@@ -82,8 +80,8 @@ class AnthropicVertexLLM extends BaseLLM {
 	// {"error":{"code":400,"message":"Project `1234567890` is not allowed to use Publisher Model `projects/project-id/locations/us-central1/publishers/anthropic/models/claude-3-haiku@20240307`","status":"FAILED_PRECONDITION"}}
 	@cacheRetry({ backOffMs: 5000 })
 	@logTextGeneration
-	async generateText(userPrompt: string, systemPrompt?: string): Promise<string> {
-		return withActiveSpan('generateText', async (span) => {
+	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
+		return withActiveSpan(`generateText ${opts?.id}`, async (span) => {
 			const combinedPrompt = combinePrompts(userPrompt, systemPrompt);
 			const maxTokens = 4096;
 

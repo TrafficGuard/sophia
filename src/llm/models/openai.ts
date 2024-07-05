@@ -30,17 +30,18 @@ export function openaiLLmFromModel(model: string): LLM {
 
 // 1 token ~= 4 chars
 export function GPT4() {
-	return new OpenAI('gpt-4-turbo-preview', 128_000, 10 / (1_000_000 * 4), 30 / (1_000_000 * 4));
+	return new OpenAI('GPT4-turbo', 'gpt-4-turbo-preview', 128_000, 10 / (1_000_000 * 4), 30 / (1_000_000 * 4));
 }
 
 export function GPT4o() {
-	return new OpenAI('gpt-4o', 128_000, 5 / (1_000_000 * 4), 15 / (1_000_000 * 4));
+	return new OpenAI('GPT4o', 'gpt-4o', 128_000, 5 / (1_000_000 * 4), 15 / (1_000_000 * 4));
 }
+
 export class OpenAI extends BaseLLM {
 	openAISDK: OpenAISDK | null = null;
 
-	constructor(model: Model, maxInputTokens: number, inputCostPerChar: number, outputCostPerChar: number) {
-		super(OPENAI_SERVICE, model, maxInputTokens, inputCostPerChar, outputCostPerChar);
+	constructor(name, model: Model, maxInputTokens: number, inputCostPerChar: number, outputCostPerChar: number) {
+		super(name, OPENAI_SERVICE, model, maxInputTokens, inputCostPerChar, outputCostPerChar);
 	}
 
 	private sdk(): OpenAISDK {
@@ -67,7 +68,7 @@ export class OpenAI extends BaseLLM {
 
 	@logTextGeneration
 	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
-		return withActiveSpan('generateText', async (span) => {
+		return withActiveSpan(`generateText ${opts?.id}`, async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);

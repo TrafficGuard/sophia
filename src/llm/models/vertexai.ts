@@ -8,7 +8,7 @@ import { currentUser } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
 import { appContext } from '../../app';
 import { BaseLLM } from '../base-llm';
-import { LLM, combinePrompts, logTextGeneration } from '../llm';
+import { GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../llm';
 import { MultiLLM } from '../multi-llm';
 
 export function GEMINI_1_5_PRO_LLMS(): AgentLLMs {
@@ -25,10 +25,7 @@ export const VERTEX_SERVICE = 'vertex';
 
 export function vertexLLMRegistry(): Record<string, () => LLM> {
 	return {
-		[`${VERTEX_SERVICE}:gemini-1.5-pro-001`]: Gemini_1_5_Pro,
 		[`${VERTEX_SERVICE}:gemini-experimental`]: Gemini_1_5_Experimental,
-		[`${VERTEX_SERVICE}:gemini-1.5-flash-001`]: Gemini_1_5_Flash,
-
 		[`${VERTEX_SERVICE}:gemini-1.5-pro`]: Gemini_1_5_Pro,
 		[`${VERTEX_SERVICE}:gemini-1.5-flash`]: Gemini_1_5_Flash,
 	};
@@ -40,29 +37,36 @@ export function vertexLLMRegistry(): Record<string, () => LLM> {
 
 // gemini-1.5-pro-latest
 export function Gemini_1_5_Pro(version = '001') {
-	return new VertexLLM(VERTEX_SERVICE, `gemini-1.5-pro-${version}`, 1_000_000, 0.00125 / 1000, 0.00375 / 1000);
+	return new VertexLLM('Gemini 1.5 Pro', VERTEX_SERVICE, `gemini-1.5-pro-${version}`, 1_000_000, 0.00125 / 1000, 0.00375 / 1000);
 }
 
 export function Gemini_1_5_Experimental() {
-	return new VertexLLM(VERTEX_SERVICE, 'gemini-experimental', 1_000_000, 0.0036 / 1000, 0.018 / 1000);
+	return new VertexLLM('Gemini experimental', VERTEX_SERVICE, 'gemini-experimental', 1_000_000, 0.0036 / 1000, 0.018 / 1000);
 }
 
 export function Gemini_1_5_Flash(version = '001') {
-	return new VertexLLM(VERTEX_SERVICE, `gemini-1.5-flash-${version}`, 1_000_000, 0.000125 / 1000, 0.000375 / 1000);
+	return new VertexLLM('Gemini 1.5 Flash', VERTEX_SERVICE, `gemini-1.5-flash-${version}`, 1_000_000, 0.000125 / 1000, 0.000375 / 1000);
 }
 
 /**
  * Vertex AI models - Gemini
  */
 class VertexLLM extends BaseLLM {
-	vertexAI = new VertexAI({
-		project: currentUser().llmConfig.vertexProjectId ?? envVar('GCLOUD_PROJECT'),
-		location: currentUser().llmConfig.vertexRegion ?? envVar('GCLOUD_REGION'),
-	});
+	_vertex: VertexAI;
+
+	vertex(): VertexAI {
+		if (!this._vertex) {
+			this._vertex = new VertexAI({
+				project: currentUser().llmConfig.vertexProjectId ?? envVar('GCLOUD_PROJECT'),
+				location: currentUser().llmConfig.vertexRegion ?? envVar('GCLOUD_REGION'),
+			});
+		}
+		return this._vertex;
+	}
 
 	@logTextGeneration
-	async generateText(userPrompt: string, systemPrompt: string): Promise<string> {
-		return withActiveSpan('generateText', async (span) => {
+	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
+		return withActiveSpan(`generateText ${opts?.id}`, async (span) => {
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
 
 			const promptLength = userPrompt.length + systemPrompt?.length ?? 0;
@@ -77,13 +81,13 @@ class VertexLLM extends BaseLLM {
 			const llmRequestSave = appContext().llmCallService.saveRequest(userPrompt, systemPrompt);
 			const requestTime = Date.now();
 
-			const generativeModel = this.vertexAI.preview.getGenerativeModel({
+			const generativeModel = this.vertex().getGenerativeModel({
 				model: this.model,
 				systemInstruction: systemPrompt ? { role: 'system', parts: [{ text: systemPrompt }] } : undefined,
 				generationConfig: {
 					maxOutputTokens: 8192,
-					temperature: 1,
-					topP: 0.95,
+					temperature: opts?.temperature,
+					topP: opts?.temperature,
 					stopSequences: ['</response>'],
 				},
 				safetySettings: SAFETY_SETTINGS,

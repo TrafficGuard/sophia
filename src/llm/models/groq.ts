@@ -9,7 +9,7 @@ import { envVar } from '#utils/env-var';
 import { appContext } from '../../app';
 import { RetryableError } from '../../cache/cacheRetry';
 import { BaseLLM } from '../base-llm';
-import { LLM, combinePrompts, logDuration } from '../llm';
+import { GenerateTextOptions, LLM, combinePrompts, logDuration } from '../llm';
 import { MultiLLM } from '../multi-llm';
 
 export const GROQ_SERVICE = 'groq';
@@ -23,15 +23,15 @@ export function groqLLMRegistry(): Record<string, () => LLM> {
 }
 
 export function groqMixtral8x7b(): LLM {
-	return new GroqLLM(GROQ_SERVICE, 'mixtral-8x7b-32768', 32_768, 0.27, 0.27);
+	return new GroqLLM('Mixtral 8x7b (Groq)', GROQ_SERVICE, 'mixtral-8x7b-32768', 32_768, 0.27, 0.27);
 }
 
 export function groqGemma7bIt(): LLM {
-	return new GroqLLM(GROQ_SERVICE, 'gemma-7b-it', 8_192, 0.1 / 1000000, 0.1 / 1000000);
+	return new GroqLLM('Gemma 7b-it (Groq)', GROQ_SERVICE, 'gemma-7b-it', 8_192, 0.1 / 1000000, 0.1 / 1000000);
 }
 
 export function groqLlama3_70B(): LLM {
-	return new GroqLLM(GROQ_SERVICE, 'llama3-70b-8192', 8_192, (0.59 / 1_000_000) * 4, (0.79 / 1_000_000) * 4);
+	return new GroqLLM('Llama3 70b (Groq)', GROQ_SERVICE, 'llama3-70b-8192', 8_192, (0.59 / 1_000_000) * 4, (0.79 / 1_000_000) * 4);
 }
 
 export function grokLLMs(): AgentLLMs {
@@ -48,12 +48,20 @@ export function grokLLMs(): AgentLLMs {
  * https://wow.groq.com/
  */
 export class GroqLLM extends BaseLLM {
-	groq = new Groq({
-		apiKey: currentUser().llmConfig.groqKey ?? envVar('GROQ_API_KEY'),
-	});
+	_groq: Groq;
+
+	groq(): Groq {
+		if (!this._groq) {
+			this._groq = new Groq({
+				apiKey: currentUser().llmConfig.groqKey ?? envVar('GROQ_API_KEY'),
+			});
+		}
+		return this._groq;
+	}
+
 	@logDuration
-	async generateText(userPrompt: string, systemPrompt = ''): Promise<string> {
-		return withActiveSpan('generateText', async (span) => {
+	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
+		return withActiveSpan(`generateText ${opts?.id}`, async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
 			span.setAttributes({
@@ -69,7 +77,7 @@ export class GroqLLM extends BaseLLM {
 			const requestTime = Date.now();
 
 			try {
-				const completion = await this.groq.chat.completions.create({
+				const completion = await this.groq().chat.completions.create({
 					messages: [
 						{
 							role: 'user',

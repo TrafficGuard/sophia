@@ -36,10 +36,12 @@ If you have [gcloud](https://cloud.google.com/sdk/docs/install) installed then r
 
 Run `gcloud auth application-default login` which will provide credentials for the Google Cloud SDKs. (If the webpage fails to load then ensure port the callback webpage opens with isn't already in use)
 
-To use Anthropic Claude through the Vertex API you will need to first enable the Claude models from the Model Garden. Make sure to click Accept on the final screen.
+To use Anthropic Claude through the Vertex API you will need to first [enable the Claude models](https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/use-claude#grant-permissions) from the Model Garden. Make sure to click Accept on the final screen.
 
 Model garden links - [3.5 Sonnet](https://console.cloud.google.com/vertex-ai/publishers/anthropic/model-garden/claude-3-5-sonnet?supportedpurview=project)
 [3.0 Haiku](https://console.cloud.google.com/vertex-ai/publishers/anthropic/model-garden/claude-3-haiku?supportedpurview=project)
+
+As Claude is only available in [select regions](https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/use-claude#regions) there is an additional environment variable GCLOUD_CLAUDE_REGION in the sample .env file which default to us-east5
 
 ## Configuration
 

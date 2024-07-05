@@ -27,21 +27,28 @@ export class CodeEditor {
 		filesToEdit = filesToEdit.filter((file) => file?.trim().length);
 
 		// https://aider.chat/docs/llms.html
+		let env: any = undefined;
 		let modelArg = '';
-		if (currentUser().llmConfig.anthropicKey) {
+		const anthropicKey = currentUser().llmConfig.anthropicKey || process.env.ANTHROPIC_API_KEY;
+		const deepSeekKey = currentUser().llmConfig.deepseekKey || process.env.DEEPSEEK_API_KEY;
+		const openaiKey = currentUser().llmConfig.openaiKey || process.env.OPENAI_API_KEY;
+		if (anthropicKey) {
 			modelArg = '--sonnet';
-		} else if (currentUser().llmConfig.deepseekKey) {
+			env = { ANTHROPIC_API_KEY: anthropicKey };
+		} else if (deepSeekKey) {
 			modelArg = '--model deepseek/deepseek-coder';
-		} else if (currentUser().llmConfig.openaiKey) {
+			env = { DEEPSEEK_API_KEY: deepSeekKey };
+		} else if (openaiKey) {
 			// default to gpt4o
 			modelArg = '';
+			env = { OPENAI_API_KEY: openaiKey };
 		} else {
 			throw new Error('Aider code editing requires a key for Anthropic, Deepseek or OpenAI');
 		}
 
 		const cmd = `aider --skip-check-update --yes ${modelArg} --message-file=${messageFilePath} ${filesToEdit.map((file) => `"${file}"`).join(' ')}`;
 
-		const { stdout, stderr, exitCode } = await execCommand(cmd);
+		const { stdout, stderr, exitCode } = await execCommand(cmd, { envVars: env });
 		if (exitCode > 0) throw new Error(`${stdout} ${stderr}`);
 	}
 }

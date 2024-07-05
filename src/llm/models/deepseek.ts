@@ -9,7 +9,7 @@ import { envVar } from '#utils/env-var';
 import { appContext } from '../../app';
 import { RetryableError } from '../../cache/cacheRetry';
 import { BaseLLM } from '../base-llm';
-import { LLM, combinePrompts, logTextGeneration } from '../llm';
+import { GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../llm';
 
 export const DEEPSEEK_SERVICE = 'deepseek';
 
@@ -22,12 +22,12 @@ export function deepseekLLMRegistry(): Record<string, () => LLM> {
 
 export function deepseekCoder(): LLM {
 	// TODO Need to adjust for tokens https://platform.deepseek.com/api-docs/faq#how-to-calculate-token-usage-offline
-	return new DeepseekLLM('deepseek-coder', 32000, 0.14 / 1_000_000, 0.28 / 1_000_000);
+	return new DeepseekLLM('DeepSeek Coder', 'deepseek-coder', 32000, 0.14 / 1_000_000, 0.28 / 1_000_000);
 }
 
 export function deepseekChat(): LLM {
 	// TODO Need to adjust for tokens https://platform.deepseek.com/api-docs/faq#how-to-calculate-token-usage-offline
-	return new DeepseekLLM('deepseek-chat', 32000, 0.14 / 1_000_000, 0.28 / 1_000_000);
+	return new DeepseekLLM('DeepSeek Chat', 'deepseek-chat', 32000, 0.14 / 1_000_000, 0.28 / 1_000_000);
 }
 
 /**
@@ -35,21 +35,27 @@ export function deepseekChat(): LLM {
  * @see https://platform.deepseek.com/api-docs/api/create-chat-completion
  */
 export class DeepseekLLM extends BaseLLM {
-	client: any;
+	_client: any;
 
-	constructor(model: string, maxTokens: number, inputCostPerToken: number, outputCostPerToken: number) {
-		super(DEEPSEEK_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
-		this.client = axios.create({
-			baseURL: 'https://api.deepseek.com',
-			headers: {
-				Authorization: `Bearer ${currentUser().llmConfig.deepseekKey ?? envVar('DEEPSEEK_API_KEY')}`,
-			},
-		});
+	client() {
+		if (!this._client) {
+			this._client = axios.create({
+				baseURL: 'https://api.deepseek.com',
+				headers: {
+					Authorization: `Bearer ${currentUser().llmConfig.deepseekKey ?? envVar('DEEPSEEK_API_KEY')}`,
+				},
+			});
+		}
+		return this._client;
+	}
+
+	constructor(displayName: string, model: string, maxTokens: number, inputCostPerToken: number, outputCostPerToken: number) {
+		super(displayName, DEEPSEEK_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
 	}
 
 	@logTextGeneration
-	async generateText(userPrompt: string, systemPrompt: string): Promise<string> {
-		return withSpan('generateText', async (span) => {
+	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
+		return withSpan(`generateText ${opts?.id}`, async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
@@ -76,7 +82,7 @@ export class DeepseekLLM extends BaseLLM {
 			});
 
 			try {
-				const response = await this.client.post('/chat/completions', {
+				const response = await this.client().post('/chat/completions', {
 					messages,
 					model: this.model,
 				});

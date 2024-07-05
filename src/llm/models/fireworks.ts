@@ -9,7 +9,7 @@ import { envVar } from '#utils/env-var';
 import { appContext } from '../../app';
 import { RetryableError } from '../../cache/cacheRetry';
 import { BaseLLM } from '../base-llm';
-import { LLM, combinePrompts, logTextGeneration } from '../llm';
+import { GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../llm';
 
 export const FIREWORKS_SERVICE = 'fireworks';
 
@@ -17,19 +17,25 @@ export const FIREWORKS_SERVICE = 'fireworks';
  * Fireworks AI models
  */
 export class FireworksLLM extends BaseLLM {
-	client: OpenAI;
+	_client: OpenAI;
 
-	constructor(model: string, maxTokens: number, inputCostPerToken: number, outputCostPerToken: number) {
-		super(FIREWORKS_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
-		this.client = new OpenAI({
-			apiKey: currentUser().llmConfig.fireworksKey ?? envVar('FIREWORKS_KEY'),
-			baseURL: 'https://api.fireworks.ai/inference/v1',
-		});
+	client(): OpenAI {
+		if (!this._client) {
+			this._client = new OpenAI({
+				apiKey: currentUser().llmConfig.fireworksKey ?? envVar('FIREWORKS_KEY'),
+				baseURL: 'https://api.fireworks.ai/inference/v1',
+			});
+		}
+		return this._client;
+	}
+
+	constructor(displayName: string, model: string, maxTokens: number, inputCostPerToken: number, outputCostPerToken: number) {
+		super(displayName, FIREWORKS_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
 	}
 
 	@logTextGeneration
-	async generateText(userPrompt: string, systemPrompt: string): Promise<string> {
-		return withSpan('generateText', async (span) => {
+	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
+		return withSpan(`generateText ${opts?.id}`, async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
@@ -56,7 +62,7 @@ export class FireworksLLM extends BaseLLM {
 			});
 
 			try {
-				const completion: OpenAI.ChatCompletion = await this.client.chat.completions.create({
+				const completion: OpenAI.ChatCompletion = await this.client().chat.completions.create({
 					messages,
 					model: this.model,
 					max_tokens: 4094,
@@ -111,7 +117,7 @@ export function fireworksLLMRegistry(): Record<string, () => LLM> {
 	};
 }
 export function fireworksLlama3_70B(): LLM {
-	return new FireworksLLM('accounts/fireworks/models/llama-v3-70b-instruct', 8000, 0.9 / 1_000_000, 0.9 / 1_000_000);
+	return new FireworksLLM('LLama3 70b-i (Fireworks)', 'accounts/fireworks/models/llama-v3-70b-instruct', 8000, 0.9 / 1_000_000, 0.9 / 1_000_000);
 }
 
 export function fireworksLLmFromModel(model: string): LLM | null {

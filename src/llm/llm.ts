@@ -16,6 +16,8 @@ export interface GenerateTextOptions {
 	 * Top-p changes how the model selects tokens for output. Tokens are selected from most probable to least until the sum of their probabilities equals the top-p value. For example, if tokens A, B, and C have a probability of .3, .2, and .1 and the top-p value is .5, then the model will select either A or B as the next token (using temperature).
 	 */
 	topP?: number;
+
+	stopSequences?: string[];
 }
 
 export type GenerateJsonOptions = Omit<GenerateTextOptions, 'type'>;
@@ -49,6 +51,8 @@ export interface LLM {
 	 * The LLM model identifier
 	 */
 	getModel(): string;
+
+	getDisplayName(): string;
 
 	/**
 	 * The LLM identifier in the format service:model

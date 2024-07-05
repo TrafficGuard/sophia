@@ -9,6 +9,7 @@ export interface SerializedLLM {
 
 export abstract class BaseLLM implements LLM {
 	constructor(
+		protected readonly displayName: string,
 		protected readonly service: string,
 		protected readonly model: string,
 		private maxInputTokens: number,
@@ -62,6 +63,10 @@ export abstract class BaseLLM implements LLM {
 
 	getId(): string {
 		return `${this.service}:${this.model}`;
+	}
+
+	getDisplayName(): string {
+		return this.displayName;
 	}
 
 	formatFunctionResult(functionName: string, result: any): string {

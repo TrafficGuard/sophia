@@ -9,7 +9,7 @@ import { envVar } from '#utils/env-var';
 import { appContext } from '../../app';
 import { RetryableError } from '../../cache/cacheRetry';
 import { BaseLLM } from '../base-llm';
-import { LLM, combinePrompts, logTextGeneration } from '../llm';
+import { GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../llm';
 
 export const TOGETHER_SERVICE = 'together';
 
@@ -20,25 +20,31 @@ export function togetherLLMRegistry(): Record<string, () => LLM> {
 }
 
 export function togetherLlama3_70B(): LLM {
-	return new TogetherLLM('meta-llama/Llama-3-70b-chat-hf', 8000, 0.9 / 1_000_000, 0.9 / 1_000_000);
+	return new TogetherLLM('Llama3 70b (Together)', 'meta-llama/Llama-3-70b-chat-hf', 8000, 0.9 / 1_000_000, 0.9 / 1_000_000);
 }
 /**
  * Together AI models
  */
 export class TogetherLLM extends BaseLLM {
-	client: OpenAI;
+	_client: OpenAI;
 
-	constructor(model: string, maxTokens: number, inputCostPerToken: number, outputCostPerToken: number) {
-		super(TOGETHER_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
-		this.client = new OpenAI({
-			apiKey: currentUser().llmConfig.togetheraiKey ?? envVar('TOGETHERAI_KEY'),
-			baseURL: 'https://api.together.xyz/v1',
-		});
+	client(): OpenAI {
+		if (!this._client) {
+			this._client = new OpenAI({
+				apiKey: currentUser().llmConfig.togetheraiKey ?? envVar('TOGETHERAI_KEY'),
+				baseURL: 'https://api.together.xyz/v1',
+			});
+		}
+		return this._client;
+	}
+
+	constructor(displayName: string, model: string, maxTokens: number, inputCostPerToken: number, outputCostPerToken: number) {
+		super(displayName, TOGETHER_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
 	}
 
 	@logTextGeneration
-	async generateText(userPrompt: string, systemPrompt: string): Promise<string> {
-		return withSpan('generateText', async (span) => {
+	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
+		return withSpan(`generateText ${opts?.id}`, async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
@@ -65,7 +71,7 @@ export class TogetherLLM extends BaseLLM {
 			});
 
 			try {
-				const completion: OpenAI.ChatCompletion = await this.client.chat.completions.create({
+				const completion: OpenAI.ChatCompletion = await this.client().chat.completions.create({
 					messages,
 					model: this.model,
 				});

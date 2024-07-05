@@ -8,8 +8,10 @@ import { groqLLMRegistry } from '#llm/models/groq';
 import { openAiLLMRegistry } from '#llm/models/openai';
 import { togetherLLMRegistry } from '#llm/models/together';
 import { vertexLLMRegistry } from '#llm/models/vertexai';
+import { MultiLLM } from '#llm/multi-llm';
+import { logger } from '#o11y/logger';
 
-export const LLM_REGISTRY: Record<string, () => LLM> = {
+export const LLM_FACTORY: Record<string, () => LLM> = {
 	...anthropicVertexLLMRegistry(),
 	...anthropicLLMRegistry(),
 	...fireworksLLMRegistry(),
@@ -20,22 +22,33 @@ export const LLM_REGISTRY: Record<string, () => LLM> = {
 	...deepseekLLMRegistry(),
 };
 
-const REGISTRY_KEYS = Object.keys(LLM_REGISTRY);
+export const LLM_TYPES: Array<{ id: string; name: string }> = Object.values(LLM_FACTORY)
+	.map((factory) => factory())
+	.map((llm) => {
+		return { id: llm.getId(), name: llm.getDisplayName() };
+	});
+
+const REGISTRY_KEYS = Object.keys(LLM_FACTORY);
 
 /**
  * @param llmId LLM identifier in the format service:model
  */
 export function getLLM(llmId: string): LLM {
 	// Check matching id first
-	if (LLM_REGISTRY[llmId]) {
-		return LLM_REGISTRY[llmId]();
+	if (LLM_FACTORY[llmId]) {
+		return LLM_FACTORY[llmId]();
 	}
 	// Check substring matching
 	for (const key of REGISTRY_KEYS) {
 		if (llmId.startsWith(key)) {
-			return LLM_REGISTRY[key]();
+			return LLM_FACTORY[key]();
 		}
 	}
+	if (llmId === 'multi:multi') {
+		logger.warn('TODO MultiLLM deserialization not implemented');
+		return new MultiLLM([], 0);
+	}
+
 	throw new Error(`No LLM registered with id ${llmId}`);
 }
 

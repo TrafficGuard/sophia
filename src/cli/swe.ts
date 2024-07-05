@@ -1,30 +1,29 @@
 import { readFileSync } from 'fs';
 import { Span } from '@opentelemetry/api';
 import { LlmFunctions } from '#agent/LlmFunctions';
-import { AgentContext, AgentLLMs, agentContextStorage, createContext } from '#agent/agentContext';
+import { AgentContext, AgentLLMs, agentContext, agentContextStorage, createContext } from '#agent/agentContext';
 import { RunAgentConfig } from '#agent/xmlAgentRunner';
 import '#fastify/trace-init/trace-init';
 import { FileSystem } from '#functions/filesystem';
 import { GitLab } from '#functions/scm/gitlab';
-import { GEMINI_1_5_PRO_LLMS, Gemini_1_5_Pro } from '#llm/models/vertexai';
+import { ClaudeLLMs } from '#llm/models/anthropic';
+import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { withActiveSpan } from '#o11y/trace';
-import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
-import { appContext } from '../app';
-import { CodeEditingAgent } from '../swe/codeEditingAgent';
-import { ProjectInfo } from '../swe/projectDetection';
-import { SoftwareDeveloperAgent } from '../swe/softwareDeveloperAgent';
-
-import { currentUser } from '#user/userService/userContext';
-import { envVarHumanInLoopSettings } from './cliHumanInLoop';
+import { CodeEditingAgent } from '#swe/codeEditingAgent';
+import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
+import { appContext, initFirestoreApplicationContext } from '../app';
 
 // Used to test the local repo editing workflow in DevEditWorkflow
 
 // Usage:
-// npm run edit-local
+// npm run swe
 
 async function main() {
-	const gemini = Gemini_1_5_Pro();
-	const llms: AgentLLMs = GEMINI_1_5_PRO_LLMS();
+	let llms: AgentLLMs = ClaudeLLMs();
+	if (process.env.GCLOUD_PROJECT) {
+		await initFirestoreApplicationContext();
+		llms = ClaudeVertexLLMs();
+	}
 
 	const functions = new LlmFunctions();
 	functions.addFunctionClass(FileSystem);
@@ -36,15 +35,24 @@ async function main() {
 		functions,
 		initialPrompt: readFileSync('src/cli/swe-in', 'utf-8'),
 	};
-	const context: AgentContext = createContext(config);
+	let context: AgentContext = createContext(config);
 	agentContextStorage.enterWith(context);
 
-	await withActiveSpan('swe', async (span: Span) => {
-		span.setAttributes({
-			initialPrompt: config.initialPrompt,
+	try {
+		await withActiveSpan('SWE', async (span: Span) => {
+			span.setAttributes({
+				initialPrompt: config.initialPrompt,
+			});
+			await new SoftwareDeveloperAgent().runSoftwareDeveloperWorkflow(config.initialPrompt);
 		});
-		await new SoftwareDeveloperAgent().runSoftwareDeveloperWorkflow(config.initialPrompt);
-	});
+		context = agentContext();
+		context.state = 'completed';
+	} catch (e) {
+		context.state = 'error';
+		context.error = JSON.stringify(e);
+	} finally {
+		await appContext().agentStateService.save(context);
+	}
 }
 
 main().then(

@@ -25,7 +25,7 @@ export class MockLLM extends BaseLLM {
 		private responses: string[] = [],
 		maxInputTokens = 100000,
 	) {
-		super('mock', 'mock', maxInputTokens, 1 / 1_000_000, 1 / 1_000_000);
+		super('mock', 'mock', 'mock', maxInputTokens, 1 / 1_000_000, 1 / 1_000_000);
 	}
 
 	setResponse(response: string) {

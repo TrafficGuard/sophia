@@ -10,7 +10,7 @@ https://arxiv.org/html/2402.05120v1
 
 /**
  * LLM implementation which calls multiple LLMs and selects the best result.
- * NOT YET TESTED
+ * Not properly tested yet
  */
 export class MultiLLM extends BaseLLM {
 	maxTokens: number;
@@ -19,7 +19,7 @@ export class MultiLLM extends BaseLLM {
 		private llms: LLM[],
 		private callsPerLLM = 1,
 	) {
-		super('multi', 'multi', Math.min(...llms.map((llm) => llm.getMaxInputTokens())), 0, 0);
+		super('multi', 'multi', 'multi', Math.min(...llms.map((llm) => llm.getMaxInputTokens())), 0, 0);
 		this.maxTokens = Math.min(...llms.map((llm) => llm.getMaxInputTokens()));
 	}
 

@@ -48,12 +48,19 @@ export class FileSystem {
 	constructor(public basePath: string = process.cwd()) {
 		const args = process.argv.slice(2); // Remove the first two elements (node and script path)
 		const fsArg = args.find((arg) => arg.startsWith('--fs='));
+		const fsEnvVar = process.env.NOUS_FS;
 		if (fsArg) {
 			const fsPath = fsArg.slice(4); // Extract the value after '-fs='
 			if (existsSync(fsPath)) {
 				this.basePath = fsPath;
 			} else {
 				logger.error(`Invalid -fs arg value. ${fsPath} does not exist`);
+			}
+		} else if (fsEnvVar) {
+			if (existsSync(fsEnvVar)) {
+				this.basePath = fsEnvVar;
+			} else {
+				logger.error(`Invalid NOUS_FS env var. ${fsEnvVar} does not exist`);
 			}
 		}
 
@@ -290,13 +297,13 @@ export class FileSystem {
 	 */
 	async getMultipleFileContents(filePaths: string[]): Promise<Map<string, string>> {
 		const mapResult = new Map<string, string>();
-		for (const projectFilePath of filePaths) {
-			const filePath = path.join(this.getWorkingDirectory(), projectFilePath);
+		for (const relativeFilePath of filePaths) {
+			const filePath = path.join(this.getWorkingDirectory(), relativeFilePath);
 			try {
 				const contents = await fs.readFile(filePath, 'utf8');
 				mapResult.set(path.relative(this.getWorkingDirectory(), filePath), contents);
 			} catch (e) {
-				this.log.error(e, `Error reading ${filePath} (projectFilePath ${projectFilePath})`);
+				this.log.warn(`Error reading ${filePath} (${relativeFilePath}) ${e.message}`);
 			}
 		}
 		return mapResult;
@@ -335,6 +342,13 @@ export class FileSystem {
 	 */
 	@func()
 	async fileExists(filePath: string): Promise<boolean> {
+		// Check if we've been given an absolute path
+		if (filePath.startsWith('/')) {
+			try {
+				await fs.access(filePath);
+				return true;
+			} catch {}
+		}
 		const path = filePath.startsWith('/') ? resolve(this.basePath, filePath.slice(1)) : resolve(this.basePath, this.workingDirectory, filePath);
 		try {
 			logger.info(`fileExists: ${path}`);

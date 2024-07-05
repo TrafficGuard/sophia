@@ -135,7 +135,7 @@ export class CodeEditingAgent {
 		// 	console.log('Directory')
 		// }
 		logger.debug(getFileSystem().getWorkingDirectory(), projectInfo.compile);
-		const { exitCode, stdout, stderr } = await execCommand(projectInfo.compile, getFileSystem().getWorkingDirectory());
+		const { exitCode, stdout, stderr } = await execCommand(projectInfo.compile);
 		const result = `<compile_output>
 	<command>${projectInfo.compile}</command>
 	<stdout>

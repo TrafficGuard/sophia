@@ -44,7 +44,7 @@ export class PublicWeb {
 	async crawlWebsite(url: string): Promise<Map<string, string>> {
 		logger.info(`Crawling ${url}`);
 		const cwd = path.join(getFileSystem().basePath, '.cache', 'wget');
-		const { stdout, stderr, exitCode } = await execCommand(`wget -r -l 1  -k -p ${url}`, cwd);
+		const { stdout, stderr, exitCode } = await execCommand(`wget -r -l 1  -k -p ${url}`, { workingDirectory: cwd });
 		if (exitCode > 0) throw new Error(`${stdout} ${stderr}`);
 
 		// console.log(stdout)

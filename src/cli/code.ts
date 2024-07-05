@@ -1,17 +1,18 @@
 import { readFileSync } from 'fs';
 import { Span } from '@opentelemetry/api';
 import { LlmFunctions } from '#agent/LlmFunctions';
-import { AgentContext, AgentLLMs, agentContextStorage, createContext } from '#agent/agentContext';
+import { AgentContext, AgentLLMs, agentContext, agentContextStorage, createContext } from '#agent/agentContext';
 import { RunAgentConfig } from '#agent/xmlAgentRunner';
 import '#fastify/trace-init/trace-init';
 import { FileSystem } from '#functions/filesystem';
 import { withActiveSpan } from '#o11y/trace';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
-import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
 import { ProjectInfo } from '#swe/projectDetection';
 
+import { ClaudeLLMs } from '#llm/models/anthropic';
 import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { currentUser } from '#user/userService/userContext';
+import { appContext, initFirestoreApplicationContext } from '../app';
 import { envVarHumanInLoopSettings } from './cliHumanInLoop';
 
 // Used to test the local repo editing workflow in CodeEditingAgent
@@ -20,7 +21,11 @@ import { envVarHumanInLoopSettings } from './cliHumanInLoop';
 // npm run code
 
 async function main() {
-	const llms: AgentLLMs = ClaudeVertexLLMs();
+	let llms: AgentLLMs = ClaudeLLMs();
+	if (process.env.GCLOUD_PROJECT) {
+		await initFirestoreApplicationContext();
+		llms = ClaudeVertexLLMs();
+	}
 
 	const initialPrompt = readFileSync('src/cli/code-in', 'utf-8');
 
@@ -35,8 +40,10 @@ async function main() {
 		initialPrompt,
 		humanInLoop: envVarHumanInLoopSettings(),
 	};
-	const context: AgentContext = createContext(config);
+	let context: AgentContext = createContext(config);
 	agentContextStorage.enterWith(context);
+
+	await appContext().agentStateService.save(context);
 
 	// const info = await new DevRequirementsWorkflow().detectProjectInfo();
 
@@ -52,12 +59,21 @@ async function main() {
 	// 	languageTools: new TypescriptTools(),
 	// };
 
-	await withActiveSpan('code', async (span: Span) => {
-		span.setAttributes({
-			initialPrompt,
+	try {
+		await withActiveSpan('code', async (span: Span) => {
+			span.setAttributes({
+				initialPrompt,
+			});
+			await new CodeEditingAgent().runCodeEditWorkflow(initialPrompt, projectInfo);
 		});
-		await new CodeEditingAgent().runCodeEditWorkflow(initialPrompt, projectInfo);
-	});
+		context = agentContext();
+		context.state = 'completed';
+	} catch (e) {
+		context.state = 'error';
+		context.error = JSON.stringify(e);
+	} finally {
+		await appContext().agentStateService.save(context);
+	}
 }
 
 main().then(

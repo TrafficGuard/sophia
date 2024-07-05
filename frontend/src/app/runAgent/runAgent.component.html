@@ -29,8 +29,8 @@
             <mat-form-field appearance="fill">
               <mat-label>Easy</mat-label>
               <mat-select id="llmEasy" formControlName="llmEasy">
-                <mat-option *ngFor="let llm of llms" [value]="llm">
-                  {{ llm }}
+                <mat-option *ngFor="let llm of llms" [value]="llm.id">
+                  {{ llm.name }}
                 </mat-option>
               </mat-select>
             </mat-form-field>
@@ -39,8 +39,8 @@
             <mat-form-field appearance="fill">
               <mat-label>Medium</mat-label>
               <mat-select id="llmMedium" formControlName="llmMedium">
-                <mat-option *ngFor="let llm of llms" [value]="llm">
-                  {{ llm }}
+                <mat-option *ngFor="let llm of llms" [value]="llm.id">
+                  {{ llm.name }}
                 </mat-option>
               </mat-select>
             </mat-form-field>
@@ -49,8 +49,8 @@
             <mat-form-field appearance="fill">
               <mat-label>Hard</mat-label>
               <mat-select id="llmHard" formControlName="llmHard">
-                <mat-option *ngFor="let llm of llms" [value]="llm">
-                  {{ llm }}
+                <mat-option *ngFor="let llm of llms" [value]="llm.id">
+                  {{ llm.name }}
                 </mat-option>
               </mat-select>
             </mat-form-field>

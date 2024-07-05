@@ -93,10 +93,17 @@ export function failOnError(userMessage: string, execResult: ExecResult): void {
 	throw new Error(errorMessage);
 }
 
-export async function execCommand(command: string, workingDirectory?: string): Promise<ExecResult> {
+export interface ExecCmdOptions {
+	workingDirectory?: string;
+	envVars?: Record<string, string>;
+}
+
+export async function execCommand(command: string, opts?: ExecCmdOptions): Promise<ExecResult> {
 	return withSpan('execCommand', async (span) => {
 		const shell = os.platform() === 'darwin' ? '/bin/zsh' : '/bin/bash';
-		const options: ExecOptions = { cwd: workingDirectory ?? getFileSystem().getWorkingDirectory(), shell };
+
+		const env = opts?.envVars ? { ...process.env, ...opts.envVars } : undefined;
+		const options: ExecOptions = { cwd: opts?.workingDirectory ?? getFileSystem().getWorkingDirectory(), shell, env };
 		try {
 			logger.info(`${options.cwd} % ${command}`);
 			const { stdout, stderr } = await execAsync(command, options);
