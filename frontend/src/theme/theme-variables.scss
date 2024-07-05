@@ -9,8 +9,9 @@
 // for more insight about Angular Material theming.
 @use '@angular/material' as mat;
 
-@include mat.core();
 /*
+@include mat.core();
+
 // Define a dark theme
 $dark-primary: mat.define-palette(mat.$indigo-palette);
 $dark-accent: mat.define-palette(mat.$blue-grey-palette);
