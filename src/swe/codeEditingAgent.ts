@@ -1,9 +1,12 @@
 import path from 'path';
-import { getFileSystem, llms } from '#agent/agentContext';
+import { agentContext, getFileSystem, llms } from '#agent/agentContext';
 import { FileSystem } from '#functions/filesystem';
+import { Perplexity } from '#functions/web/perplexity';
 import { logger } from '#o11y/logger';
-import { CompileErrorAnalysis, analyzeCompileErrors } from '#swe/analyzeCompileErrors';
+import { span } from '#o11y/trace';
+import { CompileErrorAnalysis, CompileErrorAnalysisDetails, analyzeCompileErrors } from '#swe/analyzeCompileErrors';
 import { execCommand } from '#utils/exec';
+import { appContext } from '../app';
 import { cacheRetry } from '../cache/cacheRetry';
 import { func, funcClass } from '../functionDefinition/functionDecorators';
 import { CodeEditor } from './codeEditor';
@@ -29,78 +32,115 @@ export class CodeEditingAgent {
 	 * @param requirements The requirements to implement including support documentation and code samples.
 	 */
 	@func()
-	async runCodeEditWorkflow(requirements: string, projectInfo?: ProjectInfo) {
+	async runCodeEditWorkflow(requirements: string, projectInfo?: ProjectInfo): Promise<CompileErrorAnalysis | null> {
 		if (!projectInfo) {
 			const detected: ProjectInfo[] = await detectProjectInfo();
 			if (detected.length !== 1) throw new Error('projectInfo array must have one item');
 			projectInfo = detected[0];
 		}
 
-		const fileSystem: FileSystem = getFileSystem();
-		const projectPath = path.join(fileSystem.getWorkingDirectory(), projectInfo.baseDir);
-		fileSystem.setWorkingDirectory(projectInfo.baseDir);
+		logger.info(projectInfo);
+		const fs: FileSystem = getFileSystem();
+		const git = fs.vcs;
+		fs.setWorkingDirectory(projectInfo.baseDir);
 
+		// Find the initial set of files required for editing
 		const filesResponse: SelectFilesResponse = await this.selectFilesToEdit(requirements, projectInfo);
 		const initialSelectedFiles: string[] = [
 			...filesResponse.primaryFiles.map((selected) => selected.path),
 			...filesResponse.secondaryFiles.map((selected) => selected.path),
 		];
+		logger.info(initialSelectedFiles, 'Initial selected files');
 
-		const implementationRequirements = await llms().hard.generateText(
-			`${await fileSystem.getMultipleFileContentsAsXml(initialSelectedFiles)}
+		// Perform a first pass on the files to generate an implementation specification
+		const implementationDetailsPrompt = `${await fs.getMultipleFileContentsAsXml(initialSelectedFiles)}
 		<requirements>${requirements}</requirements>
-		You are a senior software engineer. Your job is to review the provided user requirements against the code provided and produce an implementation design specification to give to a junior developer to implement the changes in the provided files.
+		You are a senior software engineer. Your task is to review the provided user requirements against the code provided and produce an implementation design specification to give to a junior developer to implement the changes in the provided files.
 		Do not provide any details of verification commands etc as the CI/CD build will run integration tests. Only detail the changes required in the files for the pull request.
 		Check if any of the requirements have already been correctly implemented in the code as to not duplicate work.
 		Look at the existing style of the code when producing the requirements.
-		`,
-			null,
-			{ id: 'implementationSpecification' },
-		);
+		`;
+		const implementationRequirements = await llms().hard.generateText(implementationDetailsPrompt, null, { id: 'implementationSpecification' });
 
-		logger.info(`projectPath ${projectPath}`);
-		logger.info(initialSelectedFiles, 'Initial selected files');
+		// Edit/compile loop ----------------------------------------
 
-		let errorAnalysis: CompileErrorAnalysis = null;
-		let compileErrorOutput = null;
+		let compileErrorAnalysis: CompileErrorAnalysisDetails | null = null;
+		let compileErrorSearchResults: string[] = [];
+		/* The git commit sha of the last commit which compiled successfully. We store this so when there are one or more commits
+		   which don't compile, we can provide the diff since the last good commit to help identify causes of compile issues. */
+		let compiledCommitSha: string | null = agentContext().memory.compiledCommitSha;
 
-		const MAX_ATTEMPTS = 2;
-		let e: any;
+		const MAX_ATTEMPTS = 3;
 		for (let i = 0; i < MAX_ATTEMPTS; i++) {
 			try {
-				const files: string[] = [...initialSelectedFiles];
-				let editRequirements = implementationRequirements;
-
-				if (errorAnalysis) editRequirements += `\nImmediate task: Fix the following compile errors:\n${compileErrorOutput}`;
-				if (errorAnalysis?.additionalFiles) files.push(...errorAnalysis.additionalFiles);
-				if (errorAnalysis.installPackages) {
-					for (const packageName of errorAnalysis.installPackages) {
-						await projectInfo.languageTools?.installPackage(packageName);
+				// Make sure the project initially compiles
+				if (i === 0) {
+					await this.compile(projectInfo);
+					const headSha = await git.getHeadSha();
+					if (compiledCommitSha !== headSha) {
+						const agent = agentContext();
+						agent.memory.compiledCommitSha = headSha;
+						await appContext().agentStateService.save(agent);
 					}
 				}
 
-				// Make sure the project compiles first
-				if (i === 0) await this.compile(projectInfo);
+				const codeEditorFiles: string[] = [...initialSelectedFiles];
+				let codeEditorRequirements = implementationRequirements;
 
-				await new CodeEditor().editFilesToMeetRequirements(editRequirements, files);
+				// If the previous edit caused compile errors then we will create a requirements specifically for fixing any compile errors first before making more functionality changes
+				if (compileErrorAnalysis) {
+					const installPackages = compileErrorAnalysis.installPackages ?? [];
+					for (const packageName of installPackages) await projectInfo.languageTools?.installPackage(packageName);
 
-				const newFiles: string[] = await fileSystem.vcs.getFilesAddedInHeadCommit();
-				initialSelectedFiles.push(...newFiles);
-				files.push(...newFiles);
-				// TODO get any new files added in the last commit and add to initialSelectedFiles
+					let compileFixRequirements = '';
+					if (compileErrorAnalysis.researchQuery) {
+						try {
+							const searchResult = await new Perplexity().search(compileErrorAnalysis.researchQuery, false);
+							compileErrorSearchResults.push(searchResult);
+						} catch (e) {
+							logger.error(e, 'Error searching with Perplexity. Ensure you have configured a valid token');
+						}
+					}
+
+					compileFixRequirements += compileErrorSearchResults.map((result) => `<research>${result}</research>\n`).join();
+					compileFixRequirements += `<diff>${await git.getDiff(compiledCommitSha)}</diff>\n`;
+					compileFixRequirements += `<compile-errors>${compileErrorAnalysis.compilerOutput}</compile-errors>\n`;
+					compileFixRequirements += 'When the git diff was applied, building the app results in the provided compile errors.\n';
+					if (installPackages.length) compileFixRequirements += `The following packages have now been installed: ${installPackages.join(', ')}.\n`;
+					compileFixRequirements += 'Please pay attention to detail and fix all of the the compile errors}';
+					codeEditorRequirements = compileFixRequirements;
+
+					codeEditorFiles.push(...(compileErrorAnalysis.additionalFiles ?? []));
+				}
+
+				await new CodeEditor().editFilesToMeetRequirements(codeEditorRequirements, codeEditorFiles);
+
+				// The code editor may add new files, so we want to add them to the initial file set
+				const addedFiles: string[] = await git.getAddedFiles(compiledCommitSha);
+				initialSelectedFiles.push(...addedFiles);
+
+				// Check the changes compile
 				await this.compile(projectInfo);
-				errorAnalysis = null;
+				// Update the compiled commit state
+				compiledCommitSha = await git.getHeadSha();
+				const agent = agentContext();
+				agent.memory.compiledCommitSha = compiledCommitSha;
+				await appContext().agentStateService.save(agent);
+				compileErrorAnalysis = null;
+				compileErrorSearchResults = [];
+
 				break;
 			} catch (e) {
-				// TODO If compiling fails after Aider edit, we could add in the diff from the files with compile errors
-				compileErrorOutput = e.message;
+				logger.info('Compiler error');
+				logger.info(e);
+				const compileErrorOutput = e.message;
 				logger.error(`Compile Error Output: ${compileErrorOutput}`);
 				// TODO handle code editor error separately - what failure modes does it have (invalid args, git error etc)?
-				errorAnalysis = await analyzeCompileErrors(compileErrorOutput, initialSelectedFiles);
+				compileErrorAnalysis = await analyzeCompileErrors(compileErrorOutput, initialSelectedFiles);
 			}
 		}
 
-		if (errorAnalysis) return;
+		if (compileErrorAnalysis) return compileErrorAnalysis;
 
 		if (projectInfo.staticAnalysis) {
 			const STATIC_ANALYSIS_MAX_ATTEMPTS = 2;
@@ -108,25 +148,30 @@ export class CodeEditingAgent {
 				// Run it twice so the first time can apply any auto-fixes, then the second time has only the non-auto fixable issues
 				try {
 					await this.runStaticAnalysis(projectInfo);
-					await fileSystem.vcs.addAllTrackedAndCommit('Fix static analysis errors');
+					await fs.vcs.addAllTrackedAndCommit('Fix static analysis errors');
 					break;
 				} catch (e) {
+					let staticAnalysisErrorOutput = e.message;
 					// Commit any successful auto-fixes
-					await fileSystem.vcs.addAllTrackedAndCommit('Fix static analysis errors');
+					await fs.vcs.addAllTrackedAndCommit('Fix static analysis errors');
 					if (i === STATIC_ANALYSIS_MAX_ATTEMPTS - 1) {
-						logger.warn(`Unable to fix static analysis errors: ${compileErrorOutput}`);
+						logger.warn(`Unable to fix static analysis errors: ${staticAnalysisErrorOutput}`);
 					} else {
-						const staticErrorFiles = await this.extractFilenames(`${compileErrorOutput}\n\nExtract the filenames from the compile errors.`);
+						staticAnalysisErrorOutput = JSON.stringify(e); // Need to stringify?
+						logger.info(`Static analysis error output: ${staticAnalysisErrorOutput}`);
+						const staticErrorFiles = await this.extractFilenames(`${staticAnalysisErrorOutput}\n\nExtract the filenames from the compile errors.`);
+
 						await new CodeEditor().editFilesToMeetRequirements(
-							`Static analysis command: ${projectInfo.staticAnalysis}\n${compileErrorOutput}\nFix these static analysis errors`,
+							`Static analysis command: ${projectInfo.staticAnalysis}\n${staticAnalysisErrorOutput}\nFix these static analysis errors`,
 							staticErrorFiles,
 						);
+						// TODO need to compile again
 					}
 				}
 			}
 		}
 
-		await this.testLoop(requirements, projectInfo, initialSelectedFiles, projectPath);
+		await this.testLoop(requirements, projectInfo, initialSelectedFiles);
 	}
 
 	async compile(projectInfo: ProjectInfo): Promise<void> {
@@ -176,7 +221,7 @@ export class CodeEditingAgent {
 		}
 	}
 
-	async testLoop(requirements: string, projectInfo: ProjectInfo, initialSelectedFiles: string[], projectPath: string): Promise<CompileErrorAnalysis | null> {
+	async testLoop(requirements: string, projectInfo: ProjectInfo, initialSelectedFiles: string[]): Promise<CompileErrorAnalysis | null> {
 		if (!projectInfo.test) return null;
 		let testErrorOutput = null;
 		let errorAnalysis: CompileErrorAnalysis = null;
@@ -199,8 +244,8 @@ export class CodeEditingAgent {
 		return errorAnalysis;
 	}
 
-	@cacheRetry()
-	// @func()
+	@cacheRetry({ scope: 'agent' })
+	@span()
 	async summariseRequirements(requirements: string): Promise<string> {
 		return summariseRequirements(requirements);
 	}
@@ -214,7 +259,7 @@ export class CodeEditingAgent {
 			action:
 				'You will respond ONLY in JSON. From the requirements quietly consider which the files may be required to complete the task. You MUST output your answer ONLY as JSON in the format of this example:\n<example>\n{\n files: ["file1", "file2", "file3"]\n}\n</example>',
 		});
-		const response = await llms().hard.generateTextAsJson(prompt, null, { id: 'extractFilenames' });
+		const response: any = await llms().hard.generateTextAsJson(prompt, null, { id: 'extractFilenames' });
 		return response.files;
 	}
 }

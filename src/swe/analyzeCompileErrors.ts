@@ -1,10 +1,17 @@
 import { getFileSystem, llms } from '#agent/agentContext';
 
 export interface CompileErrorAnalysis {
+	compilerOutput: string;
 	compileIssuesSummary: string;
-	webResearch: string;
+	researchQuery: string;
 	installPackages: string[];
 	additionalFiles: string[];
+}
+
+export interface CompileErrorAnalysisDetails extends CompileErrorAnalysis {
+	researchResult?: string;
+	/** diff since the last successfully compiled commit */
+	diff?: string;
 }
 
 export async function analyzeCompileErrors(compilerOutput: string, initialFileSelection: string[]): Promise<CompileErrorAnalysis> {
@@ -26,7 +33,7 @@ export async function analyzeCompileErrors(compilerOutput: string, initialFileSe
 <json>
 {
    "compileIssuesSummary": "",
-   "webResearch": "",
+   "researchQuery": "",
    "installPackages": [],
    "additionalFiles: [],
 }
@@ -34,7 +41,9 @@ export async function analyzeCompileErrors(compilerOutput: string, initialFileSe
 </response_example>`;
 
 	const prompt = `${fileList}\n${fileContents}\n${compileOutputXml}\n${instructions}`;
-	return (await llms().hard.generateTextAsJson(prompt, null, {
+	const analysis: CompileErrorAnalysis = await llms().hard.generateTextAsJson(prompt, null, {
 		id: 'analyzeCompileErrors',
-	})) as CompileErrorAnalysis;
+	});
+	analysis.compilerOutput = compilerOutput;
+	return analysis;
 }

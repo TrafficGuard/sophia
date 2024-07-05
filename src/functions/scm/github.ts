@@ -1,5 +1,5 @@
 import { existsSync } from 'fs';
-import { join } from 'path';
+import path, { join } from 'path';
 import { request } from '@octokit/request';
 import { getFileSystem } from '#agent/agentContext';
 import { SourceControlManagement } from '#functions/scm/sourceControlManagement';
@@ -100,17 +100,37 @@ export class GitHub implements SourceControlManagement {
 	}
 
 	@func()
-	async getProjects(): Promise<any[]> {
+	async getProjects(): Promise<GitHubRepository[]> {
 		const response = await this.request()('GET /orgs/{org}/repos', {
 			org: this.config().organisation,
-			// type: "private",
+			type: 'all',
+			sort: 'updated',
+			direction: 'desc',
+			per_page: 100,
 		});
-		return response as unknown as Array<any>;
+		return response.data as GitHubRepository[];
 	}
 
-	async getJobLogs(projectPath: string, jobId: string): Promise<string> {
-		throw new Error('Method not implemented.');
+	getJobLogs(projectPath: string, jobId: string): Promise<string> {
+		return Promise.resolve('');
 	}
+}
+
+interface GitHubRepository {
+	id: number;
+	name: string;
+	full_name: string;
+	private: boolean;
+	html_url: string;
+	description: string | null;
+	fork: boolean;
+	created_at: string;
+	updated_at: string;
+	pushed_at: string;
+	git_url: string;
+	ssh_url: string;
+	clone_url: string;
+	default_branch: string;
 }
 
 function extractOwnerProject(url: string): [string, string] {

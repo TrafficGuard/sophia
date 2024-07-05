@@ -27,7 +27,7 @@ export interface LLM {
 	generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string>;
 
 	/* Generates a response that is expected to be in JSON format, and returns the object */
-	generateTextAsJson(userPrompt: string, systemPrompt?: string, opts?: GenerateJsonOptions): Promise<any>;
+	generateTextAsJson<T>(userPrompt: string, systemPrompt?: string, opts?: GenerateJsonOptions): Promise<T>;
 
 	/**
 	 * Generates a response that is expected to have the <result></result> element, and returns the text inside it.

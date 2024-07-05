@@ -1,7 +1,7 @@
 import util from 'util';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
-import { execCmd, execCommand } from '#utils/exec';
+import { execCmd, execCommand, failOnError } from '#utils/exec';
 import { FileSystem } from '../filesystem';
 import { VersionControlSystem } from './versionControlSystem';
 const exec = util.promisify(require('child_process').exec);
@@ -33,17 +33,29 @@ export class Git implements VersionControlSystem {
 		await this.commit(commitMessage);
 	}
 
-	async getFilesAddedInHeadCommit(): Promise<string[]> {
-		const { stdout } = await execCommand(`git diff --name-status HEAD^..HEAD | grep '^A'`);
-		// grep returns 1 if there are no matches. That's ok in this case as its likely there won't be new files, only edits to existing files.
+	/**
+	 * Get the files added. If no commit argument if provided then it is for the head commit,
+	 */
+	async getAddedFiles(commitSha?: string): Promise<string[]> {
+		const { stdout } = await execCommand(`git diff --name-status ${commitSha ?? 'HEAD^'}..HEAD`);
+		logger.debug(`getFilesAddedInHeadCommit:\n${stdout}`);
 		// Output is in the format
 		// A       etc/newFile
 		// A       src/cache/newFile.test.ts
-		return stdout.split('\n').map((line) => line.slice(1).trim());
+		return stdout
+			.split('\n')
+			.filter((line: string) => line.startsWith('A'))
+			.map((line) => line.slice(1).trim());
 	}
 
 	async init(): Promise<void> {
 		const originUrl = await execCmd('git config --get remote.origin.url', this.fileSystem.getWorkingDirectory());
+	}
+
+	async getHeadSha(): Promise<string> {
+		const execResult = await execCommand('git rev-parse HEAD');
+		failOnError('Unable to get current commit sha', execResult);
+		return execResult.stdout;
 	}
 
 	async getBranchName(): Promise<string> {
@@ -52,28 +64,27 @@ export class Git implements VersionControlSystem {
 		return stdout.trim();
 	}
 
+	/**
+	 * Returns the diff between the current branch head and the source branch
+	 * @param sourceBranch
+	 */
 	async getBranchDiff(sourceBranch: string = this.previousBranch): Promise<string> {
 		if (!sourceBranch) throw new Error('Source branch is required');
 		const cmd = sourceBranch ? `git merge-base HEAD ${sourceBranch}` : 'git diff $(git merge-base HEAD @{u})';
-		const { stdout, stderr } = await execCommand(cmd);
-		return stdout;
+		const result = await execCommand(cmd);
+		failOnError('Error getting branch diff', result);
+		return result.stdout;
 	}
 
-	// @func()
-	async getDiff(): Promise<string> {
-		const cwd = this.fileSystem.getWorkingDirectory();
-		try {
-			const { stdout, stderr } = await exec('git diff --color --exit-code', {
-				cwd,
-			});
-			if (stderr.trim().length) {
-				throw new Error(stderr);
-			}
-			return stdout;
-		} catch (error) {
-			logger.error(error);
-			throw error;
-		}
+	/**
+	 * Returns the diff between the head commit either the previous commit, or the commit provided by the commitSha argument.
+	 * @param commitSha
+	 */
+	@span()
+	async getDiff(commitSha?: string): Promise<string> {
+		const result = await execCommand(`git diff ${commitSha ?? 'HEAD^'}..HEAD`);
+		failOnError('Error getting diff', result);
+		return result.stdout;
 	}
 
 	@span({ branch: 0 })

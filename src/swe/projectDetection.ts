@@ -19,14 +19,17 @@ interface ProjectDetection {
 	files: string[];
 }
 
-export interface ProjectInfo {
-	baseDir: string;
-	language: LanguageRuntime | '';
+interface ProjectScripts {
 	initialise: string;
 	compile: string;
 	format: string;
 	staticAnalysis: string;
 	test: string;
+}
+
+export interface ProjectInfo extends ProjectScripts {
+	baseDir: string;
+	language: LanguageRuntime | '';
 	languageTools: LanguageTools | null;
 }
 
@@ -61,6 +64,7 @@ export async function detectProjectInfo(): Promise<ProjectInfo[]> {
 	}
 	logger.info('Detecting project info...');
 	const files: string[] = await fileSystem.listFilesRecursively('./');
+
 	const prompt = `<task_requirements>
 <task_input>
 ${files.join('\n')}
@@ -120,7 +124,7 @@ Then the output would be:
 </output>
 </example>
 </task_requirements>`;
-	const projectDetections = (await llms().medium.generateTextAsJson(prompt, null, { id: 'projectInfoFileSelection' })) as ProjectDetections;
+	const projectDetections: ProjectDetections = await llms().medium.generateTextAsJson(prompt, null, { id: 'projectInfoFileSelection' });
 	logger.info(projectDetections, 'Project detections');
 	if (!projectDetections.projects.length) throw new Error(`Could not detect a software project within ${fileSystem.getWorkingDirectory()}`);
 
@@ -129,26 +133,24 @@ Then the output would be:
 
 	const projectDetection = projectDetections.projects[0];
 	const projectDetectionFiles = projectDetection.files.filter((filename) => !filename.includes('package-lock.json') && !filename.includes('yarn.lock'));
-	const infoFilesContents = await fileSystem.getMultipleFileContentsAsXml(projectDetectionFiles);
+	const projectDetectionFileContents = await fileSystem.getMultipleFileContentsAsXml(projectDetectionFiles);
 
-	const infoResponse = await llms().medium.generateTextAsJson(
-		`${infoFilesContents}.\n 
+	const projectScripts: ProjectScripts = await llms().medium.generateTextAsJson(
+		`${projectDetectionFileContents}.\n 
 		Your task is to determine the shell commands to compile, lint/format, and unit test the ${projectDetection.language} project from the files provided.
 		There may be multiple shell commands to chain together, eg. To lint and format the project might require "npm run prettier && npm run eslint".
 		
 		
-Explain your reasoning, then output a Markdown JSON block, with the JSON in this format as per the ProjectDetection and ProjectDetection interfaces:
+Explain your reasoning, then output a Markdown JSON block, with the JSON formatted in the following example:
+<example>
 {
-    projects: [
-        {
-            "initialise": "",
-            "compile": "",
-            "format": "",
-            "staticAnalysis": "",
-            "test": ""
-        }
-    ]
+	"initialise": "",
+	"compile": "",
+	"format": "",
+	"staticAnalysis": "",
+	"test": ""
 }
+</example>
 `,
 		null,
 		{ id: 'detectProjectInfo' },
@@ -156,7 +158,7 @@ Explain your reasoning, then output a Markdown JSON block, with the JSON in this
 	projectDetection.files = undefined;
 	const projectInfo: ProjectInfo = {
 		...projectDetection,
-		...infoResponse.projects[0],
+		...projectScripts,
 		languageTools: getLanguageTools(projectDetection.language),
 	};
 	logger.info(projectInfo, 'ProjectInfo detected');

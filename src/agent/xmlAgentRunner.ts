@@ -27,7 +27,7 @@ export interface RunAgentConfig {
 	/** The name of this agent */
 	agentName: string;
 	/** The functions the agent has available to call */
-	functions: LlmFunctions;
+	functions: LlmFunctions | Array<new () => any>;
 	/** The initial prompt */
 	initialPrompt: string;
 	/** The agent system prompt */

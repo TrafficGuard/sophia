@@ -3,7 +3,7 @@ import { buildPrompt } from '#swe/softwareDeveloperAgent';
 
 async function reviewChanges(requirements: string) {
 	const prompt = buildPrompt({
-		information: `The following is the git diff of the changes made so far to meet the requirements:\n<diff>\n${await getFileSystem().vcs.getDiff()}\n</diff>`,
+		information: `The following is the git diff of the changes made so far to meet the requirements:\n<diff>\n${await getFileSystem().vcs.getBranchDiff()}\n</diff>`,
 		requirements,
 		// action: 'Do the changes in the diff satisfy the requirements, and why or why not? Do the changes follow the same style as the rest of the code? Are any of the changes redundant?' +
 		// 'If so explain why and finish with the output <complete/>. If not, detail what changes you would still like to make. Output your answer in the JSON matching this TypeScript interface:\n' +

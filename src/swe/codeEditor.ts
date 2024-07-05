@@ -46,6 +46,9 @@ export class CodeEditor {
 			throw new Error('Aider code editing requires a key for Anthropic, Deepseek or OpenAI');
 		}
 
+		// TODO --llm-history-file LLM_HISTORY_FILE
+		// Then we can parse the tokens for an approximate cost
+
 		const cmd = `aider --skip-check-update --yes ${modelArg} --message-file=${messageFilePath} ${filesToEdit.map((file) => `"${file}"`).join(' ')}`;
 
 		const { stdout, stderr, exitCode } = await execCommand(cmd, { envVars: env });
