@@ -5,12 +5,12 @@ import { AgentContext, AgentLLMs, agentContextStorage, createContext } from '#ag
 import { RunAgentConfig } from '#agent/xmlAgentRunner';
 import '#fastify/trace-init/trace-init';
 import { FileSystem } from '#functions/filesystem';
-import { GEMINI_1_5_PRO_LLMS, Gemini_1_5_Pro } from '#llm/models/vertexai';
 import { withActiveSpan } from '#o11y/trace';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
 import { ProjectInfo } from '#swe/projectDetection';
 
+import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { currentUser } from '#user/userService/userContext';
 import { envVarHumanInLoopSettings } from './cliHumanInLoop';
 
@@ -20,8 +20,7 @@ import { envVarHumanInLoopSettings } from './cliHumanInLoop';
 // npm run code
 
 async function main() {
-	const gemini = Gemini_1_5_Pro();
-	const llms: AgentLLMs = GEMINI_1_5_PRO_LLMS();
+	const llms: AgentLLMs = ClaudeVertexLLMs();
 
 	const initialPrompt = readFileSync('src/cli/code-in', 'utf-8');
 
@@ -41,18 +40,19 @@ async function main() {
 
 	// const info = await new DevRequirementsWorkflow().detectProjectInfo();
 
-	const projectInfo: ProjectInfo = {
-		baseDir: process.cwd(),
-		language: 'nodejs',
-		initialise: 'npm install',
-		compile: 'npm run build',
-		format: 'npm run lint && npm run fix',
-		staticAnalysis: null,
-		test: 'npm run test:unit',
-		languageTools: new TypescriptTools(),
-	};
+	let projectInfo: ProjectInfo | undefined;
+	// projectInfo = {
+	// 	baseDir: process.cwd(),
+	// 	language: 'nodejs',
+	// 	initialise: 'npm install',
+	// 	compile: 'npm run build',
+	// 	format: 'npm run lint && npm run fix',
+	// 	staticAnalysis: null,
+	// 	test: 'npm run test:unit',
+	// 	languageTools: new TypescriptTools(),
+	// };
 
-	await withActiveSpan('edit-local', async (span: Span) => {
+	await withActiveSpan('code', async (span: Span) => {
 		span.setAttributes({
 			initialPrompt,
 		});

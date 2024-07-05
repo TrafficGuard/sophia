@@ -102,7 +102,7 @@ class AnthropicVertexLLM extends BaseLLM {
 			let message: Message;
 			try {
 				message = await this.api().messages.create({
-					system: systemPrompt,
+					system: systemPrompt ? [{ type: 'text', text: systemPrompt }] : undefined,
 					messages: [
 						{
 							role: 'user',
