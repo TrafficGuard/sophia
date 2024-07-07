@@ -1,5 +1,7 @@
 export interface LlmRequest {
 	id: number;
+	/** From the GenerateTextOptions.id field */
+	description?: string;
 	userPromptText: string;
 	systemPromptId?: number;
 	/** Hydrated from systemPromptId */

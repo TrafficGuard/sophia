@@ -80,6 +80,7 @@ export class FirestoreLlmCallService implements LlmCallService {
 			if (docSnap.exists) {
 				requests.push({
 					id,
+					description: docSnap.data().systemPromptId,
 					systemPromptId: docSnap.data().systemPromptId,
 					userPromptText: docSnap.data().userPromptText,
 					variationSourceId: docSnap.data().variationSourceId,
@@ -212,6 +213,7 @@ export class FirestoreLlmCallService implements LlmCallService {
 		}
 		return {
 			id: llmRequestId,
+			description: docSnap.data().description,
 			systemPromptId: docSnap.data().systemPromptId,
 			userPromptText: docSnap.data().userPromptText,
 			variationSourceId: docSnap.data().variationSourceId,

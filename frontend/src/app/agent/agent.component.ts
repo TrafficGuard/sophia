@@ -44,7 +44,8 @@ export interface LlmResponse {
   llmRequestId: number;
   /** Hydrated from llmRequestId */
   llmRequest?: LlmRequest;
-
+  /** From GenerateTextOptions.id */
+  description: string
   /** Populated when called by an agent */
   agentId?: string;
   /** Populated when called by a user through the UI */
