@@ -45,7 +45,8 @@ export class FileSystem {
 	 * @param basePath The root folder allowed to be accessed by this file system instance. This should only be accessed by system level
 	 * functions. Generally getWorkingDirectory() should be used
 	 */
-	constructor(public basePath: string = process.cwd()) {
+	constructor(public basePath?: string) {
+		this.basePath ??= process.cwd();
 		const args = process.argv.slice(2); // Remove the first two elements (node and script path)
 		const fsArg = args.find((arg) => arg.startsWith('--fs='));
 		const fsEnvVar = process.env.NOUS_FS;
@@ -64,9 +65,9 @@ export class FileSystem {
 			}
 		}
 
-		this.log = logger.child({ FileSystem: basePath });
+		this.log = logger.child({ FileSystem: this.basePath });
 		// We will want to re-visit this, the .git folder can be in a parent directory
-		if (existsSync(path.join(basePath, '.git'))) {
+		if (existsSync(path.join(this.basePath, '.git'))) {
 			this.vcs = new Git(this);
 		}
 	}

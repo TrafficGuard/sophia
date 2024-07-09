@@ -12,8 +12,9 @@ markdown_extensions:
 nav:
   - index.md
   - setup.md
-  - functions.md
   - observability.md
+  - functions.md
+  - agents.md
   - xml-agent.md
   - software-engineer.md
   - code-review.md

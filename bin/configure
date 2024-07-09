@@ -6,12 +6,12 @@ python -m pip install --upgrade pip
 pip install aider-chat youtube-transcript-api
 
 
-# Node.js setup ---------------------------------
+# Server Node.js setup ---------------------------------
 
+echo Initialising server project
 nvm install $(cat .nvmrc)
 nvm use
 npm install
-
 
 # Default environment variables  ----------------
 
@@ -19,3 +19,10 @@ if [[ ! -f ./variables/local.env ]]; then
     echo "Creating local.env by copying from local.env.example"
     cp ./variables/local.env.example ./variables/local.env
 fi
+
+
+# Angular setup ----------------
+
+echo Initialising Angular project
+cd frontend
+npm install

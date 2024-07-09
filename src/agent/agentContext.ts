@@ -121,7 +121,7 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		budgetRemaining: 0,
 		cost: 0,
 		llms: config.llms,
-		fileSystem: new FileSystem(),
+		fileSystem: new FileSystem(config.fileSystemPath),
 		functions: Array.isArray(config.functions) ? new LlmFunctions(...config.functions) : config.functions, // TODO Should replace FileSystem with the context filesystem
 		memory: {},
 		invoking: [],

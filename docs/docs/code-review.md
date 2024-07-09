@@ -2,7 +2,7 @@
 
 Nous has support for AI code reviews of GitLab merge requests. GitHub support is a good candidate for using the Code Editor agent to assist with!
 
-The configuration files are located in the [/resources](https://github.com/TrafficGuard/nous/tree/preview/resources/codeReview) folder.
+For the current working proof-of-concept, the configuration files are located in the [/resources](https://github.com/TrafficGuard/nous/tree/preview/resources/codeReview) folder. The next step will to store the configuration in a database.
 
 Code review are useful for guidelines where a lint rule doesn't exist yet, or it can't easily be codified.
 

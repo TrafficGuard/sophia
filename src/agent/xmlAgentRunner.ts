@@ -40,6 +40,8 @@ export interface RunAgentConfig {
 	resumeAgentId?: string;
 	/** Message to add to the prompt when resuming */
 	resumeMessage?: string;
+	/** The base path of the context FileSystem. Defaults to the process working directory */
+	fileSystemPath?: string;
 }
 
 export async function cancelAgent(agentId: string, executionId: string, feedback: string): Promise<void> {

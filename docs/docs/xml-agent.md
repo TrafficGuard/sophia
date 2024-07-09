@@ -7,15 +7,15 @@ and then output a structured XML response. The XML part of the response is parse
 
 This custom prompt and parsing allows function calling on any sufficiently capable LLM. However, given the reasoning
 capabilities required for optimal plan generation and function selection, the best results will be from using the 
-most capable frontier models i.e. GPT-4o or Claude Opus.
+most capable frontier models. Currently, we recommend using Claude 3.5 Sonnet for the 'hard' LLM which is used by the autonomous agent.
 
-A useful strategy is to first attempt to get your agent working with a less capable model, e.g. Claude Sonnet.
+A useful strategy is to first attempt to get your agent working with a less capable model.
 As you observe where the agent goes off-track you can tune your prompt and the documentation for the functions and their parameters.
 Then for production use switch to a more capable model for more reliable results.
 
 ## Built-in functions
 
-The autonomous agent always has two function available, `requestFeedback` and `completed`.
+The autonomous agent always has two function available, `Agent.requestFeedback` and `Agent.completed`.
 
 The `requestFeedback` function definition in the system prompt lets the LLM know it can request a decision or additional details.
 
