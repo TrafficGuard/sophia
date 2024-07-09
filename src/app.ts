@@ -54,10 +54,15 @@ export async function initApp(): Promise<void> {
 	// If the process has the argument --db=file, or DATABASE=file env var, then use file based persistence
 	const args = process.argv.slice(2); // Remove the first two elements (node and script path)
 	const dbArg = args.find((arg) => arg.startsWith('--db='));
-	if (dbArg?.slice(5) === 'file' || process.env.DATABASE === 'file') {
+	const database = process.env.DATABASE;
+	if (dbArg?.slice(5) === 'file' || database === 'file') {
 		await initFileApplicationContext();
-	} else {
+	} else if (database === 'memory') {
+		initInMemoryApplicationContext();
+	} else if (database === 'firestore') {
 		await initFirestoreApplicationContext();
+	} else {
+		throw new Error(`Invalid value for DATABASE environment: ${database}`);
 	}
 
 	try {

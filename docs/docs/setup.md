@@ -21,7 +21,7 @@ The configure script will:
 - Ensure the node.js version in *.nvmrc* is installed and run `npm install`
 - Initialise the environment variable file at *variables/local.env*
 
-### Google Cloud setup (optional/recommended)
+### Google Cloud setup (recommended)
 
 When enabled Google Cloud is used for Firestore database persistence, the Gemini AI models, Anthropic Claude on Vertex, and tracing via OpenTelemetry.
 
@@ -39,21 +39,24 @@ Run `gcloud auth application-default login` which will provide credentials for t
 To use Anthropic Claude through the Vertex API you will need to first [enable the Claude models](https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/use-claude#grant-permissions) from the Model Garden. Make sure to click Accept on the final screen.
 
 Model garden links - [3.5 Sonnet](https://console.cloud.google.com/vertex-ai/publishers/anthropic/model-garden/claude-3-5-sonnet?supportedpurview=project)
-[3.0 Haiku](https://console.cloud.google.com/vertex-ai/publishers/anthropic/model-garden/claude-3-haiku?supportedpurview=project)
+- [3.0 Haiku](https://console.cloud.google.com/vertex-ai/publishers/anthropic/model-garden/claude-3-haiku?supportedpurview=project)
 
-As Claude is only available in [select regions](https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/use-claude#regions) there is an additional environment variable GCLOUD_CLAUDE_REGION in the sample .env file which default to us-east5
+As Claude is only available in [select regions](https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/use-claude#regions) there is an additional environment variable GCLOUD_CLAUDE_REGION in the sample local.env file which defaults to us-east5
 
-## Configuration
+### Non-Google Cloud setup
+
+If you want to get running ASAP then in `variables/local.env` update the `DATABASE` variable to `file` or `memory`.
+
+## Configuration quick start
 
 *variables/local.env* contains the configuration when running Nous locally.
 
-Update the SINGLE_USER_EMAIL variable with your email.
-
 If you have configured Google Cloud then update `TRACE_AGENT_ENABLED` to `true`.
 
-The LLM API keys and integration configurations can be set in the environment variables, which provides defaults for any user the app. By default Nous runs in a single user mode.
+By default, Nous runs in a single user mode. A single profile will be created and can be updated via the web UI. 
+Update the `SINGLE_USER_EMAIL` variable with your email before running Nous for the first time.
 
-Alternately you can run the application and enter the LLM/integration configuration values in the UI.
+The LLM service API keys and integration configurations can be set in web UI, or alternatively in the `variables/local.env` file. Values in the user profile take preferences over the environment configuration values.
 
 Quick links to create API keys:
 
@@ -64,13 +67,13 @@ LLMs
 - [Together.ai](https://api.together.ai/settings/api-keys)
 - [Fireworks.ai](https://fireworks.ai/api-keys)
 
-Function callable integrations
+Integrations
 - [Perplexity](https://www.perplexity.ai/settings/api)
 - [Jira](https://id.atlassian.com/manage-profile/security/api-tokens)
-- [GitLab.com](https://www.gitab.com/-/user_settings/personal_access_tokens) (Grant api, read_repo and write_repo roles)
+- [GitLab](https://www.gitab.com/-/user_settings/personal_access_tokens)
 - [GitHub](https://github.com/settings/tokens?type=beta)
 
-## Running
+## Running quick start
 
 ### CLI
 
