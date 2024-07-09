@@ -66,7 +66,7 @@ class VertexLLM extends BaseLLM {
 
 	@logTextGeneration
 	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
-		return withActiveSpan(`generateText ${opts?.id}`, async (span) => {
+		return withActiveSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
 
 			const promptLength = userPrompt.length + systemPrompt?.length ?? 0;

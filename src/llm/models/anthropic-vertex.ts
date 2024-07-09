@@ -81,7 +81,7 @@ class AnthropicVertexLLM extends BaseLLM {
 	@cacheRetry({ backOffMs: 5000 })
 	@logTextGeneration
 	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
-		return withActiveSpan(`generateText ${opts?.id}`, async (span) => {
+		return withActiveSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
 			const combinedPrompt = combinePrompts(userPrompt, systemPrompt);
 			const maxTokens = 4096;
 
