@@ -47,6 +47,8 @@ As Claude is only available in [select regions](https://cloud.google.com/vertex-
 
 *variables/local.env* contains the configuration when running Nous locally.
 
+Update the SINGLE_USER_EMAIL variable with your email.
+
 If you have configured Google Cloud then update `TRACE_AGENT_ENABLED` to `true`.
 
 The LLM API keys and integration configurations can be set in the environment variables, which provides defaults for any user the app. By default Nous runs in a single user mode.
@@ -72,18 +74,14 @@ Function callable integrations
 
 ### CLI
 
-In the *src/cli* folder are the file chat.ts, agent.ts, swe.ts, code.ts, research.ts, util.ts.
+In the *src/cli* folder are the file chat.ts, agent.ts, swe.ts, code.ts, research.ts, util.ts which are scripts that can be run with `npm run <script>`
 
-These can be run with `npm run chat`, `npm run agent`, `npm run code`, `npm run swe`, `npm run research`, `npm run util`
-
-`chat`, `agent`, `swe` and `code` read their input from the co-located files. Util is for testing individual pieces of code.
-
-- `chat` does a single completion from an LLM, reading the input from *src/cli/chat-in*
-- `agent` runs the autonomous agent, using the functions configured, reading the input from *src/cli/agent-in*
-- `code` runs the Code Editing agent on the repository, reading the input from *src/cli/code-in*
-- `swe` runs the software engineer agent, which can find a remote repo to clone, edit and create a pull/merge request. Input read from *src/cli/swe-in*
-- `research` runs the autonomous agent with the web research functions configured.
-- `util` used for running any random piece of code to test.
+- `npm run chat` does a single text generation from an LLM, reading the input from *src/cli/chat-in*
+- `npm run agent` runs the autonomous agent, using the functions configured, reading the input from *src/cli/agent-in*
+- `npm run code` runs the Code Editing agent on the repository, reading the input from *src/cli/code-in*
+- `npm run swe` runs the software engineer agent, which can find a remote repo to clone, edit and create a pull/merge request. Input read from *src/cli/swe-in*
+- `npm run research` runs the autonomous agent with the web research functions configured.
+- `npm run util` used for running any random piece of code to test.
 
 ### Local server & UI
 
