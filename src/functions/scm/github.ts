@@ -3,6 +3,7 @@ import path, { join } from 'path';
 import { request } from '@octokit/request';
 import { getFileSystem } from '#agent/agentContext';
 import { SourceControlManagement } from '#functions/scm/sourceControlManagement';
+import { GitProject } from './gitProject';
 import { logger } from '#o11y/logger';
 import { functionConfig } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
@@ -117,7 +118,7 @@ export class GitHub implements SourceControlManagement {
 	}
 
 	@func()
-	async getProjects(): Promise<GitHubRepository[]> {
+	async getProjects(): Promise<GitProject[]> {
 		if (this.config().username) {
 			try {
 				logger.info(`Getting projects for ${this.config().organisation}`)
@@ -131,7 +132,7 @@ export class GitHub implements SourceControlManagement {
 						'X-GitHub-Api-Version': '2022-11-28',
 					},
 				});
-				return response.data as GitHubRepository[];
+				return (response.data as GitHubRepository[]).map(convertGitHubToGitProject);
 			} catch (error) {
 				logger.error(error, 'Failed to get projects');
 				throw new Error(`Failed to get projects: ${error.message}`);
@@ -149,7 +150,7 @@ export class GitHub implements SourceControlManagement {
 						'X-GitHub-Api-Version': '2022-11-28',
 					},
 				});
-				return response.data as GitHubRepository[];
+				return (response.data as GitHubRepository[]).map(convertGitHubToGitProject);
 			} catch (error) {
 				logger.error(error, 'Failed to get projects');
 				throw new Error(`Failed to get projects: ${error.message}`);
@@ -203,6 +204,17 @@ interface GitHubRepository {
 	ssh_url: string;
 	clone_url: string;
 	default_branch: string;
+}
+
+function convertGitHubToGitProject(repo: GitHubRepository): GitProject {
+	return {
+		id: repo.id,
+		name: repo.name,
+		description: repo.description,
+		defaultBranch: repo.default_branch,
+		visibility: repo.private ? 'private' : 'public',
+		archived: repo.archived || false,
+	};
 }
 
 function extractOwnerProject(url: string): [string, string] {
