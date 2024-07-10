@@ -128,7 +128,7 @@ export class GitLab implements SourceControlManagement {
 			});
 			// console.log(`${group} ==========`);
 			projects.sort((a, b) => a.path.localeCompare(b.path));
-			projects.map((project) => convertGitLabToGitProject(project)).forEach((project) => resultProjects.push(project));
+			projects.map((project) => this.convertGitLabToGitProject(project)).forEach((project) => resultProjects.push(project));
 
 			const descendantGroups = await this.api().Groups.allDescendantGroups(group, {});
 			for (const descendantGroup of descendantGroups) {
@@ -152,16 +152,16 @@ export class GitLab implements SourceControlManagement {
 		return resultProjects;
 	}
 
-function convertGitLabToGitProject(project: ProjectSchema): GitProject {
-	return {
-		id: project.id,
-		name: project.name,
-		description: project.description,
-		defaultBranch: project.default_branch,
-		visibility: project.visibility,
-		archived: project.archived || false,
-	};
-}
+	private convertGitLabToGitProject(project: ProjectSchema): GitProject {
+		return {
+			id: project.id,
+			name: project.name,
+			description: project.description,
+			defaultBranch: project.default_branch,
+			visibility: project.visibility,
+			archived: project.archived || false,
+		};
+	}
 
 	/**
 	 * Clones a project from GitLab to the file system. To use this project the function FileSystem.setWorkingDirectory must be called after with the returned value
