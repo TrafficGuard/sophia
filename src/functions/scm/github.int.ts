@@ -1,8 +1,10 @@
-import { expect } from 'chai';
 import { existsSync } from 'fs';
+import { expect } from 'chai';
 import { GitHub } from './github';
-import {initInMemoryApplicationContext} from "../../app";
 
+const TEST_OWNER = '';
+const TEST_REPO = '';
+const PROJECT_PATH = `${TEST_OWNER}/${TEST_REPO}`;
 /**
  * Tests that interact with real GitHub resources
  */
@@ -10,7 +12,6 @@ describe.only('GitHub Integration Tests', () => {
 	let github: GitHub;
 
 	beforeEach(() => {
-
 		// Configured from the provided environment variables
 		github = new GitHub();
 	});
@@ -48,7 +49,7 @@ describe.only('GitHub Integration Tests', () => {
 		it.only('should get the projects and clone the first one', async () => {
 			const projects = await github.getProjects();
 			expect(projects.length).to.be.greaterThan(0);
-			console.log(projects[0])
+			console.log(projects[0]);
 			const firstProject = projects[0];
 			const clonePath = await github.cloneProject(`${firstProject.name}`);
 			expect(clonePath).to.be.a('string');
@@ -59,10 +60,9 @@ describe.only('GitHub Integration Tests', () => {
 	describe('getJobLogs', () => {
 		it.skip('should fetch job logs for a specific job', async () => {
 			// Note: You'll need to replace these with actual values from your GitHub repository
-			const projectPath = 'dittohead-gh/test';
 			const jobId = '12345678';
 
-			const logs = await github.getJobLogs(projectPath, jobId);
+			const logs = await github.getJobLogs(PROJECT_PATH, jobId);
 
 			expect(logs).to.be.a('string');
 			expect(logs.length).to.be.greaterThan(0);
@@ -70,11 +70,10 @@ describe.only('GitHub Integration Tests', () => {
 		});
 
 		it('should throw an error for non-existent job', async () => {
-			const projectPath = 'dittohead-gh/test';
 			const nonExistentJobId = '99999999';
 
 			try {
-				await github.getJobLogs(projectPath, nonExistentJobId);
+				await github.getJobLogs(PROJECT_PATH, nonExistentJobId);
 				expect.fail('Expected an error to be thrown');
 			} catch (error) {
 				expect(error).to.be.an('error');

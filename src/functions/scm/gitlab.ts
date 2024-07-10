@@ -20,8 +20,8 @@ import { checkExecResult, execCmd, execCommand } from '#utils/exec';
 import { cacheRetry } from '../../cache/cacheRetry';
 import { func, funcClass } from '../../functionDefinition/functionDecorators';
 import { UtilFunctions } from '../util';
-import { SourceControlManagement } from './sourceControlManagement';
 import { GitProject } from './gitProject';
+import { SourceControlManagement } from './sourceControlManagement';
 
 export interface GitLabConfig {
 	host: string;
@@ -120,7 +120,7 @@ export class GitLab implements SourceControlManagement {
 	 */
 	@cacheRetry({ scope: 'global' })
 	async getProjects(): Promise<GitProject[]> {
-		const resultProjects: GitLabProject[] = [];
+		const resultProjects: GitProject[] = [];
 		for (const group of this.config().topLevelGroups) {
 			const projects = await this.api().Groups.allProjects(group, {
 				orderBy: 'name',
@@ -149,7 +149,7 @@ export class GitLab implements SourceControlManagement {
 			}
 		}
 
-		return resultProjects as GitProject[];
+		return resultProjects;
 	}
 
 	private convertGitLabToGitProject(project: ProjectSchema): GitProject {

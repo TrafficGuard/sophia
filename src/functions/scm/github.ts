@@ -3,12 +3,12 @@ import path, { join } from 'path';
 import { request } from '@octokit/request';
 import { getFileSystem } from '#agent/agentContext';
 import { SourceControlManagement } from '#functions/scm/sourceControlManagement';
-import { GitProject } from './gitProject';
 import { logger } from '#o11y/logger';
 import { functionConfig } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
 import { checkExecResult, execCmd, execCommand, failOnError } from '#utils/exec';
 import { func, funcClass } from '../../functionDefinition/functionDecorators';
+import { GitProject } from './gitProject';
 
 type RequestType = typeof request;
 
@@ -36,10 +36,8 @@ export class GitHub implements SourceControlManagement {
 				organisation: userConfig.organisation || process.env.GITHUB_ORG,
 				token: userConfig.token || envVar('GITHUB_TOKEN'),
 			};
-			if (!this._config.username && !this._config.organisation)
-				throw new Error('GitHub Org or User must be provided')
-			if (!this._config.token)
-				throw new Error('GitHub token must be provided')
+			if (!this._config.username && !this._config.organisation) throw new Error('GitHub Org or User must be provided');
+			if (!this._config.token) throw new Error('GitHub token must be provided');
 		}
 		return this._config;
 	}
@@ -121,7 +119,7 @@ export class GitHub implements SourceControlManagement {
 	async getProjects(): Promise<GitProject[]> {
 		if (this.config().username) {
 			try {
-				logger.info(`Getting projects for ${this.config().organisation}`)
+				logger.info(`Getting projects for ${this.config().organisation}`);
 				const response = await this.request()('GET /users/{username}/repos', {
 					username: this.config().username,
 					type: 'all',
@@ -139,7 +137,7 @@ export class GitHub implements SourceControlManagement {
 			}
 		} else if (this.config().organisation) {
 			try {
-				logger.info(`Getting projects for ${this.config().organisation}`)
+				logger.info(`Getting projects for ${this.config().organisation}`);
 				const response = await this.request()('GET /orgs/{org}/repos', {
 					org: this.config().organisation,
 					type: 'all',
@@ -156,7 +154,7 @@ export class GitHub implements SourceControlManagement {
 				throw new Error(`Failed to get projects: ${error.message}`);
 			}
 		} else {
-			throw new Error('GitHub Org or User must be configured')
+			throw new Error('GitHub Org or User must be configured');
 		}
 	}
 
