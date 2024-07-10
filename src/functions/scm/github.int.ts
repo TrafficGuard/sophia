@@ -15,8 +15,43 @@ describe.only('GitHub Integration Tests', () => {
 
 	afterEach(() => {});
 
+	describe('getProjects', () => {
+		it('should get the projects from the configured organization', async () => {
+			const projects = await github.getProjects();
+			expect(projects).to.be.an('array');
+			expect(projects.length).to.be.greaterThan(0);
+			expect(projects[0]).to.have.property('name');
+			expect(projects[0]).to.have.property('full_name');
+		});
+
+		it('should throw an error for invalid organization', async () => {
+			// Temporarily set an invalid organization
+			const originalOrg = github['_config'].organisation;
+			github['_config'].organisation = 'invalid-org-name-12345';
+
+			try {
+				await github.getProjects();
+				expect.fail('Expected an error to be thrown');
+			} catch (error) {
+				expect(error).to.be.an('error');
+				expect(error.message).to.include('Failed to get projects');
+			} finally {
+				// Restore the original organization
+				github['_config'].organisation = originalOrg;
+			}
+		});
+	});
+
 	describe('getProjects and clone one', () => {
-		it('should get the projects and clone the first one', async () => {});
+		it('should get the projects and clone the first one', async () => {
+			const projects = await github.getProjects();
+			expect(projects.length).to.be.greaterThan(0);
+
+			const firstProject = projects[0];
+			const clonePath = await github.cloneProject(firstProject.full_name);
+			expect(clonePath).to.be.a('string');
+			expect(existsSync(clonePath)).to.be.true;
+		});
 	});
 
 	describe('getJobLogs', () => {
