@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import { existsSync } from 'fs';
 import { GitHub } from './github';
 
 /**
