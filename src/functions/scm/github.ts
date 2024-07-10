@@ -22,24 +22,30 @@ export interface GitHubConfig {
  */
 @funcClass(__filename)
 export class GitHub implements SourceControlManagement {
-	_request;
-	_config: GitHubConfig;
+	/** Do not access. Use request() */
+	private _request;
+	/** Do not access. Use config() */
+	private _config: GitHubConfig;
 
-	private config(): GitHubConfig {
+	config(): GitHubConfig {
 		if (!this._config) {
 			const userConfig = functionConfig(GitHub) as GitHubConfig;
 			this._config = {
-				username: userConfig.username || envVar('GITHUB_USER'),
-				organisation: userConfig.organisation || envVar('GITHUB_ORG'),
+				username: userConfig.username || process.env.GITHUB_USER,
+				organisation: userConfig.organisation || process.env.GITHUB_ORG,
 				token: userConfig.token || envVar('GITHUB_TOKEN'),
 			};
+			if (!this._config.username && !this._config.organisation)
+				throw new Error('GitHub Org or User must be provided')
+			if (!this._config.token)
+				throw new Error('GitHub token must be provided')
 		}
 		return this._config;
 	}
 
-	private request(): RequestType {
-		if (!this.request) {
-			functionConfig(GitHub).this._request = request.defaults({
+	request(): RequestType {
+		if (!this._request) {
+			this._request = request.defaults({
 				headers: {
 					authorization: `token ${this.config().token}`,
 				},
@@ -112,14 +118,45 @@ export class GitHub implements SourceControlManagement {
 
 	@func()
 	async getProjects(): Promise<GitHubRepository[]> {
-		const response = await this.request()('GET /orgs/{org}/repos', {
-			org: this.config().organisation,
-			type: 'all',
-			sort: 'updated',
-			direction: 'desc',
-			per_page: 100,
-		});
-		return response.data as GitHubRepository[];
+		if (this.config().username) {
+			try {
+				logger.info(`Getting projects for ${this.config().organisation}`)
+				const response = await this.request()('GET /users/{username}/repos', {
+					username: this.config().username,
+					type: 'all',
+					sort: 'updated',
+					direction: 'desc',
+					per_page: 100,
+					headers: {
+						'X-GitHub-Api-Version': '2022-11-28',
+					},
+				});
+				return response.data as GitHubRepository[];
+			} catch (error) {
+				logger.error(error, 'Failed to get projects');
+				throw new Error(`Failed to get projects: ${error.message}`);
+			}
+		} else if (this.config().organisation) {
+			try {
+				logger.info(`Getting projects for ${this.config().organisation}`)
+				const response = await this.request()('GET /orgs/{org}/repos', {
+					org: this.config().organisation,
+					type: 'all',
+					sort: 'updated',
+					direction: 'desc',
+					per_page: 100,
+					headers: {
+						'X-GitHub-Api-Version': '2022-11-28',
+					},
+				});
+				return response.data as GitHubRepository[];
+			} catch (error) {
+				logger.error(error, 'Failed to get projects');
+				throw new Error(`Failed to get projects: ${error.message}`);
+			}
+		} else {
+			throw new Error('GitHub Org or User must be configured')
+		}
 	}
 
 	/**
