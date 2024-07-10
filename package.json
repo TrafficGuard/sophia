@@ -13,6 +13,7 @@
     "bench": "   node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/cli/bench.ts",
     "code": "    node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/cli/code.ts",
     "swe": "     node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/cli/swe.ts",
+    "scrape": "  node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/cli/scrape.ts",
     "research": "node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/cli/research.ts",
     "util": "    node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/cli/util.ts",
     "build": "    tsc",
