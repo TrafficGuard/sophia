@@ -6,7 +6,7 @@ import { SourceControlManagement } from '#functions/scm/sourceControlManagement'
 import { logger } from '#o11y/logger';
 import { functionConfig } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
-import {checkExecResult, execCmd, execCommand, failOnError} from '#utils/exec';
+import { checkExecResult, execCmd, execCommand, failOnError } from '#utils/exec';
 import { func, funcClass } from '../../functionDefinition/functionDecorators';
 
 type RequestType = typeof request;
@@ -54,8 +54,8 @@ export class GitHub implements SourceControlManagement {
 	 */
 	@func()
 	async runIntegrationTest(): Promise<string> {
-		const result = await execCommand('npm run test:integration')
-		failOnError('Test failed', result)
+		const result = await execCommand('npm run test:integration');
+		failOnError('Test failed', result);
 		return result.stdout;
 	}
 
@@ -138,11 +138,11 @@ export class GitHub implements SourceControlManagement {
 				repo,
 				job_id: jobId,
 				headers: {
-					'Accept': 'application/vnd.github+json',
-					'X-GitHub-Api-Version': '2022-11-28'
-				}
+					Accept: 'application/vnd.github+json',
+					'X-GitHub-Api-Version': '2022-11-28',
+				},
 			});
-			
+
 			return response.data;
 		} catch (error) {
 			logger.error(`Failed to get job logs for job ${jobId} in project ${projectPath}`, error);
