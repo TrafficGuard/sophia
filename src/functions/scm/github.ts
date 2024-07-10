@@ -122,8 +122,32 @@ export class GitHub implements SourceControlManagement {
 		return response.data as GitHubRepository[];
 	}
 
-	getJobLogs(projectPath: string, jobId: string): Promise<string> {
-		return Promise.resolve('');
+	/**
+	 * Fetches the logs for a specific job in a GitHub Actions workflow.
+	 * @param projectPath The path to the project, typically in the format 'owner/repo'
+	 * @param jobId The ID of the job for which to fetch logs
+	 * @returns A promise that resolves to the job logs as a string
+	 * @throws Error if unable to fetch the job logs
+	 */
+	@func()
+	async getJobLogs(projectPath: string, jobId: string): Promise<string> {
+		try {
+			const [owner, repo] = extractOwnerProject(projectPath);
+			const response = await this.request()('GET /repos/{owner}/{repo}/actions/jobs/{job_id}/logs', {
+				owner,
+				repo,
+				job_id: jobId,
+				headers: {
+					'Accept': 'application/vnd.github+json',
+					'X-GitHub-Api-Version': '2022-11-28'
+				}
+			});
+			
+			return response.data;
+		} catch (error) {
+			logger.error(`Failed to get job logs for job ${jobId} in project ${projectPath}`, error);
+			throw new Error(`Failed to get job logs: ${error.message}`);
+		}
 	}
 }
 
