@@ -1,3 +1,4 @@
+<a id="banner"></a>
 <p align="center">
   <img src="https://public.trafficguard.ai/nous/banner.png" alt="nous logo"/>
 </p>
