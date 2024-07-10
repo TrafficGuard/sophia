@@ -76,4 +76,4 @@ so its possibly to dynamically change which functions are available in a long-ru
 To ensure the all functions have been registered when the application is running, add the function class to the array in `functionRegistry.ts`.
 This is required by the web interface for the function selection list to be complete and for the `npm run functions` command to pre-build all the definitions.
 
-See the [Tools/Integrations](/integrations.md) page for information on the provided function callable integrations.
+See the [Tools/Integrations](integrations.md) page for information on the provided function callable integrations.
