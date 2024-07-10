@@ -21,7 +21,7 @@ Our platform on Google Cloud comprises projects developed in TypeScript, Python,
 Given that:
 
 - Open source projects are typically Python/GitHub focused, and
-- The vendor AI tools (Google Cloud and GitLab) only really understand their silos.
+- The vendor AI tools are focused on their silos.
 
 we saw a need for TypeScript based tooling which can work across our entire tech stack, and understand how all of our pieces fit together.
 
@@ -129,17 +129,17 @@ import { anthropicLLMs } from '#llms/anthropic'
 
 initAgentContext(anthropicLLMs());
 
-const cityFromPersonPrompt = (person: string) => `What is the city ${person} is from? Only respond with the name of the city.`;
-const countryFromCityInLanguagePrompt = (city: string, language: string) => `What country is the city ${city} in? Respond in ${language}.`;
+const prompt1 = (person: string) => `What is the city ${person} is from? Only respond with the name of the city.`;
+const prompt2 = (city: string, language: string) => `What country is the city ${city} in? Respond in ${language}.`;
 
-const city = await llms().easy.generateText(cityFromPersonPrompt('Obama'));
-const result = await llms().easy.generateText(countryFromCityInLanguagePrompt(city, 'German'));
+const city = await llms().easy.generateText(prompt1('Obama'));
+const result = await llms().easy.generateText(prompt2(city, 'German'));
 
 console.log(result);
 ```
 
 The Nous code also has the advantage of static typing with the prompt arguments, enabling you to refactor with ease.
-It's also easier to debug with breakpoints/logging with simple control flow.
+Using simple control flow allows easy debugging with breakpoints/logging.
 
 
 ## Contributing 

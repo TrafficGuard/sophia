@@ -7,7 +7,7 @@ import { createBranchName } from '#swe/createBranchName';
 import { generatePullRequestTitleDescription } from '#swe/pullRequestTitleDescription';
 import { selectProject } from '#swe/selectProject';
 import { summariseRequirements } from '#swe/summariseRequirements';
-import { ExecResult, execCommand } from '#utils/exec';
+import { ExecResult, execCommand, failOnError } from '#utils/exec';
 import { cacheRetry } from '../cache/cacheRetry';
 import { func, funcClass } from '../functionDefinition/functionDecorators';
 import { CodeEditingAgent } from './codeEditingAgent';
@@ -40,21 +40,16 @@ export class SoftwareDeveloperAgent {
 		const targetBranch = gitProject.default_branch;
 
 		const repoPath = await getSourceControlManagementTool().cloneProject(gitProject.path_with_namespace);
-		// ensure we're setting a relative path. Not sure about this now that setWorkingDirectory will detect the basePath at the start of the path
-		// if (repoPath.startsWith('/')) repoPath = repoPath.slice(1);
 		getFileSystem().setWorkingDirectory(repoPath);
 
-		const projectInfos = await this.detectProjectInfo();
-		if (projectInfos.length !== 1) throw new Error('detected project info length != 1');
-		const projectInfo = projectInfos[0];
-		logger.info(projectInfo, `Detected project info ${Object.keys(projectInfo).join(', ')}`);
+		const projectInfo = await this.detectSingleProjectInfo();
 
 		if (projectInfo.initialise) {
 			const result: ExecResult = await execCommand(projectInfo.initialise);
-			if (result.exitCode > 0) throw new Error(`Error initialising the repository project: ${result.stdout} ${result.stderr}`);
+			failOnError('Error initialising the repository project', result);
 		}
 
-		// Should check we're on the develop branch first, and pull, when creating a branch
+		// Should check we're on the develop/default branch first, and pull, when creating a branch
 		// If we're resuming an agent which has progressed past here then it will switch to the branch it created before
 		const branchName = await this.createBranchName(requirements);
 		await getFileSystem().vcs.switchToBranch(branchName);
@@ -92,5 +87,17 @@ export class SoftwareDeveloperAgent {
 	// @cacheRetry()
 	async detectProjectInfo(): Promise<ProjectInfo[]> {
 		return await detectProjectInfo();
+	}
+
+	/**
+	 * A projectInfo.json file may have references to sub-projects. Calling this method assumes
+	 * there will be only one entry in the projectInfo.json file, and will throw an error if there is more
+	 */
+	async detectSingleProjectInfo(): Promise<ProjectInfo> {
+		const projectInfos = await this.detectProjectInfo();
+		if (projectInfos.length !== 1) throw new Error('detected project info length != 1');
+		const projectInfo = projectInfos[0];
+		logger.info(projectInfo, `Detected project info ${Object.keys(projectInfo).join(', ')}`);
+		return projectInfo;
 	}
 }
