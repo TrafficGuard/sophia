@@ -8,7 +8,7 @@ const PROJECT_PATH = `${TEST_OWNER}/${TEST_REPO}`;
 /**
  * Tests that interact with real GitHub resources
  */
-describe.only('GitHub Integration Tests', () => {
+describe('GitHub Integration Tests', () => {
 	let github: GitHub;
 
 	beforeEach(() => {
@@ -46,7 +46,7 @@ describe.only('GitHub Integration Tests', () => {
 	});
 
 	describe('getProjects and clone one', () => {
-		it.only('should get the projects and clone the first one', async () => {
+		it('should get the projects and clone the first one', async () => {
 			const projects = await github.getProjects();
 			expect(projects.length).to.be.greaterThan(0);
 			console.log(projects[0]);
@@ -57,8 +57,8 @@ describe.only('GitHub Integration Tests', () => {
 		});
 	});
 
-	describe('getJobLogs', () => {
-		it.skip('should fetch job logs for a specific job', async () => {
+	describe.skip('getJobLogs', () => {
+		it('should fetch job logs for a specific job', async () => {
 			// Note: You'll need to replace these with actual values from your GitHub repository
 			const jobId = '12345678';
 
