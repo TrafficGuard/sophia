@@ -19,6 +19,7 @@ nav:
   - software-engineer.md
   - code-review.md
   - integrations.md
+  - roadmap.md
 
 plugins:
   - glightbox
