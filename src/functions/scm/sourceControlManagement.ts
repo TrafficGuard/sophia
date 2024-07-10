@@ -1,5 +1,6 @@
 import { functionRegistry } from 'src/functionRegistry';
 import { agentContext } from '#agent/agentContext';
+import { GitProject } from './gitProject';
 
 /**
  * Source Code Management system (GitHub, Gitlab, BitBucket etc)

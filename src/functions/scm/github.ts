@@ -213,7 +213,7 @@ function convertGitHubToGitProject(repo: GitHubRepository): GitProject {
 		description: repo.description,
 		defaultBranch: repo.default_branch,
 		visibility: repo.private ? 'private' : 'public',
-		archived: repo.archived || false,
+		archived: repo.archived ?? false,
 	};
 }
 

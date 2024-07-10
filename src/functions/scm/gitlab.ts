@@ -145,11 +145,11 @@ export class GitLab implements SourceControlManagement {
 					throw new Error(`Need pagination for projects for group ${group}. Returned more than ${pageSize}`);
 				}
 				projects.sort((a, b) => a.path.localeCompare(b.path));
-				projects.map((project) => convertGitLabToGitProject(project)).forEach((project) => resultProjects.push(project));
+				projects.map((project) => this.convertGitLabToGitProject(project)).forEach((project) => resultProjects.push(project));
 			}
 		}
 
-		return resultProjects;
+		return resultProjects as GitProject[];
 	}
 
 	private convertGitLabToGitProject(project: ProjectSchema): GitProject {

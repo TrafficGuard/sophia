@@ -50,7 +50,7 @@ describe.only('GitHub Integration Tests', () => {
 			expect(projects.length).to.be.greaterThan(0);
 			console.log(projects[0])
 			const firstProject = projects[0];
-			const clonePath = await github.cloneProject(firstProject.full_name);
+			const clonePath = await github.cloneProject(`${firstProject.name}`);
 			expect(clonePath).to.be.a('string');
 			expect(existsSync(clonePath)).to.be.true;
 		});
