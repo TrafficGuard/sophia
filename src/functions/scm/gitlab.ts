@@ -20,6 +20,7 @@ import { checkExecResult, execCmd, execCommand } from '#utils/exec';
 import { cacheRetry } from '../../cache/cacheRetry';
 import { func, funcClass } from '../../functionDefinition/functionDecorators';
 import { UtilFunctions } from '../util';
+import { GitProject } from './gitProject';
 import { SourceControlManagement } from './sourceControlManagement';
 
 export interface GitLabConfig {
@@ -118,8 +119,8 @@ export class GitLab implements SourceControlManagement {
 	 * @returns the details of all the projects available (name, description, git URL etc)
 	 */
 	@cacheRetry({ scope: 'global' })
-	async getProjects(): Promise<any[]> {
-		const resultProjects: GitLabProject[] = [];
+	async getProjects(): Promise<GitProject[]> {
+		const resultProjects: GitProject[] = [];
 		for (const group of this.config().topLevelGroups) {
 			const projects = await this.api().Groups.allProjects(group, {
 				orderBy: 'name',
@@ -127,7 +128,7 @@ export class GitLab implements SourceControlManagement {
 			});
 			// console.log(`${group} ==========`);
 			projects.sort((a, b) => a.path.localeCompare(b.path));
-			projects.map((project) => this.toGitLabProject(project)).forEach((project) => resultProjects.push(project));
+			projects.map((project) => this.convertGitLabToGitProject(project)).forEach((project) => resultProjects.push(project));
 
 			const descendantGroups = await this.api().Groups.allDescendantGroups(group, {});
 			for (const descendantGroup of descendantGroups) {
@@ -144,30 +145,21 @@ export class GitLab implements SourceControlManagement {
 					throw new Error(`Need pagination for projects for group ${group}. Returned more than ${pageSize}`);
 				}
 				projects.sort((a, b) => a.path.localeCompare(b.path));
-				projects.map((project) => this.toGitLabProject(project)).forEach((project) => resultProjects.push(project));
+				projects.map((project) => this.convertGitLabToGitProject(project)).forEach((project) => resultProjects.push(project));
 			}
 		}
 
-		return resultProjects.map((project) => {
-			project.ci_config_path = undefined;
-			project.archived = undefined;
-			project.visibility = undefined;
-			return project;
-		});
+		return resultProjects;
 	}
 
-	private toGitLabProject(project: ProjectSchema): GitLabProject {
+	private convertGitLabToGitProject(project: ProjectSchema): GitProject {
 		return {
 			id: project.id,
 			name: project.name,
 			description: project.description,
-			path_with_namespace: project.path_with_namespace,
-			http_url_to_repo: project.http_url_to_repo,
-			default_branch: project.default_branch,
-			archived: project.archived,
+			defaultBranch: project.default_branch || 'main', // Provide a default value
 			visibility: project.visibility,
-			owner: project.owner,
-			ci_config_path: project.ci_config_path,
+			archived: project.archived || false,
 		};
 	}
 

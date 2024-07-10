@@ -6,8 +6,9 @@ import { SourceControlManagement } from '#functions/scm/sourceControlManagement'
 import { logger } from '#o11y/logger';
 import { functionConfig } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
-import { checkExecResult, execCmd } from '#utils/exec';
+import { checkExecResult, execCmd, execCommand, failOnError } from '#utils/exec';
 import { func, funcClass } from '../../functionDefinition/functionDecorators';
+import { GitProject } from './gitProject';
 
 type RequestType = typeof request;
 
@@ -18,34 +19,49 @@ export interface GitHubConfig {
 }
 
 /**
- * NOT COMPLETED OR TESTED!
+ *
  */
 @funcClass(__filename)
 export class GitHub implements SourceControlManagement {
-	_request;
-	_config: GitHubConfig;
+	/** Do not access. Use request() */
+	private _request;
+	/** Do not access. Use config() */
+	private _config: GitHubConfig;
 
-	private config(): GitHubConfig {
+	config(): GitHubConfig {
 		if (!this._config) {
 			const userConfig = functionConfig(GitHub) as GitHubConfig;
 			this._config = {
-				username: userConfig.username || envVar('GITHUB_USER'),
-				organisation: userConfig.organisation || envVar('GITHUB_ORG'),
+				username: userConfig.username || process.env.GITHUB_USER,
+				organisation: userConfig.organisation || process.env.GITHUB_ORG,
 				token: userConfig.token || envVar('GITHUB_TOKEN'),
 			};
+			if (!this._config.username && !this._config.organisation) throw new Error('GitHub Org or User must be provided');
+			if (!this._config.token) throw new Error('GitHub token must be provided');
 		}
 		return this._config;
 	}
 
-	private request(): RequestType {
-		if (!this.request) {
-			functionConfig(GitHub).this._request = request.defaults({
+	request(): RequestType {
+		if (!this._request) {
+			this._request = request.defaults({
 				headers: {
 					authorization: `token ${this.config().token}`,
 				},
 			});
 		}
 		return this._request;
+	}
+
+	// Do NOT change this method
+	/**
+	 * Runs the integration test for the GitHub service class
+	 */
+	@func()
+	async runIntegrationTest(): Promise<string> {
+		const result = await execCommand('npm run test:integration');
+		failOnError('Test failed', result);
+		return result.stdout;
 	}
 
 	/**
@@ -100,19 +116,74 @@ export class GitHub implements SourceControlManagement {
 	}
 
 	@func()
-	async getProjects(): Promise<GitHubRepository[]> {
-		const response = await this.request()('GET /orgs/{org}/repos', {
-			org: this.config().organisation,
-			type: 'all',
-			sort: 'updated',
-			direction: 'desc',
-			per_page: 100,
-		});
-		return response.data as GitHubRepository[];
+	async getProjects(): Promise<GitProject[]> {
+		if (this.config().username) {
+			try {
+				logger.info(`Getting projects for ${this.config().organisation}`);
+				const response = await this.request()('GET /users/{username}/repos', {
+					username: this.config().username,
+					type: 'all',
+					sort: 'updated',
+					direction: 'desc',
+					per_page: 100,
+					headers: {
+						'X-GitHub-Api-Version': '2022-11-28',
+					},
+				});
+				return (response.data as GitHubRepository[]).map(convertGitHubToGitProject);
+			} catch (error) {
+				logger.error(error, 'Failed to get projects');
+				throw new Error(`Failed to get projects: ${error.message}`);
+			}
+		} else if (this.config().organisation) {
+			try {
+				logger.info(`Getting projects for ${this.config().organisation}`);
+				const response = await this.request()('GET /orgs/{org}/repos', {
+					org: this.config().organisation,
+					type: 'all',
+					sort: 'updated',
+					direction: 'desc',
+					per_page: 100,
+					headers: {
+						'X-GitHub-Api-Version': '2022-11-28',
+					},
+				});
+				return (response.data as GitHubRepository[]).map(convertGitHubToGitProject);
+			} catch (error) {
+				logger.error(error, 'Failed to get projects');
+				throw new Error(`Failed to get projects: ${error.message}`);
+			}
+		} else {
+			throw new Error('GitHub Org or User must be configured');
+		}
 	}
 
-	getJobLogs(projectPath: string, jobId: string): Promise<string> {
-		return Promise.resolve('');
+	/**
+	 * Fetches the logs for a specific job in a GitHub Actions workflow.
+	 * @param projectPath The path to the project, typically in the format 'owner/repo'
+	 * @param jobId The ID of the job for which to fetch logs
+	 * @returns A promise that resolves to the job logs as a string
+	 * @throws Error if unable to fetch the job logs
+	 */
+	@func()
+	async getJobLogs(projectPath: string, jobId: string): Promise<string> {
+		try {
+			const [owner, repo] = extractOwnerProject(projectPath);
+			const response = await this.request()('GET /repos/{owner}/{repo}/actions/jobs/{job_id}/logs', {
+				owner,
+				repo,
+				job_id: jobId,
+				headers: {
+					Accept: 'application/vnd.github+json',
+					'X-GitHub-Api-Version': '2022-11-28',
+				},
+			});
+
+			return response.data;
+		} catch (error) {
+			logger.error(`Failed to get job logs for job ${jobId} in project ${projectPath}`, error);
+			throw new Error(`Failed to get job logs: ${error.message}`);
+		}
 	}
 }
 
@@ -131,6 +202,18 @@ interface GitHubRepository {
 	ssh_url: string;
 	clone_url: string;
 	default_branch: string;
+	archived: boolean;
+}
+
+function convertGitHubToGitProject(repo: GitHubRepository): GitProject {
+	return {
+		id: repo.id,
+		name: repo.name,
+		description: repo.description,
+		defaultBranch: repo.default_branch,
+		visibility: repo.private ? 'private' : 'public',
+		archived: repo.archived ?? false,
+	};
 }
 
 function extractOwnerProject(url: string): [string, string] {

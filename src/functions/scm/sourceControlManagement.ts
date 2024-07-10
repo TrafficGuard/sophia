@@ -1,11 +1,12 @@
 import { functionRegistry } from 'src/functionRegistry';
 import { agentContext } from '#agent/agentContext';
+import { GitProject } from './gitProject';
 
 /**
  * Source Code Management system (GitHub, Gitlab, BitBucket etc)
  */
 export interface SourceControlManagement {
-	getProjects(): Promise<any[]>;
+	getProjects(): Promise<GitProject[]>;
 
 	cloneProject(projectPathWithNamespace: string): Promise<string>;
 
