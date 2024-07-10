@@ -157,7 +157,7 @@ export class GitLab implements SourceControlManagement {
 			id: project.id,
 			name: project.name,
 			description: project.description,
-			defaultBranch: project.default_branch,
+			defaultBranch: project.default_branch || 'main', // Provide a default value
 			visibility: project.visibility,
 			archived: project.archived || false,
 		};

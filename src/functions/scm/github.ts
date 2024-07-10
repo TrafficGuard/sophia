@@ -204,6 +204,7 @@ interface GitHubRepository {
 	ssh_url: string;
 	clone_url: string;
 	default_branch: string;
+	archived: boolean;
 }
 
 function convertGitHubToGitProject(repo: GitHubRepository): GitProject {
