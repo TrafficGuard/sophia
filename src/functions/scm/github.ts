@@ -6,7 +6,7 @@ import { SourceControlManagement } from '#functions/scm/sourceControlManagement'
 import { logger } from '#o11y/logger';
 import { functionConfig } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
-import { checkExecResult, execCmd } from '#utils/exec';
+import {checkExecResult, execCmd, execCommand, failOnError} from '#utils/exec';
 import { func, funcClass } from '../../functionDefinition/functionDecorators';
 
 type RequestType = typeof request;
@@ -18,7 +18,7 @@ export interface GitHubConfig {
 }
 
 /**
- * NOT COMPLETED OR TESTED!
+ *
  */
 @funcClass(__filename)
 export class GitHub implements SourceControlManagement {
@@ -46,6 +46,17 @@ export class GitHub implements SourceControlManagement {
 			});
 		}
 		return this._request;
+	}
+
+	// Do NOT change this method
+	/**
+	 * Runs the integration test for the GitHub service class
+	 */
+	@func()
+	async runIntegrationTest(): Promise<string> {
+		const result = await execCommand('npm run test:integration')
+		failOnError('Test failed', result)
+		return result.stdout;
 	}
 
 	/**
