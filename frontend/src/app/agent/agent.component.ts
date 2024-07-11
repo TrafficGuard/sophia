@@ -277,9 +277,9 @@ export class AgentComponent implements OnInit {
       .subscribe({
         next: (response) => {
           console.log('Agent resumed successfully:', response);
-          this.loadAgentDetails(this.agentId!);
           this.isSubmitting = false;
           this.loadAgentDetails(this.agentId!);
+          this.errorForm.reset();
         },
         error: (error) => {
           this.isSubmitting = false;
