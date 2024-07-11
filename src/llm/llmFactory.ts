@@ -8,6 +8,7 @@ import { groqLLMRegistry } from '#llm/models/groq';
 import { openAiLLMRegistry } from '#llm/models/openai';
 import { togetherLLMRegistry } from '#llm/models/together';
 import { vertexLLMRegistry } from '#llm/models/vertexai';
+import { ollamaLLMRegistry } from '#llm/models/ollama';
 import { MultiLLM } from '#llm/multi-llm';
 import { logger } from '#o11y/logger';
 
@@ -20,6 +21,7 @@ export const LLM_FACTORY: Record<string, () => LLM> = {
 	...togetherLLMRegistry(),
 	...vertexLLMRegistry(),
 	...deepseekLLMRegistry(),
+	...ollamaLLMRegistry(),
 };
 
 export const LLM_TYPES: Array<{ id: string; name: string }> = Object.values(LLM_FACTORY)
