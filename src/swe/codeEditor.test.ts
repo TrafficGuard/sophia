@@ -1,3 +1,4 @@
+import { expect } from 'chai';
 import { CodeEditor } from './codeEditor';
 
 describe('CodeEditor', () => {
@@ -16,9 +17,9 @@ ASSISTANT This should be ignored
 SYSTEM Another system message
 USER Another user message
 `;
-			const expected = ['This is a system message', 'This is a user message', 'Another system message', 'Another user message'];
+			const expected = 'This is a system message\nThis is a user message\nAnother system message\nAnother user message';
 			// @ts-ignore: Accessing private method for testing
-			expect(codeEditor.parseAiderInput(input)).toEqual(expected);
+			expect(codeEditor.parseAiderInput(input)).to.equal(expected);
 		});
 
 		it('should return an empty array for no matching lines', () => {
@@ -27,7 +28,7 @@ ASSISTANT This should be ignored
 Some other text
 `;
 			// @ts-ignore: Accessing private method for testing
-			expect(codeEditor.parseAiderInput(input)).toEqual([]);
+			expect(codeEditor.parseAiderInput(input)).to.equal('');
 		});
 	});
 
@@ -41,9 +42,9 @@ ASSISTANT This is another assistant message
 Some other text
 ASSISTANT Final assistant message
 `;
-			const expected = ['This is an assistant message', 'This is another assistant message', 'Final assistant message'];
+			const expected = 'This is an assistant message\nThis is another assistant message\nFinal assistant message';
 			// @ts-ignore: Accessing private method for testing
-			expect(codeEditor.parseAiderOutput(input)).toEqual(expected);
+			expect(codeEditor.parseAiderOutput(input)).to.equal(expected);
 		});
 
 		it('should return an empty array for no matching lines', () => {
@@ -53,7 +54,7 @@ USER This should also be ignored
 Some other text
 `;
 			// @ts-ignore: Accessing private method for testing
-			expect(codeEditor.parseAiderOutput(input)).toEqual([]);
+			expect(codeEditor.parseAiderOutput(input)).to.equal('');
 		});
 	});
 });
