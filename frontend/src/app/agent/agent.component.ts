@@ -217,9 +217,10 @@ export class AgentComponent implements OnInit {
       .subscribe({
         next: (response) => {
           console.log('Agent resumed successfully:', response);
-          this.loadAgentDetails(this.agentId!);
           this.isSubmitting = false;
           this.loadAgentDetails(this.agentId!);
+          this.loadLlmCalls();
+          this.hilForm.reset();
         },
         error: (error) => {
           this.isSubmitting = false;
@@ -251,8 +252,9 @@ export class AgentComponent implements OnInit {
       .subscribe({
         next: (response) => {
           console.log('Agent resumed successfully:', response);
-          this.loadAgentDetails(this.agentId!);
           this.isSubmitting = false;
+          this.loadAgentDetails(this.agentId!);
+          this.loadLlmCalls();
           this.showResumeForm = false;
           this.resumeForm.reset();
         },
@@ -279,6 +281,7 @@ export class AgentComponent implements OnInit {
           console.log('Agent resumed successfully:', response);
           this.isSubmitting = false;
           this.loadAgentDetails(this.agentId!);
+          this.loadLlmCalls();
           this.errorForm.reset();
         },
         error: (error) => {
@@ -321,6 +324,7 @@ export class AgentComponent implements OnInit {
         next: (response) => {
           console.log('Feedback submitted successfully:', response);
           this.loadAgentDetails(this.agentId!);
+          this.loadLlmCalls();
           this.feedbackForm.reset();
         },
         error: (error) => {
