@@ -15,7 +15,7 @@ export function runWithUser(user: User, fn: () => any) {
 }
 
 export function isSingleUser(): boolean {
-	return process.env.AUTH === 'single_user';
+	return !process.env.AUTH || process.env.AUTH === 'single_user';
 }
 
 /**

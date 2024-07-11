@@ -22,7 +22,7 @@ const REQUEST_FEEDBACK_FUNCTION_CALL = `<plan>Requesting feedback</plan>\n<funct
 const COMPLETE_FUNCTION_CALL = `<plan>Ready to complete</plan>\n<function_calls><function_call><function_name>${AGENT_COMPLETED_NAME}</function_name><parameters></parameters></function_call></function_calls>`;
 const NOOP_FUNCTION_CALL = `<plan>I'm going to call the noop function</plan>\n<function_calls><function_call><function_name>${TEST_FUNC_NOOP}</function_name><parameters></parameters></function_call></function_calls>`;
 
-describe.only('agentRunner', () => {
+describe('agentRunner', () => {
 	initInMemoryApplicationContext();
 	let mockLLM = new MockLLM();
 	let llms: AgentLLMs = {

@@ -1,8 +1,12 @@
+import { writeFileSync } from 'node:fs';
 import { agentContextStorage, createContext } from '#agent/agentContext';
 import { PublicWeb } from '#functions/web/web';
 import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 
+// npm run scrape <URL> <filename(optional)>
+
 async function url2markdown(url: string) {
+	if (!URL.canParse(url)) throw new Error('Invalid URL');
 	console.log(`${url}\n`);
 	agentContextStorage.enterWith(
 		createContext({
@@ -13,7 +17,10 @@ async function url2markdown(url: string) {
 		}),
 	);
 
-	return await new PublicWeb().getWebPage(url);
+	const markdown = await new PublicWeb().getWebPage(url);
+	const file = process.argv[3] ?? 'scrape.md';
+	writeFileSync(file, markdown);
+	console.log(`Written to ${file}`);
 }
 
 if (!process.argv[2]) {
@@ -21,4 +28,4 @@ if (!process.argv[2]) {
 	process.exit(1);
 }
 
-url2markdown(process.argv[2]).then(console.log, console.error);
+url2markdown(process.argv[2]).catch(console.error);

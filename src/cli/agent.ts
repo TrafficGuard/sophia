@@ -1,52 +1,32 @@
 import '#fastify/trace-init/trace-init';
 
 import { readFileSync } from 'fs';
-import { LlmFunctions } from '#agent/LlmFunctions';
-import { AgentLLMs, getFileSystem } from '#agent/agentContext';
-import { RunAgentConfig, runAgent, startAgent } from '#agent/xmlAgentRunner';
+import { startAgent } from '#agent/xmlAgentRunner';
 import { FileSystem } from '#functions/filesystem';
-import { Claude3_Opus, ClaudeLLMs } from '#llm/models/anthropic';
-import { Claude3_Haiku_Vertex, Claude3_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
-import { GPT4 } from '#llm/models/openai';
-import { GEMINI_1_5_PRO_LLMS, Gemini_1_5_Pro } from '#llm/models/vertexai';
-import { MultiLLM } from '#llm/multi-llm';
-import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
-import { appContext } from '../app';
-import { CodeEditingAgent } from '../swe/codeEditingAgent';
-import { SimpleCodeEditor } from '../swe/simpleCodeEditor';
-import { SoftwareDeveloperAgent } from '../swe/softwareDeveloperAgent';
-
-import { GoogleCloud } from '#functions/google-cloud';
-import { Jira } from '#functions/jira';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
-import { currentUser } from '#user/userService/userContext';
-import { envVarHumanInLoopSettings } from './cliHumanInLoop';
-
-const opus = Claude3_Opus();
-const sonnet = Claude3_Sonnet_Vertex();
-const haiku = Claude3_Haiku_Vertex();
-const gemini = GEMINI_1_5_PRO_LLMS;
-
-const AGENT_LLMS: AgentLLMs = {
-	easy: haiku,
-	medium: sonnet,
-	hard: opus,
-	xhard: new MultiLLM([opus, GPT4(), Gemini_1_5_Pro()], 3),
-};
+import { ClaudeLLMs } from '#llm/models/anthropic';
+import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
+import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
+import { initFirestoreApplicationContext } from '../app';
 
 export async function main() {
-	const config: RunAgentConfig = {
-		agentName: 'cil-agent',
-		initialPrompt: readFileSync('src/cli/agent-in', 'utf-8'),
-		user: currentUser(),
-		functions: new LlmFunctions(SoftwareDeveloperAgent, FileSystem, PublicWeb, Perplexity),
-		humanInLoop: envVarHumanInLoopSettings(),
-		llms: ClaudeVertexLLMs(),
-	};
+	let llms = ClaudeLLMs();
+	if (process.env.GCLOUD_PROJECT) {
+		await initFirestoreApplicationContext();
+		llms = ClaudeVertexLLMs();
+	}
 
-	await startAgent(config);
+	const functions = [FileSystem, SoftwareDeveloperAgent, Perplexity, PublicWeb];
+
+	await startAgent({
+		agentName: 'cli-agent',
+		initialPrompt: readFileSync('src/cli/agent-in', 'utf-8'),
+		functions,
+		llms,
+	});
 }
+
 main().then(
 	() => console.log('done'),
 	(e) => console.error(e),

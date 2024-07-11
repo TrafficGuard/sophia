@@ -2,10 +2,12 @@ import util from 'util';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
 import { execCmd, execCommand, failOnError } from '#utils/exec';
+import { funcClass } from '../../functionDefinition/functionDecorators';
 import { FileSystem } from '../filesystem';
 import { VersionControlSystem } from './versionControlSystem';
 const exec = util.promisify(require('child_process').exec);
 
+@funcClass(__filename)
 export class Git implements VersionControlSystem {
 	/** The branch name before calling switchToBranch. This enables getting the diff between the current and previous branch */
 	previousBranch: string | undefined;
@@ -87,18 +89,31 @@ export class Git implements VersionControlSystem {
 		return result.stdout;
 	}
 
+	/**
+	 * Creates a new branch, or if it already exists then switches to it
+	 * @param branchName
+	 * @return if the branch was created, or false if switched to an existing one
+	 */
 	@span({ branch: 0 })
-	async createBranch(branchName: string): Promise<void> {
+	async createBranch(branchName: string): Promise<boolean> {
 		this.previousBranch = await this.getBranchName();
 
 		const { stdout, stderr, exitCode } = await execCommand(`git branch ${branchName}`);
-
+		if (exitCode === 0) {
+			return true;
+		}
 		if (exitCode > 0 && stderr?.includes('already exists')) {
 			logger.info(`Branch ${branchName} already exists. Switching to it`);
 			await this.switchToBranch(branchName);
-		} else if (exitCode > 0) throw new Error(`${stdout}\n${stderr}`);
+			return false;
+		}
+		if (exitCode > 0) throw new Error(`${stdout}\n${stderr}`);
 	}
 
+	/**
+	 *
+	 * @param branchName
+	 */
 	@span({ branch: 0 })
 	async switchToBranch(branchName: string): Promise<void> {
 		this.previousBranch = await this.getBranchName();

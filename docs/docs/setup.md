@@ -71,7 +71,7 @@ Integrations
 - [GitLab](https://www.gitab.com/-/user_settings/personal_access_tokens)
 - [GitHub](https://github.com/settings/tokens?type=beta)
 
-For observability configuration (logging and tracing) see the [Observability page](/observability).
+For observability configuration (logging and tracing) see the [Observability page](observability.md).
 
 ## Running quick start
 

@@ -90,6 +90,7 @@ export function llms(): AgentLLMs {
  */
 export function addCost(cost: number) {
 	const store = agentContextStorage.getStore();
+	if (!store) return;
 	logger.debug(`Adding cost $${cost}`);
 	store.cost += cost;
 	store.budgetRemaining -= cost;
@@ -97,8 +98,9 @@ export function addCost(cost: number) {
 }
 
 export function getFileSystem(): FileSystem {
-	const filesystem = agentContextStorage.getStore().fileSystem;
-	if (!filesystem) throw new Error('No file system available in the workflow context');
+	if (!agentContextStorage.getStore() && process.env.TEST === 'true') return new FileSystem();
+	const filesystem = agentContextStorage.getStore()?.fileSystem;
+	if (!filesystem) throw new Error('No file system available on the agent context');
 	return filesystem;
 }
 

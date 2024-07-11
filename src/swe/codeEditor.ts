@@ -71,8 +71,6 @@ export class CodeEditor {
 		const llmHistory = await getFileSystem().getFileContents(llmHistoryFile);
 		const parsedInput = this.parseAiderInput(llmHistory);
 		const parsedOutput = this.parseAiderOutput(llmHistory);
-		console.log(parsedInput)
-		console.log(parsedOutput);
 
 		const cost = inputCharCost * parsedInput.length + outputCharCost * parsedOutput.length;
 		addCost(cost);

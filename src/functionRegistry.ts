@@ -1,6 +1,7 @@
 import { FileSystem } from '#functions/filesystem';
 import { GoogleCloud } from '#functions/google-cloud';
 import { Jira } from '#functions/jira';
+import { GitHub } from '#functions/scm/github';
 import { GitLab } from '#functions/scm/gitlab';
 import { Slack } from '#functions/slack';
 import { UtilFunctions } from '#functions/util';
@@ -17,6 +18,7 @@ export function functionRegistry(): Array<new () => any> {
 		CodeEditingAgent,
 		FileSystem,
 		GitLab,
+		GitHub,
 		GoogleCloud,
 		Jira,
 		Perplexity,
