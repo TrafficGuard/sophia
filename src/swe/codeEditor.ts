@@ -10,6 +10,17 @@ import {promisify} from "util";
 
 @funcClass(__filename)
 export class CodeEditor {
+	private parseAiderInput(output: string): string[] {
+		return output.split('\n')
+			.filter(line => line.startsWith('SYSTEM') || line.startsWith('USER'))
+			.map(line => line.replace(/^(SYSTEM|USER)\s+/, ''));
+	}
+
+	private parseAiderOutput(output: string): string[] {
+		return output.split('\n')
+			.filter(line => line.startsWith('ASSISTANT'))
+			.map(line => line.replace(/^ASSISTANT\s+/, ''));
+	}
 	/**
 	 * Makes the changes to the project files to meet the task requirements
 	 * @param requirements the complete task requirements with all the supporting documentation and code samples
@@ -58,6 +69,13 @@ export class CodeEditor {
 
 		const { stdout, stderr, exitCode } = await execCommand(cmd, { envVars: env });
 		logger.info(stdout + stderr);
+
+		const parsedInput = this.parseAiderInput(stdout);
+		const parsedOutput = this.parseAiderOutput(stdout);
+
+		logger.info('Parsed Aider Input:', parsedInput);
+		logger.info('Parsed Aider Output:', parsedOutput);
+
 		if (exitCode > 0) throw new Error(`${stdout} ${stderr}`);
 	}
 }
