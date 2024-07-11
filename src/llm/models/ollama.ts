@@ -1,9 +1,8 @@
 import axios from 'axios';
-import { addCost, agentContext } from '#agent/agentContext';
+import { AgentLLMs, agentContext } from '#agent/agentContext';
 import { CallerId } from '#llm/llmCallService/llmCallService';
 import { CreateLlmResponse } from '#llm/llmCallService/llmRequestResponse';
 import { withActiveSpan } from '#o11y/trace';
-import { envVar } from '#utils/env-var';
 import { appContext } from '../../app';
 import { BaseLLM } from '../base-llm';
 import { GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../llm';
@@ -11,12 +10,13 @@ import { GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../
 export const OLLAMA_SERVICE = 'ollama';
 
 export class OllamaLLM extends BaseLLM {
-	constructor(name: string, model: string, maxInputTokens: number, inputCostPerChar: number, outputCostPerChar: number) {
-		super(name, OLLAMA_SERVICE, model, maxInputTokens, inputCostPerChar, outputCostPerChar);
+	constructor(name: string, model: string, maxInputTokens: number) {
+		super(name, OLLAMA_SERVICE, model, maxInputTokens, 0, 0);
 	}
 
 	@logTextGeneration
 	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
+		console.log('generateText');
 		return withActiveSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 
@@ -31,78 +31,76 @@ export class OllamaLLM extends BaseLLM {
 			const llmRequestSave = appContext().llmCallService.saveRequest(userPrompt, systemPrompt);
 			const requestTime = Date.now();
 
-			try {
-				const response = await axios.post(`${envVar('OLLAMA_API_URL') || 'http://localhost:11434'}/api/generate`, {
-					model: this.model,
-					prompt: prompt,
-					stream: false,
-					options: {
-						temperature: opts?.temperature ?? 1,
-						top_p: opts?.topP,
-					},
-				});
+			const url = `${process.env.OLLAMA_API_URL || 'http://localhost:11434'}/api/generate`;
 
-				const responseText = response.data.response;
-				const timeToFirstToken = Date.now() - requestTime;
-				const finishTime = Date.now();
+			const response = await axios.post(url, {
+				model: this.model,
+				prompt: prompt,
+				stream: false,
+				options: {
+					temperature: opts?.temperature ?? 1,
+					top_p: opts?.topP,
+				},
+			});
 
-				const llmRequest = await llmRequestSave;
-				const llmResponse: CreateLlmResponse = {
-					llmId: this.getId(),
-					llmRequestId: llmRequest.id,
-					responseText: responseText,
-					requestTime,
-					timeToFirstToken: timeToFirstToken,
-					totalTime: finishTime - requestTime,
-					callStack: agentContext().callStack.join(' > '),
-				};
-				await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
+			console.log(response);
+			const responseText = response.data.response;
+			const timeToFirstToken = Date.now() - requestTime;
+			const finishTime = Date.now();
 
-				const inputCost = this.getInputCostPerToken() * prompt.length;
-				const outputCost = this.getOutputCostPerToken() * responseText.length;
-				const cost = inputCost + outputCost;
+			const llmRequest = await llmRequestSave;
+			const llmResponse: CreateLlmResponse = {
+				llmId: this.getId(),
+				llmRequestId: llmRequest.id,
+				responseText: responseText,
+				requestTime,
+				timeToFirstToken: timeToFirstToken,
+				totalTime: finishTime - requestTime,
+				callStack: agentContext().callStack.join(' > '),
+			};
+			await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
 
-				span.setAttributes({
-					response: responseText,
-					timeToFirstToken,
-					inputCost,
-					outputCost,
-					cost,
-					outputChars: responseText.length,
-				});
+			span.setAttributes({
+				response: responseText,
+				timeToFirstToken,
+				outputChars: responseText.length,
+			});
 
-				addCost(cost);
-
-				return responseText;
-			} catch (error) {
-				span.recordException(error);
-				throw error;
-			}
+			return responseText;
 		});
 	}
 }
 
-export function Qwen2_7b() {
-	return new OllamaLLM('Qwen2 7B', 'qwen2:7b', 8192, 0, 0);
+export function Ollama_Qwen2_7b() {
+	return new OllamaLLM('Qwen2 7B', 'qwen2:7b', 8192);
 }
 
-export function Llama3_7b() {
-	return new OllamaLLM('Llama3 7B', 'llama3:7b', 4096, 0, 0);
+export function Ollama_Llama3_7b() {
+	return new OllamaLLM('Llama3 7B', 'llama3:7b', 4096);
 }
 
-export function CodeGemma_7b() {
-	return new OllamaLLM('CodeGemma 7B', 'codegemma:7b', 8192, 0, 0);
+export function Ollama_CodeGemma_7b() {
+	return new OllamaLLM('CodeGemma 7B', 'codegemma:7b', 8192);
 }
 
-export function Phi3() {
-	return new OllamaLLM('Phi3', 'phi3:latest', 2048, 0, 0);
+export function Ollama_Phi3() {
+	return new OllamaLLM('Phi3', 'phi3:latest', 2048);
+}
+
+export function Ollama_LLMs(): AgentLLMs {
+	return {
+		easy: Ollama_Phi3(),
+		medium: Ollama_Phi3(),
+		hard: Ollama_Llama3_7b(),
+		xhard: Ollama_Llama3_7b(),
+	};
 }
 
 export function ollamaLLMRegistry(): Record<string, () => LLM> {
 	return {
-		[`${OLLAMA_SERVICE}:qwen2:7b`]: Qwen2_7b,
-		[`${OLLAMA_SERVICE}:llama3:7b`]: Llama3_7b,
-		[`${OLLAMA_SERVICE}:codegemma:7b`]: CodeGemma_7b,
-		[`${OLLAMA_SERVICE}:phi3:latest`]: Phi3,
+		[`${OLLAMA_SERVICE}:qwen2:7b`]: Ollama_Qwen2_7b,
+		[`${OLLAMA_SERVICE}:llama3:7b`]: Ollama_Llama3_7b,
+		[`${OLLAMA_SERVICE}:codegemma:7b`]: Ollama_CodeGemma_7b,
+		[`${OLLAMA_SERVICE}:phi3:latest`]: Ollama_Phi3,
 	};
 }
