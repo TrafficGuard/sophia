@@ -1,9 +1,12 @@
 import { join } from 'path';
-import { getFileSystem } from '#agent/agentContext';
+import { agentContext, getFileSystem } from '#agent/agentContext';
+import { logger } from '#o11y/logger';
 import { currentUser } from '#user/userService/userContext';
 import { execCommand } from '#utils/exec';
 import { cacheRetry } from '../cache/cacheRetry';
 import { func, funcClass } from '../functionDefinition/functionDecorators';
+import fs from "node:fs";
+import {promisify} from "util";
 
 @funcClass(__filename)
 export class CodeEditor {
@@ -12,11 +15,11 @@ export class CodeEditor {
 	 * @param requirements the complete task requirements with all the supporting documentation and code samples
 	 * @param filesToEdit the names of any existing relevant files to edit
 	 */
-	@cacheRetry({ scope: 'global' })
 	@func()
 	async editFilesToMeetRequirements(requirements: string, filesToEdit: string[]): Promise<void> {
 		const messageFilePath = '.aider-requirements';
-
+		logger.info(requirements);
+		logger.info(filesToEdit);
 		// TODO insert additional info into the prompt
 		// We could have languageTools.getPrompt()
 		// See if a project has a AI-code.md file
@@ -46,12 +49,15 @@ export class CodeEditor {
 			throw new Error('Aider code editing requires a key for Anthropic, Deepseek or OpenAI');
 		}
 
-		// TODO --llm-history-file LLM_HISTORY_FILE
-		// Then we can parse the tokens for an approximate cost
+		await promisify(fs.mkdir)('.nous/aider/llm-history', { recursive: true });
+		const llmHistoryFile = `.nous/aider/llm-history/${agentContext().agentId}-${Date.now()}`;
 
-		const cmd = `aider --skip-check-update --yes ${modelArg} --message-file=${messageFilePath} ${filesToEdit.map((file) => `"${file}"`).join(' ')}`;
+		const cmd = `aider --skip-check-update --yes ${modelArg} --llm-history-file="${llmHistoryFile}" --message-file=${messageFilePath} ${filesToEdit
+			.map((file) => `"${file}"`)
+			.join(' ')}`;
 
 		const { stdout, stderr, exitCode } = await execCommand(cmd, { envVars: env });
+		logger.info(stdout + stderr);
 		if (exitCode > 0) throw new Error(`${stdout} ${stderr}`);
 	}
 }
