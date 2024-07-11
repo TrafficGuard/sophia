@@ -5,6 +5,7 @@ import { anthropicVertexLLMRegistry } from '#llm/models/anthropic-vertex';
 import { deepseekLLMRegistry } from '#llm/models/deepseek';
 import { fireworksLLMRegistry } from '#llm/models/fireworks';
 import { groqLLMRegistry } from '#llm/models/groq';
+import { ollamaLLMRegistry } from '#llm/models/ollama';
 import { openAiLLMRegistry } from '#llm/models/openai';
 import { togetherLLMRegistry } from '#llm/models/together';
 import { vertexLLMRegistry } from '#llm/models/vertexai';
@@ -20,6 +21,7 @@ export const LLM_FACTORY: Record<string, () => LLM> = {
 	...togetherLLMRegistry(),
 	...vertexLLMRegistry(),
 	...deepseekLLMRegistry(),
+	...ollamaLLMRegistry(),
 };
 
 export const LLM_TYPES: Array<{ id: string; name: string }> = Object.values(LLM_FACTORY)
