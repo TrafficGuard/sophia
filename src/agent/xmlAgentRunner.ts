@@ -93,6 +93,23 @@ export async function resumeHil(agentId: string, executionId: string, feedback: 
 	return runAgent(agent);
 }
 
+export async function resumeCompleted(agentId: string, executionId: string, instructions: string): Promise<string> {
+	const agent = await appContext().agentStateService.load(agentId);
+	if (agent.executionId !== executionId) throw new Error('Invalid executionId. Agent has already been resumed');
+
+	if (instructions.trim().length) {
+		agent.functionCallHistory.push({
+			function_name: SUPERVISOR_RESUMED_FUNCTION_NAME,
+			stdout: instructions,
+			parameters: {},
+		});
+	}
+	agent.state = 'agent';
+	agent.inputPrompt += `\nSupervisor note: The agent has been resumed from the completed state with the following instructions: ${instructions}`;
+	await appContext().agentStateService.save(agent);
+	return runAgent(agent);
+}
+
 export async function provideFeedback(agentId: string, executionId: string, feedback: string): Promise<string> {
 	const agent = await appContext().agentStateService.load(agentId);
 	if (agent.executionId !== executionId) throw new Error('Invalid executionId. Agent has already been provided feedback');

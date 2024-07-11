@@ -89,4 +89,29 @@ export async function agentExecutionRoutes(fastify: AppFastifyInstance) {
 			send(reply, 200);
 		},
 	);
+
+	/** Resumes an agent in the completed state */
+	fastify.post(
+		`${v1BasePath}/resume-completed`,
+		{
+			schema: {
+				body: Type.Object({
+					agentId: Type.String(),
+					executionId: Type.String(),
+					instructions: Type.String(),
+				}),
+			},
+		},
+		async (req, reply) => {
+			const { agentId, executionId, instructions } = req.body;
+
+			try {
+				await resumeCompleted(agentId, executionId, instructions);
+				send(reply, 200);
+			} catch (error) {
+				logger.error(error, 'Error resuming completed agent');
+				sendBadRequest(reply, 'Error resuming completed agent');
+			}
+		},
+	);
 }
