@@ -1,25 +1,27 @@
+import fs from 'node:fs';
 import { join } from 'path';
+import { promisify } from 'util';
 import { agentContext, getFileSystem } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
 import { currentUser } from '#user/userService/userContext';
 import { execCommand } from '#utils/exec';
 import { cacheRetry } from '../cache/cacheRetry';
 import { func, funcClass } from '../functionDefinition/functionDecorators';
-import fs from "node:fs";
-import {promisify} from "util";
 
 @funcClass(__filename)
 export class CodeEditor {
 	private parseAiderInput(output: string): string[] {
-		return output.split('\n')
-			.filter(line => line.startsWith('SYSTEM') || line.startsWith('USER'))
-			.map(line => line.replace(/^(SYSTEM|USER)\s+/, ''));
+		return output
+			.split('\n')
+			.filter((line) => line.startsWith('SYSTEM') || line.startsWith('USER'))
+			.map((line) => line.replace(/^(SYSTEM|USER)\s+/, ''));
 	}
 
 	private parseAiderOutput(output: string): string[] {
-		return output.split('\n')
-			.filter(line => line.startsWith('ASSISTANT'))
-			.map(line => line.replace(/^ASSISTANT\s+/, ''));
+		return output
+			.split('\n')
+			.filter((line) => line.startsWith('ASSISTANT'))
+			.map((line) => line.replace(/^ASSISTANT\s+/, ''));
 	}
 	/**
 	 * Makes the changes to the project files to meet the task requirements
