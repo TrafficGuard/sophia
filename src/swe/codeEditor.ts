@@ -80,4 +80,18 @@ export class CodeEditor {
 
 		if (exitCode > 0) throw new Error(`${stdout} ${stderr}`);
 	}
+
+	private parseAiderInput(output: string): string[] {
+		return output
+			.split('\n')
+			.filter((line) => line.startsWith('SYSTEM') || line.startsWith('USER'))
+			.map((line) => line.replace(/^(SYSTEM|USER)\s+/, ''));
+	}
+
+	private parseAiderOutput(output: string): string[] {
+		return output
+			.split('\n')
+			.filter((line) => line.startsWith('ASSISTANT'))
+			.map((line) => line.replace(/^ASSISTANT\s+/, ''));
+	}
 }
