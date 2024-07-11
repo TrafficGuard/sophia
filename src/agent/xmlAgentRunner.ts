@@ -19,7 +19,7 @@ import { AgentContext, AgentLLMs, AgentRunningState, agentContext, agentContextS
 export const SUPERVISOR_RESUMED_FUNCTION_NAME = 'Supervisor.Resumed';
 export const SUPERVISOR_CANCELLED_FUNCTION_NAME = 'Supervisor.Cancelled';
 
-const FUNCTION_OUTPUT_SUMMARIZE_LENGTH = 1000;
+const FUNCTION_OUTPUT_SUMMARIZE_LENGTH = 2000;
 
 export interface RunAgentConfig {
 	/** Uses currentUser() if not provided */
@@ -215,10 +215,10 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 
 					let llmResponse: FunctionResponse;
 					try {
-						llmResponse = await agentLLM.generateTextExpectingFunctions(currentPrompt, systemPromptWithFunctions);
+						llmResponse = await agentLLM.generateTextExpectingFunctions(currentPrompt, systemPromptWithFunctions, { id: 'generateFunctionCalls' });
 					} catch (e) {
 						const retryPrompt = `${currentPrompt}\nNote: Your previous response did not contain the response in the required format of <response><function_calls>...</function_calls></response>. You must reply in the correct response format.`;
-						llmResponse = await agentLLM.generateTextExpectingFunctions(retryPrompt, systemPromptWithFunctions);
+						llmResponse = await agentLLM.generateTextExpectingFunctions(retryPrompt, systemPromptWithFunctions, { id: 'generateFunctionCalls-retryError' });
 					}
 					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + userRequestXml + llmResponse.textResponse;
 					const functionCalls = llmResponse.functions.functionCalls;
@@ -229,7 +229,9 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 						const retryPrompt = `${currentPrompt}
 						Note: Your previous response did not contain a function call.  If you are able to answer/complete the question/task, then call the ${AGENT_COMPLETED_NAME} function with the appropriate response.
 						If you are unsure what to do next then call the ${AGENT_REQUEST_FEEDBACK} function with a clarifying question.`;
-						const functionCallResponse: FunctionResponse = await agentLLM.generateTextExpectingFunctions(retryPrompt, systemPromptWithFunctions);
+						const functionCallResponse: FunctionResponse = await agentLLM.generateTextExpectingFunctions(retryPrompt, systemPromptWithFunctions, {
+							id: 'generateFunctionCalls-retryNoFunctions',
+						});
 						// retrying
 						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + userRequestXml + functionCallResponse.textResponse;
 						const functionCalls = functionCallResponse.functions.functionCalls;
@@ -247,7 +249,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 
 					for (const functionCall of functionCalls) {
 						try {
-							const functionResponse = await functions.callFunction(functionCall);
+							const functionResponse: any = await functions.callFunction(functionCall);
 							let functionResult = agentLLM.formatFunctionResult(functionCall.function_name, functionResponse);
 							if (functionResult.startsWith('<response>')) functionResult = functionResult.slice(10);
 							// The trailing </response> will be removed as it's a stop word for the LLMs
@@ -257,7 +259,9 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 							// To minimise the function call history size becoming too large (i.e. expensive)
 							// we'll create a summary for responses which are quite long
 							const outputSummary =
-								functionResponseString?.length > FUNCTION_OUTPUT_SUMMARIZE_LENGTH ? await summariseLongFunctionOutput(functionCall) : undefined;
+								functionResponse?.functionResponseString?.length > FUNCTION_OUTPUT_SUMMARIZE_LENGTH
+									? await summariseLongFunctionOutput(functionResponse)
+									: undefined;
 
 							agent.functionCallHistory.push({
 								function_name: functionCall.function_name,
@@ -343,8 +347,7 @@ async function summariseLongFunctionOutput(functionResult: FunctionCallResult): 
 		functionResult.stdout ?? functionResult.stderr
 	}</${errorPrefix}output>
 	For the above function call summarise the output into a paragraph that captures key details about the output content, which might include identifiers, content summary, content structure and examples. Only responsd with the summary`;
-	const summary = await llms().easy.generateText(prompt, null, { id: 'summariseFunctionOutput' });
-	return summary;
+	return await llms().easy.generateText(prompt, null, { id: 'summariseLongFunctionOutput' });
 }
 
 function notificationMessage(agent: AgentContext): string {
