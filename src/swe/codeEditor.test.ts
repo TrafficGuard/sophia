@@ -1,4 +1,4 @@
-import { CodeEditor } from '../codeEditor';
+import { CodeEditor } from './codeEditor';
 
 describe('CodeEditor', () => {
 	let codeEditor: CodeEditor;
