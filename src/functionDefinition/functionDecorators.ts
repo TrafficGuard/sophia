@@ -1,7 +1,7 @@
 import { Span } from '@opentelemetry/api';
 import { agentContext } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
-import { getTracer, setFunctionSpanAttributes } from '#o11y/trace';
+import { getTracer, setFunctionSpanAttributes, withActiveSpan } from '#o11y/trace';
 import { functionDefinitionParser } from './functionDefinitionParser';
 import { FunctionDefinition } from './functions';
 
@@ -49,23 +49,18 @@ export function func() {
 				attributeExtractors[param.name] = param.index;
 			}
 
-			return tracer.withActiveSpan(functionName, async (span: Span) => {
+			return withActiveSpan(functionName, async (span: Span) => {
 				setFunctionSpanAttributes(span, functionName, attributeExtractors, args);
-				try {
-					agentContext()?.callStack.push(functionName);
-					span.setAttribute('call', agentContext()?.callStack.join(' > '));
+				span.setAttribute('call', agentContext()?.callStack.join(' > '));
 
-					const result = originalMethod.call(this, ...args);
-					if (typeof result?.then === 'function') await result;
-					try {
-						span.setAttribute('result', JSON.stringify(result));
-					} catch (e) {
-						logger.info(`Could not serialize result from function ${functionName}: ${e.message}`);
-					}
-					return result;
-				} finally {
-					agentContext()?.callStack.pop();
+				const result = originalMethod.call(this, ...args);
+				if (typeof result?.then === 'function') await result;
+				try {
+					span.setAttribute('result', JSON.stringify(result));
+				} catch (e) {
+					logger.info(`Could not serialize result from function ${functionName}: ${e.message}`);
 				}
+				return result;
 			});
 		};
 	};
