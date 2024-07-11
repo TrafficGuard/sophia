@@ -32,7 +32,7 @@ export class OllamaLLM extends BaseLLM {
       const requestTime = Date.now();
 
       try {
-        const response = await axios.post(`${envVar('OLLAMA_API_URL', 'http://localhost:11434')}/api/generate`, {
+        const response = await axios.post(`${envVar('OLLAMA_API_URL') || 'http://localhost:11434'}/api/generate`, {
           model: this.model,
           prompt: prompt,
           stream: false,
