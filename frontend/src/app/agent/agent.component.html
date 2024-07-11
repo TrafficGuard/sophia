@@ -39,6 +39,25 @@
       </form>
     </mat-card>
 
+    <mat-card *ngIf="agentDetails.state === 'completed' && showResumeForm">
+      <form [formGroup]="resumeForm" (ngSubmit)="onResumeCompleted()">
+        <mat-card-title>Resume Completed Agent</mat-card-title>
+        <mat-card-content>
+          <mat-form-field appearance="fill" class="full-width">
+            <textarea
+              matInput
+              placeholder="Provide additional instructions or context (optional)"
+              formControlName="resumeInstructions"
+            ></textarea>
+          </mat-form-field>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-raised-button color="primary" type="submit">Resume</button>
+          <button mat-raised-button (click)="cancelResumeForm()">Cancel</button>
+        </mat-card-actions>
+      </form>
+    </mat-card>
+
     <mat-card *ngIf="agentDetails.state === 'hil'">
       <form [formGroup]="hilForm" (ngSubmit)="onResumeHil()">
         <mat-card-title>Human In Loop check</mat-card-title>
@@ -76,8 +95,10 @@
         <mat-list-item *ngIf="agentDetails.userId"
           ><span class="fixed-width-field"><strong>User ID:</strong></span> {{ agentDetails.userId }}
         </mat-list-item>
-        <mat-list-item
-          ><span class="fixed-width-field"><strong>State:</strong></span> {{ displayState(agentDetails.state) }}
+        <mat-list-item>
+          <span class="fixed-width-field"><strong>State:</strong></span> 
+          {{ displayState(agentDetails.state) }}
+          <a *ngIf="agentDetails.state === 'completed'" (click)="openResumeForm()" class="resume-link">Resume</a>
         </mat-list-item>
         <mat-expansion-panel *ngIf="agentDetails.state === 'completed'" (opened)="outputExpanded = true" (closed)="outputExpanded = false">
           <mat-expansion-panel-header>

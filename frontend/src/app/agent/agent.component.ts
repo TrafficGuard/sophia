@@ -78,8 +78,10 @@ export class AgentComponent implements OnInit {
   feedbackForm!: FormGroup;
   hilForm!: FormGroup;
   errorForm!: FormGroup;
+  resumeForm!: FormGroup;
   output: string | null = null;
   isSubmitting: boolean = false;
+  showResumeForm: boolean = false;
 
   userPromptExpanded: boolean = false;
   systemPromptExpanded: boolean = false;
@@ -119,6 +121,13 @@ export class AgentComponent implements OnInit {
     this.initializeFeedbackForm();
     this.initializeErrorForm();
     this.initializeHillForm();
+    this.initializeResumeForm();
+  }
+
+  private initializeResumeForm(): void {
+    this.resumeForm = this.formBuilder.group({
+      resumeInstructions: [''],
+    });
   }
 
   private getTabNameFromIndex(index: number): string {
@@ -216,6 +225,41 @@ export class AgentComponent implements OnInit {
           this.isSubmitting = false;
           console.error('Error resuming agent:', error);
           this.snackBar.open('Error resuming agent', 'Close', { duration: 3000 });
+        },
+      });
+  }
+
+  openResumeForm(): void {
+    this.showResumeForm = true;
+  }
+
+  cancelResumeForm(): void {
+    this.showResumeForm = false;
+    this.resumeForm.reset();
+  }
+
+  onResumeCompleted(): void {
+    if (!this.resumeForm.valid) return;
+    this.isSubmitting = true;
+    const resumeInstructions = this.resumeForm.get('resumeInstructions')?.value;
+    this.http
+      .post(`${environment.serverUrl}/agent/v1/resume-completed`, {
+        agentId: this.agentId,
+        executionId: this.agentDetails.executionId,
+        instructions: resumeInstructions,
+      })
+      .subscribe({
+        next: (response) => {
+          console.log('Agent resumed successfully:', response);
+          this.loadAgentDetails(this.agentId!);
+          this.isSubmitting = false;
+          this.showResumeForm = false;
+          this.resumeForm.reset();
+        },
+        error: (error) => {
+          this.isSubmitting = false;
+          console.error('Error resuming completed agent:', error);
+          this.snackBar.open('Error resuming completed agent', 'Close', { duration: 3000 });
         },
       });
   }
