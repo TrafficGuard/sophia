@@ -21,13 +21,11 @@ export function deepseekLLMRegistry(): Record<string, () => LLM> {
 }
 
 export function deepseekCoder(): LLM {
-	// TODO Need to adjust for tokens https://platform.deepseek.com/api-docs/faq#how-to-calculate-token-usage-offline
-	return new DeepseekLLM('DeepSeek Coder', 'deepseek-coder', 32000, 0.14 / 1_000_000, 0.28 / 1_000_000);
+	return new DeepseekLLM('DeepSeek Coder', 'deepseek-coder', 32000, 0.14 / (1_000_000 * 3.5), 0.28 / (1_000_000 * 3.5));
 }
 
 export function deepseekChat(): LLM {
-	// TODO Need to adjust for tokens https://platform.deepseek.com/api-docs/faq#how-to-calculate-token-usage-offline
-	return new DeepseekLLM('DeepSeek Chat', 'deepseek-chat', 32000, 0.14 / 1_000_000, 0.28 / 1_000_000);
+	return new DeepseekLLM('DeepSeek Chat', 'deepseek-chat', 32000, 0.14 / (1_000_000 * 3.5), 0.28 / (1_000_000 * 3.5));
 }
 
 /**

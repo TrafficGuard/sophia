@@ -23,11 +23,11 @@ export function groqLLMRegistry(): Record<string, () => LLM> {
 }
 
 export function groqMixtral8x7b(): LLM {
-	return new GroqLLM('Mixtral 8x7b (Groq)', GROQ_SERVICE, 'mixtral-8x7b-32768', 32_768, 0.27, 0.27);
+	return new GroqLLM('Mixtral 8x7b (Groq)', GROQ_SERVICE, 'mixtral-8x7b-32768', 32_768, 0.27 / (1_000_000 * 3.5), 0.27 / (1_000_000 * 3.5));
 }
 
 export function groqGemma7bIt(): LLM {
-	return new GroqLLM('Gemma 7b-it (Groq)', GROQ_SERVICE, 'gemma-7b-it', 8_192, 0.1 / 1000000, 0.1 / 1000000);
+	return new GroqLLM('Gemma 7b-it (Groq)', GROQ_SERVICE, 'gemma-7b-it', 8_192, 0.1 / (1_000_000 * 3.5), 0.1 / (1_000_000 * 3.5));
 }
 
 export function groqLlama3_70B(): LLM {
