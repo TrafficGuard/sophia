@@ -43,12 +43,11 @@ export function functionDefinitionParser(sourceFilePath: string): [string, any] 
 	classes.forEach((cls: ClassDeclaration) => {
 		const className = cls.getName();
 		const classDescription = cls.getJsDocs()[0]?.getDescription().trim();
-		// console.log(cls.getName())
+
 		cls.getMethods().forEach((method: MethodDeclaration) => {
 			// This can be tidied up. Create the object definition first, then create the XML formatted version
 			const methodName = method.getName();
 			const methodDescription = method.getJsDocs()[0]?.getDescription().trim();
-			// console.log(methodName)
 
 			const optionalParams = [];
 			for (const parameter of method.getParameters()) {
@@ -103,6 +102,10 @@ export function functionDefinitionParser(sourceFilePath: string): [string, any] 
 					const name = param.getName();
 					const type = param.getType().getText();
 					const description = paramDescriptions[name]; // param.getJsDocs()[0]?.getComment()?.trim();
+					// If there isn't a @param doc for a parameter, then its not exposed to the LLM
+					if (!description || description.trim() === '') {
+						return '';
+					}
 					return `
                     <parameter>
                     	<index>${index++}</index>
@@ -122,7 +125,8 @@ export function functionDefinitionParser(sourceFilePath: string): [string, any] 
 					description: paramDescriptions[param.getName()] || '',
 				};
 				if (optionalParams[param.getName()]) paramDef.optional = true;
-				params.push(paramDef);
+				// If there isn't a @param doc for a parameter, then its not exposed to the LLM
+				if (paramDef.description) params.push(paramDef);
 			});
 
 			const parameters = paramText.trim().length

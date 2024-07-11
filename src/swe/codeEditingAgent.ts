@@ -26,6 +26,8 @@ export function buildPrompt(args: {
 @funcClass(__filename)
 export class CodeEditingAgent {
 	//* @param projectInfo details of the project, lang/runtime etc
+
+	// No @param doc for projectInfo as its only for passing programmatically. We don't want the LLM hallucinating it
 	/**
 	 * Runs a workflow which edits the code repository to implement the requirements, and committing changes to version control.
 	 * It also compiles, formats, lints, and runs tests where applicable.

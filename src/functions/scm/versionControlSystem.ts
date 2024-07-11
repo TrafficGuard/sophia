@@ -10,7 +10,12 @@ export interface VersionControlSystem {
 	 */
 	getDiff(commitSha?: string): Promise<string>;
 
-	createBranch(branchName: string): Promise<void>;
+	/**
+	 * Creates a new branch, or if it already exists then switches to it
+	 * @param branchName
+	 * @return if the branch was created, or false if switched to an existing one
+	 */
+	createBranch(branchName: string): Promise<boolean>;
 
 	switchToBranch(branchName: string): Promise<void>;
 
