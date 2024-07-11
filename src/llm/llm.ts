@@ -22,6 +22,8 @@ export interface GenerateTextOptions {
 
 export type GenerateJsonOptions = Omit<GenerateTextOptions, 'type'>;
 
+export type GenerateFunctionOptions = Omit<GenerateTextOptions, 'type'>;
+
 export interface LLM {
 	/* Generates text from a LLM */
 	generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string>;
@@ -39,8 +41,9 @@ export interface LLM {
 	 * Generates a response expecting to contain the <function_call> element matching the FunctionResponse type
 	 * @param prompt
 	 * @param systemPrompt
+	 * @param opts
 	 */
-	generateTextExpectingFunctions(prompt: string, systemPrompt?: string): Promise<FunctionResponse>;
+	generateTextExpectingFunctions(prompt: string, systemPrompt?: string, opts?: GenerateFunctionOptions): Promise<FunctionResponse>;
 
 	/**
 	 * The service provider of the LLM (OpenAI, Google, TogetherAI etc)
