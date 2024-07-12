@@ -21,7 +21,7 @@
 
     <mat-card *ngIf="agentDetails.state === 'error'"  >
       <form [formGroup]="errorForm" (ngSubmit)="onResumeError()">
-        <mat-card-title>Agent Errored</mat-card-title>
+        <mat-card-title>Agent Error</mat-card-title>
         <mat-card-content style="margin-bottom: 0; margin-top: 15px">
           <mat-expansion-panel *ngIf="agentDetails.error" style="width: 1000px; margin-bottom: 20px">
             <mat-expansion-panel-header>
@@ -167,6 +167,7 @@
         <mat-list-item
           ><span class="fixed-width-field"><strong>Cost:</strong></span> ${{ agentDetails.cost | number : '1.2-2' }}
         </mat-list-item>
+        <!--
         <mat-list-item
           ><span class="fixed-width-field"><strong>Budget:</strong></span> ${{ agentDetails.budget | number : '1.2-2' }}
         </mat-list-item>
@@ -175,6 +176,7 @@
             agentDetails.budgetRemaining | number : '1.2-2'
           }}
         </mat-list-item>
+        -->
         <mat-list-item
           ><span class="fixed-width-field"><strong>Working Directory:</strong></span> {{ agentDetails.fileSystem.workingDirectory }}
         </mat-list-item>

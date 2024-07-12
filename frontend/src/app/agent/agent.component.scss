@@ -23,11 +23,14 @@
 .llm-row {
   display: flex;
   justify-content: space-between;
+  text-wrap: nowrap;
+
 }
 
 .llm-column {
   flex: 1;
-  text-align: center;
+  text-align: left;
+  padding-right: 8px;
 }
 .hidden {
   display: none;

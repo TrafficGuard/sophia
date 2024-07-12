@@ -73,6 +73,9 @@ Some of the key features include:
 
 <img src="https://public.trafficguard.ai/nous/feedback.png" width="702">
 
+### Resume error
+
+![Resume error](https://public.trafficguard.ai/nous/error.png)
 
 ## Code Examples
 
