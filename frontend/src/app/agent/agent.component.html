@@ -8,7 +8,7 @@
         <mat-card-content>
           <span class="fixed-width-field"><strong>Feedback:</strong></span>
           <mat-form-field appearance="fill" class="full-width">
-            <textarea matInput placeholder="Enter your feedback" formControlName="feedback"></textarea>
+            <textarea matInput class="resumeField" placeholder="Enter your feedback" formControlName="feedback"></textarea>
           </mat-form-field>
         </mat-card-content>
         <mat-card-actions>
@@ -19,21 +19,30 @@
       </form>
     </mat-card>
 
-    <mat-card *ngIf="agentDetails.state === 'error'">
+    <mat-card *ngIf="agentDetails.state === 'error'"  >
       <form [formGroup]="errorForm" (ngSubmit)="onResumeError()">
-        <mat-card-title>Error Occurred</mat-card-title>
-        <mat-card-content>
-          <span class="fixed-width-field"><strong>Error Details:</strong></span>
+        <mat-card-title>Agent Errored</mat-card-title>
+        <mat-card-content style="margin-bottom: 0; margin-top: 15px">
+          <mat-expansion-panel *ngIf="agentDetails.error" style="width: 1000px; margin-bottom: 20px">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <span style="margin-right: 5px"><strong>Error:</strong></span>
+                <span class="expansion-preview">{{ agentDetails.error | slice : 0 : 150 }}...</span>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <div matExpansionPanelContent style="white-space: pre;">{{ agentDetails.error }}</div>
+          </mat-expansion-panel>
           <mat-form-field appearance="fill" class="full-width">
             <textarea
               matInput
-              placeholder="Describe the error or provide additional details"
+              class="resumeField"
+              placeholder="Provide additional instructions to resume or workaround the error."
               formControlName="errorDetails"
             ></textarea>
           </mat-form-field>
         </mat-card-content>
-        <mat-card-actions>
-          <button mat-raised-button color="primary" type="submit" [disabled]="!errorForm.valid">Resume</button>
+        <mat-card-actions style="margin-bottom: 0">
+          <button mat-raised-button color="primary" type="submit" [disabled]="!errorForm.valid">Resume Agent</button>
           <button mat-raised-button color="warn" (click)="cancelAgent()">Cancel Agent</button>
         </mat-card-actions>
       </form>
@@ -46,6 +55,7 @@
           <mat-form-field appearance="fill" class="full-width">
             <textarea
               matInput
+              class="resumeField"
               placeholder="Provide additional instructions or context (optional)"
               formControlName="resumeInstructions"
             ></textarea>
@@ -67,6 +77,7 @@
           <mat-form-field appearance="fill" class="full-width">
             <textarea
               matInput
+              class="resumeField"
               placeholder="Provide additional details (optional)"
               formControlName="feedback"
             ></textarea>
@@ -81,10 +92,10 @@
 
     <mat-card>
       <mat-list>
+        <!--
         <mat-list-item *ngIf="agentDetails.agentId"
           ><span class="fixed-width-field"><strong>Agent ID:</strong></span> {{ agentDetails.agentId }}
         </mat-list-item>
-        <!--
         <mat-list-item><span
           class="fixed-width-field"><strong>Execution ID:</strong></span> {{ agentDetails.executionId }}
         </mat-list-item>-->
@@ -98,29 +109,31 @@
           ><span class="fixed-width-field"><strong>User ID:</strong></span> {{ agentDetails.userId }}
         </mat-list-item>
         <mat-list-item>
-          <span class="fixed-width-field"><strong>State:</strong></span> 
+          <span class="fixed-width-field"><strong>State:</strong></span>
           {{ displayState(agentDetails.state) }}
           <a *ngIf="agentDetails.state === 'completed'" (click)="openResumeForm()" class="resume-link">Resume</a>
         </mat-list-item>
-        <mat-expansion-panel *ngIf="agentDetails.state === 'completed'" (opened)="outputExpanded = true" (closed)="outputExpanded = false">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <span class="fixed-width-field"><strong>Output:</strong></span>
-              <span class="expansion-preview" [ngClass]="{'hidden': outputExpanded}">{{ output | slice : 0 : 50 }}</span>
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-          <div matExpansionPanelContent style="white-space: pre;">{{ output }}</div>
-        </mat-expansion-panel>
 
         <mat-expansion-panel (opened)="userPromptExpanded = true" (closed)="userPromptExpanded = false">
           <mat-expansion-panel-header>
             <mat-panel-title>
               <span class="fixed-width-field"><strong>User Prompt:</strong></span>
-              <span class="expansion-preview" [ngClass]="{'hidden': userPromptExpanded}">{{ agentDetails.userPrompt | slice : 0 : 50 }}</span>
+              <span class="expansion-preview" [ngClass]="{'hidden': userPromptExpanded}">{{ agentDetails.userPrompt | slice : 0 : 150 }}</span>
             </mat-panel-title>
           </mat-expansion-panel-header>
           <div matExpansionPanelContent style="white-space: pre;">{{ agentDetails.userPrompt }}</div>
         </mat-expansion-panel>
+
+        <mat-expansion-panel *ngIf="agentDetails.state === 'completed'" (opened)="outputExpanded = true" (closed)="outputExpanded = false">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <span class="fixed-width-field"><strong>Output:</strong></span>
+              <span class="expansion-preview" [ngClass]="{'hidden': outputExpanded}">{{ output | slice : 0 : 150 }}</span>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div matExpansionPanelContent style="white-space: pre;">{{ output }}</div>
+        </mat-expansion-panel>
+
         <!--
         <mat-expansion-panel>
           <mat-expansion-panel-header>
@@ -133,15 +146,7 @@
           </div>
         </mat-expansion-panel>
         -->
-        <mat-expansion-panel *ngIf="agentDetails.error">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <span class="fixed-width-field"><strong>Error:</strong></span>
-              <span class="expansion-preview">{{ agentDetails.error | slice : 0 : 50 }}...</span>
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-          <div matExpansionPanelContent style="white-space: pre;">{{ agentDetails.error }}</div>
-        </mat-expansion-panel>
+
         <mat-list-item *ngIf="agentDetails.planningResponse"
           ><span class="fixed-width-field"><strong>Planning Response:</strong></span>
           {{ agentDetails.planningResponse }}

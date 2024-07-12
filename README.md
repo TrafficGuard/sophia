@@ -25,7 +25,7 @@ Nous started from a simple goal: to harness AI's potential to **enhance real-wor
 - Review code for compliance with standards and best practices.
 - Assist with large/complex refactorings, and more.
 
-At [TrafficGuard](https://www.trafficguard.ai?ref=gh) we process billions of events a month for our global clients, [protecting their ad spend](https://www.trafficguard.ai/protect/google-search?ref=gh) from bots and other invalid traffic.
+At TrafficGuard we process billions of events a month for our global clients, [protecting their ad spend](https://www.trafficguard.ai/protect/google-search?ref=gh) from bots and other invalid traffic.
 Our SaaS on GCP comprises projects developed in TypeScript, Python, GoogleSQL, PHP and Terraform, deployed from GitLab. 
 
 Given that 1) Open source projects are typically Python/GitHub focused, and 2) the vendor AI tools are focused on their silos, 
@@ -38,7 +38,7 @@ With the intention to support uses cases such as your own custom personal assist
 
 ## Features
 
-Some of the key features include:
+Key features include:
 
 - Advanced autonomous agent
   - Reasoning/planning inspired from Google's [Self-Discover](https://arxiv.org/abs/2402.03620) paper
@@ -46,7 +46,7 @@ Some of the key features include:
   - Memory and function history for complex workflows
 - LLM function definitions auto-generated from source code
 - Function callable integrations:
-  - Filesystem, Jira, Slack, Perplexity, Gitlab and more
+  - Filesystem, Jira, Slack, Perplexity, Gitlab, GitHub and more
 - Supports multiple LLMs/Services:
   - OpenAI GPT, Anthropic Claude (native and Vertex), Gemini, Groq, Fireworks, Together.ai, DeepSeek, Ollama
 - Web interface
@@ -59,12 +59,15 @@ Some of the key features include:
   - Scale-to-zero deployment on Firestore & Cloud Run
   - Multi-user SSO enterprise deployment (with [Google Cloud IAP](https://cloud.google.com/security/products/iap))
 - Observability with OpenTelemetry tracing
-- Software Engineer Agent:
-  - Select the appropriate repository, clone, create branch
+- Code Editing Agent:
   - Auto-detection of project initialization, compile, test and lint
-  - -> Code Editing Agent:
-    - Selects files to edit
-    - Code editing with compile, lint, test, fix loop (delegates to [Aider](https://aider.chat/)) with online search and actions to fix compile issues.
+  - Find the relevant files to edit
+  - Code editing loop with compile, lint, test, fix (editing delegates to [Aider](https://aider.chat/))
+    - Compile error analyser can search online, add additional files and packages
+- Software Engineer Agent:
+  - Find the appropriate repository from GitLab/GitHub
+  - Clone and create branch
+  - Call the Code Editing Agent
   - Create merge request
 - Code Review agent:
   - Configurable code review guidelines
