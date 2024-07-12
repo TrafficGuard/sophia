@@ -68,6 +68,7 @@ export interface LlmResponse {
   styleUrls: ['./agent.component.scss'],
 })
 export class AgentComponent implements OnInit {
+  llms: Array<{ id: string, name: string }> = [];
   llmCalls: LLMCall[] = [];
   agentId: string | null = null;
   llmCallSystemPromptOpenState: boolean[] = [];
@@ -122,6 +123,17 @@ export class AgentComponent implements OnInit {
     this.initializeErrorForm();
     this.initializeHillForm();
     this.initializeResumeForm();
+    this.http
+      .get<{ data: Array<{ id: string, name: string }> }>(`${environment.serverUrl}/llms/list`)
+      .pipe(
+        map((response) => {
+          console.log(response);
+          return response.data as Array<{ id: string, name: string }>;
+        })
+      )
+      .subscribe((llms) => {
+        this.llms = llms;
+      });
   }
 
   private initializeResumeForm(): void {
