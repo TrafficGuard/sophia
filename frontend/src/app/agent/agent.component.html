@@ -159,9 +159,9 @@
 
         <mat-list-item class="llm-row">
           <span class="fixed-width-field"><strong>LLMS:</strong></span>
-          <div class="llm-column"><strong>Easy:</strong> {{ agentDetails.llms.easy }}</div>
-          <div class="llm-column"><strong>Medium:</strong> {{ agentDetails.llms.medium }}</div>
-          <div class="llm-column"><strong>Hard:</strong> {{ agentDetails.llms.hard }}</div>
+          <div class="llm-column"><strong>Easy:</strong> {{ getLlmName(agentDetails.llms.easy) }}</div>
+          <div class="llm-column"><strong>Medium:</strong> {{ getLlmName(agentDetails.llms.medium) }}</div>
+          <div class="llm-column"><strong>Hard:</strong> {{ getLlmName(agentDetails.llms.hard) }}</div>
         </mat-list-item>
 
         <mat-list-item

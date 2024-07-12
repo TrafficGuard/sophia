@@ -71,6 +71,7 @@ export class AgentComponent implements OnInit {
   llms: Array<{ id: string, name: string }> = [];
   llmCalls: LLMCall[] = [];
   agentId: string | null = null;
+  llmNameMap: Map<string, string> = new Map();
   llmCallSystemPromptOpenState: boolean[] = [];
   llmCallFunctionCallsOpenState: boolean[] = [];
   llmCallMemoryOpenState: boolean[] = [];
@@ -133,6 +134,7 @@ export class AgentComponent implements OnInit {
       )
       .subscribe((llms) => {
         this.llms = llms;
+        this.llmNameMap = new Map(llms.map(llm => [llm.id, llm.name]));
       });
   }
 
@@ -435,5 +437,9 @@ export class AgentComponent implements OnInit {
 
   traceUrl(agent: AgentContext): string {
     return `https://console.cloud.google.com/traces/list?referrer=search&project=${environment.gcpProject}&supportedpurview=project&pageState=(%22traceIntervalPicker%22:(%22groupValue%22:%22P1D%22,%22customValue%22:null))&tid=${agent.traceId}`
+  }
+
+  getLlmName(llmId: string): string {
+    return this.llmNameMap.get(llmId) || llmId;
   }
 }
