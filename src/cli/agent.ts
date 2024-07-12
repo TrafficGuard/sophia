@@ -19,9 +19,14 @@ export async function main() {
 
 	const functions = [FileSystem, SoftwareDeveloperAgent, Perplexity, PublicWeb];
 
+	const args = process.argv.slice(2);
+	const initialPrompt = args.length > 0
+		? args.join(' ')
+		: readFileSync('src/cli/agent-in', 'utf-8');
+
 	await startAgent({
 		agentName: 'cli-agent',
-		initialPrompt: readFileSync('src/cli/agent-in', 'utf-8'),
+		initialPrompt,
 		functions,
 		llms,
 	});
