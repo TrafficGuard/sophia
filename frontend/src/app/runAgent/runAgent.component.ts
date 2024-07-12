@@ -12,7 +12,7 @@ import { environment } from '@env/environment';
 })
 export class RunAgentComponent implements OnInit {
   functions: string[] = [];
-  llms: Array<{ id: string, name: string }> = [];
+  llms: Array<{ id: string; name: string }> = [];
   runAgentForm: FormGroup;
   isSubmitting: boolean = false;
 
@@ -47,10 +47,10 @@ export class RunAgentComponent implements OnInit {
     };
     const selection = presets[preset];
     if (selection) {
-      const ids = this.llms.map(llm => llm.id)
-      this.runAgentForm.controls['llmEasy'].setValue(ids.find(id => id.startsWith(selection.easy)));
-      this.runAgentForm.controls['llmMedium'].setValue(ids.find(id => id.startsWith(selection.medium)));
-      this.runAgentForm.controls['llmHard'].setValue(ids.find(id => id.startsWith(selection.hard)));
+      const ids = this.llms.map((llm) => llm.id);
+      this.runAgentForm.controls['llmEasy'].setValue(ids.find((id) => id.startsWith(selection.easy)));
+      this.runAgentForm.controls['llmMedium'].setValue(ids.find((id) => id.startsWith(selection.medium)));
+      this.runAgentForm.controls['llmHard'].setValue(ids.find((id) => id.startsWith(selection.hard)));
     }
     return false;
   }
@@ -72,17 +72,17 @@ export class RunAgentComponent implements OnInit {
         });
       });
     this.http
-      .get<{ data: Array<{ id: string, name: string }> }>(`${environment.serverUrl}/llms/list`)
+      .get<{ data: Array<{ id: string; name: string }> }>(`${environment.serverUrl}/llms/list`)
       .pipe(
         map((response) => {
           console.log(response);
-          return response.data as Array<{ id: string, name: string }>;
+          return response.data as Array<{ id: string; name: string }>;
         })
       )
       .subscribe((llms) => {
         this.llms = llms;
       });
-      this.loadUserProfile();
+    this.loadUserProfile();
   }
 
   private loadUserProfile(): void {

@@ -45,7 +45,7 @@ export interface LlmResponse {
   /** Hydrated from llmRequestId */
   llmRequest?: LlmRequest;
   /** From GenerateTextOptions.id */
-  description: string
+  description: string;
   /** Populated when called by an agent */
   agentId?: string;
   /** Populated when called by a user through the UI */
@@ -68,7 +68,7 @@ export interface LlmResponse {
   styleUrls: ['./agent.component.scss'],
 })
 export class AgentComponent implements OnInit {
-  llms: Array<{ id: string, name: string }> = [];
+  llms: Array<{ id: string; name: string }> = [];
   llmCalls: LLMCall[] = [];
   agentId: string | null = null;
   llmNameMap: Map<string, string> = new Map();
@@ -125,16 +125,16 @@ export class AgentComponent implements OnInit {
     this.initializeHillForm();
     this.initializeResumeForm();
     this.http
-      .get<{ data: Array<{ id: string, name: string }> }>(`${environment.serverUrl}/llms/list`)
+      .get<{ data: Array<{ id: string; name: string }> }>(`${environment.serverUrl}/llms/list`)
       .pipe(
         map((response) => {
           console.log(response);
-          return response.data as Array<{ id: string, name: string }>;
+          return response.data as Array<{ id: string; name: string }>;
         })
       )
       .subscribe((llms) => {
         this.llms = llms;
-        this.llmNameMap = new Map(llms.map(llm => [llm.id, llm.name]));
+        this.llmNameMap = new Map(llms.map((llm) => [llm.id, llm.name]));
       });
   }
 
@@ -200,21 +200,21 @@ export class AgentComponent implements OnInit {
   }
 
   displayState(state: AgentRunningState): string {
-    switch(state) {
+    switch (state) {
       case 'agent':
         return 'Agent control loop';
       case 'functions':
         return 'Calling functions';
-       case 'error':
-         return 'Error';
-        case 'hil':
-          return 'Human-in-the-loop check';
-        case 'feedback':
-          return 'Agent requested feedback';
-        case 'completed':
-          return 'Completed'
-        default:
-          return state
+      case 'error':
+        return 'Error';
+      case 'hil':
+        return 'Human-in-the-loop check';
+      case 'feedback':
+        return 'Agent requested feedback';
+      case 'completed':
+        return 'Completed';
+      default:
+        return state;
     }
   }
 
@@ -424,19 +424,25 @@ export class AgentComponent implements OnInit {
   convertNewlinesToHtml(text: string): SafeHtml {
     text ??= '';
     // sanitize first?
-    return this.sanitizer.bypassSecurityTrustHtml(text.replaceAll('\\n', '<br/>').replaceAll('\\t', '&nbsp;&nbsp;&nbsp;&nbsp;'));
+    return this.sanitizer.bypassSecurityTrustHtml(
+      text.replaceAll('\\n', '<br/>').replaceAll('\\t', '&nbsp;&nbsp;&nbsp;&nbsp;')
+    );
   }
 
   agentUrl(agent: AgentContext): string {
-    return `https://console.cloud.google.com/firestore/databases/${environment.firestoreDb || '(default)'}/data/panel/AgentContext/${agent.agentId}?project=${environment.gcpProject}`
+    return `https://console.cloud.google.com/firestore/databases/${
+      environment.firestoreDb || '(default)'
+    }/data/panel/AgentContext/${agent.agentId}?project=${environment.gcpProject}`;
   }
 
   llmCallUrl(llmResponse: LlmResponse): string {
-    return `https://console.cloud.google.com/firestore/databases/${environment.firestoreDb || '(default)'}/data/panel/LlmResponse/${llmResponse.id}?project=${environment.gcpProject}`
+    return `https://console.cloud.google.com/firestore/databases/${
+      environment.firestoreDb || '(default)'
+    }/data/panel/LlmResponse/${llmResponse.id}?project=${environment.gcpProject}`;
   }
 
   traceUrl(agent: AgentContext): string {
-    return `https://console.cloud.google.com/traces/list?referrer=search&project=${environment.gcpProject}&supportedpurview=project&pageState=(%22traceIntervalPicker%22:(%22groupValue%22:%22P1D%22,%22customValue%22:null))&tid=${agent.traceId}`
+    return `https://console.cloud.google.com/traces/list?referrer=search&project=${environment.gcpProject}&supportedpurview=project&pageState=(%22traceIntervalPicker%22:(%22groupValue%22:%22P1D%22,%22customValue%22:null))&tid=${agent.traceId}`;
   }
 
   getLlmName(llmId: string): string {

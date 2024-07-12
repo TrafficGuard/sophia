@@ -6,23 +6,25 @@
     <button style="margin-left: 2em" mat-raised-button color="primary" routerLink="/runAgent" routerLinkActive="active">
       New Agent
     </button>
-    <button style="margin-left: 2em" mat-raised-button color="primary" (click)="refreshAgents()">
-      Refresh
-    </button>
+    <button style="margin-left: 2em" mat-raised-button color="primary" (click)="refreshAgents()">Refresh</button>
   </mat-toolbar>
   <table mat-table [dataSource]="agentContexts$">
     <!-- Checkbox Column -->
     <ng-container matColumnDef="select">
       <th mat-header-cell *matHeaderCellDef>
-        <mat-checkbox (change)="$event ? masterToggle() : null"
-                      [checked]="selection.hasValue() && isAllSelected()"
-                      [indeterminate]="selection.hasValue() && !isAllSelected()">
+        <mat-checkbox
+          (change)="$event ? masterToggle() : null"
+          [checked]="selection.hasValue() && isAllSelected()"
+          [indeterminate]="selection.hasValue() && !isAllSelected()"
+        >
         </mat-checkbox>
       </th>
       <td mat-cell *matCellDef="let row">
-        <mat-checkbox (click)="$event.stopPropagation()"
-                      (change)="$event ? selection.toggle(row) : null"
-                      [checked]="selection.isSelected(row)">
+        <mat-checkbox
+          (click)="$event.stopPropagation()"
+          (change)="$event ? selection.toggle(row) : null"
+          [checked]="selection.isSelected(row)"
+        >
         </mat-checkbox>
       </td>
     </ng-container>
@@ -51,7 +53,9 @@
 
     <ng-container matColumnDef="output">
       <th mat-header-cell *matHeaderCellDef>Error/Completed Output</th>
-      <td mat-cell *matCellDef="let element">{{ (element.state === 'error' ? element.error : element.completed) | slice : 0 : 150 }}</td>
+      <td mat-cell *matCellDef="let element">
+        {{ (element.state === 'error' ? element.error : element.completed) | slice : 0 : 150 }}
+      </td>
     </ng-container>
 
     <ng-container matColumnDef="cost">

@@ -82,7 +82,6 @@ export interface AgentContext {
   memory: Map<string, string>;
 }
 
-
 @Component({
   selector: 'app-contexts',
   templateUrl: './agents.component.html',
@@ -129,29 +128,28 @@ export class AgentsComponent implements OnInit {
   }
 
   masterToggle() {
-    this.isAllSelected() ?
-      this.selection.clear() :
-      this.agentContexts$.data.forEach(row => this.selection.select(row));
+    this.isAllSelected()
+      ? this.selection.clear()
+      : this.agentContexts$.data.forEach((row) => this.selection.select(row));
   }
 
   deleteSelectedAgents() {
-    const selectedAgentIds = this.selection.selected.map(agent => agent.agentId);
+    const selectedAgentIds = this.selection.selected.map((agent) => agent.agentId);
     if (selectedAgentIds.length === 0) {
       this.snackBar.open('No agents selected for deletion', 'Close', { duration: 3000 });
       return;
     }
 
-    this.http.post(`${environment.serverUrl}/agent/v1/delete`, { agentIds: selectedAgentIds })
-      .subscribe({
-        next: () => {
-          this.snackBar.open('Agents deleted successfully', 'Close', { duration: 3000 });
-          this.loadAgentContexts();
-        },
-        error: (error) => {
-          console.error('Error deleting agents:', error);
-          this.snackBar.open('Error deleting agents', 'Close', { duration: 3000 });
-        }
-      });
+    this.http.post(`${environment.serverUrl}/agent/v1/delete`, { agentIds: selectedAgentIds }).subscribe({
+      next: () => {
+        this.snackBar.open('Agents deleted successfully', 'Close', { duration: 3000 });
+        this.loadAgentContexts();
+      },
+      error: (error) => {
+        console.error('Error deleting agents:', error);
+        this.snackBar.open('Error deleting agents', 'Close', { duration: 3000 });
+      },
+    });
   }
 
   refreshAgents() {
