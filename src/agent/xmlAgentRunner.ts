@@ -161,6 +161,7 @@ export async function startAgent(config: RunAgentConfig): Promise<string> {
 		agent.inputPrompt = `<user_request>${config.initialPrompt}</user_request>`;
 	}
 	await appContext().agentStateService.save(agent);
+	logger.info(`Created agent ${agent.agentId}`);
 	return runAgent(agent);
 }
 

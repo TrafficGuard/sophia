@@ -88,7 +88,7 @@ class VertexLLM extends BaseLLM {
 					maxOutputTokens: 8192,
 					temperature: opts?.temperature,
 					topP: opts?.temperature,
-					stopSequences: opts.stopSequences,
+					stopSequences: opts?.stopSequences,
 				},
 				safetySettings: SAFETY_SETTINGS,
 			});
