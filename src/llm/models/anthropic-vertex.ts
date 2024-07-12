@@ -118,7 +118,13 @@ class AnthropicVertexLLM extends BaseLLM {
 				throw e;
 			}
 
-			// appCtx().
+			// This started happening randomly!
+			if (typeof message === 'string') {
+				message = JSON.parse(message);
+			}
+			if (!message.content.length) throw new Error(`Response Message did not have any content: ${JSON.stringify(message)}`);
+
+			if (message.content[0].type !== 'text') throw new Error(`Message content type was not text. Was ${message.content[0].type}`);
 
 			const responseText = (message.content[0] as TextBlock).text;
 
@@ -154,8 +160,6 @@ class AnthropicVertexLLM extends BaseLLM {
 				outputChars: responseText.length,
 				callStack: agentContext().callStack.join(' > '),
 			});
-
-			if (!message.content.length) throw new Error(`Response Message did not have any content: ${JSON.stringify(message)}`);
 
 			if (message.stop_reason === 'max_tokens') {
 				// TODO we can replay with request with the current response appended so the LLM can complete it
