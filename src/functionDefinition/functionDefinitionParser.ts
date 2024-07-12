@@ -4,9 +4,66 @@ import path from 'path';
 import { ClassDeclaration, Decorator, JSDoc, JSDocTag, MethodDeclaration, ParameterDeclaration, Project } from 'ts-morph';
 import { logger } from '#o11y/logger';
 import { FunctionDefinition, FunctionParameter } from './functions';
+import {funcClass} from "./functionDecorators";
 
 const CACHED_BASE_PATH = '.nous/functions/';
 
+/**
+ * Parses a source which is expected to have a class with the @funClass decorator.
+ *
+ * With the example class:
+ * <code>
+ * @funcClass(__filename)
+ * export class FuncClass {
+ *    /**
+ *     * Description of simple method
+ *     *\/
+ *    @func()
+ *    simpleMethod(): void {}
+ *
+ *   /**
+ *     * Description of complexMethod
+ *     * @param arg1 {string} the first arg
+ *     * @param arg2 {number} the second arg
+ *     * @return Promise<Date> the current date
+ *     *\/
+ *    @func()
+ *    async complexMethod(arg1: string, arg2?: number): Promise<Date> {
+ *        return new Date()
+ *    }
+ * }
+ * </code>
+ * Then the parsed result would be:
+ * {
+ * 	 "FuncClass.simpleMethod": {
+ *      "name": "FuncClass.simpleMethod",
+ *      "group": "FuncClass",
+ *      "description": "Description of simple method",
+ *      "returns": "",
+ *      "params": []
+ *    },
+ * 	  "FuncClass.complexMethod": {
+ *      "name": "FuncClass.complexMethod",
+ *      "group": "FuncClass",
+ *      "description": "Description of complexMethod",
+ *      "returns": "Date - the current date",
+ *      "params": [
+ *          {
+ *          	"name": "arg1",
+ *          	"type": "string",
+ *          	"description": "the first arg"
+ *          },
+ *          {
+ *            "name": "arg2",
+ *            "type": "string",
+ *            "description": "the second arg",
+ *            "optional": true
+ *          }
+ *      ]
+ *   }
+ * }
+ * @param sourceFilePath the full path to the source file
+ */
 export function functionDefinitionParser(sourceFilePath: string): [string, any] {
 	const cwd = process.cwd();
 	let cachedPath = path.relative(cwd, sourceFilePath);
@@ -36,9 +93,9 @@ export function functionDefinitionParser(sourceFilePath: string): [string, any] 
 	const classes = sourceFile.getClasses();
 
 	// The function definitions as an XML string
-	let definition = '';
+	let xmlDefinition = '';
 	// The function definitions as an object, keyed by the method name
-	const objDefinition: Record<string, FunctionDefinition> = {};
+	const jsonDefinition: Record<string, FunctionDefinition> = {};
 
 	classes.forEach((cls: ClassDeclaration) => {
 		const className = cls.getName();
@@ -143,7 +200,7 @@ export function functionDefinitionParser(sourceFilePath: string): [string, any] 
                 <function_name>${className}.${methodName}</function_name>
                 <description>${methodDescription}</description>${parameters}${returnsXml}
             </function_description>`;
-			objDefinition[methodName] = {
+			jsonDefinition[methodName] = {
 				class: className,
 				name: methodName,
 				description: methodDescription,
@@ -151,14 +208,14 @@ export function functionDefinitionParser(sourceFilePath: string): [string, any] 
 				returns,
 			};
 
-			definition += `${functionDescription}\n`;
+			xmlDefinition += `${functionDescription}\n`;
 		});
 	});
 
 	fs.mkdirSync(path.join(cachedPath, '..'), { recursive: true });
-	writeFileSync(`${cachedPath}.xml`, definition);
-	writeFileSync(`${cachedPath}.json`, JSON.stringify(objDefinition, null, 2));
-	return [definition, objDefinition];
+	writeFileSync(`${cachedPath}.xml`, xmlDefinition);
+	writeFileSync(`${cachedPath}.json`, JSON.stringify(jsonDefinition, null, 2));
+	return [xmlDefinition, jsonDefinition];
 }
 
 function getFileUpdatedTimestamp(filePath: string): Date | null {
