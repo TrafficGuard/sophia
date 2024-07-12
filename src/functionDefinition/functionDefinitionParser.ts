@@ -8,45 +8,6 @@ import {funcClass} from "./functionDecorators";
 
 const CACHED_BASE_PATH = '.nous/functions/';
 
-/**
- * Converts the JSON function definitions to the XML format described in the xml-agent-system-prompt
- * @param jsonDefinitions The JSON object containing function definitions
- * @returns A string containing the XML representation of the function definitions
- */
-function convertJsonToXml(jsonDefinitions: Record<string, FunctionDefinition>): string {
-    let xmlOutput = '<functions>\n';
-
-    for (const [methodName, funcDef] of Object.entries(jsonDefinitions)) {
-        xmlOutput += `  <function_description>\n`;
-        xmlOutput += `    <function_name>${funcDef.class}.${funcDef.name}</function_name>\n`;
-        xmlOutput += `    <description>${funcDef.description}</description>\n`;
-
-        if (funcDef.parameters.length > 0) {
-            xmlOutput += `    <parameters>\n`;
-            for (const param of funcDef.parameters) {
-                xmlOutput += `      <parameter>\n`;
-                xmlOutput += `        <index>${param.index}</index>\n`;
-                xmlOutput += `        <name>${param.name}</name>\n`;
-                xmlOutput += `        <type>${param.type}</type>\n`;
-                if (param.optional) {
-                    xmlOutput += `        <optional>true</optional>\n`;
-                }
-                xmlOutput += `        <description>${param.description}</description>\n`;
-                xmlOutput += `      </parameter>\n`;
-            }
-            xmlOutput += `    </parameters>\n`;
-        }
-
-        if (funcDef.returns) {
-            xmlOutput += `    <returns>${funcDef.returns}</returns>\n`;
-        }
-
-        xmlOutput += `  </function_description>\n`;
-    }
-
-    xmlOutput += '</functions>';
-    return xmlOutput;
-}
 
 /**
  * Parses a source which is expected to have a class with the @funClass decorator.
@@ -253,7 +214,6 @@ export function functionDefinitionParser(sourceFilePath: string): [string, any] 
 	});
 
 	fs.mkdirSync(path.join(cachedPath, '..'), { recursive: true });
-	const xmlDefinition = convertJsonToXml(jsonDefinition);
 	writeFileSync(`${cachedPath}.xml`, xmlDefinition);
 	writeFileSync(`${cachedPath}.json`, JSON.stringify(jsonDefinition, null, 2));
 	return [xmlDefinition, jsonDefinition];
