@@ -77,6 +77,10 @@ Some of the key features include:
 
 ![Resume error](https://public.trafficguard.ai/nous/error.png)
 
+### List agents
+
+![List agents](https://public.trafficguard.ai/nous/list.png)
+
 ## Code Examples
 
 ### Nous vs LangChain

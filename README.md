@@ -74,8 +74,7 @@ Key features include:
 
 ## UI Examples
 
-[New Agent](#new-agent) | [Sample trace](#sample-trace) | [Human in the loop notification](#human-in-the-loop-notification) | [Resume error](#resume-error)
-
+[New Agent](#new-agent) | [Sample trace](#sample-trace) | [Human in the loop notification](#human-in-the-loop-notification) | [Resume error](#resume-error) | [List agents](#list-agents)
 
 ### New Agent
 
@@ -92,6 +91,10 @@ Key features include:
 ### Resume error
 
 ![Resume error](https://public.trafficguard.ai/nous/error.png)
+
+### List agents
+
+![List agents](https://public.trafficguard.ai/nous/list.png)
 
 ## Code Examples
 
