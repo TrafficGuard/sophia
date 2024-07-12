@@ -21,11 +21,15 @@ async function main() {
 		llms = ClaudeVertexLLMs();
 	}
 
+	const args = process.argv.slice(2);
+	const initialPrompt = args.length > 0 ? args.join(' ') : readFileSync('src/cli/code-in', 'utf-8');
+	console.log(`Prompt: ${initialPrompt}`);
+
 	const config: RunAgentConfig = {
-		agentName: 'code',
+		agentName: 'cli-code',
 		llms,
 		functions: [FileSystem],
-		initialPrompt: readFileSync('src/cli/code-in', 'utf-8'),
+		initialPrompt,
 	};
 
 	await runAgentWorkflow(config, async () => {

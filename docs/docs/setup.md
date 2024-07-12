@@ -77,12 +77,14 @@ For observability configuration (logging and tracing) see the [Observability pag
 
 ### CLI
 
-In the *src/cli* folder are the file chat.ts, agent.ts, swe.ts, code.ts, research.ts, util.ts which are scripts that can be run with `npm run <script>`
+In the *src/cli* folder are the file chat.ts, agent.ts, swe.ts, code.ts, research.ts, util.ts which are scripts that can be run with `npm run <script> <optional prompt>`.
 
-- `npm run chat` does a single text generation from an LLM, reading the input from *src/cli/chat-in*
-- `npm run agent` runs the autonomous agent, using the functions configured in src/cli/agent.ts, and reading the input from *src/cli/agent-in*
-- `npm run code` runs the Code Editing agent on the repository, reading the input from *src/cli/code-in*
-- `npm run swe` runs the Software engineer agent, which can find a remote repo to clone, edit and create a pull/merge request. Input read from *src/cli/swe-in*
+If a prompt isn't provided, then it will read the prompt from the file indicated. This gives the option of quick inputs and more prepared, structured inputs.
+
+- `npm run chat` does a single text generation from an LLM, if no arguments reading the input from *src/cli/chat-in*
+- `npm run agent` runs the autonomous agent, using the functions configured in src/cli/agent.ts, and if no arguments reading the input from *src/cli/agent-in*
+- `npm run code` runs the Code Editing agent on the repository, if no arguments reading the input from *src/cli/code-in*
+- `npm run swe` runs the Software engineer agent, which can find a remote repo to clone, edit and create a pull/merge request. If no arguments reading the input from *src/cli/swe-in*
 - `npm run research` runs the autonomous agent with the web research functions configured.
 - `npm run util` used for running any random piece of code to test.
 

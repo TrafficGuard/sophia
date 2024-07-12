@@ -25,7 +25,7 @@ Nous started from a simple goal: to harness AI's potential to **enhance real-wor
 - Review code for compliance with standards and best practices.
 - Assist with large/complex refactorings, and more.
 
-At TrafficGuard we process billions of events a month for our global clients, [protecting their ad spend](https://www.trafficguard.ai/protect/google-search?ref=gh) from bots and other invalid traffic.
+At TrafficGuard we process billions of events a month for our global clients, [increasing their ad spend ROI](https://www.trafficguard.ai/case-studies?ref=gh) by protecting against bots and other forms of invalid traffic.
 Our SaaS on GCP comprises projects developed in TypeScript, Python, GoogleSQL, PHP and Terraform, deployed from GitLab. 
 
 Given that 1) Open source projects are typically Python/GitHub focused, and 2) the vendor AI tools are focused on their silos, 

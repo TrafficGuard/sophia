@@ -19,20 +19,23 @@ async function main() {
 		llms = ClaudeVertexLLMs();
 	}
 
-	const prompt = readFileSync('src/cli/chat-in', 'utf-8');
+	const args = process.argv.slice(2);
+	const initialPrompt = args.length > 0 ? args.join(' ') : readFileSync('src/cli/chat-in', 'utf-8');
+	console.log(`Prompt: ${initialPrompt}`);
 
 	const context: AgentContext = createContext({
-		initialPrompt: readFileSync('src/cli/chat-in', 'utf-8'),
+		initialPrompt,
 		agentName: 'chat',
 		llms,
 		functions: [],
 	});
 	agentContextStorage.enterWith(context);
 
-	const text = await llms.medium.generateText(prompt);
+	const text = await llms.medium.generateText(initialPrompt);
 
 	writeFileSync('src/cli/chat-out', text);
-	console.log('wrote to chat-out');
+	console.log(text);
+	console.log('Wrote output to src/cli/chat-out');
 }
 
 main()

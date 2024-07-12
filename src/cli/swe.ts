@@ -10,7 +10,7 @@ import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
 import { initFirestoreApplicationContext } from '../app';
 
-// Used to test the local repo editing workflow in DevEditWorkflow
+// Used to test the SoftwareDeveloperAgent
 
 // Usage:
 // npm run swe
@@ -22,11 +22,14 @@ async function main() {
 		llms = ClaudeVertexLLMs();
 	}
 
+	const args = process.argv.slice(2);
+	const initialPrompt = args.length > 0 ? args.join(' ') : readFileSync('src/cli/swe-in', 'utf-8');
+
 	const config: RunAgentConfig = {
-		agentName: 'SWE',
+		agentName: 'cli-SWE',
 		llms,
 		functions: [FileSystem, GitLab],
-		initialPrompt: readFileSync('src/cli/swe-in', 'utf-8'),
+		initialPrompt,
 	};
 
 	await runAgentWorkflow(config, async () => {
