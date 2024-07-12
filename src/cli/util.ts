@@ -53,7 +53,7 @@ async function main() {
 		functions,
 		initialPrompt: '',
 		humanInLoop: envVarHumanInLoopSettings(),
-		pyodide: pyodide,
+		pyodide,
 	};
 
 	const context: AgentContext = createContext(config);
