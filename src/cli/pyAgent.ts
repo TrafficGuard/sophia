@@ -30,7 +30,7 @@ async function main() {
             functions,
             initialPrompt,
             llms: llms(),
-            pyodide: pyodide,
+            pyodide,
         });
 
         logger.info(`Pyodide Agent started with ID: ${agentId}`);
