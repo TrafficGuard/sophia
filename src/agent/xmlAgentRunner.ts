@@ -21,6 +21,8 @@ export const SUPERVISOR_CANCELLED_FUNCTION_NAME = 'Supervisor.Cancelled';
 
 const FUNCTION_OUTPUT_SUMMARIZE_LENGTH = 2000;
 
+const stopSequences = ['</response>'];
+
 export interface RunAgentConfig {
 	/** Uses currentUser() if not provided */
 	user?: User;
@@ -44,6 +46,14 @@ export interface RunAgentConfig {
 	fileSystemPath?: string;
 }
 
+/**
+ * The reference to a running agent
+ */
+interface AgentExecution {
+	agentId: string;
+	execution: Promise<any>;
+}
+
 export async function cancelAgent(agentId: string, executionId: string, feedback: string): Promise<void> {
 	const agent = await appContext().agentStateService.load(agentId);
 	if (agent.executionId !== executionId) throw new Error('Invalid executionId. Agent has already been cancelled/resumed');
@@ -57,7 +67,7 @@ export async function cancelAgent(agentId: string, executionId: string, feedback
 	await appContext().agentStateService.save(agent);
 }
 
-export async function resumeError(agentId: string, executionId: string, feedback: string): Promise<string> {
+export async function resumeError(agentId: string, executionId: string, feedback: string): Promise<void> {
 	const agent = await appContext().agentStateService.load(agentId);
 	if (agent.executionId !== executionId) {
 		throw new Error('Invalid executionId. Agent has already been resumed');
@@ -71,13 +81,13 @@ export async function resumeError(agentId: string, executionId: string, feedback
 	agent.state = 'agent';
 	agent.inputPrompt += `\nSupervisor note: ${feedback}`;
 	await appContext().agentStateService.save(agent);
-	return runAgent(agent);
+	await runAgent(agent);
 }
 
 /**
  * Resume an agent that was in the Human-in-the-loop state
  */
-export async function resumeHil(agentId: string, executionId: string, feedback: string): Promise<string> {
+export async function resumeHil(agentId: string, executionId: string, feedback: string): Promise<void> {
 	const agent = await appContext().agentStateService.load(agentId);
 	if (agent.executionId !== executionId) throw new Error('Invalid executionId. Agent has already been resumed');
 
@@ -90,10 +100,13 @@ export async function resumeHil(agentId: string, executionId: string, feedback: 
 	}
 	agent.state = 'agent';
 	await appContext().agentStateService.save(agent);
-	return runAgent(agent);
+	await runAgent(agent);
 }
 
-export async function resumeCompleted(agentId: string, executionId: string, instructions: string): Promise<string> {
+/**
+ * Restart an agent that was in the completed state
+ */
+export async function resumeCompleted(agentId: string, executionId: string, instructions: string): Promise<void> {
 	const agent = await appContext().agentStateService.load(agentId);
 	if (agent.executionId !== executionId) throw new Error('Invalid executionId. Agent has already been resumed');
 
@@ -107,10 +120,10 @@ export async function resumeCompleted(agentId: string, executionId: string, inst
 	agent.state = 'agent';
 	agent.inputPrompt += `\nSupervisor note: The agent has been resumed from the completed state with the following instructions: ${instructions}`;
 	await appContext().agentStateService.save(agent);
-	return runAgent(agent);
+	await runAgent(agent);
 }
 
-export async function provideFeedback(agentId: string, executionId: string, feedback: string): Promise<string> {
+export async function provideFeedback(agentId: string, executionId: string, feedback: string): Promise<void> {
 	const agent = await appContext().agentStateService.load(agentId);
 	if (agent.executionId !== executionId) throw new Error('Invalid executionId. Agent has already been provided feedback');
 
@@ -121,7 +134,7 @@ export async function provideFeedback(agentId: string, executionId: string, feed
 	agent.state = 'agent';
 	await appContext().agentStateService.save(agent);
 
-	return runAgent(agent);
+	await runAgent(agent);
 }
 
 // export async function runAgent2(config: RunAgentConfig): Promise<string> {
@@ -152,6 +165,12 @@ export async function startAgent(config: RunAgentConfig): Promise<string> {
 }
 
 export async function runAgent(agent: AgentContext): Promise<string> {
+	const agentExecution = await runAgentWithExecution(agent);
+	await agentExecution.execution;
+	return agentExecution.agentId;
+}
+
+export async function runAgentWithExecution(agent: AgentContext): Promise<AgentExecution> {
 	const agentStateService = appContext().agentStateService;
 	agent.state = 'agent';
 
@@ -189,7 +208,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 
 	await agentStateService.save(agent);
 
-	await withActiveSpan(agent.name, async (span: Span) => {
+	const execution: Promise<any> = withActiveSpan(agent.name, async (span: Span) => {
 		agent.traceId = span.spanContext().traceId;
 
 		span.setAttributes({
@@ -232,10 +251,16 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 
 					let llmResponse: FunctionResponse;
 					try {
-						llmResponse = await agentLLM.generateTextExpectingFunctions(currentPrompt, systemPromptWithFunctions, { id: 'generateFunctionCalls' });
+						llmResponse = await agentLLM.generateTextExpectingFunctions(currentPrompt, systemPromptWithFunctions, {
+							id: 'generateFunctionCalls',
+							stopSequences,
+						});
 					} catch (e) {
 						const retryPrompt = `${currentPrompt}\nNote: Your previous response did not contain the response in the required format of <response><function_calls>...</function_calls></response>. You must reply in the correct response format.`;
-						llmResponse = await agentLLM.generateTextExpectingFunctions(retryPrompt, systemPromptWithFunctions, { id: 'generateFunctionCalls-retryError' });
+						llmResponse = await agentLLM.generateTextExpectingFunctions(retryPrompt, systemPromptWithFunctions, {
+							id: 'generateFunctionCalls-retryError',
+							stopSequences,
+						});
 					}
 					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + userRequestXml + llmResponse.textResponse;
 					const functionCalls = llmResponse.functions.functionCalls;
@@ -248,6 +273,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 						If you are unsure what to do next then call the ${AGENT_REQUEST_FEEDBACK} function with a clarifying question.`;
 						const functionCallResponse: FunctionResponse = await agentLLM.generateTextExpectingFunctions(retryPrompt, systemPromptWithFunctions, {
 							id: 'generateFunctionCalls-retryNoFunctions',
+							stopSequences,
 						});
 						// retrying
 						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + userRequestXml + functionCallResponse.textResponse;
@@ -330,7 +356,8 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 					logger.error(e, 'Control loop error');
 					controlError = true;
 					agent.state = 'error';
-					agent.error = e.toString();
+					agent.error = e.message;
+					if (e.stack) `${agent.error}\n${e.stack}`;
 					agent.inputPrompt = currentPrompt;
 					await agentStateService.save(agent);
 				}
@@ -355,7 +382,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 			}
 		}
 	});
-	return agent.agentId;
+	return { agentId: agent.agentId, execution };
 }
 
 async function summariseLongFunctionOutput(functionResult: FunctionCallResult): Promise<string> {

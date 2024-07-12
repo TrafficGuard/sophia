@@ -92,7 +92,7 @@ export class Anthropic extends BaseLLM {
 					system: systemPrompt,
 					messages: [{ role: 'user', content: prompt }],
 					model: this.model,
-					stop_sequences: ['</response>'], // This is needed otherwise it can hallucinate the function response and continue on
+					stop_sequences: opts.stopSequences,
 				});
 			} catch (e) {
 				if (e.status === 529 || e.status === 429) {

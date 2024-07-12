@@ -109,7 +109,7 @@ class AnthropicVertexLLM extends BaseLLM {
 					],
 					model: this.model,
 					max_tokens: maxTokens,
-					stop_sequences: ['</response>'], // This is needed otherwise it can hallucinate the function response and continue on
+					stop_sequences: opts.stopSequences,
 				});
 			} catch (e) {
 				if (this.isRetryableError(e)) {

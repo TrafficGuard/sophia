@@ -17,11 +17,20 @@ export interface GenerateTextOptions {
 	 */
 	topP?: number;
 
+	/**
+	 * Strings in the output which will stop generation
+	 */
 	stopSequences?: string[];
 }
 
+/**
+ * Options when generating text expecting JSON
+ */
 export type GenerateJsonOptions = Omit<GenerateTextOptions, 'type'>;
 
+/**
+ * Options when generating text expecting function calls
+ */
 export type GenerateFunctionOptions = Omit<GenerateTextOptions, 'type'>;
 
 export interface LLM {
