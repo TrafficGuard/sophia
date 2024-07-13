@@ -2,7 +2,7 @@ import { logger } from '#o11y/logger';
 
 import OpenAI from 'openai';
 import { agentContext } from '#agent/agentContext';
-import { currentUser, functionConfig } from '#user/userService/userContext';
+import { functionConfig } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
 import { cacheRetry } from '../../cache/cacheRetry';
 import { func, funcClass } from '../../functionDefinition/functionDecorators';
@@ -16,13 +16,13 @@ export interface PerplexityConfig {
 @funcClass(__filename)
 export class Perplexity {
 	/**
-	 * Calls the Perplexity AI search API to provide an AI summarised query grounded with update-to-date web searches
-	 * @param query the natural language query
+	 * Calls Perplexity to perform online research.
+	 * @param researchQuery the natural language query to research
 	 * @param saveToMemory if the response should be saved to the agent memory.
 	 */
 	@cacheRetry()
 	@func()
-	async search(query: string, saveToMemory: boolean): Promise<string> {
+	async research(researchQuery: string, saveToMemory: boolean): Promise<string> {
 		try {
 			const perplexity = new OpenAI({
 				apiKey: functionConfig(Perplexity).key ?? envVar('PERPLEXITY_KEY'),
@@ -32,7 +32,7 @@ export class Perplexity {
 			const response = await perplexity.chat.completions.create({
 				model: 'llama-3-sonar-large-32k-online',
 				max_tokens: 4096,
-				messages: [{ role: 'user', content: query }],
+				messages: [{ role: 'user', content: researchQuery }],
 				stream: false,
 			});
 			const content = response.choices[0].message?.content;
@@ -40,12 +40,12 @@ export class Perplexity {
 			// $0.60/MIL + $5/1000
 			// 5 / 1000
 			if (saveToMemory) {
-				const key = `Perplexity-${query.replaceAll(' ', '_').replaceAll(/\W/g, '')}`;
+				const key = `Perplexity-${researchQuery.replaceAll(' ', '_').replaceAll(/\W/g, '')}`;
 				agentContext().memory[key] = content;
 			}
 			return content;
 		} catch (e) {
-			log.error(e, `query: ${query}`);
+			log.error(e, `query: ${researchQuery}`);
 			throw e;
 		}
 	}

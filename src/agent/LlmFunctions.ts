@@ -1,7 +1,7 @@
 import { Agent } from '#agent/agentFunctions';
 import { FunctionCall } from '#llm/llm';
 import { logger } from '#o11y/logger';
-import { FunctionDefinition } from '../functionDefinition/functions';
+import { FunctionDefinition, getFunctionDefinitions } from '../functionDefinition/functions';
 
 import { functionFactory } from '../functionDefinition/functionDecorators';
 
@@ -40,10 +40,6 @@ export class LlmFunctions {
 		return Object.keys(this.functionInstances);
 	}
 
-	getFunctionDefinitions(): Array<FunctionDefinition> {
-		return this.getFunctionInstances().map((classRef) => Object.getPrototypeOf(classRef).__functionsObj);
-	}
-
 	addFunctionInstance(functionClassInstance: object, name: string): void {
 		this.functionInstances[name] = functionClassInstance;
 	}
@@ -62,22 +58,22 @@ export class LlmFunctions {
 
 	async callFunction(functionCall: FunctionCall): Promise<any> {
 		const [functionClass, functionName] = functionCall.function_name.split('.');
-		const functions = this.functionInstances[functionClass];
-		if (!functions) throw new Error(`Function class ${functionClass} does not exist`);
-		const func = functions[functionName];
+		const functionClassInstance = this.functionInstances[functionClass];
+		if (!functionClassInstance) throw new Error(`Function class ${functionClass} does not exist`);
+		const func = functionClassInstance[functionName];
 		if (!func) throw new Error(`Function ${functionClass}.${functionName} does not exist`);
 		if (typeof func !== 'function') throw new Error(`Function error: ${functionClass}.${functionName} is not a function. Is a ${typeof func}`);
 
 		const args = Object.values(functionCall.parameters);
 		let result: any;
 		if (args.length === 0) {
-			result = await func.call(functions);
+			result = await func.call(functionClassInstance);
 		} else if (args.length === 1) {
-			result = await func.call(functions, args[0]);
+			result = await func.call(functionClassInstance, args[0]);
 		} else {
-			const functionDefinitions: Record<string, FunctionDefinition> = Object.getPrototypeOf(functions).__functionsObj; // this lookup should be a method in metadata
-			if (!functionDefinitions) throw new Error(`__functionsObj not found on prototype for ${functionClass}.${functionName}`);
+			const functionDefinitions: Record<string, FunctionDefinition> = getFunctionDefinitions(functionClassInstance);
 			const functionDefinition = functionDefinitions[functionName];
+			if (!functionDefinition) throw new Error(`No function definition found for ${functionName}.  Valid functions are ${Object.keys(functionDefinitions)}`);
 			if (!functionDefinition.parameters) {
 				logger.error(`${functionClass}.${functionName} definition doesnt have any parameters`);
 				logger.info(functionDefinition);
@@ -93,7 +89,7 @@ export class LlmFunctions {
 					);
 				args[paramDef.index] = paramValue;
 			}
-			result = await func.call(functions, ...args);
+			result = await func.call(functionClassInstance, ...args);
 		}
 		return result;
 	}

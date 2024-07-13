@@ -103,6 +103,8 @@ function initTrace(): void {
 
 		const tracer = trace.getTracer(traceServiceName);
 		setTracer(tracer, agentContextStorage);
+	} else {
+		setTracer(null, agentContextStorage);
 	}
 }
 
