@@ -3,20 +3,23 @@
 // If the FunctionDefinition/FunctionParameter interfaces change then the loading of cached definitions in the
 // parser will need to check for the old schema and discard
 
-export interface FunctionParameter {
-	index: number;
-	name: string;
-	type: string;
-	optional?: boolean;
-	description: string;
-}
-
+/**
+ * Definition of a class method which can be called by agents
+ */
 export interface FunctionDefinition {
 	class: string;
 	name: string;
 	description: string;
 	parameters: FunctionParameter[];
 	returns?: string;
+}
+
+export interface FunctionParameter {
+	index: number;
+	name: string;
+	type: string;
+	optional?: boolean;
+	description: string;
 }
 
 /**

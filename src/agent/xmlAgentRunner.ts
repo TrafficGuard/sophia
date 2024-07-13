@@ -21,6 +21,8 @@ export const SUPERVISOR_CANCELLED_FUNCTION_NAME = 'Supervisor.Cancelled';
 
 const FUNCTION_OUTPUT_SUMMARIZE_LENGTH = 2000;
 
+export const XML_AGENT_SPAN = '';
+
 const stopSequences = ['</response>'];
 
 export interface RunAgentConfig {
@@ -137,14 +139,6 @@ export async function provideFeedback(agentId: string, executionId: string, feed
 	await runAgent(agent);
 }
 
-// export async function runAgent2(config: RunAgentConfig): Promise<string> {
-// 	return executeAgent(createContext(config))
-// }
-
-// export function executeAgent(agent: AgentContext): Promise<string> {
-// 	const agentStateService = appCtx().agentStateService;
-// }
-
 export async function startAgent(config: RunAgentConfig): Promise<string> {
 	const agent: AgentContext = createContext(config);
 	// System prompt for the XML function calling autonomous agent
@@ -218,7 +212,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 
 		let shouldContinue = true;
 		while (shouldContinue) {
-			shouldContinue = await withActiveSpan('XmlAgent', async (span) => {
+			shouldContinue = await withActiveSpan(XML_AGENT_SPAN, async (span) => {
 				let completed = false;
 				let requestFeedback = false;
 				let anyFunctionCallErrors = false;

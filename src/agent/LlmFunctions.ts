@@ -72,7 +72,7 @@ export class LlmFunctions {
 			result = await func.call(functionClassInstance, args[0]);
 		} else {
 			const functionDefinitions: Record<string, FunctionDefinition> = getFunctionDefinitions(functionClassInstance);
-			const functionDefinition = functionDefinitions[functionName];
+			const functionDefinition = functionDefinitions[functionCall.function_name];
 			if (!functionDefinition) throw new Error(`No function definition found for ${functionName}.  Valid functions are ${Object.keys(functionDefinitions)}`);
 			if (!functionDefinition.parameters) {
 				logger.error(`${functionClass}.${functionName} definition doesnt have any parameters`);
