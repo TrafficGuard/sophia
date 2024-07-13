@@ -32,7 +32,7 @@ async function main() {
 			initialPrompt,
 			llms: ClaudeVertexLLMs(),
 		};
-		const agentId = 'x'; // = await startAgent(config);
+		const agentId = await startAgent(config);
 		await runAgentWorkflow(config, async () => {
 			const llmFunctions: LlmFunctions = agentContext().functions;
 			for (const functionClassInstance of llmFunctions.getFunctionInstances()) {
@@ -43,6 +43,20 @@ async function main() {
 					const methodName = funcName.split('.')[1];
 					pyodide.globals.set(`${functionClassName}.${methodName}`, functionClassInstance[methodName].bind(functionClassInstance));
 				}
+			}
+
+			// Select files under the functions folder
+			const fileSystem = new FileSystem();
+			const functionsPath = path.join(process.cwd(), 'src', 'functions');
+			const files = await fileSystem.listFilesRecursively(functionsPath);
+			const typescriptFiles = files.filter(file => file.endsWith('.ts'));
+
+			for (const file of typescriptFiles) {
+				const contents = await fileSystem.getFileContents(file);
+				pyodide.runPython(`
+					with open('${file}', 'w') as f:
+						f.write('''${contents}''')
+				`);
 			}
 		});
 
