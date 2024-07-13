@@ -7,6 +7,8 @@ import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { RunAgentConfig } from '#agent/xmlAgentRunner';
 import { agentContext } from '#agent/agentContext';
+import { functionRegistry } from '../functionRegistry';
+import { getFunctionDefinitions } from '../functionDefinition/functions';
 
 async function main() {
 	const args = process.argv.slice(2);
@@ -35,8 +37,13 @@ async function main() {
             
             const llmFunctions: LlmFunctions = agentContext().functions
             for(const functionClassInstance of llmFunctions.getFunctionInstances()) {
-                // For each method on the class with a definition set on the pyodide globals
-                // eg pyodide.globals.set("Agent.complete", agent.complete);
+                const functionClassName = functionClassInstance.constructor.name;
+                const functionDefinitions = getFunctionDefinitions(functionClassInstance);
+                
+                for (const [funcName, funcDef] of Object.entries(functionDefinitions)) {
+                    const methodName = funcName.split('.')[1];
+                    pyodide.globals.set(`${functionClassName}.${methodName}`, functionClassInstance[methodName].bind(functionClassInstance));
+                }
             }
         });
 
