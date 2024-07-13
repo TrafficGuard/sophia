@@ -172,8 +172,8 @@ class AnthropicVertexLLM extends BaseLLM {
 	}
 
 	isRetryableError(e: any) {
-		if (e.status === 429) return true;
-		if (e.error?.code === 429) return true;
-		return e.error?.error?.code === 429;
+		if (e.status === 429 || e.status === 529) return true;
+		if (e.error?.code === 429 || e.error?.code === 529) return true;
+		return e.error?.error?.code === 429 || e.error?.error?.code === 529;
 	}
 }

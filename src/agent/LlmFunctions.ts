@@ -36,6 +36,10 @@ export class LlmFunctions {
 		return Object.values(this.functionInstances);
 	}
 
+	getFunctionInstanceMap(): Record<string, object> {
+		return this.functionInstances;
+	}
+
 	getFunctionClassNames(): string[] {
 		return Object.keys(this.functionInstances);
 	}
@@ -72,7 +76,11 @@ export class LlmFunctions {
 			result = await func.call(functionClassInstance, args[0]);
 		} else {
 			const functionDefinitions: Record<string, FunctionDefinition> = getFunctionDefinitions(functionClassInstance);
-			const functionDefinition = functionDefinitions[functionCall.function_name];
+			let functionDefinition = functionDefinitions[functionName];
+			if (!functionDefinition) {
+				// Seems bit of a hack, why coming through in both formats? Also doing this in functionDecorators.ts
+				functionDefinition = functionDefinitions[`${functionClass}.${functionName}`];
+			}
 			if (!functionDefinition) throw new Error(`No function definition found for ${functionName}.  Valid functions are ${Object.keys(functionDefinitions)}`);
 			if (!functionDefinition.parameters) {
 				logger.error(`${functionClass}.${functionName} definition doesnt have any parameters`);

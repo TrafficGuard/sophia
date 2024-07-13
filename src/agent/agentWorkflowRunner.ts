@@ -1,6 +1,7 @@
 import { Span } from '@opentelemetry/api';
 import { AgentContext, agentContext, agentContextStorage, createContext } from '#agent/agentContext';
 import { RunAgentConfig } from '#agent/xmlAgentRunner';
+import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { appContext } from '../app';
 
@@ -19,7 +20,9 @@ export async function runAgentWorkflow(config: RunAgentConfig, workflow: () => a
 		});
 		context = agentContext();
 		context.state = 'completed';
+		logger.info('completed');
 	} catch (e) {
+		logger.error(e);
 		context = agentContext();
 		context.state = 'error';
 		context.error = JSON.stringify(e);

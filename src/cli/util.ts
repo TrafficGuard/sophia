@@ -14,8 +14,6 @@ import { MultiLLM } from '#llm/multi-llm';
 import { ICodeReview, loadCodeReviews } from '#swe/codeReview/codeReviewParser';
 import { appContext } from '../app';
 
-import { writeFileSync } from 'node:fs';
-import { currentUser } from '#user/userService/userContext';
 import { envVarHumanInLoopSettings } from './cliHumanInLoop';
 
 // For running random bits of code

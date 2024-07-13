@@ -97,7 +97,7 @@ export class CodeEditingAgent {
 					let compileFixRequirements = '';
 					if (compileErrorAnalysis.researchQuery) {
 						try {
-							const searchResult = await new Perplexity().search(compileErrorAnalysis.researchQuery, false);
+							const searchResult = await new Perplexity().research(compileErrorAnalysis.researchQuery, false);
 							compileErrorSearchResults.push(searchResult);
 						} catch (e) {
 							logger.error(e, 'Error searching with Perplexity. Ensure you have configured a valid token');

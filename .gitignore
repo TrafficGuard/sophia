@@ -23,3 +23,4 @@ src/cli/*-in
 src/cli/*-out
 ng-starter/
 tg/
+pyodide/

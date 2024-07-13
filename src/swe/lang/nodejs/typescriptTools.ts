@@ -1,13 +1,27 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'path';
 import { getFileSystem } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
-import { ExecResult, execCommand } from '#utils/exec';
+import { ExecResult, execCommand, failOnError } from '#utils/exec';
 import { func, funcClass } from '../../../functionDefinition/functionDecorators';
 import { LanguageTools } from '../languageTools';
 
 @funcClass(__filename)
 export class TypescriptTools implements LanguageTools {
+	/**
+	 * Runs the command `npm run <script>`
+	 * @param script the script in the package.json file to run
+	 * @reutrn the stdout and stderr
+	 */
+	@func()
+	async runNpmScript(script: string): Promise<string> {
+		const packageJson = JSON.parse(readFileSync('package.json').toString());
+		if (!packageJson.scripts[script]) throw new Error(`Npm script ${script} doesn't exist in package.json`);
+		const result = await execCommand(`npm run ${script}`);
+		failOnError(`Error running npm run ${script}`, result);
+		return `${result.stdout}${result.stderr ? `\n${result.stderr}` : ''}`;
+	}
+
 	/**
 	 * Generates an outline of a TypeScript repository by running the tsc command with the emitDeclarationOnly flag
 	 * and returning the contents of all the type definition files.
