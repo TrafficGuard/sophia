@@ -33,7 +33,7 @@ let agentContextStorage: AsyncLocalStorage<AgentContext>;
  * @param theAgentContextStorage
  */
 export function setTracer(theTracer: Tracer, theAgentContextStorage: AsyncLocalStorage<AgentContext>): void {
-	tracer = wrapTracer(theTracer);
+	if (theTracer) tracer = wrapTracer(theTracer);
 	// Having the agentContextStorage() function call in this file was causing a compile failure, so we need to pass in the reference to the storage.
 	agentContextStorage = theAgentContextStorage;
 }
@@ -74,8 +74,8 @@ export async function withActiveSpan<T>(spanName: string, func: (span: Span) => 
 		}
 	};
 
-	if (!tracer) return functionWithCallStack(fakeSpan);
-	return tracer.withActiveSpan(spanName, functionWithCallStack);
+	if (!tracer) return await functionWithCallStack(fakeSpan);
+	return await tracer.withActiveSpan(spanName, functionWithCallStack);
 }
 
 /**
@@ -111,7 +111,7 @@ export function span(attributeExtractors: SpanAttributeExtractors = {}) {
 		const functionName = String(context.name);
 		return async function replacementMethod(this: any, ...args: any[]) {
 			try {
-				agentContextStorage?.getStore()?.callStack.push(functionName);
+				agentContextStorage.getStore()?.callStack.push(functionName);
 				if (!tracer) {
 					return await originalMethod.call(this, ...args);
 				}
@@ -120,7 +120,7 @@ export function span(attributeExtractors: SpanAttributeExtractors = {}) {
 					return await originalMethod.call(this, ...args);
 				});
 			} finally {
-				agentContextStorage?.getStore()?.callStack.pop();
+				agentContextStorage.getStore()?.callStack.pop();
 			}
 		};
 	};

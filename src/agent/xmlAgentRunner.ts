@@ -12,7 +12,7 @@ import { User } from '#user/user';
 import { sleep } from '#utils/async-utils';
 import { envVar } from '#utils/env-var';
 import { appContext } from '../app';
-import { getFunctionDefinitions } from '../functionDefinition/functions';
+import { FunctionDefinition, getAllFunctionDefinitions } from '../functionDefinition/functions';
 import { LlmFunctions } from './LlmFunctions';
 import { AgentContext, AgentLLMs, AgentRunningState, agentContext, agentContextStorage, createContext, llms } from './agentContext';
 
@@ -166,20 +166,16 @@ export async function startAgent(config: RunAgentConfig): Promise<string> {
 }
 
 export async function runAgent(agent: AgentContext): Promise<string> {
-	const agentExecution = await runAgentWithExecution(agent);
-	await agentExecution.execution;
-	return agentExecution.agentId;
-}
-
-export async function runAgentWithExecution(agent: AgentContext): Promise<AgentExecution> {
+	// 	const agentExecution = await runAgentWithExecution(agent);
+	// 	await agentExecution.execution;
+	// 	return agentExecution.agentId;
+	// }
+	//
+	// export async function runAgentWithExecution(agent: AgentContext): Promise<AgentExecution> {
 	const agentStateService = appContext().agentStateService;
 	agent.state = 'agent';
 
 	agentContextStorage.enterWith(agent);
-
-	// TODO only do this if FileSystem is selected by the user
-	// The filesystem will always be on on the context for programmatic usage
-	agent.functions.addFunctionInstance(agent.fileSystem, 'FileSystem');
 
 	const agentLLM = llms().hard;
 
@@ -188,9 +184,8 @@ export async function runAgentWithExecution(agent: AgentContext): Promise<AgentE
 
 	const functions = agent.functions;
 
-	const systemPrompt = updateFunctionDefinitions(agent.systemPrompt, getFunctionDefinitions(functions.getFunctionInstances()));
-	const functionDefinitions = getFunctionDefinitions(functions.getFunctionInstances());
-	const systemPromptWithFunctions = updateFunctionDefinitions(systemPrompt, functionDefinitions);
+	const functionsXml = convertJsonToXml(getAllFunctionDefinitions(functions.getFunctionInstances()));
+	const systemPromptWithFunctions = updateFunctionDefinitions(agent.systemPrompt, functionsXml);
 
 	// Human in the loop settings
 	// How often do we require human input to avoid misguided actions and wasting money
@@ -209,7 +204,7 @@ export async function runAgentWithExecution(agent: AgentContext): Promise<AgentE
 
 	await agentStateService.save(agent);
 
-	const execution: Promise<any> = withActiveSpan(agent.name, async (span: Span) => {
+	await withActiveSpan(agent.name, async (span: Span) => {
 		agent.traceId = span.spanContext().traceId;
 
 		span.setAttributes({
@@ -383,7 +378,7 @@ export async function runAgentWithExecution(agent: AgentContext): Promise<AgentE
 			}
 		}
 	});
-	return { agentId: agent.agentId, execution };
+	return agent.agentId; //{ agentId: agent.agentId, execution };
 }
 
 async function summariseLongFunctionOutput(functionResult: FunctionCallResult): Promise<string> {
@@ -445,4 +440,44 @@ async function waitForInput() {
 		rl.close();
 	})();
 	span.end();
+}
+
+/**
+ * Converts the JSON function definitions to the XML format described in the xml-agent-system-prompt
+ * @param jsonDefinitions The JSON object containing function definitions
+ * @returns A string containing the XML representation of the function definitions
+ */
+function convertJsonToXml(jsonDefinitions: FunctionDefinition[]): string {
+	let xmlOutput = '<functions>\n';
+
+	for (const funcDef of jsonDefinitions) {
+		xmlOutput += '  <function_description>\n';
+		xmlOutput += `    <function_name>${funcDef.name}</function_name>\n`;
+		xmlOutput += `    <description>${funcDef.description}</description>\n`;
+
+		if (funcDef.parameters.length > 0) {
+			xmlOutput += '    <parameters>\n';
+			for (const param of funcDef.parameters) {
+				xmlOutput += `    <${param.name} type="${param.type}" ${param.optional ? 'optional' : ''}>${param.description}</${param.name}>\n`;
+				// xmlOutput += '      <parameter>\n';
+				// xmlOutput += `        <name>${param.name}</name>\n`;
+				// xmlOutput += `        <type>${param.type}</type>\n`;
+				// if (param.optional) {
+				// 	xmlOutput += '        <optional>true</optional>\n';
+				// }
+				// xmlOutput += `        <description>${param.description}</description>\n`;
+				// xmlOutput += '      </parameter>\n';
+			}
+			xmlOutput += '    </parameters>\n';
+		}
+
+		if (funcDef.returns) {
+			xmlOutput += `    <returns>${funcDef.returns}</returns>\n`;
+		}
+
+		xmlOutput += '  </function_description>\n';
+	}
+
+	xmlOutput += '</functions>';
+	return xmlOutput;
 }
