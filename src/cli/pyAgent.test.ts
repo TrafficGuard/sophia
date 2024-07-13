@@ -62,4 +62,37 @@ describe('pyAgent', () => {
 		expect(fileSystemStub.getFileContents.callCount).to.equal(2); // Only for .ts files
 		expect(loadPyodideStub.calledOnce).to.be.true;
 	});
+
+	it('should load TypeScript files in Pyodide', async () => {
+		process.argv = ['node', 'pyAgent.ts', 'Test', 'prompt'];
+		const pyodideInstance = {
+			globals: {
+				set: sinon.stub(),
+			},
+			runPython: sinon.stub(),
+		};
+		loadPyodideStub.resolves(pyodideInstance);
+
+		await import('./pyAgent');
+
+		expect(pyodideInstance.runPython.calledWith(sinon.match(/import glob/))).to.be.true;
+		expect(pyodideInstance.runPython.calledWith(sinon.match(/ts_files = glob.glob/))).to.be.true;
+		expect(pyodideInstance.runPython.calledWith(sinon.match(/exec\(f.read\(\)\)/))).to.be.true;
+	});
+
+	it('should handle errors when loading TypeScript files', async () => {
+		process.argv = ['node', 'pyAgent.ts', 'Test', 'prompt'];
+		const pyodideInstance = {
+			globals: {
+				set: sinon.stub(),
+			},
+			runPython: sinon.stub().throws(new Error('Python execution error')),
+		};
+		loadPyodideStub.resolves(pyodideInstance);
+		const loggerErrorStub = sinon.stub(logger, 'error');
+
+		await import('./pyAgent');
+
+		expect(loggerErrorStub.calledWith('Error starting Pyodide Agent:', sinon.match.instanceOf(Error))).to.be.true;
+	});
 });

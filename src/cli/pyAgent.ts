@@ -53,11 +53,27 @@ async function main() {
 
 			for (const file of typescriptFiles) {
 				const contents = await fileSystem.getFileContents(file);
+				const relativePath = path.relative(process.cwd(), file);
 				pyodide.runPython(`
-					with open('${file}', 'w') as f:
+					import os
+					
+					file_path = '${relativePath}'
+					os.makedirs(os.path.dirname(file_path), exist_ok=True)
+					with open(file_path, 'w') as f:
 						f.write('''${contents}''')
 				`);
 			}
+			
+			// Load the TypeScript files in Pyodide
+			pyodide.runPython(`
+				import os
+				import glob
+				
+				ts_files = glob.glob('src/functions/**/*.ts', recursive=True)
+				for ts_file in ts_files:
+					with open(ts_file, 'r') as f:
+						exec(f.read())
+			`);
 		});
 
 		logger.info(`Pyodide Agent started with ID: ${agentId}`);
