@@ -17,7 +17,7 @@ export class ProfileComponent implements OnInit {
 
   private createProfileForm(): FormGroup {
     return new FormGroup({
-      id: new FormControl({ value: '', disabled: true }),
+      id: new FormControl({value: '', disabled: true}),
       email: new FormControl(''),
       enabled: new FormControl(false),
       hilBudget: new FormControl(0),
