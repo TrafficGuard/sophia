@@ -12,8 +12,6 @@
     "agent": "   node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/cli/agent.ts",
     "bench": "   node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/cli/bench.ts",
     "pyagent": " node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/cli/pyAgent.ts",
-    "py": "      node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/cli/pyAgent.ts",
-    "py": "      node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/cli/pyAgent.ts",
     "code": "    node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/cli/code.ts",
     "swe": "     node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/cli/swe.ts",
     "scrape": "  node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/cli/scrape.ts",

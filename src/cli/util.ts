@@ -14,10 +14,7 @@ import { MultiLLM } from '#llm/multi-llm';
 import { ICodeReview, loadCodeReviews } from '#swe/codeReview/codeReviewParser';
 import { appContext } from '../app';
 
-import { writeFileSync } from 'node:fs';
-import { currentUser } from '#user/userService/userContext';
 import { envVarHumanInLoopSettings } from './cliHumanInLoop';
-import { loadPyodide } from 'pyodide';
 
 // For running random bits of code
 // Usage:
@@ -39,21 +36,12 @@ async function main() {
 	const functions = new LlmFunctions();
 	functions.addFunctionClass(FileSystem);
 
-	// Initialize Pyodide
-	console.log('Initializing Pyodide...');
-	const pyodide = await loadPyodide();
-	await pyodide.loadPackage('micropip');
-	const micropip = pyodide.pyimport('micropip');
-	await micropip.install('numpy');
-	console.log('Pyodide initialized successfully');
-
 	const config: RunAgentConfig = {
 		agentName: 'util',
 		llms: utilLLMs,
 		functions,
 		initialPrompt: '',
 		humanInLoop: envVarHumanInLoopSettings(),
-		pyodide,
 	};
 
 	const context: AgentContext = createContext(config);

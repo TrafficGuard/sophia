@@ -29,7 +29,11 @@ export function func() {
 			const functionName = `${className}.${methodName}`;
 			// NOTE - modification, build attributeExtractors from all the arguments
 			const funcDefinitions = getFunctionDefinitions(this);
-			const funcDef: FunctionDefinition = funcDefinitions[functionName];
+			let funcDef: FunctionDefinition = funcDefinitions[functionName];
+			if (!funcDef) {
+				// Same hack in LlmFunction.ts
+				funcDef = funcDefinitions[methodName];
+			}
 			if (!funcDef)
 				throw new Error(`No function definition found for ${functionName}. Does the method have JSDoc?. Valid functions are ${Object.keys(funcDefinitions)}`);
 			const attributeExtractors = {};

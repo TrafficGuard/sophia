@@ -16,7 +16,7 @@ export const environment = {
   version: env['npm_package_version'] + '-dev',
   defaultLanguage: 'en-US',
   supportedLanguages: ['en-US'],
-  serverUrl: 'http://localhost:3000/api',
+  serverUrl: env['SERVER_URL'] || 'http://localhost:3000/api',
   gcpProject: env['GCLOUD_PROJECT'],
   firestoreDb: env['FIRESTORE_DATABASE'],
 };
