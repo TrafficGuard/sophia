@@ -1,6 +1,6 @@
 # AI Code reviews
 
-Nous has support for AI code reviews of GitLab merge requests. GitHub support is a good candidate for using the Code Editor agent to assist with!
+Nous has support for AI code reviews of GitLab merge requests. Adding GitHub support is a good candidate for using the Code Editor agent to assist with!
 
 For the current working proof-of-concept, the configuration files are located in the [/resources](https://github.com/TrafficGuard/nous/tree/preview/resources/codeReview) folder. The next step will to store the configuration in a database.
 

@@ -1,6 +1,6 @@
 # AI Software Engineer
 
-AI offers coding capabilities across a spectrum of use cases, from smart IDE auto-completion to fully autonomous agents. We can classify AI's role in software development into these levels:
+AI offers coding capabilities across a spectrum of use cases, from smart IDE auto-completion to fully autonomous agents. AI's role in software development exists in a number of levels:
 
 1. IDE inline code suggestions
 2. IDE context aware chat

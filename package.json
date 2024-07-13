@@ -8,7 +8,7 @@
   },
   "scripts": {
     "clean": "echo dumy clean",
-    "chat": "    node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/cli/chat.ts",
+    "gen": "     node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/cli/gen.ts",
     "agent": "   node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/cli/agent.ts",
     "bench": "   node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/cli/bench.ts",
     "pyagent": " node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register --inspect=0.0.0.0:9229 src/cli/pyAgent.ts",

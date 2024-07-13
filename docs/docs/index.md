@@ -16,14 +16,15 @@ Nous started from a simple goal: to harness AI's potential to **enhance real-wor
 - Review code for compliance with standards and best practices.
 - Assist with large/complex refactorings, and more.
 
-At [TrafficGuard](https://www.trafficguard.ai?ref=nous) we process billions of events a month for our global clients, [protecting their ad spend](https://www.trafficguard.ai/protect/google-search?ref=nous) from bots and other invalid traffic. 
+At TrafficGuard we process billions of events a month for our global clients, [increasing their Ad spend ROI](https://www.trafficguard.ai/case-studies?ref=nous) from bots and other invalid traffic. 
 Our platform on Google Cloud comprises projects developed in TypeScript, Python, GoogleSQL, PHP and Terraform, deployed from GitLab.
 
-Given that 1) Open source projects are typically Python/GitHub focused, and 2) the vendor AI tools are focused on their silos, we saw a need for TypeScript based tooling which can work across our entire tech stack, and understand how all of our pieces fit together.
+With open source projects typically Python/GitHub focused, and the vendor AI tools being focused in their silos, 
+we saw a need for TypeScript based tooling which can work across our entire tech stack, and understand the overall architecture.
 
-Through its evolution we designed it as a flexible platform for the TypeScript community to expand and support the use cases and integrations of your choice.
+Through its evolution we've designed nous as a flexible platform for the TypeScript community to expand and support the use cases and integrations of your choice.
 
-For example our design choice of Firestore for the initial database implementation and Cloud Run for deployment provides a scale-to-zero solution with zero-cost using the free tier.
+Our design choice of Firestore for the initial database implementation, with Cloud Run, provides a scale-to-zero solution with zero-cost using the free tier.
 With the intention to support uses cases such as your own custom personal assistant, always available via mobile.
 
 ## Features
@@ -32,8 +33,9 @@ Some of the key features include:
 
 - Advanced autonomous agent
     - Reasoning/planning inspired from Google's [Self-Discover](https://arxiv.org/abs/2402.03620) paper
-    - Custom XML-based function calling on any sufficiently capable LLM
     - Memory and function history for complex workflows
+    - Custom XML-based function calling on any sufficiently capable LLM
+        - Experimental code-generated function calling with Python/Pyodide
 - LLM function definitions auto-generated from source code
 - Function callable integrations:
     - Filesystem, Jira, Slack, Perplexity, Gitlab and more
