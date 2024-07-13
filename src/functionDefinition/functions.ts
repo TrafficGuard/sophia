@@ -1,6 +1,7 @@
-// - Types --------------------------------------------------------------------
+// Definitions for LLM function calling
 
-import { logger } from '#o11y/logger';
+// If the FunctionDefinition/FunctionParameter interfaces change then the loading of cached definitions in the
+// parser will need to check for the old schema and discard
 
 export interface FunctionParameter {
 	index: number;
@@ -15,36 +16,38 @@ export interface FunctionDefinition {
 	name: string;
 	description: string;
 	parameters: FunctionParameter[];
-	returns: string;
+	returns?: string;
 }
 
-// - Utils --------------------------------------------------------------------
-
 /**
- * Gets all the LLM function definitions on a class
- * @param obj the class instance
- * @returns {FunctionDefinition[]}
+ * Sets the function definitions on a class prototype
+ * @param ctor the function class constructor function
+ * @param definitions
  */
-export function getAllFunctions(obj: any): FunctionDefinition[] {
-	if (obj.__functions === undefined || obj.__functions === null) {
-		logger.warn(`no functions set for ${obj.constructor.name}`);
-		return [];
-	}
-	return obj.__functions;
+export function setFunctionDefinitions(ctor: new (...args: any[]) => any, definitions: Record<string, FunctionDefinition>) {
+	ctor.prototype.__functions = definitions;
 }
 
-// - Decorators ---------------------------------------------------------------
-
-// In functionDefinitionParser.ts are references to the func and funcDef names
+/**
+ * Gets the function definitions for an instance of a function class
+ * @param instance
+ */
+export function getFunctionDefinitions(instance: any): Record<string, FunctionDefinition> {
+	const funcDefinitions: Record<string, FunctionDefinition> | undefined = Object.getPrototypeOf(instance).__functions;
+	if (funcDefinitions === undefined) {
+		throw new Error(`Instance prototype did not have function definitions. Does the class have the @funcClass decorator? Object: ${JSON.stringify(instance)}`);
+	}
+	return funcDefinitions;
+}
 
 /**
- * Generates the function definitions of the provided objects.
- * @param objects
+ * Get the function definitions of the provided instances of function classes.
+ * @param instances
  */
-export function getFunctionDefinitions(objects: any[]): string {
-	let defs = '';
-	for (const obj of objects) {
-		defs += Object.getPrototypeOf(obj).__functions ?? '';
+export function getAllFunctionDefinitions(instances: any[]): FunctionDefinition[] {
+	const definitions = [];
+	for (const instance of instances) {
+		definitions.push(...Object.values(getFunctionDefinitions(instance)));
 	}
-	return defs;
+	return definitions;
 }

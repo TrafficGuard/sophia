@@ -36,13 +36,12 @@ The `@funcClass(__filename)` annotation must be on the class so ts-morph can fin
 
 The `@func()` annotation must be on each class method to be exposed as a LLM callable function.
 
-The generated definitions will be under the folder `.nous/functions`  in json and in the xml format used by the autonomous agent.
-
-The definition generation code could be extended to transform the JSON definition into the native function calling format for OpenAI, Anthropic, Gemini etc.
-
 If the definition files don't exist at runtime then they will automatically be generated. To improve startup time
-the definition files are only re-built if the source file modified date is newer. Also, the definition files can be generated
-at build time with the `npm run functions` script.
+the definition files are cached under the folder `.nous/functions` and only re-built if the source file modified date is newer. 
+Also, the definition files can be generated at build time with the `npm run functions` script.
+
+Function calling agents can transform the object implementing the [FunctionDefinition](https://github.com/TrafficGuard/nous/blob/main/src/functionDefinition/functions.ts#L13)
+interface into the format required, e.g. the custom XML format, or native function calling types for OpenAI, Anthropic, Gemini etc.
 
 The `@func` annotation also adds OpenTelemetry tracing to the function call.
 
