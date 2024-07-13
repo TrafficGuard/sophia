@@ -16,7 +16,7 @@
     "cypress:run": "npm run write:env -s && ng run nous-ng:cypress-run",
     "translations:extract": "ngx-translate-extract --input ./src --output ./src/translations/template.json --format=json --clean --sort",
     "docs": "hads ./docs -o",
-    "write:env": "ngx-scripts env npm_package_version SERVER_URL GCLOUD_PROJECT FIRESTORE_DATABASE",
+    "write:env": "ngx-scripts env npm_package_version SERVER_URL GCLOUD_PROJECT FIRESTORE_DATABASE AUTH",
     "prettier": "prettier --write \"./src/**/*.{ts,js,html,scss}\"",
     "prettier:check": "prettier --list-different \"./src/**/*.{ts,js,html,scss}\"",
     "postinstall": "npm run prettier -s",
