@@ -7,20 +7,23 @@ import {
 	RunAgentConfig,
 	SUPERVISOR_CANCELLED_FUNCTION_NAME,
 	SUPERVISOR_RESUMED_FUNCTION_NAME,
+	XML_AGENT_SPAN,
 	cancelAgent,
 	provideFeedback,
 	startAgent,
 } from '#agent/xmlAgentRunner';
-import { TEST_FUNC_NOOP, TEST_FUNC_SUM, THROW_ERROR_TEXT, TestFunctions } from '#functions/testFunctions';
+import { TEST_FUNC_NOOP, TEST_FUNC_SKY_COLOUR, TEST_FUNC_SUM, THROW_ERROR_TEXT, TestFunctions } from '#functions/testFunctions';
 import { MockLLM } from '#llm/models/mock-llm';
+import { setTracer } from '#o11y/trace';
 import { User } from '#user/user';
 import { sleep } from '#utils/async-utils';
-import { AgentContext, AgentLLMs } from './agentContext';
+import { AgentContext, AgentLLMs, agentContextStorage } from './agentContext';
 
 const REQUEST_FEEDBACK_VALUE = 'question is...';
 const REQUEST_FEEDBACK_FUNCTION_CALL = `<plan>Requesting feedback</plan>\n<function_calls><function_call><function_name>${AGENT_REQUEST_FEEDBACK}</function_name><parameters><${REQUEST_FEEDBACK_PARAM_NAME}>${REQUEST_FEEDBACK_VALUE}</${REQUEST_FEEDBACK_PARAM_NAME}></parameters></function_call></function_calls>`;
 const COMPLETE_FUNCTION_CALL = `<plan>Ready to complete</plan>\n<function_calls><function_call><function_name>${AGENT_COMPLETED_NAME}</function_name><parameters></parameters></function_call></function_calls>`;
 const NOOP_FUNCTION_CALL = `<plan>I'm going to call the noop function</plan>\n<function_calls><function_call><function_name>${TEST_FUNC_NOOP}</function_name><parameters></parameters></function_call></function_calls>`;
+const SKY_COLOUR_FUNCTION_CALL = `<plan>Get the sky colour</plan>\n<function_calls><function_call><function_name>${TEST_FUNC_SKY_COLOUR}</function_name><parameters></parameters></function_call></function_calls>`;
 
 describe('agentRunner', () => {
 	initInMemoryApplicationContext();
@@ -32,10 +35,11 @@ describe('agentRunner', () => {
 		xhard: mockLLM,
 	};
 	let functions = new LlmFunctions();
+	const AGENT_NAME = 'test';
 
 	function runConfig(runConfig?: Partial<RunAgentConfig>): RunAgentConfig {
 		const defaults: RunAgentConfig = {
-			agentName: 'test',
+			agentName: AGENT_NAME,
 			initialPrompt: 'test prompt',
 			systemPrompt: '<functions></functions>',
 			llms,
@@ -70,6 +74,8 @@ describe('agentRunner', () => {
 
 	beforeEach(() => {
 		initInMemoryApplicationContext();
+		// This is needed for the tests on the LlmCall.callStack property
+		setTracer(null, agentContextStorage);
 		mockLLM = new MockLLM();
 		llms = {
 			easy: mockLLM,
@@ -90,7 +96,6 @@ describe('agentRunner', () => {
 			await startAgent(runConfig({ initialPrompt: 'Add 3 and 6', functions: functions }));
 			const agent = await waitForAgent();
 			// spy on sum
-			expect(agent.error).to.be.undefined;
 			expect(agent.state).to.equal('completed');
 		});
 	});
@@ -204,6 +209,24 @@ describe('agentRunner', () => {
 			expect(agent.state).to.equal('completed');
 			const functionCallResult = agent.functionCallHistory.find((call) => call.function_name === SUPERVISOR_CANCELLED_FUNCTION_NAME);
 			expect(functionCallResult.stdout).to.equal('cancelled');
+		});
+	});
+
+	describe('LLM calls', () => {
+		it('should have the call stack', async () => {
+			functions.addFunctionClass(TestFunctions);
+			mockLLM.addResponse(SKY_COLOUR_FUNCTION_CALL);
+			mockLLM.addResponse('blue');
+			mockLLM.addResponse(COMPLETE_FUNCTION_CALL);
+			await startAgent(runConfig({ functions }));
+			const agent = await waitForAgent();
+			expect(agent.state).to.equal('completed');
+
+			const calls = await appContext().llmCallService.getLlmCallsForAgent(agent.agentId);
+			expect(calls.length).to.equal(3);
+			const skyCall = calls[1];
+			expect(skyCall.response.callStack).to.equal(`${AGENT_NAME} > ${XML_AGENT_SPAN} > skyColour > generateText`);
+			expect(skyCall.response.responseText).to.equal('blue');
 		});
 	});
 });

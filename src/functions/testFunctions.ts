@@ -5,6 +5,8 @@ export const THROW_ERROR_TEXT = 'FunctionErrorText';
 export const TEST_FUNC_SUM = 'TestFunctions.sum';
 
 export const TEST_FUNC_NOOP = 'TestFunctions.noop';
+export const TEST_FUNC_SKY_COLOUR = 'TestFunctions.skyColour';
+
 /**
  * Mainly used for testing
  */
