@@ -72,7 +72,7 @@ export class CodeEditingAgent {
 		   which don't compile, we can provide the diff since the last good commit to help identify causes of compile issues. */
 		let compiledCommitSha: string | null = agentContext().memory.compiledCommitSha;
 
-		const MAX_ATTEMPTS = 3;
+		const MAX_ATTEMPTS = 5;
 		for (let i = 0; i < MAX_ATTEMPTS; i++) {
 			try {
 				// Make sure the project initially compiles

@@ -81,9 +81,9 @@ class AnthropicVertexLLM extends BaseLLM {
 	@cacheRetry({ backOffMs: 5000 })
 	@logTextGeneration
 	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
-		return withActiveSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
+		return await withActiveSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
 			const combinedPrompt = combinePrompts(userPrompt, systemPrompt);
-			const maxTokens = 4096;
+			const maxOutputTokens = 4096;
 
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
 			span.setAttributes({
@@ -108,7 +108,7 @@ class AnthropicVertexLLM extends BaseLLM {
 						},
 					],
 					model: this.model,
-					max_tokens: maxTokens,
+					max_tokens: maxOutputTokens,
 					stop_sequences: opts?.stopSequences,
 				});
 			} catch (e) {
@@ -122,6 +122,12 @@ class AnthropicVertexLLM extends BaseLLM {
 			if (typeof message === 'string') {
 				message = JSON.parse(message);
 			}
+
+			const errorMessage = message as any;
+			if (errorMessage.type === 'error') {
+				throw new Error(`${errorMessage.error.type} ${errorMessage.error.message}`);
+			}
+
 			if (!message.content.length) throw new Error(`Response Message did not have any content: ${JSON.stringify(message)}`);
 
 			if (message.content[0].type !== 'text') throw new Error(`Message content type was not text. Was ${message.content[0].type}`);
@@ -165,7 +171,7 @@ class AnthropicVertexLLM extends BaseLLM {
 				// TODO we can replay with request with the current response appended so the LLM can complete it
 				logger.error('= RESPONSE exceeded max tokens ===============================');
 				logger.debug(responseText);
-				throw new MaxTokensError(maxTokens, responseText);
+				throw new MaxTokensError(maxOutputTokens, responseText);
 			}
 			return responseText;
 		});

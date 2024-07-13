@@ -347,7 +347,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 					controlError = true;
 					agent.state = 'error';
 					agent.error = e.message;
-					if (e.stack) `${agent.error}\n${e.stack}`;
+					if (e.stack) agent.error += `\n${e.stack}`;
 					agent.inputPrompt = currentPrompt;
 					await agentStateService.save(agent);
 				}

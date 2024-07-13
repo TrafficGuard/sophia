@@ -1,10 +1,11 @@
 import { AgentLLMs, addCost, agentContext } from '#agent/agentContext';
 import { CallerId } from '#llm/llmCallService/llmCallService';
 import { CreateLlmResponse } from '#llm/llmCallService/llmRequestResponse';
+import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { appContext } from '../../app';
 import { BaseLLM } from '../base-llm';
-import { combinePrompts, logTextGeneration } from '../llm';
+import { GenerateTextOptions, combinePrompts, logTextGeneration } from '../llm';
 
 export function mockLLMs(): AgentLLMs {
 	return {
@@ -46,7 +47,8 @@ export class MockLLM extends BaseLLM {
 	}
 
 	@logTextGeneration
-	async generateText(userPrompt: string, systemPrompt: string): Promise<string> {
+	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
+		if (opts?.id) logger.info(`MockLLM ${opts.id}`);
 		return withActiveSpan('generateText', async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 			this.lastPrompt = prompt;

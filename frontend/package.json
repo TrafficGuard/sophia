@@ -5,7 +5,7 @@
   "scripts": {
     "ng": "ng",
     "build": "npm run write:env -s && ng build --base-href=/ui/",
-    "start": "npm run write:env -s && ng serve --port 4201 --proxy-config proxy.conf.js",
+    "start": "npm run write:env -s && ng serve --proxy-config proxy.conf.js",
     "start:local": "dotenv -e ../variables/local.env -- npm run start",
     "deploy": "npm run write:env -s && ng deploy",
     "lint": "ng lint && stylelint \"src/**/*.scss\"",
