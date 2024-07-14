@@ -6,7 +6,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { environment } from '@env/environment';
 
 @Component({
-  selector: 'run-agent',
+  selector: 'app-run-agent',
   templateUrl: './runAgent.component.html',
   styleUrls: ['./runAgent.component.scss'],
 })
