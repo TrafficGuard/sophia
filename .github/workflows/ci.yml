@@ -16,6 +16,15 @@ jobs:
         with:
           node-version: '20.x'
 
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+        with:
+          version: '>= 363.0.0'
+          install_components: 'cloud-firestore-emulator'
+
+      - name: 'Run firestore emulator'
+        run: 'gcloud emulators firestore start --host-port=127.0.0.1:8243'
+
       - name: Install dependencies (server)
         run: npm ci
 
