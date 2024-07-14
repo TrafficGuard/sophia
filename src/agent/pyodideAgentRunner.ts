@@ -161,9 +161,9 @@ export async function runPyodideAgent(agent: AgentContext): Promise<string> {
 					const globals = pyodide.toPy(jsGlobals);
 					try {
 						pythonScript = `
-						async def main():
-						${pythonCode}
-						main()`;
+async def main():
+${pythonCode}
+main()`;
 						logger.info(pythonScript);
 						console.log('Original');
 						console.log(pythonScript);
