@@ -34,4 +34,4 @@ jobs:
 
       - name: Run tests (frontend)
         working-directory: ./frontend
-        run: npm test
+        run: npm test:ci
