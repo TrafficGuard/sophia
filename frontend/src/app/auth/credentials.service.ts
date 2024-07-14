@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { environment } from "@env/environment";
 
 export interface Credentials {
   // Customize received credentials here
@@ -30,7 +31,7 @@ export class CredentialsService {
    * @return True if the user is authenticated.
    */
   isAuthenticated(): boolean {
-    return !!this.credentials;
+    return !!this.credentials || environment.auth === 'gcloud_iap' || environment.auth === 'single_user';
   }
 
   /**
