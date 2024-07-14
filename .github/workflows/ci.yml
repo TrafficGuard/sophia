@@ -19,8 +19,11 @@ jobs:
       - name: Install dependencies (server)
         run: npm ci
 
+      - name: Lint (server)
+        run: npm run lint:ci
+
       - name: Run tests (server)
-        run: npm test:ci
+        run: npm run test:ci
 
       - name: Install dependencies (frontend)
         working-directory: ./frontend
