@@ -14,7 +14,7 @@ import { appContext } from '../app';
 
 export const SUPERVISOR_RESUMED_FUNCTION_NAME = 'Supervisor.Resumed';
 export const SUPERVISOR_CANCELLED_FUNCTION_NAME = 'Supervisor.Cancelled';
-const FUNCTION_OUTPUT_SUMMARIZE_LENGTH = 2000;
+const FUNCTION_OUTPUT_SUMMARIZE_MIN_LENGTH = 2000;
 
 export interface RunAgentConfig {
 	/** Uses currentUser() if not provided */
@@ -86,9 +86,8 @@ export async function cancelAgent(agentId: string, executionId: string, feedback
 
 export async function resumeError(agentId: string, executionId: string, feedback: string): Promise<void> {
 	const agent = await appContext().agentStateService.load(agentId);
-	if (agent.executionId !== executionId) {
-		throw new Error('Invalid executionId. Agent has already been resumed');
-	}
+	if (agent.executionId !== executionId) throw new Error('Invalid executionId. Agent has already been resumed');
+
 	agent.functionCallHistory.push({
 		function_name: SUPERVISOR_RESUMED_FUNCTION_NAME,
 		stdout: feedback,
@@ -155,7 +154,9 @@ export async function provideFeedback(agentId: string, executionId: string, feed
 }
 
 export async function summariseLongFunctionOutput(functionCall: FunctionCall, result: string): Promise<string | null> {
-	const prompt = `<function_name>${functionCall.function_name}</function_name><output>\n${result}</output>
+	if (!result || result.length < FUNCTION_OUTPUT_SUMMARIZE_MIN_LENGTH) return null;
+
+	const prompt = `<function_name>${functionCall.function_name}</function_name>\n<output>\n${result}\n</output>\n
 	For the above function call summarise the output into a paragraph that captures key details about the output content, which might include identifiers, content summary, content structure and examples. Only responsd with the summary`;
 	return await llms().easy.generateText(prompt, null, { id: 'summariseLongFunctionOutput' });
 }
