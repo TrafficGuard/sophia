@@ -239,21 +239,21 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + currentPrompt;
 					}
 
-					let llmResponse: FunctionResponse;
+					let functionResponse: FunctionResponse;
 					try {
-						llmResponse = await agentLLM.generateTextExpectingFunctions(currentPrompt, systemPromptWithFunctions, {
+						functionResponse = await agentLLM.generateFunctionResponse(currentPrompt, systemPromptWithFunctions, {
 							id: 'generateFunctionCalls',
 							stopSequences,
 						});
 					} catch (e) {
 						const retryPrompt = `${currentPrompt}\nNote: Your previous response did not contain the response in the required format of <response><function_calls>...</function_calls></response>. You must reply in the correct response format.`;
-						llmResponse = await agentLLM.generateTextExpectingFunctions(retryPrompt, systemPromptWithFunctions, {
+						functionResponse = await agentLLM.generateFunctionResponse(retryPrompt, systemPromptWithFunctions, {
 							id: 'generateFunctionCalls-retryError',
 							stopSequences,
 						});
 					}
-					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + userRequestXml + llmResponse.textResponse;
-					const functionCalls = llmResponse.functions.functionCalls;
+					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + userRequestXml + functionResponse.textResponse;
+					const functionCalls = functionResponse.functions.functionCalls;
 
 					if (!functionCalls.length) {
 						// Re-try once with an addition to the prompt that there was no function calls,
@@ -261,7 +261,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 						const retryPrompt = `${currentPrompt}
 						Note: Your previous response did not contain a function call.  If you are able to answer/complete the question/task, then call the ${AGENT_COMPLETED_NAME} function with the appropriate response.
 						If you are unsure what to do next then call the ${AGENT_REQUEST_FEEDBACK} function with a clarifying question.`;
-						const functionCallResponse: FunctionResponse = await agentLLM.generateTextExpectingFunctions(retryPrompt, systemPromptWithFunctions, {
+						const functionCallResponse: FunctionResponse = await agentLLM.generateFunctionResponse(retryPrompt, systemPromptWithFunctions, {
 							id: 'generateFunctionCalls-retryNoFunctions',
 							stopSequences,
 						});
@@ -338,7 +338,7 @@ export async function runAgent(agent: AgentContext): Promise<string> {
 					// This section is duplicated in the provideFeedback function
 					agent.invoking = [];
 					if (!anyFunctionCallErrors && !completed && !requestFeedback) agent.state = 'agent';
-					currentPrompt = `${userRequestXml}\n${llmResponse.textResponse}\n${functionResults.join('\n')}`;
+					currentPrompt = `${userRequestXml}\n${functionResponse.textResponse}\n${functionResults.join('\n')}`;
 					agent.inputPrompt = currentPrompt;
 					await agentStateService.save(agent);
 				} catch (e) {

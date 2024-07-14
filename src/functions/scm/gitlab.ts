@@ -363,7 +363,7 @@ export class GitLab implements SourceControlManagement {
 		</json>
 		</example>
 		`;
-		const reviewComments = (await llms().medium.generateTextAsJson(prompt, null, { id: 'reviewDiff' })) as Array<{ lineNumber: number; comment: string }>;
+		const reviewComments = (await llms().medium.generateJson(prompt, null, { id: 'reviewDiff' })) as Array<{ lineNumber: number; comment: string }>;
 
 		return { code: currentCode, comments: reviewComments, mrDiff };
 	}
