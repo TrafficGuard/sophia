@@ -71,7 +71,7 @@ An example configuration is:
 
 To enable the code review functionality you will need to configure webhook(s) in GitLab.
 
-Webhooks can be configured at the project or group leve, so if you have multiple top-level groups
+Webhooks can be configured at the project or group level, so if you have multiple top-level groups
 that you wanted to be reviewed, then you will need to configure a webhook for each one.
 
 Follow the [GitLab Webhook documentation](https://gitlab.synrgy.mobi/groups/devops/-/hooks) and for the
