@@ -36,7 +36,7 @@ export class FirestoreLlmCallService implements LlmCallService {
 	db: Firestore;
 	constructor() {
 		this.db = new Firestore({
-			projectId: process.env.FIRESTORE_EMULATOR_HOST ? undefined : envVar('GCLOUD_PROJECT'),
+			projectId: process.env.FIRESTORE_EMULATOR_HOST ? 'demo-nous' : envVar('GCLOUD_PROJECT'),
 			databaseId: process.env.FIRESTORE_DATABASE,
 			ignoreUndefinedProperties: true,
 		});
