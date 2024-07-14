@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import { AsyncLocalStorage } from 'async_hooks';
 import { LlmFunctions } from '#agent/LlmFunctions';
-import { RunAgentConfig } from '#agent/xmlAgentRunner';
+import { RunAgentConfig } from '#agent/agentRunner';
 import { FileSystem } from '#functions/filesystem';
 import { FunctionCall, FunctionCallResult, LLM, TaskLevel } from '#llm/llm';
 import { deserializeLLMs } from '#llm/llmFactory';
@@ -35,6 +35,8 @@ export interface AgentContext {
 	/** User provided name */
 	name: string;
 	parentAgentId?: string;
+	/** The type of autonomous agent function calling.*/
+	type: 'xml' | 'python';
 
 	user: User;
 
@@ -110,6 +112,7 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		executionId: randomUUID(),
 		traceId: '',
 		name: config.agentName,
+		type: config.type ?? 'xml',
 		user: config.user ?? currentUser(),
 		systemPrompt: config.systemPrompt,
 		inputPrompt: '',
@@ -193,5 +196,9 @@ export async function deserializeAgentContext(serialized: Record<string, any>): 
 	context.memory = serialized.memory;
 	context.user = await appContext().userService.getUser(serialized.user);
 	context.llms = deserializeLLMs(serialized.llms);
+
+	// backwards compatability
+	if (!context.type) context.type = 'xml';
+
 	return context as AgentContext;
 }

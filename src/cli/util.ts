@@ -1,6 +1,5 @@
 import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext, AgentLLMs, agentContextStorage, createContext, getFileSystem, llms } from '#agent/agentContext';
-import { RunAgentConfig } from '#agent/xmlAgentRunner';
 import '#fastify/trace-init/trace-init';
 import { FileSystem } from '#functions/filesystem';
 import { Jira } from '#functions/jira';
@@ -14,6 +13,7 @@ import { MultiLLM } from '#llm/multi-llm';
 import { ICodeReview, loadCodeReviews } from '#swe/codeReview/codeReviewParser';
 import { appContext } from '../app';
 
+import { RunAgentConfig } from '#agent/agentRunner';
 import { envVarHumanInLoopSettings } from './cliHumanInLoop';
 
 // For running random bits of code

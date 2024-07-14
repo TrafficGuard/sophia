@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { AgentLLMs } from '#agent/agentContext';
+import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
-import { RunAgentConfig } from '#agent/xmlAgentRunner';
 import '#fastify/trace-init/trace-init';
 import { FileSystem } from '#functions/filesystem';
 import { ClaudeLLMs } from '#llm/models/anthropic';

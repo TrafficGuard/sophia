@@ -1,7 +1,7 @@
 import { Type } from '@sinclair/typebox';
 import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext, agentContextStorage, createContext } from '#agent/agentContext';
-import { RunAgentConfig } from '#agent/xmlAgentRunner';
+import { RunAgentConfig } from '#agent/agentRunner';
 import { send, sendSuccess } from '#fastify/index';
 import { GitLab } from '#functions/scm/gitlab';
 import { GEMINI_1_5_PRO_LLMS } from '#llm/models/vertexai';

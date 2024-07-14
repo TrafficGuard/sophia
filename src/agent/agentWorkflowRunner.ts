@@ -1,6 +1,6 @@
 import { Span } from '@opentelemetry/api';
 import { AgentContext, agentContext, agentContextStorage, createContext } from '#agent/agentContext';
-import { RunAgentConfig } from '#agent/xmlAgentRunner';
+import { RunAgentConfig } from '#agent/agentRunner';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { appContext } from '../app';

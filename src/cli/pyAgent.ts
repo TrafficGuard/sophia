@@ -1,8 +1,8 @@
 import '#fastify/trace-init/trace-init';
 
 import { readFileSync } from 'fs';
+import { startAgent } from '#agent/agentRunner';
 import { startPyodideAgent } from '#agent/pyodideAgentRunner';
-import { startAgent } from '#agent/xmlAgentRunner';
 import { FileSystem } from '#functions/filesystem';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
