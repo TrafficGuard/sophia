@@ -45,7 +45,7 @@ export async function analyzeCompileErrors(compilerOutput: string, initialFileSe
 </response_example>`;
 
 	const prompt = `${fileList}\n${fileContents}\n${compileOutputXml}\n${instructions}`;
-	const analysis: CompileErrorAnalysis = await llms().hard.generateTextAsJson(prompt, null, {
+	const analysis: CompileErrorAnalysis = await llms().hard.generateJson(prompt, null, {
 		id: 'analyzeCompileErrors',
 	});
 	analysis.compilerOutput = compilerOutput;

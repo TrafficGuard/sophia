@@ -17,7 +17,7 @@ export abstract class BaseLLM implements LLM {
 		private outputCostPerChar: number,
 	) {}
 
-	async generateTextExpectingFunctions(prompt: string, systemPrompt?: string, opts?: GenerateFunctionOptions): Promise<FunctionResponse> {
+	async generateFunctionResponse(prompt: string, systemPrompt?: string, opts?: GenerateFunctionOptions): Promise<FunctionResponse> {
 		const response = await this.generateText(prompt, systemPrompt, opts);
 		return {
 			textResponse: response,
@@ -30,7 +30,7 @@ export abstract class BaseLLM implements LLM {
 		return extractStringResult(response);
 	}
 
-	async generateTextAsJson(prompt: string, systemPrompt?: string, opts?: GenerateJsonOptions): Promise<any> {
+	async generateJson(prompt: string, systemPrompt?: string, opts?: GenerateJsonOptions): Promise<any> {
 		const response = await this.generateText(prompt, systemPrompt, opts ? { type: 'json', ...opts } : { type: 'json' });
 		return extractJsonResult(response);
 	}

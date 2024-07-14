@@ -261,7 +261,7 @@ export class CodeEditingAgent {
 			action:
 				'You will respond ONLY in JSON. From the requirements quietly consider which the files may be required to complete the task. You MUST output your answer ONLY as JSON in the format of this example:\n<example>\n{\n files: ["file1", "file2", "file3"]\n}\n</example>',
 		});
-		const response: any = await llms().hard.generateTextAsJson(prompt, null, { id: 'extractFilenames' });
+		const response: any = await llms().hard.generateJson(prompt, null, { id: 'extractFilenames' });
 		return response.files;
 	}
 }

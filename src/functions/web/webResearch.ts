@@ -96,7 +96,7 @@ export class WebResearcher {
 	async sortSearchResults(searchResults: OrganicSearchResult[], query: string): Promise<OrganicSearchResult[]> {
 		// The web researcher will load and process pages until the knowledgebase is sufficient to answer the query
 		// This additional sorting aims to reduce the number of web pages processed
-		const sortedResults = await llms().medium.generateTextAsJson<OrganicSearchResult[]>(
+		const sortedResults = await llms().medium.generateJson<OrganicSearchResult[]>(
 			`<json>\n${JSON.stringify(
 				searchResults,
 			)}\n</json>\nSort this array of URL/titles in the order that would be most likely to have the answer for the query "${query}" with the most likely first. Output your answer in JSON only.`,
