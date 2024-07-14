@@ -116,7 +116,7 @@ describe('agentRunner', () => {
 			mockLLM.addResponse(COMPLETE_FUNCTION_CALL);
 			await startAgent(runConfig({ functions }));
 			const agent = await waitForAgent();
-			expect(agent.error).to.be.undefined;
+			expect(!agent.error).to.be.true;
 			expect(agent.state).to.equal('completed');
 		});
 	});

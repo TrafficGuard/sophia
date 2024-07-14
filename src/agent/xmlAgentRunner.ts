@@ -68,7 +68,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 			shouldContinue = await withActiveSpan(XML_AGENT_SPAN, async (span) => {
 				let completed = false;
 				let requestFeedback = false;
-				const anyFunctionCallErrors = false;
+				let anyFunctionCallErrors = false;
 				let controlError = false;
 				try {
 					if (hilCount && countSinceHil === hilCount) {
@@ -173,7 +173,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 							agent.error = null;
 						} catch (e) {
 							functionErrorCount++;
-							// anyFunctionCallErrors = true;
+							anyFunctionCallErrors = true;
 							agent.state = 'error';
 							logger.error(e, 'Function error');
 							agent.error = e.toString();
@@ -194,7 +194,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 
 					// This section is duplicated in the provideFeedback function
 					agent.invoking = [];
-					if (!completed && !requestFeedback) agent.state = 'agent';
+					if (!anyFunctionCallErrors && !completed && !requestFeedback) agent.state = 'agent';
 					currentPrompt = `${userRequestXml}\n${functionResponse.textResponse}\n${functionResults.join('\n')}`;
 					agent.inputPrompt = currentPrompt;
 					await agentStateService.save(agent);
