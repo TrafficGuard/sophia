@@ -194,8 +194,11 @@ export async function deserializeAgentContext(serialized: Record<string, any>): 
 	context.fileSystem = new FileSystem().fromJSON(serialized.fileSystem);
 	context.functions = new LlmFunctions().fromJSON(serialized.functions ?? serialized.toolbox); // toolbox for backward compat
 	context.memory = serialized.memory;
-	context.user = await appContext().userService.getUser(serialized.user);
 	context.llms = deserializeLLMs(serialized.llms);
+
+	const user = currentUser();
+	if (serialized.user === user.id) context.user = user;
+	else context.user = await appContext().userService.getUser(serialized.user);
 
 	// backwards compatability
 	if (!context.type) context.type = 'xml';
