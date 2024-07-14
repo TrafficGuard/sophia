@@ -43,14 +43,14 @@ Key features include:
 - Advanced autonomous agents
   - Reasoning/planning inspired from Google's [Self-Discover](https://arxiv.org/abs/2402.03620) paper
   - Memory and function history for complex workflows
-  - Custom XML-based function calling on any sufficiently capable LLM
-    - Experimental code-generated function calling with Python/Pyodide 
+  - Custom XML-based function calling agent on any sufficiently capable LLM
+  - Experimental code-generating function calling agent using Pyodide
 - LLM function definitions auto-generated from source code
 - Function callable integrations:
   - Filesystem, Jira, Slack, Perplexity, Gitlab, GitHub and more
 - Supports multiple LLMs/Services:
-  - OpenAI GPT, Anthropic Claude (native and Vertex), Gemini, Groq, Fireworks, Together.ai, DeepSeek, Ollama
-- Web interface
+  - OpenAI, Anthropic (native & Vertex), Gemini, Groq, Fireworks, Together.ai, DeepSeek, Ollama
+- CLI and Web interface
 - Human-in-the-loop for:
   - Budget control
   - Agent initiated questions
@@ -72,6 +72,7 @@ Key features include:
   - Create merge request
 - Code Review agent:
   - Configurable code review guidelines
+  - Posts comments on GitLab merge requests
 
 ## UI Examples
 
@@ -174,7 +175,7 @@ Visit our [documentation site](https://nous.trafficguard.ai/setup/) for the gett
 
 We welcome contributions to the project through [issues](https://github.com/TrafficGuard/nous/issues), [pull requests](https://github.com/TrafficGuard/nous/pulls)  or [discussions](https://github.com/TrafficGuard/nous/discussions)
 
-Contributed by [TrafficGuard](https://www.trafficguard.ai) - Increasing the RoI on your ad spend.
+Contributed by [TrafficGuard](https://www.trafficguard.ai) - Increasing the ROI on your ad spend.
 
 
 

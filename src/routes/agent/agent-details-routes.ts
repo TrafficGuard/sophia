@@ -1,6 +1,7 @@
 import { Type } from '@sinclair/typebox';
 import { FastifyReply } from 'fastify';
-import { AgentContext, serializeContext } from '#agent/agentContext';
+import { AgentContext } from '#agent/agentContext';
+import { serializeContext } from '#agent/agentContext';
 import { send, sendBadRequest, sendSuccess } from '#fastify/index';
 import { logger } from '#o11y/logger';
 import { AppFastifyInstance } from '../../app';

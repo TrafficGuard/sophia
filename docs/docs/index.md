@@ -9,7 +9,7 @@
 
 ## The Nous Story
 
-Nous started from a simple goal: to harness AI's potential to **enhance real-world productivity**, born in DevOps and Platform Engineering space. We envisioned a tool that could:
+Nous started from a simple goal: to harness AI's potential to enhance real-world productivity, born in DevOps and Platform Engineering space. We envisioned a tool that could:
 
 - Automate standard and simple requests using natural language prompts.
 - Intelligently triage build failures, support requests and production incidents.
@@ -34,14 +34,14 @@ Some of the key features include:
 - Advanced autonomous agent
     - Reasoning/planning inspired from Google's [Self-Discover](https://arxiv.org/abs/2402.03620) paper
     - Memory and function history for complex workflows
-    - Custom XML-based function calling on any sufficiently capable LLM
-        - Experimental code-generated function calling with Python/Pyodide
+    - Custom XML-based function calling agent on any sufficiently capable LLM
+    - Experimental code-generating function calling agent using Pyodide
 - LLM function definitions auto-generated from source code
 - Function callable integrations:
     - Filesystem, Jira, Slack, Perplexity, Gitlab and more
 - Supports multiple LLMs/Services:
-    - OpenAI GPT, Anthropic Claude (native and Vertex), Gemini, Groq, Fireworks, Together.ai, DeepSeek, Ollama
-- Web interface
+    - OpenAI, Anthropic (native & Vertex), Gemini, Groq, Fireworks, Together.ai, DeepSeek, Ollama
+- CLI and Web interface
 - Human-in-the-loop for:
     - Budget control
     - Agent initiated questions
@@ -60,6 +60,7 @@ Some of the key features include:
     - Create merge request
 - Code Review agent:
     - Configurable code review guidelines
+    - Posts comments on GitLab merge requests
 
 ## UI Examples
 

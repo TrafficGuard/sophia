@@ -15,12 +15,9 @@ temp/
 .ignore
 .cache
 .venv/
-ai-in
-ai-out
-.npmrc
 .nous/
 src/cli/*-in
 src/cli/*-out
-ng-starter/
 tg/
 pyodide/
+firestore-debug.log

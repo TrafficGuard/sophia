@@ -1,7 +1,8 @@
 import { DocumentSnapshot, Firestore } from '@google-cloud/firestore';
-import { AgentContext, AgentRunningState, deserializeAgentContext, serializeContext } from '#agent/agentContext';
+import { AgentContext, AgentRunningState } from '#agent/agentContext';
+import { deserializeAgentContext, serializeContext } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
-import { span } from '#o11y/trace';
+import { span, withSpan } from '#o11y/trace';
 import { envVar } from '#utils/env-var';
 import { AgentStateService } from './agentStateService';
 
@@ -53,15 +54,16 @@ export class FirestoreAgentStateService implements AgentStateService {
 
 	@span()
 	async list(): Promise<AgentContext[]> {
-		const querySnapshot = await this.db.collection('AgentContext').orderBy('lastUpdate', 'desc').get();
-		return await this.deserializeQuery(querySnapshot);
+		// TODO limit the fields retrieved for performance, esp while functionCallHistory and memory is on the AgentContext object
+		const querySnapshot = await withSpan('AgentContext-collection', () => this.db.collection('AgentContext').orderBy('lastUpdate', 'desc').get());
+		return this.deserializeQuery(querySnapshot);
 	}
 
 	@span()
 	async listRunning(): Promise<AgentContext[]> {
 		// Needs an index TODO https://cloud.google.com/firestore/docs/query-data/multiple-range-fields
 		const querySnapshot = await this.db.collection('AgentContext').where('state', '!=', 'completed').orderBy('lastUpdate', 'desc').get();
-		return await this.deserializeQuery(querySnapshot);
+		return this.deserializeQuery(querySnapshot);
 	}
 
 	private async deserializeQuery(querySnapshot: FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData, FirebaseFirestore.DocumentData>) {
