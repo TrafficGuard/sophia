@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { environment } from "@env/environment";
+import { environment } from '@env/environment';
 
 export interface Credentials {
   // Customize received credentials here

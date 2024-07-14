@@ -19,6 +19,9 @@ jobs:
       - name: Install dependencies (server)
         run: npm ci
 
+      - name: Install biome linux-x64 (server)
+        run: npm install --save-dev @biomejs/cli-linux-x64 || true
+
       - name: Lint (server)
         run: npm run lint:ci
 

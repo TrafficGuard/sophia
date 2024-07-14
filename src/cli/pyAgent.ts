@@ -1,8 +1,7 @@
 import '#fastify/trace-init/trace-init';
 
 import { readFileSync } from 'fs';
-import { startPyodideAgent } from '#agent/pyodideAgentRunner';
-import { startAgent } from '#agent/xmlAgentRunner';
+import { startAgent } from '#agent/agentRunner';
 import { FileSystem } from '#functions/filesystem';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
@@ -27,8 +26,9 @@ export async function main() {
 	const initialPrompt = args.length > 0 ? args.join(' ') : readFileSync('src/cli/agent-in', 'utf-8');
 	console.log(`Prompt: ${initialPrompt}`);
 
-	const agentId = await startPyodideAgent({
+	const agentId = await startAgent({
 		agentName: 'cli-pyagent',
+		type: 'python',
 		initialPrompt,
 		functions,
 		llms,

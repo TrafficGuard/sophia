@@ -46,9 +46,9 @@ export class MockLLM extends BaseLLM {
 		return this.lastPrompt;
 	}
 
-	@logTextGeneration
+	// @logTextGeneration
 	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
-		if (opts?.id) logger.info(`MockLLM ${opts.id}`);
+		logger.info(`MockLLM ${opts?.id} ${userPrompt}`);
 		return withActiveSpan('generateText', async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 			this.lastPrompt = prompt;

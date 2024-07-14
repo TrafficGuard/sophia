@@ -1,12 +1,12 @@
 import { readFileSync } from 'fs';
 import { Type } from '@sinclair/typebox';
 import { LlmFunctions } from '#agent/LlmFunctions';
-import { startAgent } from '#agent/xmlAgentRunner';
 import { send } from '#fastify/index';
 import { getLLM } from '#llm/llmFactory';
 import { logger } from '#o11y/logger';
 import { AppFastifyInstance } from '../../app';
 
+import { startAgent } from '#agent/agentRunner';
 import { currentUser } from '#user/userService/userContext';
 import { functionFactory } from '../../functionDefinition/functionDecorators';
 

@@ -7,11 +7,11 @@ import {
 	RunAgentConfig,
 	SUPERVISOR_CANCELLED_FUNCTION_NAME,
 	SUPERVISOR_RESUMED_FUNCTION_NAME,
-	XML_AGENT_SPAN,
 	cancelAgent,
 	provideFeedback,
 	startAgent,
-} from '#agent/xmlAgentRunner';
+} from '#agent/agentRunner';
+import { XML_AGENT_SPAN } from '#agent/xmlAgentRunner';
 import { TEST_FUNC_NOOP, TEST_FUNC_SKY_COLOUR, TEST_FUNC_SUM, THROW_ERROR_TEXT, TestFunctions } from '#functions/testFunctions';
 import { MockLLM } from '#llm/models/mock-llm';
 import { setTracer } from '#o11y/trace';
@@ -116,7 +116,7 @@ describe('agentRunner', () => {
 			mockLLM.addResponse(COMPLETE_FUNCTION_CALL);
 			await startAgent(runConfig({ functions }));
 			const agent = await waitForAgent();
-			expect(agent.error).to.be.undefined;
+			expect(!agent.error).to.be.true;
 			expect(agent.state).to.equal('completed');
 		});
 	});

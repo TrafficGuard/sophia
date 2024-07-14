@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import { AgentLLMs } from '#agent/agentContext';
-import { startAgent } from '#agent/xmlAgentRunner';
+import { startAgent } from '#agent/agentRunner';
 import '#fastify/trace-init/trace-init';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
