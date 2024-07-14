@@ -1,7 +1,7 @@
 import { logger } from '#o11y/logger';
 
 import OpenAI from 'openai';
-import { agentContext } from '#agent/agentContext';
+import { addCost, agentContext } from '#agent/agentContext';
 import { functionConfig } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
 import { cacheRetry } from '../../cache/cacheRetry';
@@ -36,10 +36,17 @@ export class Perplexity {
 				stream: false,
 			});
 			const content = response.choices[0].message?.content;
-			// TODO Add perplexity costs. This is output tokens, do we get charged for their input tokens?
-			// $0.60/MIL + $5/1000
-			// 5 / 1000
+
+			// https://docs.perplexity.ai/docs/pricing
+			// $1/MIL output + $5/1000
+			const tokens = content.length / 4; // llama 3
+			const costPerToken = 1 / 1_000_000;
+			const onlineCost = 5 / 1000;
+			const cost = tokens * costPerToken + onlineCost;
+			addCost(cost);
+
 			if (saveToMemory) {
+				// TODO summarise long queries to a shorter id
 				const key = `Perplexity-${researchQuery.replaceAll(' ', '_').replaceAll(/\W/g, '')}`;
 				agentContext().memory[key] = content;
 			}
