@@ -7,6 +7,8 @@ import { environment } from '@env/environment';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AgentContext, AgentRunningState } from '@app/agents/agents.component';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 export interface LLMCall {
   request: LlmRequest;
@@ -228,18 +230,23 @@ export class AgentComponent implements OnInit {
         executionId: this.agentDetails.executionId,
         feedback,
       })
-      .subscribe({
-        next: (response) => {
-          console.log('Agent resumed successfully:', response);
-          this.isSubmitting = false;
-          this.loadAgentDetails(this.agentId!);
-          this.loadLlmCalls();
-          this.hilForm.reset();
-        },
-        error: (error) => {
-          this.isSubmitting = false;
+      .pipe(
+        catchError((error) => {
           console.error('Error resuming agent:', error);
           this.snackBar.open('Error resuming agent', 'Close', { duration: 3000 });
+          return of(null);
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          if (response) {
+            console.log('Agent resumed successfully:', response);
+            this.snackBar.open('Agent resumed successfully', 'Close', { duration: 3000 });
+            this.loadAgentDetails(this.agentId!);
+            this.loadLlmCalls();
+            this.hilForm.reset();
+          }
+          this.isSubmitting = false;
         },
       });
   }
@@ -263,19 +270,24 @@ export class AgentComponent implements OnInit {
         executionId: this.agentDetails.executionId,
         instructions: resumeInstructions,
       })
-      .subscribe({
-        next: (response) => {
-          console.log('Agent resumed successfully:', response);
-          this.isSubmitting = false;
-          this.loadAgentDetails(this.agentId!);
-          this.loadLlmCalls();
-          this.showResumeForm = false;
-          this.resumeForm.reset();
-        },
-        error: (error) => {
-          this.isSubmitting = false;
+      .pipe(
+        catchError((error) => {
           console.error('Error resuming completed agent:', error);
           this.snackBar.open('Error resuming completed agent', 'Close', { duration: 3000 });
+          return of(null);
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          if (response) {
+            console.log('Agent resumed successfully:', response);
+            this.snackBar.open('Agent resumed successfully', 'Close', { duration: 3000 });
+            this.loadAgentDetails(this.agentId!);
+            this.loadLlmCalls();
+            this.showResumeForm = false;
+            this.resumeForm.reset();
+          }
+          this.isSubmitting = false;
         },
       });
   }
@@ -290,18 +302,23 @@ export class AgentComponent implements OnInit {
         executionId: this.agentDetails.executionId,
         feedback: errorDetails,
       })
-      .subscribe({
-        next: (response) => {
-          console.log('Agent resumed successfully:', response);
-          this.isSubmitting = false;
-          this.loadAgentDetails(this.agentId!);
-          this.loadLlmCalls();
-          this.errorForm.reset();
-        },
-        error: (error) => {
-          this.isSubmitting = false;
+      .pipe(
+        catchError((error) => {
           console.error('Error resuming agent:', error);
           this.snackBar.open('Error resuming agent', 'Close', { duration: 3000 });
+          return of(null);
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          if (response) {
+            console.log('Agent resumed successfully:', response);
+            this.snackBar.open('Agent resumed successfully', 'Close', { duration: 3000 });
+            this.loadAgentDetails(this.agentId!);
+            this.loadLlmCalls();
+            this.errorForm.reset();
+          }
+          this.isSubmitting = false;
         },
       });
   }
@@ -313,14 +330,20 @@ export class AgentComponent implements OnInit {
         executionId: this.agentDetails.executionId,
         reason: 'None provided',
       })
-      .subscribe({
-        next: (response) => {
-          console.log('Agent cancelled successfully:', response);
-          this.loadAgentDetails(this.agentId!);
-        },
-        error: (error) => {
+      .pipe(
+        catchError((error) => {
           console.error('Error cancelling agent:', error);
           this.snackBar.open('Error cancelling agent', 'Close', { duration: 3000 });
+          return of(null);
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          if (response) {
+            console.log('Agent cancelled successfully:', response);
+            this.snackBar.open('Agent cancelled successfully', 'Close', { duration: 3000 });
+            this.loadAgentDetails(this.agentId!);
+          }
         },
       });
   }
@@ -334,35 +357,46 @@ export class AgentComponent implements OnInit {
         executionId: this.agentDetails.executionId,
         feedback: feedback,
       })
-      .subscribe({
-        next: (response) => {
-          console.log('Feedback submitted successfully:', response);
-          this.loadAgentDetails(this.agentId!);
-          this.loadLlmCalls();
-          this.feedbackForm.reset();
-        },
-        error: (error) => {
+      .pipe(
+        catchError((error) => {
           console.error('Error submitting feedback:', error);
           this.snackBar.open('Error submitting feedback', 'Close', { duration: 3000 });
+          return of(null);
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          if (response) {
+            console.log('Feedback submitted successfully:', response);
+            this.snackBar.open('Feedback submitted successfully', 'Close', { duration: 3000 });
+            this.loadAgentDetails(this.agentId!);
+            this.loadLlmCalls();
+            this.feedbackForm.reset();
+          }
         },
       });
   }
 
   loadLlmCalls(): void {
     if (this.agentId) {
-      this.http.get<any>(`${environment.serverUrl}/llms/calls/agent/${this.agentId}`).subscribe(
-        (calls) => {
-          this.llmCalls = calls.data;
-          this.llmCalls.forEach((call) => {
-            call.request.userPromptText = call.request.userPromptText.replace('\\n', '<br/>');
-            if (call.request.systemPrompt)
-              call.request.systemPrompt.text = call.request.systemPrompt.text.replace('\\n', '<br/>');
-          });
-        },
-        (error) => {
-          console.error('Error loading LLM calls', error);
-        }
-      );
+      this.http.get<any>(`${environment.serverUrl}/llms/calls/agent/${this.agentId}`)
+        .pipe(
+          catchError((error) => {
+            console.error('Error loading LLM calls', error);
+            this.snackBar.open('Error loading LLM calls', 'Close', { duration: 3000 });
+            return of(null);
+          })
+        )
+        .subscribe((calls) => {
+          if (calls) {
+            this.llmCalls = calls.data;
+            this.llmCalls.forEach((call) => {
+              call.request.userPromptText = call.request.userPromptText.replace('\\n', '<br/>');
+              if (call.request.systemPrompt)
+                call.request.systemPrompt.text = call.request.systemPrompt.text.replace('\\n', '<br/>');
+            });
+          }
+        });
     }
   }
 
@@ -371,21 +405,31 @@ export class AgentComponent implements OnInit {
   }
 
   private loadAgentDetails(agentId: string): void {
-    this.http.get<any>(`${environment.serverUrl}/agent/v1/details/${agentId}`).subscribe((details) => {
-      this.agentDetails = details.data;
-      this.output = null;
-      if (this.agentDetails && this.agentDetails.state === 'completed') {
-        // If the agent has been cancelled after an error then display the error
-        // Otherwise display the Agent.completed argument
-        const completed = this.agentDetails.functionCallHistory.slice(-1)[0];
-        this.output = this.agentDetails.error ?? Object.values(completed.parameters);
-      }
-      // Initialize expanded states for stdout and stderr
-      this.agentDetails.functionCallHistory.forEach((invoked: any) => {
-        invoked.stdoutExpanded = false;
-        invoked.stderrExpanded = false;
+    this.http.get<any>(`${environment.serverUrl}/agent/v1/details/${agentId}`)
+      .pipe(
+        catchError((error) => {
+          console.error('Error loading agent details', error);
+          this.snackBar.open('Error loading agent details', 'Close', { duration: 3000 });
+          return of(null);
+        })
+      )
+      .subscribe((details) => {
+        if (details) {
+          this.agentDetails = details.data;
+          this.output = null;
+          if (this.agentDetails &&this.agentDetails.state === 'completed') {
+            // If the agent has been cancelled after an error then display the error
+            // Otherwise display the Agent.completed argument
+            const completed = this.agentDetails.functionCallHistory.slice(-1)[0];
+            this.output = this.agentDetails.error ?? Object.values(completed.parameters);
+          }
+          // Initialize expanded states for stdout and stderr
+          this.agentDetails.functionCallHistory.forEach((invoked: any) => {
+            invoked.stdoutExpanded = false;
+            invoked.stderrExpanded = false;
+          });
+        }
       });
-    });
   }
 
   refreshAgentDetails(): void {
