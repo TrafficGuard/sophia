@@ -85,6 +85,7 @@ export class AgentComponent implements OnInit {
   resumeForm!: FormGroup;
   output: string | null = null;
   isSubmitting: boolean = false;
+  isSubmittingError: boolean = false;
   showResumeForm: boolean = false;
 
   userPromptExpanded: boolean = false;
@@ -294,7 +295,7 @@ export class AgentComponent implements OnInit {
 
   onResumeError(): void {
     if (!this.errorForm.valid) return;
-    this.isSubmitting = true;
+    this.isSubmittingError = true;
     const errorDetails = this.errorForm.get('errorDetails')?.value;
     this.http
       .post(`${environment.serverUrl}/agent/v1/resume-error`, {
@@ -306,6 +307,7 @@ export class AgentComponent implements OnInit {
         catchError((error) => {
           console.error('Error resuming agent:', error);
           this.snackBar.open('Error resuming agent', 'Close', { duration: 3000 });
+          this.isSubmittingError = false;
           return of(null);
         })
       )
@@ -318,7 +320,7 @@ export class AgentComponent implements OnInit {
             this.loadLlmCalls();
             this.errorForm.reset();
           }
-          this.isSubmitting = false;
+          this.isSubmittingError = false;
         },
       });
   }
