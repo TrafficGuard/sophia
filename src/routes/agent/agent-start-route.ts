@@ -50,7 +50,7 @@ export async function agentStartRoute(fastify: AppFastifyInstance) {
 				user: currentUser(),
 				agentName: name,
 				initialPrompt: userPrompt,
-				type,
+				type: type as 'xml' | 'python',
 				humanInLoop: { budget, count },
 				llms: {
 					easy: getLLM(llmEasy),
