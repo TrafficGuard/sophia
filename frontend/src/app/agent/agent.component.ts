@@ -235,6 +235,7 @@ export class AgentComponent implements OnInit {
         catchError((error) => {
           console.error('Error resuming agent:', error);
           this.snackBar.open('Error resuming agent', 'Close', { duration: 3000 });
+          this.isSubmitting = false;
           return of(null);
         })
       )
