@@ -52,6 +52,16 @@ interface AgentExecution {
 	execution: Promise<any>;
 }
 
+async function runAgent(agent: AgentContext): Promise<string> {
+	if (agent.type === 'xml') {
+		return runXmlAgent(agent);
+	}
+	if (agent.type === 'python') {
+		return runPythonAgent(agent);
+	}
+	throw new Error(`Invalid agent type ${agent.type}`);
+}
+
 export async function startAgent(config: RunAgentConfig): Promise<string> {
 	const agent: AgentContext = createContext(config);
 
@@ -68,9 +78,7 @@ export async function startAgent(config: RunAgentConfig): Promise<string> {
 	await appContext().agentStateService.save(agent);
 	logger.info(`Created agent ${agent.agentId}`);
 
-	if (agent.type === 'xml') return runXmlAgent(agent);
-	if (agent.type === 'python') return runPythonAgent(agent);
-	throw new Error(`Invalid agent type ${agent.type}`);
+	return runAgent(agent);
 }
 
 export async function cancelAgent(agentId: string, executionId: string, feedback: string): Promise<void> {
@@ -99,7 +107,7 @@ export async function resumeError(agentId: string, executionId: string, feedback
 	agent.state = 'agent';
 	agent.inputPrompt += `\nSupervisor note: ${feedback}`;
 	await appContext().agentStateService.save(agent);
-	await runXmlAgent(agent);
+	await runAgent(agent);
 }
 
 /**
@@ -118,7 +126,7 @@ export async function resumeHil(agentId: string, executionId: string, feedback: 
 	}
 	agent.state = 'agent';
 	await appContext().agentStateService.save(agent);
-	await runXmlAgent(agent);
+	await runAgent(agent);
 }
 
 /**
@@ -138,7 +146,7 @@ export async function resumeCompleted(agentId: string, executionId: string, inst
 	agent.state = 'agent';
 	agent.inputPrompt += `\nSupervisor note: The agent has been resumed from the completed state with the following instructions: ${instructions}`;
 	await appContext().agentStateService.save(agent);
-	await runXmlAgent(agent);
+	await runAgent(agent);
 }
 
 export async function provideFeedback(agentId: string, executionId: string, feedback: string): Promise<void> {
@@ -151,8 +159,7 @@ export async function provideFeedback(agentId: string, executionId: string, feed
 	result.stdout = feedback;
 	agent.state = 'agent';
 	await appContext().agentStateService.save(agent);
-
-	await runXmlAgent(agent);
+	await runAgent(agent);
 }
 
 export async function summariseLongFunctionOutput(functionCall: FunctionCall, result: string): Promise<string | null> {

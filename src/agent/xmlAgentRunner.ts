@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { Span, SpanStatusCode } from '@opentelemetry/api';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
-import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateFunctionDefinitions } from '#agent/agentPromptUtils';
+import { buildFileSystemPrompt, buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateFunctionDefinitions } from '#agent/agentPromptUtils';
 import { notificationMessage, summariseLongFunctionOutput, waitForInput } from '#agent/agentRunner';
 import { getServiceName } from '#fastify/trace-init/trace-init';
 import { Slack } from '#functions/slack';
@@ -13,7 +13,7 @@ import { appContext } from '../app';
 import { FunctionDefinition, getAllFunctionDefinitions } from '../functionDefinition/functions';
 import { AgentContext, agentContext, agentContextStorage, llms } from './agentContext';
 
-export const XML_AGENT_SPAN = '';
+export const XML_AGENT_SPAN = 'XmlAgent';
 
 const stopSequences = ['</response>'];
 
@@ -92,7 +92,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 					}
 
 					if (!currentPrompt.includes('<function_call_history>')) {
-						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + currentPrompt;
+						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + buildFileSystemPrompt() + currentPrompt;
 					}
 
 					if (agent.error) {
@@ -114,7 +114,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 							stopSequences,
 						});
 					}
-					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + userRequestXml + functionResponse.textResponse;
+					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + buildFileSystemPrompt() + userRequestXml + functionResponse.textResponse;
 					const functionCalls = functionResponse.functions.functionCalls;
 
 					if (!functionCalls.length) {
@@ -128,7 +128,8 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 							stopSequences,
 						});
 						// retrying
-						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + userRequestXml + functionCallResponse.textResponse;
+						currentPrompt =
+							buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + buildFileSystemPrompt() + userRequestXml + functionCallResponse.textResponse;
 						const functionCalls = functionCallResponse.functions.functionCalls;
 						if (!functionCalls.length) {
 							throw new Error('Found no function invocations');

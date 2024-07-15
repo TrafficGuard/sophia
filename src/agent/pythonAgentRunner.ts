@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { Span, SpanStatusCode } from '@opentelemetry/api';
 import { loadPyodide } from 'pyodide';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
-import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateFunctionDefinitions } from '#agent/agentPromptUtils';
+import { buildFileSystemPrompt, buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateFunctionDefinitions } from '#agent/agentPromptUtils';
 import { getServiceName } from '#fastify/trace-init/trace-init';
 import { Slack } from '#functions/slack';
 import { logger } from '#o11y/logger';
@@ -93,7 +93,7 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 					}
 
 					if (!currentPrompt.includes('<function_call_history>')) {
-						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + currentPrompt;
+						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + buildFileSystemPrompt() + currentPrompt;
 					}
 
 					const llmResponse: string = await agentLLM.generateText(currentPrompt, systemPromptWithFunctions, {
@@ -103,7 +103,7 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 
 					const pythonCode = extractPythonCode(llmResponse);
 
-					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + userRequestXml + llmResponse;
+					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + buildFileSystemPrompt() + userRequestXml + llmResponse;
 
 					agent.state = 'functions';
 					agent.inputPrompt = currentPrompt;
@@ -172,7 +172,7 @@ main()`.trim();
 						logger.info(pythonScript);
 						console.log('Original');
 						console.log(pythonScript);
-						pythonScript = await llms().hard.generateText(
+						pythonScript = await llms().medium.generateText(
 							`${pythonScript}\n\nPlease format this Python script correctly with 4 spaces for an indent. Output only the re-formatted script. Do not chat, do not output markdown ticks, etc. Only the code`,
 							null,
 							{ id: 'Reformat Python script' },

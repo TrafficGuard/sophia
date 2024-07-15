@@ -71,9 +71,9 @@ export class Git implements VersionControlSystem {
 	 * @param sourceBranch
 	 */
 	async getBranchDiff(sourceBranch: string = this.previousBranch): Promise<string> {
+		// git diff $(git merge-base <source-branch> HEAD) HEAD
 		if (!sourceBranch) throw new Error('Source branch is required');
-		const cmd = sourceBranch ? `git merge-base HEAD ${sourceBranch}` : 'git diff $(git merge-base HEAD @{u})';
-		const result = await execCommand(cmd);
+		const result = await execCommand(`git diff $(git merge-base ${sourceBranch} HEAD) HEAD`);
 		failOnError('Error getting branch diff', result);
 		return result.stdout;
 	}
@@ -123,6 +123,12 @@ export class Git implements VersionControlSystem {
 			const { stdout, stderr, exitCode } = await execCommand(`git switch ${branchName}`);
 			if (exitCode > 0) throw new Error(`${stdout}\n${stderr}`);
 		}
+	}
+
+	@span()
+	async mergeAllChangesIntoLatestCommit(): Promise<void> {
+		const result = await execCommand('git add . && git commit --amend --no-edit');
+		failOnError('Failed to amend current commit with all outstanding changes', result);
 	}
 
 	// @func()

@@ -9,7 +9,7 @@ import {
 	MergeRequestDiscussionNotePositionOptions,
 	ProjectSchema,
 } from '@gitbeaker/rest';
-import { getFileSystem, llms } from '#agent/agentContext';
+import { agentContext, getFileSystem, llms } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
 import { ICodeReview, loadCodeReviews } from '#swe/codeReview/codeReviewParser';
@@ -188,6 +188,7 @@ export class GitLab implements SourceControlManagement {
 			const result = await execCmd(command);
 			checkExecResult(result, `Failed to clone ${projectPathWithNamespace}`);
 		}
+		agentContext().memory[`fileSystemDirectory_GitLab_${projectPathWithNamespace.replace('/', '_')}`] = path;
 		return path;
 	}
 

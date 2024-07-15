@@ -58,4 +58,16 @@ export class Agent {
 		if (!memory.key) logger.info(`deleteMemory key doesn't exist: ${key}`);
 		memory.key = undefined;
 	}
+
+	/**
+	 * Retrieves contents from memory
+	 * @param key {string} An existing key in the memory to retrieve.
+	 */
+	@func()
+	async getMemory(key: string): Promise<string> {
+		if (!key) throw new Error('Parameter "key" must be provided');
+		const memory = agentContext().memory;
+		if (!memory.key) throw new Error(`Memory key ${key} did not exist`);
+		return memory.key;
+	}
 }
