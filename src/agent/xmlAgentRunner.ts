@@ -1,3 +1,4 @@
+import { readFileSync } from 'fs';
 import { Span, SpanStatusCode } from '@opentelemetry/api';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
 import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateFunctionDefinitions } from '#agent/agentPromptUtils';
@@ -16,6 +17,8 @@ export const XML_AGENT_SPAN = '';
 
 const stopSequences = ['</response>'];
 
+const xmlSystemPrompt = readFileSync('src/agent/xml-agent-system-prompt').toString();
+
 export async function runXmlAgent(agent: AgentContext): Promise<string> {
 	const agentStateService = appContext().agentStateService;
 	agent.state = 'agent';
@@ -30,7 +33,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 	const agentFunctions = agent.functions;
 
 	const functionsXml = convertJsonToXml(getAllFunctionDefinitions(agentFunctions.getFunctionInstances()));
-	const systemPromptWithFunctions = updateFunctionDefinitions(agent.systemPrompt, functionsXml);
+	const systemPromptWithFunctions = updateFunctionDefinitions(xmlSystemPrompt, functionsXml);
 
 	// Human in the loop settings
 	// How often do we require human input to avoid misguided actions and wasting money

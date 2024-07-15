@@ -29,8 +29,7 @@ export class Agent {
 	 */
 	@func()
 	async completed(note: string): Promise<void> {
-		logger.info('Agent completed');
-		logger.info(note);
+		logger.info(`Agent completed. Note: ${note}`);
 	}
 
 	/**
@@ -39,9 +38,11 @@ export class Agent {
 	 * @param content {string} The plain text contents to store in the working memory
 	 */
 	@func()
-	async addNewMemory(key: string, content: string): Promise<void> {
+	async saveMemory(key: string, content: string): Promise<void> {
+		if (!key || !key.trim().length) throw new Error('Memory key must be provided');
+		if (!content || !content.trim().length) throw new Error('Memory content must be provided');
 		const memory = agentContext().memory;
-		// if (memory.has(key)) throw new Error(`Memory key ${key} already exists. Did you mean to update or use a different key?`);
+		if (memory.key) logger.info(`Overwriting memory key ${key}`);
 		memory[key] = content;
 	}
 
@@ -52,9 +53,9 @@ export class Agent {
 	 * @param content {string} The plain text content to store in the working memory under the key
 	 */
 	@func()
-	async updateMemory(key: string, content: string): Promise<void> {
+	async deleteMemory(key: string, content: string): Promise<void> {
 		const memory = agentContext().memory;
-		// if (!memory.has(key)) throw new Error(`Memory key ${key} does not exist. Did you mean to create a new memory key or use a different existing key?`);
-		memory[key] = content;
+		if (!memory.key) logger.info(`deleteMemory key doesn't exist: ${key}`);
+		memory.key = undefined;
 	}
 }

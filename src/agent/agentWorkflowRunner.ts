@@ -6,7 +6,7 @@ import { withActiveSpan } from '#o11y/trace';
 import { appContext } from '../app';
 
 /**
- * Runs a workflow with an agentContext. This also makes the workflow display in the Agents UI
+ * Runs a workflow with an agentContext. This also persists the agent so its actions can be reviewed in the UI
  * @param config
  * @param workflow
  */
