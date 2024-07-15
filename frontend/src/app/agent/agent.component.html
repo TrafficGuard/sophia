@@ -273,7 +273,7 @@
   <mat-tab label="LLM Calls">
     <mat-card *ngFor="let call of llmCalls; let i = index">
       <mat-card-title id="{{ call.response.id }}"
-        >Call: {{ call.response.callStack }} {{ call.response.description }}
+        >{{ call.response.callStack }} {{ call.response.description }}
         <a href="{{ llmCallUrl(call.response) }}" style="font-size: x-small">GCP</a></mat-card-title
       >
       <mat-card-content>
