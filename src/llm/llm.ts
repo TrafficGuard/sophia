@@ -90,11 +90,6 @@ export interface LLM {
 }
 
 /**
- * The difficulty of a LLM generative task. Used to select an appropriate model for the cost vs capability.
- */
-export type TaskLevel = 'easy' | 'medium' | 'hard' | 'xhard';
-
-/**
  * The parsed response from an LLM when expecting it to respond with <function_calls></function_calls>
  */
 export interface FunctionResponse {

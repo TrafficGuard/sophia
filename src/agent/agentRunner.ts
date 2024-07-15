@@ -3,7 +3,7 @@ import readline from 'readline';
 import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext, AgentLLMs, agentContextStorage, createContext, llms } from '#agent/agentContext';
 import { AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
-import { runPyodideAgent } from '#agent/pyodideAgentRunner';
+import { runPythonAgent } from '#agent/pythonAgentRunner';
 import { runXmlAgent } from '#agent/xmlAgentRunner';
 import { FunctionCall, FunctionCallResult } from '#llm/llm';
 import { logger } from '#o11y/logger';
@@ -16,6 +16,9 @@ export const SUPERVISOR_RESUMED_FUNCTION_NAME = 'Supervisor.Resumed';
 export const SUPERVISOR_CANCELLED_FUNCTION_NAME = 'Supervisor.Cancelled';
 const FUNCTION_OUTPUT_SUMMARIZE_MIN_LENGTH = 2000;
 
+/**
+ * Configuration for running an autonomous agent
+ */
 export interface RunAgentConfig {
 	/** Uses currentUser() if not provided */
 	user?: User;
@@ -51,8 +54,6 @@ interface AgentExecution {
 
 export async function startAgent(config: RunAgentConfig): Promise<string> {
 	const agent: AgentContext = createContext(config);
-	// System prompt for the XML function calling autonomous agent
-	agent.systemPrompt = readFileSync('src/agent/xml-agent-system-prompt').toString();
 
 	if (config.initialPrompt?.includes('<user_request>')) {
 		const startIndex = config.initialPrompt.indexOf('<user_request>') + '<user_request>'.length;
@@ -68,7 +69,8 @@ export async function startAgent(config: RunAgentConfig): Promise<string> {
 	logger.info(`Created agent ${agent.agentId}`);
 
 	if (agent.type === 'xml') return runXmlAgent(agent);
-	if (agent.type === 'python') return runPyodideAgent(agent);
+	if (agent.type === 'python') return runPythonAgent(agent);
+	throw new Error(`Invalid agent type ${agent.type}`);
 }
 
 export async function cancelAgent(agentId: string, executionId: string, feedback: string): Promise<void> {

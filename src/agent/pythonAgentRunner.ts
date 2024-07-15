@@ -9,24 +9,20 @@ import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { envVar } from '#utils/env-var';
 import { appContext } from '../app';
-import { FunctionDefinition, getAllFunctionDefinitions } from '../functionDefinition/functions';
+import { FunctionDefinition, FunctionParameter, getAllFunctionDefinitions } from '../functionDefinition/functions';
 import { AgentContext, agentContext, agentContextStorage, createContext, llms } from './agentContext';
 
 import { RunAgentConfig, notificationMessage, waitForInput } from '#agent/agentRunner';
 
 // ===========================================================
-//   !! PYODIDE AGENT IS EXPERIMENTAL !!
+//   !! PYTHON/PYODIDE AGENT IS EXPERIMENTAL !!
 // ===========================================================
 
 const stopSequences = ['</response>'];
 
-export async function runPyodideAgent(agent: AgentContext): Promise<string> {
-	// 	const agentExecution = await runAgentWithExecution(agent);
-	// 	await agentExecution.execution;
-	// 	return agentExecution.agentId;
-	// }
-	//
-	// export async function runAgentWithExecution(agent: AgentContext): Promise<AgentExecution> {
+const pythonSystemPrompt = readFileSync('src/agent/python-agent-system-prompt').toString();
+
+export async function runPythonAgent(agent: AgentContext): Promise<string> {
 	const agentStateService = appContext().agentStateService;
 	agent.state = 'agent';
 
@@ -40,7 +36,7 @@ export async function runPyodideAgent(agent: AgentContext): Promise<string> {
 	const functions = agent.functions;
 
 	const functionsXml = convertJsonToPythonDeclaration(getAllFunctionDefinitions(functions.getFunctionInstances()));
-	const systemPromptWithFunctions = updateFunctionDefinitions(agent.systemPrompt, functionsXml);
+	const systemPromptWithFunctions = updateFunctionDefinitions(pythonSystemPrompt, functionsXml);
 
 	// Human in the loop settings
 	// How often do we require human input to avoid misguided actions and wasting money
@@ -73,7 +69,7 @@ export async function runPyodideAgent(agent: AgentContext): Promise<string> {
 
 		let shouldContinue = true;
 		while (shouldContinue) {
-			shouldContinue = await withActiveSpan('XmlAgent', async (span) => {
+			shouldContinue = await withActiveSpan('PythonAgent', async (span) => {
 				let completed = false;
 				let requestFeedback = false;
 				let anyFunctionCallErrors = false;
@@ -159,11 +155,20 @@ export async function runPyodideAgent(agent: AgentContext): Promise<string> {
 						};
 					}
 					const globals = pyodide.toPy(jsGlobals);
+					// Could optimise the imports by checking what the llm generated code uses
+					// The available imports is defined in the system prompt
 					try {
 						pythonScript = `
+import json
+import re
+import math
+import datetime
+from typing import List, Dict, Tuple, Optional, Union
+
 async def main():
 ${pythonCode}
-main()`;
+
+main()`.trim();
 						logger.info(pythonScript);
 						console.log('Original');
 						console.log(pythonScript);
@@ -259,17 +264,43 @@ function convertJsonToPythonDeclaration(jsonDefinitions: FunctionDefinition[]): 
 
 	for (const def of jsonDefinitions) {
 		functions += `
-fun ${def.name.replace('.', '_')}(${def.parameters.map((p) => `${p.name}: ${p.optional ? `Optional[${p.type}]` : p.type}`).join(', ')})
+fun ${def.name.replace('.', '_')}(${def.parameters.map((p) => `${p.name}: ${p.optional ? `Optional[${type(p)}]` : type(p)}`).join(', ')})
     """
     ${def.description}
 
     Args:
-        ${def.parameters.map((p) => `${p.name} (${p.optional ? `Optional[${p.type}]` : p.type}) -- ${p.description}`).join('\n        ')}
+        ${def.parameters.map((p) => `${p.name} (${p.optional ? `Optional[${type(p)}]` : type(p)}) -- ${p.description}`).join('\n        ')}
     ${def.returns ? `\nReturns:\n        ${def.returns}\n    """` : '"""'}
 	`;
 	}
 	functions += '\n</functions>';
 	return functions;
+}
+
+export function convertTypeScriptToPython(tsType: string): string {
+	const typeMappings: { [key: string]: string } = {
+		string: 'str',
+		number: 'float',
+		boolean: 'bool',
+		any: 'Any',
+		void: 'None',
+		undefined: 'None',
+		null: 'None',
+		// Include generics mapping as well
+		'Array<': 'List<',
+	};
+
+	let pyType = tsType;
+
+	for (const [tsType, pyTypeEquivalent] of Object.entries(typeMappings)) {
+		const regex = new RegExp(`\\b${tsType}\\b`, 'g'); // Boundary to match whole words
+		pyType = pyType.replace(regex, pyTypeEquivalent);
+	}
+	return pyType;
+}
+
+function type(param: FunctionParameter): string {
+	return convertTypeScriptToPython(param.type);
 }
 
 /**

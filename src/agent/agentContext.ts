@@ -3,12 +3,17 @@ import { AsyncLocalStorage } from 'async_hooks';
 import { LlmFunctions } from '#agent/LlmFunctions';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { FileSystem } from '#functions/filesystem';
-import { FunctionCall, FunctionCallResult, LLM, TaskLevel } from '#llm/llm';
+import { FunctionCall, FunctionCallResult, LLM } from '#llm/llm';
 import { deserializeLLMs } from '#llm/llmFactory';
 import { logger } from '#o11y/logger';
 import { User } from '#user/user';
 import { currentUser } from '#user/userService/userContext';
 import { appContext } from '../app';
+
+/**
+ * The difficulty of a LLM generative task. Used to select an appropriate model for the cost vs capability.
+ */
+export type TaskLevel = 'easy' | 'medium' | 'hard' | 'xhard';
 
 /**
  * The LLMs for each Task Level
@@ -25,55 +30,59 @@ export type AgentLLMs = Record<TaskLevel, LLM>;
  */
 export type AgentRunningState = 'agent' | 'functions' | 'error' | 'hil' | 'feedback' | 'completed';
 
+/**
+ * The state of an agent.
+ */
 export interface AgentContext {
 	/** Primary Key - Agent instance id. Allocated when the agent is first starts */
 	agentId: string;
-	/** Id of the running execution. This changes after the control loop restarts after an exit due to pausing, human in loop etc */
+	/** Id of the running execution. This changes after the agent restarts due to an error, pausing, human in loop,  etc */
 	executionId: string;
 	/** Current OpenTelemetry traceId */
 	traceId: string;
-	/** User provided name */
+	/** Display name */
 	name: string;
+	/** Not used yet */
 	parentAgentId?: string;
-	/** The type of autonomous agent function calling.*/
-	type: 'xml' | 'python';
-
+	/** The user who created the agent */
 	user: User;
-
+	/** The current state of the agent */
 	state: AgentRunningState;
-	/** The initial user prompt */
-	userPrompt: string;
-	/** The prompt the agent execution started with */
-	inputPrompt: string;
-
-	systemPrompt: string;
-	/* Track what functions we've called into */
+	/** Tracks what functions/spans we've called into */
 	callStack: string[];
-	functionCallHistory: FunctionCallResult[];
-
-	// These three fields are mutable for when saving state as the agent does work
+	/** Error message & stack */
 	error?: string;
-	planningResponse?: string;
-	invoking: FunctionCall[];
-
+	/** Budget spend in $USD until a human-in-the-loop is required */
 	hilBudget;
-	hilCount;
 	/** Total cost of running this agent */
 	cost: number;
-	/** Budget allocated until human intervention is required. This may be increased when the agent is running */
-	budget: number;
 	/** Budget remaining until human intervention is required */
 	budgetRemaining: number;
-
+	/** Pre-configured LLMs by task difficulty level for the agent. Specific LLMs can always be instantiated if required. */
 	llms: AgentLLMs;
 	/** Working filesystem */
 	fileSystem?: FileSystem | null;
+	/** Memory persisted over the agent's executions */
+	memory: Record<string, string>;
+	/** Time of the last database write of the state */
+	lastUpdate: number;
+
+	// Autonomous agent specific properties --------------------
+
+	/** The type of autonomous agent function calling.*/
+	type: 'xml' | 'python';
+	/** The function calls the agent is about to call */
+	invoking: FunctionCall[];
+	/** The initial user prompt */
+	userPrompt: string;
+	/** The prompt the agent execution started/resumed with */
+	inputPrompt: string;
+	/** Completed function calls with success/error output */
+	functionCallHistory: FunctionCallResult[];
+	/** How many iterations of the autonomous agent control loop to require human input to continue */
+	hilCount;
 	/** The functions available to the agent */
 	functions: LlmFunctions;
-	/** Memory persisted over the agent's control loop iterations */
-	memory: Record<string, string>;
-
-	lastUpdate: number;
 }
 
 export const agentContextStorage = new AsyncLocalStorage<AgentContext>();
@@ -87,7 +96,7 @@ export function llms(): AgentLLMs {
 }
 
 /**
- * Adds LLM costs to the agent context
+ * Adds costs to the current agent context (from LLM calls, Perplexity etc)
  * @param cost the cost spent in $USD
  */
 export function addCost(cost: number) {
@@ -99,6 +108,9 @@ export function addCost(cost: number) {
 	if (store.budgetRemaining < 0) store.budgetRemaining = 0;
 }
 
+/**
+ * @return the filesystem on the current agent context
+ */
 export function getFileSystem(): FileSystem {
 	if (!agentContextStorage.getStore() && process.env.TEST === 'true') return new FileSystem();
 	const filesystem = agentContextStorage.getStore()?.fileSystem;
@@ -107,6 +119,7 @@ export function getFileSystem(): FileSystem {
 }
 
 export function createContext(config: RunAgentConfig): AgentContext {
+	const fileSystem = new FileSystem(config.fileSystemPath);
 	return {
 		agentId: config.resumeAgentId || randomUUID(),
 		executionId: randomUUID(),
@@ -114,7 +127,6 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		name: config.agentName,
 		type: config.type ?? 'xml',
 		user: config.user ?? currentUser(),
-		systemPrompt: config.systemPrompt,
 		inputPrompt: '',
 		userPrompt: config.initialPrompt,
 		state: 'agent',
@@ -122,7 +134,6 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		callStack: [],
 		hilBudget: config.humanInLoop?.budget ?? (process.env.HIL_BUDGET ? parseFloat(process.env.HIL_BUDGET) : 2),
 		hilCount: config.humanInLoop?.count ?? (process.env.HIL_COUNT ? parseFloat(process.env.HIL_COUNT) : 5),
-		budget: 0,
 		budgetRemaining: 0,
 		cost: 0,
 		llms: config.llms,
@@ -132,11 +143,6 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		invoking: [],
 		lastUpdate: Date.now(),
 	};
-}
-
-export function updateContext(updates: Partial<AgentContext>) {
-	const store = agentContextStorage.getStore();
-	Object.assign(store, updates);
 }
 
 export function serializeContext(context: AgentContext): Record<string, any> {
