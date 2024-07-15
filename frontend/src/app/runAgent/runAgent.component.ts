@@ -21,6 +21,7 @@ export class RunAgentComponent implements OnInit {
       name: new FormControl('', Validators.required),
       userPrompt: new FormControl('', Validators.required),
       type: new FormControl('xml', Validators.required),
+      type: new FormControl('xml', Validators.required),
       // systemPrompt: new FormControl('', Validators.required),
       llmEasy: new FormControl('', Validators.required),
       llmMedium: new FormControl('', Validators.required),
