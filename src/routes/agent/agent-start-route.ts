@@ -21,7 +21,7 @@ export async function agentStartRoute(fastify: AppFastifyInstance) {
 					name: Type.String(),
 					userPrompt: Type.String(),
 					functions: Type.Array(Type.String()),
-					// type: Type.String(),
+					type: Type.String({ enum: ['xml', 'python'] }),
 					budget: Type.Number({ minimum: 0 }),
 					count: Type.Integer({ minimum: 0 }),
 					llmEasy: Type.String(),
@@ -31,7 +31,7 @@ export async function agentStartRoute(fastify: AppFastifyInstance) {
 			},
 		},
 		async (req, reply) => {
-			const { name, userPrompt, functions, budget, count, llmEasy, llmMedium, llmHard } = req.body;
+			const { name, userPrompt, functions, type, budget, count, llmEasy, llmMedium, llmHard } = req.body;
 
 			logger.info(req.body, `Starting agent ${name}`);
 
@@ -50,6 +50,7 @@ export async function agentStartRoute(fastify: AppFastifyInstance) {
 				user: currentUser(),
 				agentName: name,
 				initialPrompt: userPrompt,
+				type: type as 'xml' | 'python',
 				humanInLoop: { budget, count },
 				llms: {
 					easy: getLLM(llmEasy),

@@ -10,6 +10,16 @@
         </div>
 
         <div class="form-row">
+          <mat-form-field appearance="fill">
+            <mat-label>Function generation type</mat-label>
+            <mat-select id="type" formControlName="type">
+              <mat-option value="xml">XML</mat-option>
+              <mat-option value="python">Python</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
           <mat-form-field appearance="fill" class="promptField">
             <mat-label>Prompt</mat-label>
             <textarea

@@ -49,6 +49,7 @@ export class FirestoreAgentStateService implements AgentStateService {
 		return deserializeAgentContext({
 			...data,
 			agentId,
+			type: data.type || 'xml', // Ensure type is set, defaulting to 'xml' if not present
 		});
 	}
 
