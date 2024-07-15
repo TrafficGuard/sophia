@@ -48,10 +48,10 @@
           </mat-form-field>
         </mat-card-content>
         <mat-card-actions style="margin-bottom: 0">
-          <button mat-raised-button color="primary" type="submit" [disabled]="!errorForm.valid || isSubmittingError">
-            {{ isSubmittingError ? 'Resuming...' : 'Resume Agent' }}
+          <button mat-raised-button color="primary" type="submit" [disabled]="!errorForm.valid || isResumingError">
+            {{ isResumingError ? 'Resuming...' : 'Resume Agent' }}
           </button>
-          <button mat-raised-button color="warn" (click)="cancelAgent()" [disabled]="isSubmittingError">Cancel Agent</button>
+          <button mat-raised-button color="warn" (click)="cancelAgent()" [disabled]="isResumingError">Cancel Agent</button>
         </mat-card-actions>
       </form>
     </mat-card>
