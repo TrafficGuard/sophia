@@ -32,6 +32,10 @@ export class LlmFunctions {
 		return this;
 	}
 
+	removeFunctionClass(functionClassName: string): void {
+		delete this.functionInstances[functionClassName];
+	}
+
 	getFunctionInstances(): Array<object> {
 		return Object.values(this.functionInstances);
 	}

@@ -126,9 +126,9 @@ export class Git implements VersionControlSystem {
 	}
 
 	@span()
-	async mergeAllChangesIntoLatestCommit(): Promise<void> {
-		const result = await execCommand('git add . && git commit --amend --no-edit');
-		failOnError('Failed to amend current commit with all outstanding changes', result);
+	async mergeChangesIntoLatestCommit(files: string[]): Promise<void> {
+		const result = await execCommand(`git add ${files.map((file) => `"${file}"`).join(' ')} && git commit --amend --no-edit`);
+		failOnError(`Failed to amend current commit with outstanding changes to ${files.join(' ')}`, result);
 	}
 
 	// @func()

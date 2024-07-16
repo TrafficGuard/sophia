@@ -5,6 +5,7 @@ import { Perplexity } from '#functions/web/perplexity';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
 import { CompileErrorAnalysis, CompileErrorAnalysisDetails, analyzeCompileErrors } from '#swe/analyzeCompileErrors';
+import { reviewChanges } from '#swe/reviewChanges';
 import { execCommand } from '#utils/exec';
 import { appContext } from '../app';
 import { cacheRetry } from '../cache/cacheRetry';
@@ -31,7 +32,7 @@ export class CodeEditingAgent {
 	/**
 	 * Runs a workflow which edits the code repository to implement the requirements, and committing changes to version control.
 	 * It also compiles, formats, lints, and runs tests where applicable.
-	 * @param requirements The requirements to implement including support documentation and code samples.
+	 * @param requirements The detailed requirements to implement, including supporting documentation and code samples.
 	 */
 	@func()
 	async runCodeEditWorkflow(requirements: string, projectInfo?: ProjectInfo): Promise<CompileErrorAnalysis | null> {
@@ -57,7 +58,7 @@ export class CodeEditingAgent {
 		// Perform a first pass on the files to generate an implementation specification
 		const implementationDetailsPrompt = `${await fs.getMultipleFileContentsAsXml(initialSelectedFiles)}
 		<requirements>${requirements}</requirements>
-		You are a senior software engineer. Your task is to review the provided user requirements against the code provided and produce an implementation design specification to give to a junior developer to implement the changes in the provided files.
+		You are a senior software engineer. Your task is to review the provided user requirements against the code provided and produce an implementation design specification to give to a developer to implement the changes in the provided files.
 		Do not provide any details of verification commands etc as the CI/CD build will run integration tests. Only detail the changes required in the files for the pull request.
 		Check if any of the requirements have already been correctly implemented in the code as to not duplicate work.
 		Look at the existing style of the code when producing the requirements.
@@ -150,12 +151,12 @@ export class CodeEditingAgent {
 				// Run it twice so the first time can apply any auto-fixes, then the second time has only the non-auto fixable issues
 				try {
 					await this.runStaticAnalysis(projectInfo);
-					await fs.vcs.addAllTrackedAndCommit('Fix static analysis errors');
+					await fs.vcs.mergeChangesIntoLatestCommit();
 					break;
 				} catch (e) {
 					let staticAnalysisErrorOutput = e.message;
-					// Commit any successful auto-fixes
-					await fs.vcs.addAllTrackedAndCommit('Fix static analysis errors');
+					// Merge any successful auto-fixes to the latest commit
+					await fs.vcs.mergeChangesIntoLatestCommit();
 					if (i === STATIC_ANALYSIS_MAX_ATTEMPTS - 1) {
 						logger.warn(`Unable to fix static analysis errors: ${staticAnalysisErrorOutput}`);
 					} else {
@@ -173,7 +174,12 @@ export class CodeEditingAgent {
 			}
 		}
 
-		await this.testLoop(requirements, projectInfo, initialSelectedFiles);
+		// Store in memory for now while we see how the prompt performs
+		const branchName = await getFileSystem().vcs.getBranchName();
+		agentContext().memory[`${branchName}--review`] = await reviewChanges(requirements, projectInfo.devBranch);
+
+		// The prompts need some work
+		// await this.testLoop(requirements, projectInfo, initialSelectedFiles);
 	}
 
 	async compile(projectInfo: ProjectInfo): Promise<void> {
@@ -208,7 +214,7 @@ export class CodeEditingAgent {
 	async runStaticAnalysis(projectInfo: ProjectInfo): Promise<void> {
 		if (!projectInfo.staticAnalysis) return;
 		const { exitCode, stdout, stderr } = await execCommand(projectInfo.staticAnalysis);
-		const result = `<static_analysis_output><command>${projectInfo.compile}</command><stdout></stdout>${stdout}<stderr>${stderr}</stderr></static_analysis_output>`;
+		const result = `<static_analysis_output><command>${projectInfo.compile}</command><stdout>${stdout}</stdout><stderr>${stderr}</stderr></static_analysis_output>`;
 		if (exitCode > 0) {
 			throw new Error(result);
 		}
@@ -217,12 +223,13 @@ export class CodeEditingAgent {
 	async runTests(projectInfo: ProjectInfo): Promise<void> {
 		if (!projectInfo.test) return;
 		const { exitCode, stdout, stderr } = await execCommand(projectInfo.test);
-		const result = `<test_output><command>${projectInfo.test}</command><stdout></stdout>${stdout}<stderr>${stderr}</stderr></test_output>`;
+		const result = `<test_output><command>${projectInfo.test}</command><stdout>${stdout}</stdout><stderr>${stderr}</stderr></test_output>`;
 		if (exitCode > 0) {
 			throw new Error(result);
 		}
 	}
 
+	//
 	async testLoop(requirements: string, projectInfo: ProjectInfo, initialSelectedFiles: string[]): Promise<CompileErrorAnalysis | null> {
 		if (!projectInfo.test) return null;
 		let testErrorOutput = null;
@@ -261,7 +268,7 @@ export class CodeEditingAgent {
 			action:
 				'You will respond ONLY in JSON. From the requirements quietly consider which the files may be required to complete the task. You MUST output your answer ONLY as JSON in the format of this example:\n<example>\n{\n files: ["file1", "file2", "file3"]\n}\n</example>',
 		});
-		const response: any = await llms().hard.generateJson(prompt, null, { id: 'extractFilenames' });
+		const response: any = await llms().medium.generateJson(prompt, null, { id: 'extractFilenames' });
 		return response.files;
 	}
 }

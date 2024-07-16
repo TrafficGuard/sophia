@@ -17,6 +17,8 @@ interface ProjectDetection {
 	baseDir: string;
 	language: LanguageRuntime;
 	files: string[];
+	/** The base development branch to make new branches from */
+	devBranch: string;
 }
 
 interface ProjectScripts {
@@ -31,6 +33,8 @@ export interface ProjectInfo extends ProjectScripts {
 	baseDir: string;
 	language: LanguageRuntime | '';
 	languageTools: LanguageTools | null;
+	/** The base development branch to make new branches from */
+	devBranch: string;
 }
 
 /**

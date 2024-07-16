@@ -1,4 +1,4 @@
-import { access, existsSync, readFile, readdir, stat, writeFileSync } from 'node:fs';
+import { access, existsSync, mkdir, readFile, readdir, stat, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import path, { join } from 'path';
 import { promisify } from 'util';
@@ -9,7 +9,7 @@ import { Git } from '#functions/scm/git';
 import { VersionControlSystem } from '#functions/scm/versionControlSystem';
 import { UtilFunctions } from '#functions/util';
 import { logger } from '#o11y/logger';
-import { execCmd, execCommand, spawnCommand } from '#utils/exec';
+import { spawnCommand } from '#utils/exec';
 import { CDATA_END, CDATA_START } from '#utils/xml-utils';
 import { needsCDATA } from '#utils/xml-utils';
 import { func, funcClass } from '../functionDefinition/functionDecorators';
@@ -19,6 +19,7 @@ const fs = {
 	stat: promisify(stat),
 	readdir: promisify(readdir),
 	access: promisify(access),
+	mkdir: promisify(mkdir),
 };
 
 type FileFilter = (filename: string) => boolean;
@@ -99,6 +100,7 @@ export class FileSystem {
 	 */
 	@func()
 	setWorkingDirectory(dir: string): void {
+		if (!dir) throw new Error('workingDirectory must be provided');
 		this.log.info(`setWorkingDirectory ${dir}`);
 		if (`/${dir}`.startsWith(this.basePath)) dir = `/${dir}`;
 		let newWorkingDirectory = dir.startsWith(this.basePath) ? dir.replace(this.basePath, '') : dir;
@@ -152,7 +154,7 @@ export class FileSystem {
 	async searchFilesMatchingContents(contentsRegex: string): Promise<string> {
 		// --count Only show count of line matches for each file
 		// const { stdout, stderr, exitCode } = await execCommand(`rg --count ${regex}`);
-		const results = await spawnCommand(`rg --count '${contentsRegex}'`);
+		const results = await spawnCommand(`rg --count ${arg(contentsRegex)}`);
 		if (results.exitCode > 0) throw new Error(results.stderr);
 		return results.stdout;
 		// if (exitCode > 0) throw new Error(`${stdout}\n${stderr}`);
@@ -174,7 +176,7 @@ export class FileSystem {
 	}
 
 	/**
-	 * Lists the file and folder names in a single directory (the current directory.
+	 * Lists the file and folder names in a single directory.
 	 * Folder names will end with a /
 	 * @param dirPath the folder to list the files in
 	 * @returns the list of file and folder names
@@ -362,17 +364,14 @@ export class FileSystem {
 
 	/**
 	 * Writes to a file. If the file exists it will overwrite the contents.
-	 * @param filePath The file path
+	 * @param filePath The file path (either full filesystem path or relative to current working directory)
 	 * @param contents The contents to write to the file
 	 */
 	@func()
 	async writeFile(filePath: string, contents: string): Promise<void> {
-		const path = join(this.getWorkingDirectory(), filePath);
-		logger.info(`Writing file: ${path}`);
-		// TODO check filePath is not relative above basePath
-		// TODO writeFile: ensure directory exists
-		// await fs.mkdir(dir, { recursive: true });
-		writeFileSync(path, contents);
+		const fileSystemPath = filePath.startsWith(this.basePath) ? filePath : join(this.getWorkingDirectory(), filePath);
+		logger.info(`Writing file "${filePath}" to ${fileSystemPath}`);
+		writeFileSync(fileSystemPath, contents);
 	}
 
 	/**
@@ -388,4 +387,12 @@ export class FileSystem {
 	}
 
 	// https://github.com/BurntSushi/ripgrep
+}
+
+/**
+ * Sanitise arguments by single quoting and escaping single quotes in the value
+ * @param arg command line argument value
+ */
+function arg(arg: string): string {
+	return `'${arg.replace("'", "\\'")}'`;
 }

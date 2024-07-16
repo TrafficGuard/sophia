@@ -20,7 +20,7 @@ async function main() {
 	}
 
 	const args = process.argv.slice(2);
-	const initialPrompt = args.length > 0 ? args.join(' ') : readFileSync('src/cli/chat-in', 'utf-8');
+	const initialPrompt = args.length > 0 ? args.join(' ') : readFileSync('src/cli/gen-in', 'utf-8');
 	console.log(`Prompt: ${initialPrompt}`);
 
 	const context: AgentContext = createContext({
@@ -33,9 +33,9 @@ async function main() {
 
 	const text = await llms.medium.generateText(initialPrompt);
 
-	writeFileSync('src/cli/chat-out', text);
+	writeFileSync('src/cli/gen-out', text);
 	console.log(text);
-	console.log('Wrote output to src/cli/chat-out');
+	console.log('Wrote output to src/cli/gen-out');
 }
 
 main()

@@ -53,13 +53,14 @@ interface AgentExecution {
 }
 
 async function runAgent(agent: AgentContext): Promise<string> {
-	if (agent.type === 'xml') {
-		return runXmlAgent(agent);
+	switch (agent.type) {
+		case 'xml':
+			return runXmlAgent(agent);
+		case 'python':
+			return runPythonAgent(agent);
+		default:
+			throw new Error(`Invalid agent type ${agent.type}`);
 	}
-	if (agent.type === 'python') {
-		return runPythonAgent(agent);
-	}
-	throw new Error(`Invalid agent type ${agent.type}`);
 }
 
 export async function startAgent(config: RunAgentConfig): Promise<string> {

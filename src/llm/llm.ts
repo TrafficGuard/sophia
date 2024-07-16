@@ -132,17 +132,14 @@ export function combinePrompts(userPrompt: string, systemPrompt?: string): strin
 export function logTextGeneration(originalMethod: any, context: ClassMethodDecoratorContext): any {
 	return async function replacementMethod(this: BaseLLM, ...args: any[]) {
 		// system prompt
-		if (args.length > 1) {
-			logger.info('= SYSTEM PROMPT ==========================================');
-			logger.info(args[1]);
+		if (args.length > 1 && args[1]) {
+			logger.info(`= SYSTEM PROMPT ===================================================\n${args[1]}`);
 		}
-		logger.info('= USER PROMPT ====================================================================================================');
-		logger.info(args[0]);
+		logger.info(`= USER PROMPT =================================================================\n${args[1]}`);
 
 		const start = Date.now();
 		const result = await originalMethod.call(this, ...args);
-		logger.info(`= RESPONSE ${this.model} =========================================================================================`);
-		logger.info(result);
+		logger.info(`= RESPONSE ${this.model} ==========================================================\n${JSON.stringify(result)}`);
 		const duration = `${((Date.now() - start) / 1000).toFixed(1)}s`;
 		logger.info(`${duration}  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<`);
 		return result;

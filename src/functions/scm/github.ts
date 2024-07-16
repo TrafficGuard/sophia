@@ -65,8 +65,10 @@ export class GitHub implements SourceControlManagement {
 	}
 
 	/**
-	 * Clones a GitHub project to the local filesystem
+	 * Clones a GitHub project to the local filesystem at a system controlled location.
+	 * To use this project the function FileSystem.setWorkingDirectory must be called after with the returned value.
 	 * @param projectPathWithOrg The repo to clone, in the format organisation/project
+	 * @returns the file system path where the repository is located
 	 */
 	@func()
 	async cloneProject(projectPathWithOrg: string): Promise<string> {

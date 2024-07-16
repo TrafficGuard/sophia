@@ -200,8 +200,6 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 					agent.invoking = [];
 					if (!anyFunctionCallErrors && !completed && !requestFeedback) agent.state = 'agent';
 					currentPrompt = `${userRequestXml}\n${functionResponse.textResponse}\n${functionResults.join('\n')}`;
-					agent.inputPrompt = currentPrompt;
-					await agentStateService.save(agent);
 				} catch (e) {
 					span.setStatus({ code: SpanStatusCode.ERROR, message: e.toString() });
 					logger.error(e, 'Control loop error');
@@ -209,7 +207,9 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 					agent.state = 'error';
 					agent.error = e.message;
 					if (e.stack) agent.error += `\n${e.stack}`;
+				} finally {
 					agent.inputPrompt = currentPrompt;
+					agent.callStack = [];
 					await agentStateService.save(agent);
 				}
 				// return if the control loop should continue

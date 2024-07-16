@@ -120,6 +120,13 @@ export function getFileSystem(): FileSystem {
 
 export function createContext(config: RunAgentConfig): AgentContext {
 	const fileSystem = new FileSystem(config.fileSystemPath);
+	// TODO create a test for this that the context.filesystem is the same reference as the context.functions["FileSystem"]}
+	// Make sure we have the same FileSystem object on the context and in the functions
+	const functions: LlmFunctions = Array.isArray(config.functions) ? new LlmFunctions(...config.functions) : config.functions;
+	if (functions.getFunctionClassNames().includes(FileSystem.name)) {
+		functions.removeFunctionClass(FileSystem.name);
+		functions.addFunctionInstance(fileSystem, FileSystem.name);
+	}
 	return {
 		agentId: config.resumeAgentId || randomUUID(),
 		executionId: randomUUID(),
@@ -137,8 +144,8 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		budgetRemaining: 0,
 		cost: 0,
 		llms: config.llms,
-		fileSystem: new FileSystem(config.fileSystemPath),
-		functions: Array.isArray(config.functions) ? new LlmFunctions(...config.functions) : config.functions, // TODO Should replace FileSystem with the context filesystem
+		fileSystem,
+		functions: Array.isArray(config.functions) ? new LlmFunctions(...config.functions) : config.functions,
 		memory: {},
 		invoking: [],
 		lastUpdate: Date.now(),

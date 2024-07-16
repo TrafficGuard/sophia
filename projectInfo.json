@@ -7,6 +7,7 @@
     "format": "npm run lint",
     "staticAnalysis": "npm run lint",
     "test": "npm run test",
-    "languageTools": "typescript"
+    "languageTools": "typescript",
+    "devBranch": "main"
   }
 ]

@@ -164,9 +164,10 @@ export class GitLab implements SourceControlManagement {
 	}
 
 	/**
-	 * Clones a project from GitLab to the file system. To use this project the function FileSystem.setWorkingDirectory must be called after with the returned value
+	 * Clones a project from GitLab to the file system.
+	 * To use this project the function FileSystem.setWorkingDirectory must be called after with the returned value
 	 * @param projectPathWithNamespace the full project path in GitLab
-	 * @returns the path in the FileSystem containing the repository files.
+	 * @returns the file system path where the repository is located
 	 */
 	@func()
 	async cloneProject(projectPathWithNamespace: string): Promise<string> {

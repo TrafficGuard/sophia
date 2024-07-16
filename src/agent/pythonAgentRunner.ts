@@ -136,6 +136,7 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 									// stdoutSummary: outputSummary,
 								});
 								functionResults.push(agentLLM.formatFunctionResult(def.name, functionResponse));
+								return functionResponse;
 							} catch (e) {
 								anyFunctionCallErrors = true;
 								agent.state = 'error';
@@ -166,22 +167,41 @@ import datetime
 from typing import List, Dict, Tuple, Optional, Union
 
 async def main():
-${pythonCode}
+${pythonCode
+	.split('\n')
+	.map((line) => `    ${line}`)
+	.join('\n')}
 
 main()`.trim();
-						logger.info(pythonScript);
-						console.log('Original');
+						// logger.info(pythonScript);
+						// console.log('Original');
+
+						// pythonScript = await llms().medium.generateText(
+						// 	`${pythonScript}\n\nPlease format this Python script correctly with 4 spaces for an indent. Output only the re-formatted script. Do not chat, do not output markdown ticks, etc. Only the code`,
+						// 	null,
+						// 	{ id: 'Reformat Python script' },
+						// );
+						// console.log('Formatted');
+						// console.log(pythonScript);
+						logger.flush();
 						console.log(pythonScript);
-						pythonScript = await llms().medium.generateText(
-							`${pythonScript}\n\nPlease format this Python script correctly with 4 spaces for an indent. Output only the re-formatted script. Do not chat, do not output markdown ticks, etc. Only the code`,
-							null,
-							{ id: 'Reformat Python script' },
-						);
-						console.log('Formatted');
-						console.log(pythonScript);
+
+						// IndentationError
+
+						pyodide.setStdout({
+							batched: (output) => {
+								logger.info(`Script stdout: ${JSON.stringify(output)}`);
+							},
+						});
+						pyodide.setStderr({
+							batched: (output) => {
+								logger.info(`Script stderr: ${JSON.stringify(output)}`);
+							},
+						});
 						const result = await pyodide.runPythonAsync(pythonScript, { globals });
 						pythonScriptResult = result?.toJs ? result.toJs() : result;
 						logger.info(pythonScriptResult, 'pyodide result');
+						if (result?.destroy) result.destroy();
 					} catch (e) {
 						pyodideError = e;
 						logger.error(`Pyodide error ${e.message}`);
@@ -189,11 +209,17 @@ main()`.trim();
 
 						const prompt = `${functionsXml}\n<python>\n${pythonScript}</python>\n<error>${e.message}</error>\nPlease adjust/reformat the Python script to fix the issue. Output only the updated code. Do no chat, do not output markdown ticks. Only the updated code.`;
 						pythonScript = await llms().hard.generateText(prompt, null, { id: 'Fix python script error' });
-						console.log('Fixed? script');
-						console.log(pythonScript);
-						const result = await pyodide.runPythonAsync(pythonScript, { globals });
-						pythonScriptResult = result?.toJs ? result.toJs() : result;
-						logger.info(pythonScriptResult, 'pyodide result');
+						// console.log('Fixed? script');
+						// console.log(pythonScript);
+						try {
+							const result = await pyodide.runPythonAsync(pythonScript, { globals });
+							pythonScriptResult = result?.toJs ? result.toJs() : result;
+							if (result?.destroy) result.destroy();
+							logger.info(pythonScriptResult, 'pyodide result');
+						} catch (e) {
+							const error = new Error(`Error executing script:\n${pythonScript}`);
+							error.stack = e.stack;
+						}
 					}
 
 					const lastFunctionCall = agent.functionCallHistory[agent.functionCallHistory.length - 1];
@@ -218,8 +244,6 @@ main()`.trim();
 					// This section is duplicated in the provideFeedback function
 					agent.invoking = [];
 					currentPrompt = `${userRequestXml}\n${llmResponse}\n<python-result>${pythonScriptResult}</python-result>`;
-					agent.inputPrompt = currentPrompt;
-					await agentStateService.save(agent);
 				} catch (e) {
 					span.setStatus({ code: SpanStatusCode.ERROR, message: e.toString() });
 					logger.error(e, 'Control loop error');
@@ -227,7 +251,9 @@ main()`.trim();
 					agent.state = 'error';
 					agent.error = e.message;
 					if (e.stack) agent.error += `\n${e.stack}`;
+				} finally {
 					agent.inputPrompt = currentPrompt;
+					agent.callStack = [];
 					await agentStateService.save(agent);
 				}
 				// return if the control loop should continue

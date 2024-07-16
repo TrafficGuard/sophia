@@ -1,12 +1,14 @@
 import { readFileSync } from 'fs';
 import { AgentLLMs } from '#agent/agentContext';
+import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
-import { RunAgentConfig } from '#agent/xmlAgentRunner';
 import '#fastify/trace-init/trace-init';
 import { FileSystem } from '#functions/filesystem';
 import { GitLab } from '#functions/scm/gitlab';
+import { Perplexity } from '#functions/web/perplexity';
 import { ClaudeLLMs } from '#llm/models/anthropic';
 import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
+import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
 import { initFirestoreApplicationContext } from '../app';
 
@@ -28,7 +30,7 @@ async function main() {
 	const config: RunAgentConfig = {
 		agentName: 'cli-SWE',
 		llms,
-		functions: [FileSystem, GitLab],
+		functions: [FileSystem, CodeEditingAgent, Perplexity],
 		initialPrompt,
 	};
 

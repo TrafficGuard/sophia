@@ -1,4 +1,5 @@
 import { agentContext, getFileSystem, llms } from '#agent/agentContext';
+import { FileSystem } from '#functions/filesystem';
 import { logger } from '#o11y/logger';
 import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
 import { ProjectInfo } from './projectDetection';
@@ -53,16 +54,40 @@ The file paths MUST exist in the <project_map /> file_contents path attributes.
 </task>
 `;
 	const response = (await llms().medium.generateJson(prompt, null, { id: 'selectFilesToEdit' })) as SelectFilesResponse;
-	const primaryFiles = response.primaryFiles.map((entry) => entry.path);
-	const secondaryFiles = response.secondaryFiles.map((entry) => entry.path);
-	// TODO should validate the files exists, if not re-run with additional prompting
 
-	const files = [...primaryFiles, ...secondaryFiles];
-	for (const file of files) {
-		if (!(await getFileSystem().fileExists(file))) {
-			logger.error(`File ${file} does not exist`);
+	return removeNonExistingFiles(response, getFileSystem());
+}
+
+export async function removeNonExistingFiles(fileSelection: SelectFilesResponse, fileSystem: FileSystem): Promise<SelectFilesResponse> {
+	const primaryFiles = fileSelection.primaryFiles;
+	const secondaryFiles = fileSelection.secondaryFiles;
+
+	// Creating an array of promises for primary file existence checks
+	const primaryFileExistencePromises = primaryFiles.map(async (file) => {
+		const exists = await fileSystem.fileExists(file.path);
+		if (exists) {
+			return file;
 		}
-	}
+		logger.info(`Selected file for editing "${file.path}" does not exists.`);
+		return null;
+	});
 
-	return response;
+	// Creating an array of promises for secondary file existence checks
+	const secondaryFileExistencePromises = secondaryFiles.map(async (file) => {
+		const exists = await fileSystem.fileExists(file.path);
+		if (exists) {
+			return file;
+		}
+		logger.info(`Selected file for editing "${file.path}" does not exists.`);
+		return null;
+	});
+
+	// Wait for all promises to resolve
+	const existingPrimaryFiles = (await Promise.all(primaryFileExistencePromises)).filter((file) => file !== null);
+	const existingSecondaryFiles = (await Promise.all(secondaryFileExistencePromises)).filter((file) => file !== null);
+
+	return {
+		primaryFiles: existingPrimaryFiles as SelectedFiles[],
+		secondaryFiles: existingSecondaryFiles as SelectedFiles[],
+	};
 }

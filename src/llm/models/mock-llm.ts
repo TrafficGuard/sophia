@@ -90,8 +90,8 @@ export class MockLLM extends BaseLLM {
 			};
 			await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
 
-			const inputCost = this.getInputCostPerToken()(prompt);
-			const outputCost = this.getOutputCostPerToken()(responseText);
+			const inputCost = this.calculateInputCost(prompt);
+			const outputCost = this.calculateOutputCost(responseText);
 			const cost = inputCost + outputCost;
 			span.setAttributes({
 				response: responseText,

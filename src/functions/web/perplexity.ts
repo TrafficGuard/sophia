@@ -19,7 +19,7 @@ export class Perplexity {
 	 * Calls Perplexity to perform online research.
 	 * @param researchQuery the natural language query to research
 	 * @param saveToMemory if the response should be saved to the agent memory.
-	 * @returns if saveToMemory is true then returns the memory key. If saveToMemory is false then returns the research contents.
+	 * @returns {string} if saveToMemory is true then returns the memory key. If saveToMemory is false then returns the research contents.
 	 */
 	@cacheRetry()
 	@func()
@@ -49,6 +49,8 @@ export class Perplexity {
 			if (saveToMemory) {
 				const summary = await llms().easy.generateText(
 					`<query>${researchQuery}</query>\nGenerate a summarised version of the research key in one short sentence at most, with only alphanumeric with underscores for spaces. Answer concisely with only the summary.`,
+					null,
+					{ id: 'summarisePerplexityQuery' },
 				);
 				const key = `Perplexity-${summary}`;
 				agentContext().memory[key] = content;

@@ -15,7 +15,7 @@ export const REQUEST_FEEDBACK_PARAM_NAME = 'request';
 export class Agent {
 	/**
 	 * Request feedback/interaction from a supervisor when a decision or approval needs to be made, or additional details are required, before proceeding with the plan.
-	 * @param request {string} Notes on what additional information/decision is required.
+	 * @param request {string} Notes on what additional information/decision is required. Be specific on what you have been doing up to this point, and provide relevant information to help with the decision/feedback.
 	 */
 	@func()
 	async requestFeedback(request: string): Promise<void> {
@@ -42,7 +42,7 @@ export class Agent {
 		if (!key || !key.trim().length) throw new Error('Memory key must be provided');
 		if (!content || !content.trim().length) throw new Error('Memory content must be provided');
 		const memory = agentContext().memory;
-		if (memory.key) logger.info(`Overwriting memory key ${key}`);
+		if (memory[key]) logger.info(`Overwriting memory key ${key}`);
 		memory[key] = content;
 	}
 
@@ -55,19 +55,20 @@ export class Agent {
 	@func()
 	async deleteMemory(key: string, content: string): Promise<void> {
 		const memory = agentContext().memory;
-		if (!memory.key) logger.info(`deleteMemory key doesn't exist: ${key}`);
-		memory.key = undefined;
+		if (!memory[key]) logger.info(`deleteMemory key doesn't exist: ${key}`);
+		delete memory[key];
 	}
 
 	/**
 	 * Retrieves contents from memory
 	 * @param key {string} An existing key in the memory to retrieve.
+	 * @return {string} The memory contents
 	 */
 	@func()
 	async getMemory(key: string): Promise<string> {
-		if (!key) throw new Error('Parameter "key" must be provided');
+		if (!key) throw new Error(`Parameter "key" must be provided. Was ${key}`);
 		const memory = agentContext().memory;
-		if (!memory.key) throw new Error(`Memory key ${key} did not exist`);
-		return memory.key;
+		if (!memory[key]) throw new Error(`Memory key ${key} does not exist`);
+		return memory[key];
 	}
 }

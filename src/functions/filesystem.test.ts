@@ -1,10 +1,10 @@
-import path, { resolve } from 'path';
+import path, { join, resolve } from 'path';
 import { expect } from 'chai';
 import { FileSystem } from './filesystem';
 
 describe('FileSystem', () => {
-	const fileSystem = new FileSystem('/basePath');
-	describe('setWorkingDirectory', () => {
+	describe('setWorkingDirectory with fakePath', () => {
+		const fileSystem = new FileSystem('/basePath');
 		it('should be able to set a path from the baseDir when the new working directory starts with /', async () => {
 			fileSystem.setWorkingDirectory('/otherWorkDir');
 			fileSystem.setWorkingDirectory('/newWorkDir');
@@ -41,6 +41,24 @@ describe('FileSystem', () => {
 
 			fileSystem.setWorkingDirectory('./../..');
 			expect(resolve(fileSystem.getWorkingDirectory())).to.equal(resolve(fileSystem.basePath));
+		});
+	});
+
+	describe('setWorkingDirectory with real project path', () => {
+		const fileSystem = new FileSystem();
+
+		it('should set the real working directory with a relative path', async () => {
+			const fileSystem = new FileSystem();
+			fileSystem.setWorkingDirectory('frontend');
+			const exists = await fileSystem.fileExists('angular.json');
+			expect(exists).to.equal(true);
+		});
+
+		it('should set the real working directory with an absolute relative path', async () => {
+			const fileSystem = new FileSystem();
+			fileSystem.setWorkingDirectory(join(process.cwd(), 'frontend'));
+			const exists = await fileSystem.fileExists('angular.json');
+			expect(exists).to.equal(true);
 		});
 	});
 
@@ -90,11 +108,11 @@ describe('FileSystem', () => {
 		});
 		it('should list files and folders in the src directory', async () => {
 			let files: string[] = await fileSystem.listFilesInDirectory('./src');
-			expect(files).to.include('src/index.ts');
+			expect(files).to.include('index.ts');
 			expect(files).not.to.include('package.json');
 
 			files = await fileSystem.listFilesInDirectory('src');
-			expect(files).to.include('src/index.ts');
+			expect(files).to.include('index.ts');
 			expect(files).not.to.include('package.json');
 		});
 		it('should list files in the src directory when the working directory is src', async () => {
