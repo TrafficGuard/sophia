@@ -57,6 +57,7 @@ export class MockLLM extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
+				service: this.service,
 			});
 
 			if (this.responses.length === 0) throw new Error('Need to call setResponses on MockLLM before calling generateText');

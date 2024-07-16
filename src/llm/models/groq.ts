@@ -68,6 +68,7 @@ export class GroqLLM extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
+				service: this.service,
 			});
 			span.setAttribute('userPrompt', userPrompt);
 			span.setAttribute('inputChars', prompt.length);

@@ -58,7 +58,7 @@ export function ClaudeLLMs(): AgentLLMs {
 
 export class Anthropic extends BaseLLM {
 	anthropic: AnthropicSdk | undefined;
-	constructor(displayName: string, model: string, inputCostPerChar = 0, outputCostPerChar = 0) {
+	constructor(displayName: string, model: string, inputCostPerChar: number, outputCostPerChar: number) {
 		super(displayName, ANTHROPIC_SERVICE, model, 200_000, inputCostPerChar, outputCostPerChar);
 	}
 
@@ -79,6 +79,7 @@ export class Anthropic extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
+				service: this.service,
 			});
 
 			const caller: CallerId = { agentId: agentContext().agentId };

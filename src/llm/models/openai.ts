@@ -76,6 +76,7 @@ export class OpenAI extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
+				service: this.service,
 			});
 
 			const caller: CallerId = { agentId: agentContext().agentId };

@@ -62,7 +62,7 @@ export function ClaudeVertexLLMs(): AgentLLMs {
 class AnthropicVertexLLM extends BaseLLM {
 	client: AnthropicVertex | undefined;
 
-	constructor(displayName: string, model: string, inputCostPerChar = 0, outputCostPerChar = 0) {
+	constructor(displayName: string, model: string, inputCostPerChar: number, outputCostPerChar: number) {
 		super(displayName, ANTHROPIC_VERTEX_SERVICE, model, 200_000, inputCostPerChar, outputCostPerChar);
 	}
 
@@ -90,6 +90,7 @@ class AnthropicVertexLLM extends BaseLLM {
 				userPrompt,
 				inputChars: combinedPrompt.length,
 				model: this.model,
+				service: this.service,
 				caller: agentContext().callStack.at(-1) ?? '',
 			});
 
