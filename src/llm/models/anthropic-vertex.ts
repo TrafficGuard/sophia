@@ -149,12 +149,18 @@ class AnthropicVertexLLM extends BaseLLM {
 				callStack: agentContext().callStack.join(' > '),
 			};
 			await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
-
+			console.log(message);
 			const inputTokens = message.usage.input_tokens;
 			const outputTokens = message.usage.output_tokens;
 			const inputCost = this.getInputCostPerToken() * message.usage.input_tokens;
 			const outputCost = this.getOutputCostPerToken() * message.usage.output_tokens;
 			const cost = inputCost + outputCost;
+			console.log(inputTokens);
+			console.log(outputTokens);
+			console.log(inputCost);
+			console.log(outputCost);
+			console.log(cost);
+
 			addCost(cost);
 
 			span.setAttributes({
