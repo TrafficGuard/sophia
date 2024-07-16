@@ -41,14 +41,6 @@ export abstract class BaseLLM implements LLM {
 		return this.maxInputTokens;
 	}
 
-	getInputCostPerToken(): (input: string) => number {
-		return this.calculateInputCost;
-	}
-
-	getOutputCostPerToken(): (output: string) => number {
-		return this.calculateOutputCost;
-	}
-
 	isRetryableError(e: any): boolean {
 		return false;
 	}

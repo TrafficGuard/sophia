@@ -172,8 +172,8 @@ class AnthropicVertexLLM extends BaseLLM {
 			console.log(message);
 			const inputTokens = message.usage.input_tokens;
 			const outputTokens = message.usage.output_tokens;
-			const inputCost = this.getInputCostPerToken()(combinedPrompt);
-			const outputCost = this.getOutputCostPerToken()(responseText);
+			const inputCost = this.calculateInputCost(combinedPrompt);
+			const outputCost = this.calculateOutputCost(responseText);
 			const cost = inputCost + outputCost;
 			console.log(inputTokens);
 			console.log(outputTokens);

@@ -141,8 +141,8 @@ export class Anthropic extends BaseLLM {
 			const outputTokens = message.usage.output_tokens;
 			const stopReason = message.stop_reason;
 
-			const inputCost = this.getInputCostPerToken()(prompt);
-			const outputCost = this.getOutputCostPerToken()(responseText);
+			const inputCost = this.calculateInputCost(prompt);
+			const outputCost = this.calculateOutputCost(responseText);
 			const cost = inputCost + outputCost;
 
 			span.setAttributes({

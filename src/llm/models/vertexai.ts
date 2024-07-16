@@ -149,8 +149,8 @@ class VertexLLM extends BaseLLM {
 				logger.error(e);
 			}
 
-			const inputCost = this.getInputCostPerToken()(userPrompt + (systemPrompt ?? ''));
-			const outputCost = this.getOutputCostPerToken()(responseText);
+			const inputCost = this.calculateInputCost(userPrompt + (systemPrompt ?? ''));
+			const outputCost = this.calculateOutputCost(responseText);
 			const cost = inputCost + outputCost;
 
 			span.setAttributes({
