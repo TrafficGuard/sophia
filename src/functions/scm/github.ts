@@ -1,7 +1,7 @@
 import { existsSync } from 'fs';
 import path, { join } from 'path';
 import { request } from '@octokit/request';
-import { getFileSystem } from '#agent/agentContext';
+import { agentContext, getFileSystem } from '#agent/agentContext';
 import { SourceControlManagement } from '#functions/scm/sourceControlManagement';
 import { logger } from '#o11y/logger';
 import { functionConfig } from '#user/userService/userContext';
@@ -91,6 +91,7 @@ export class GitHub implements SourceControlManagement {
 			const result = await execCmd(command);
 			checkExecResult(result, `Failed to clone ${projectPathWithOrg}`);
 		}
+		agentContext().memory[`fileSystemDirectory_GitHub_${org}_${project}`] = path;
 		return path;
 	}
 

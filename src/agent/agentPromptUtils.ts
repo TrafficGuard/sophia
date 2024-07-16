@@ -1,4 +1,4 @@
-import { agentContext } from '#agent/agentContext';
+import { agentContext, getFileSystem } from '#agent/agentContext';
 
 /**
  * @return An XML representation of the agent's memory
@@ -11,6 +11,20 @@ export function buildMemoryPrompt(): string {
 	}
 	result += '</memory>\n';
 	return result;
+}
+
+/**
+ * @return An XML representation of the agent's memory
+ */
+export function buildFileSystemPrompt(): string {
+	const functions = agentContext().functions;
+	if (!functions.getFunctionClassNames().includes('FileSystem')) return '';
+	const fileSystem = getFileSystem();
+	return `\n<file_system>
+			<base_path>${fileSystem.basePath}</base_path>
+			<current_working_directory>${fileSystem.getWorkingDirectory()}</current_working_directory>
+			</file_system>
+`;
 }
 
 /**

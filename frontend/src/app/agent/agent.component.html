@@ -48,8 +48,10 @@
           </mat-form-field>
         </mat-card-content>
         <mat-card-actions style="margin-bottom: 0">
-          <button mat-raised-button color="primary" type="submit" [disabled]="!errorForm.valid">Resume Agent</button>
-          <button mat-raised-button color="warn" (click)="cancelAgent()">Cancel Agent</button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="!errorForm.valid || isResumingError">
+            {{ isResumingError ? 'Resuming...' : 'Resume Agent' }}
+          </button>
+          <button mat-raised-button color="warn" (click)="cancelAgent()" [disabled]="isResumingError">Cancel Agent</button>
         </mat-card-actions>
       </form>
     </mat-card>
@@ -90,8 +92,10 @@
           </mat-form-field>
         </mat-card-content>
         <mat-card-actions>
-          <button mat-raised-button color="primary" type="submit">Resume</button>
-          <button mat-raised-button color="warn" (click)="cancelAgent()">Cancel Agent</button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="isSubmitting">
+            {{ isSubmitting ? 'Resuming...' : 'Resume' }}
+          </button>
+          <button mat-raised-button color="warn" (click)="cancelAgent()" [disabled]="isSubmitting">Cancel Agent</button>
         </mat-card-actions>
       </form>
     </mat-card>
@@ -273,7 +277,7 @@
   <mat-tab label="LLM Calls">
     <mat-card *ngFor="let call of llmCalls; let i = index">
       <mat-card-title id="{{ call.response.id }}"
-        >Call: {{ call.response.callStack }} {{ call.response.description }}
+        >{{ call.response.callStack }} {{ call.response.description }}
         <a href="{{ llmCallUrl(call.response) }}" style="font-size: x-small">GCP</a></mat-card-title
       >
       <mat-card-content>

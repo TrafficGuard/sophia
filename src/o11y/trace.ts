@@ -65,6 +65,7 @@ export function getActiveSpan(): Span | null {
  * @returns the value from work function
  */
 export async function withActiveSpan<T>(spanName: string, func: (span: Span) => T): Promise<T> {
+	if (!spanName) logger.error(new Error(), 'spanName not provided');
 	const functionWithCallStack = async (span: Span): Promise<T> => {
 		try {
 			agentContextStorage?.getStore()?.callStack.push(spanName);
