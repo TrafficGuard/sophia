@@ -13,8 +13,8 @@ export abstract class BaseLLM implements LLM {
 		protected readonly service: string,
 		protected readonly model: string,
 		private maxInputTokens: number,
-		private inputCostPerChar: number,
-		private outputCostPerChar: number,
+		private calculateInputCost: (input: string) => number,
+		private calculateOutputCost: (output: string) => number,
 	) {}
 
 	async generateFunctionResponse(prompt: string, systemPrompt?: string, opts?: GenerateFunctionOptions): Promise<FunctionResponse> {
@@ -41,12 +41,12 @@ export abstract class BaseLLM implements LLM {
 		return this.maxInputTokens;
 	}
 
-	getInputCostPerToken(): number {
-		return this.inputCostPerChar;
+	getInputCostPerToken(): (input: string) => number {
+		return this.calculateInputCost;
 	}
 
-	getOutputCostPerToken(): number {
-		return this.outputCostPerChar;
+	getOutputCostPerToken(): (output: string) => number {
+		return this.calculateOutputCost;
 	}
 
 	isRetryableError(e: any): boolean {

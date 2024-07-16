@@ -30,19 +30,27 @@ export function anthropicVertexLLMRegistry(): Record<string, () => LLM> {
 }
 
 export function Claude3_Sonnet_Vertex() {
-	return new AnthropicVertexLLM('Claude 3 Sonnet (Vertex)', 'claude-3-sonnet@20240229', 3 / (1_000_000 * 3.5), 15 / (1_000_000 * 3.5));
+	return new AnthropicVertexLLM('Claude 3 Sonnet (Vertex)', 'claude-3-sonnet@20240229', 
+		(input: string) => (input.length * 3) / (1_000_000 * 3.5), 
+		(output: string) => (output.length * 15) / (1_000_000 * 3.5));
 }
 
 export function Claude3_5_Sonnet_Vertex() {
-	return new AnthropicVertexLLM('Claude 3.5 Sonnet (Vertex)', 'claude-3-5-sonnet@20240620', 3 / (1_000_000 * 3.5), 15 / (1_000_000 * 3.5));
+	return new AnthropicVertexLLM('Claude 3.5 Sonnet (Vertex)', 'claude-3-5-sonnet@20240620', 
+		(input: string) => (input.length * 3) / (1_000_000 * 3.5), 
+		(output: string) => (output.length * 15) / (1_000_000 * 3.5));
 }
 
 export function Claude3_Haiku_Vertex() {
-	return new AnthropicVertexLLM('Claude 3 Haiku (Vertex)', 'claude-3-haiku@20240307', 0.25 / (1_000_000 * 3.5), 1.25 / (1_000_000 * 3.5));
+	return new AnthropicVertexLLM('Claude 3 Haiku (Vertex)', 'claude-3-haiku@20240307', 
+		(input: string) => (input.length * 0.25) / (1_000_000 * 3.5), 
+		(output: string) => (output.length * 1.25) / (1_000_000 * 3.5));
 }
 
 export function Claude3_Opus_Vertex() {
-	return new AnthropicVertexLLM('Claude 3 Opus (Vertex)', 'claude-3-opus@20240229', 15 / (1_000_000 * 3.5), 75 / (1_000_000 * 3.5));
+	return new AnthropicVertexLLM('Claude 3 Opus (Vertex)', 'claude-3-opus@20240229', 
+		(input: string) => (input.length * 15) / (1_000_000 * 3.5), 
+		(output: string) => (output.length * 75) / (1_000_000 * 3.5));
 }
 
 export function ClaudeVertexLLMs(): AgentLLMs {
@@ -62,8 +70,8 @@ export function ClaudeVertexLLMs(): AgentLLMs {
 class AnthropicVertexLLM extends BaseLLM {
 	client: AnthropicVertex | undefined;
 
-	constructor(displayName: string, model: string, inputCostPerChar: number, outputCostPerChar: number) {
-		super(displayName, ANTHROPIC_VERTEX_SERVICE, model, 200_000, inputCostPerChar, outputCostPerChar);
+	constructor(displayName: string, model: string, calculateInputCost: (input: string) => number, calculateOutputCost: (output: string) => number) {
+		super(displayName, ANTHROPIC_VERTEX_SERVICE, model, 200_000, calculateInputCost, calculateOutputCost);
 	}
 
 	private api(): AnthropicVertex {
@@ -152,8 +160,8 @@ class AnthropicVertexLLM extends BaseLLM {
 			console.log(message);
 			const inputTokens = message.usage.input_tokens;
 			const outputTokens = message.usage.output_tokens;
-			const inputCost = this.getInputCostPerToken() * message.usage.input_tokens;
-			const outputCost = this.getOutputCostPerToken() * message.usage.output_tokens;
+			const inputCost = this.getInputCostPerToken()(combinedPrompt);
+			const outputCost = this.getOutputCostPerToken()(responseText);
 			const cost = inputCost + outputCost;
 			console.log(inputTokens);
 			console.log(outputTokens);

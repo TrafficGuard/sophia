@@ -30,18 +30,22 @@ export function openaiLLmFromModel(model: string): LLM {
 
 // 1 token ~= 4 chars
 export function GPT4() {
-	return new OpenAI('GPT4-turbo', 'gpt-4-turbo-preview', 128_000, 10 / (1_000_000 * 4), 30 / (1_000_000 * 4));
+	return new OpenAI('GPT4-turbo', 'gpt-4-turbo-preview', 128_000, 
+		(input: string) => (input.length * 10) / (1_000_000 * 4), 
+		(output: string) => (output.length * 30) / (1_000_000 * 4));
 }
 
 export function GPT4o() {
-	return new OpenAI('GPT4o', 'gpt-4o', 128_000, 5 / (1_000_000 * 4), 15 / (1_000_000 * 4));
+	return new OpenAI('GPT4o', 'gpt-4o', 128_000, 
+		(input: string) => (input.length * 5) / (1_000_000 * 4), 
+		(output: string) => (output.length * 15) / (1_000_000 * 4));
 }
 
 export class OpenAI extends BaseLLM {
 	openAISDK: OpenAISDK | null = null;
 
-	constructor(name, model: Model, maxInputTokens: number, inputCostPerChar: number, outputCostPerChar: number) {
-		super(name, OPENAI_SERVICE, model, maxInputTokens, inputCostPerChar, outputCostPerChar);
+	constructor(name, model: Model, maxInputTokens: number, calculateInputCost: (input: string) => number, calculateOutputCost: (output: string) => number) {
+		super(name, OPENAI_SERVICE, model, maxInputTokens, calculateInputCost, calculateOutputCost);
 	}
 
 	private sdk(): OpenAISDK {
@@ -121,8 +125,8 @@ export class OpenAI extends BaseLLM {
 			};
 			await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
 
-			const inputCost = this.getInputCostPerToken() * prompt.length;
-			const outputCost = this.getOutputCostPerToken() * responseText.length;
+			const inputCost = this.getInputCostPerToken()(prompt);
+			const outputCost = this.getOutputCostPerToken()(responseText);
 			const cost = inputCost + outputCost;
 			span.setAttributes({
 				inputChars: prompt.length,
