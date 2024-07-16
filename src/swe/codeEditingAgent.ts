@@ -151,12 +151,12 @@ export class CodeEditingAgent {
 				// Run it twice so the first time can apply any auto-fixes, then the second time has only the non-auto fixable issues
 				try {
 					await this.runStaticAnalysis(projectInfo);
-					await fs.vcs.mergeChangesIntoLatestCommit();
+					await fs.vcs.mergeChangesIntoLatestCommit(initialSelectedFiles);
 					break;
 				} catch (e) {
 					let staticAnalysisErrorOutput = e.message;
 					// Merge any successful auto-fixes to the latest commit
-					await fs.vcs.mergeChangesIntoLatestCommit();
+					await fs.vcs.mergeChangesIntoLatestCommit(initialSelectedFiles);
 					if (i === STATIC_ANALYSIS_MAX_ATTEMPTS - 1) {
 						logger.warn(`Unable to fix static analysis errors: ${staticAnalysisErrorOutput}`);
 					} else {
