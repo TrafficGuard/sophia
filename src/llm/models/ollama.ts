@@ -11,7 +11,9 @@ export const OLLAMA_SERVICE = 'ollama';
 
 export class OllamaLLM extends BaseLLM {
 	constructor(name: string, model: string, maxInputTokens: number) {
-		super(`${name} (Ollama)`, OLLAMA_SERVICE, model, maxInputTokens, 0, 0);
+		super(`${name} (Ollama)`, OLLAMA_SERVICE, model, maxInputTokens, 
+			() => 0, 
+			() => 0);
 	}
 
 	@logTextGeneration

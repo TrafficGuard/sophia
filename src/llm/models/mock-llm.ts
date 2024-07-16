@@ -26,7 +26,9 @@ export class MockLLM extends BaseLLM {
 		private responses: string[] = [],
 		maxInputTokens = 100000,
 	) {
-		super('mock', 'mock', 'mock', maxInputTokens, 1 / 1_000_000, 1 / 1_000_000);
+		super('mock', 'mock', 'mock', maxInputTokens, 
+			(input: string) => (input.length * 1) / 1_000_000, 
+			(output: string) => (output.length * 1) / 1_000_000);
 	}
 
 	setResponse(response: string) {
@@ -83,8 +85,8 @@ export class MockLLM extends BaseLLM {
 			};
 			await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
 
-			const inputCost = this.getInputCostPerToken() * prompt.length;
-			const outputCost = this.getOutputCostPerToken() * responseText.length;
+			const inputCost = this.getInputCostPerToken()(prompt);
+			const outputCost = this.getOutputCostPerToken()(responseText);
 			const cost = inputCost + outputCost;
 			span.setAttributes({
 				response: responseText,
