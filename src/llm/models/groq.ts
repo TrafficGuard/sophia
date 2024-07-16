@@ -23,21 +23,36 @@ export function groqLLMRegistry(): Record<string, () => LLM> {
 }
 
 export function groqMixtral8x7b(): LLM {
-	return new GroqLLM('Mixtral 8x7b (Groq)', GROQ_SERVICE, 'mixtral-8x7b-32768', 32_768, 
-		(input: string) => (input.length * 0.27) / (1_000_000 * 3.5), 
-		(output: string) => (output.length * 0.27) / (1_000_000 * 3.5));
+	return new GroqLLM(
+		'Mixtral 8x7b (Groq)',
+		GROQ_SERVICE,
+		'mixtral-8x7b-32768',
+		32_768,
+		(input: string) => (input.length * 0.27) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 0.27) / (1_000_000 * 3.5),
+	);
 }
 
 export function groqGemma7bIt(): LLM {
-	return new GroqLLM('Gemma 7b-it (Groq)', GROQ_SERVICE, 'gemma-7b-it', 8_192, 
-		(input: string) => (input.length * 0.1) / (1_000_000 * 3.5), 
-		(output: string) => (output.length * 0.1) / (1_000_000 * 3.5));
+	return new GroqLLM(
+		'Gemma 7b-it (Groq)',
+		GROQ_SERVICE,
+		'gemma-7b-it',
+		8_192,
+		(input: string) => (input.length * 0.1) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 0.1) / (1_000_000 * 3.5),
+	);
 }
 
 export function groqLlama3_70B(): LLM {
-	return new GroqLLM('Llama3 70b (Groq)', GROQ_SERVICE, 'llama3-70b-8192', 8_192, 
-		(input: string) => (input.length * 0.59) / (1_000_000 * 4), 
-		(output: string) => (output.length * 0.79) / (1_000_000 * 4));
+	return new GroqLLM(
+		'Llama3 70b (Groq)',
+		GROQ_SERVICE,
+		'llama3-70b-8192',
+		8_192,
+		(input: string) => (input.length * 0.59) / (1_000_000 * 4),
+		(output: string) => (output.length * 0.79) / (1_000_000 * 4),
+	);
 }
 
 export function grokLLMs(): AgentLLMs {
@@ -55,10 +70,6 @@ export function grokLLMs(): AgentLLMs {
  */
 export class GroqLLM extends BaseLLM {
 	_groq: Groq;
-
-	constructor(displayName: string, service: string, model: string, maxInputTokens: number, calculateInputCost: (input: string) => number, calculateOutputCost: (output: string) => number) {
-		super(displayName, service, model, maxInputTokens, calculateInputCost, calculateOutputCost);
-	}
 
 	groq(): Groq {
 		if (!this._groq) {

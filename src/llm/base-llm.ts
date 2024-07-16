@@ -13,8 +13,8 @@ export abstract class BaseLLM implements LLM {
 		protected readonly service: string,
 		protected readonly model: string,
 		private maxInputTokens: number,
-		private calculateInputCost: (input: string) => number,
-		private calculateOutputCost: (output: string) => number,
+		public readonly calculateInputCost: (input: string) => number,
+		public readonly calculateOutputCost: (output: string) => number,
 	) {}
 
 	async generateFunctionResponse(prompt: string, systemPrompt?: string, opts?: GenerateFunctionOptions): Promise<FunctionResponse> {

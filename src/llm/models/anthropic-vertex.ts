@@ -30,27 +30,39 @@ export function anthropicVertexLLMRegistry(): Record<string, () => LLM> {
 }
 
 export function Claude3_Sonnet_Vertex() {
-	return new AnthropicVertexLLM('Claude 3 Sonnet (Vertex)', 'claude-3-sonnet@20240229', 
-		(input: string) => (input.length * 3) / (1_000_000 * 3.5), 
-		(output: string) => (output.length * 15) / (1_000_000 * 3.5));
+	return new AnthropicVertexLLM(
+		'Claude 3 Sonnet (Vertex)',
+		'claude-3-sonnet@20240229',
+		(input: string) => (input.length * 3) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 15) / (1_000_000 * 3.5),
+	);
 }
 
 export function Claude3_5_Sonnet_Vertex() {
-	return new AnthropicVertexLLM('Claude 3.5 Sonnet (Vertex)', 'claude-3-5-sonnet@20240620', 
-		(input: string) => (input.length * 3) / (1_000_000 * 3.5), 
-		(output: string) => (output.length * 15) / (1_000_000 * 3.5));
+	return new AnthropicVertexLLM(
+		'Claude 3.5 Sonnet (Vertex)',
+		'claude-3-5-sonnet@20240620',
+		(input: string) => (input.length * 3) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 15) / (1_000_000 * 3.5),
+	);
 }
 
 export function Claude3_Haiku_Vertex() {
-	return new AnthropicVertexLLM('Claude 3 Haiku (Vertex)', 'claude-3-haiku@20240307', 
-		(input: string) => (input.length * 0.25) / (1_000_000 * 3.5), 
-		(output: string) => (output.length * 1.25) / (1_000_000 * 3.5));
+	return new AnthropicVertexLLM(
+		'Claude 3 Haiku (Vertex)',
+		'claude-3-haiku@20240307',
+		(input: string) => (input.length * 0.25) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 1.25) / (1_000_000 * 3.5),
+	);
 }
 
 export function Claude3_Opus_Vertex() {
-	return new AnthropicVertexLLM('Claude 3 Opus (Vertex)', 'claude-3-opus@20240229', 
-		(input: string) => (input.length * 15) / (1_000_000 * 3.5), 
-		(output: string) => (output.length * 75) / (1_000_000 * 3.5));
+	return new AnthropicVertexLLM(
+		'Claude 3 Opus (Vertex)',
+		'claude-3-opus@20240229',
+		(input: string) => (input.length * 15) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 75) / (1_000_000 * 3.5),
+	);
 }
 
 export function ClaudeVertexLLMs(): AgentLLMs {
@@ -175,9 +187,9 @@ class AnthropicVertexLLM extends BaseLLM {
 				inputTokens,
 				outputTokens,
 				response: responseText,
-				inputCost,
-				outputCost,
-				cost,
+				inputCost: inputCost.toFixed(4),
+				outputCost: outputCost.toFixed(4),
+				cost: cost.toFixed(4),
 				outputChars: responseText.length,
 				callStack: agentContext().callStack.join(' > '),
 			});

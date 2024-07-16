@@ -30,15 +30,23 @@ export function openaiLLmFromModel(model: string): LLM {
 
 // 1 token ~= 4 chars
 export function GPT4() {
-	return new OpenAI('GPT4-turbo', 'gpt-4-turbo-preview', 128_000, 
-		(input: string) => (input.length * 10) / (1_000_000 * 4), 
-		(output: string) => (output.length * 30) / (1_000_000 * 4));
+	return new OpenAI(
+		'GPT4-turbo',
+		'gpt-4-turbo-preview',
+		128_000,
+		(input: string) => (input.length * 10) / (1_000_000 * 4),
+		(output: string) => (output.length * 30) / (1_000_000 * 4),
+	);
 }
 
 export function GPT4o() {
-	return new OpenAI('GPT4o', 'gpt-4o', 128_000, 
-		(input: string) => (input.length * 5) / (1_000_000 * 4), 
-		(output: string) => (output.length * 15) / (1_000_000 * 4));
+	return new OpenAI(
+		'GPT4o',
+		'gpt-4o',
+		128_000,
+		(input: string) => (input.length * 5) / (1_000_000 * 4),
+		(output: string) => (output.length * 15) / (1_000_000 * 4),
+	);
 }
 
 export class OpenAI extends BaseLLM {

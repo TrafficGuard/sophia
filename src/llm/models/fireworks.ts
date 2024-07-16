@@ -29,7 +29,13 @@ export class FireworksLLM extends BaseLLM {
 		return this._client;
 	}
 
-	constructor(displayName: string, model: string, maxTokens: number, inputCostPerToken: number, outputCostPerToken: number) {
+	constructor(
+		displayName: string,
+		model: string,
+		maxTokens: number,
+		inputCostPerToken: (input: string) => number,
+		outputCostPerToken: (output: string) => number,
+	) {
 		super(displayName, FIREWORKS_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
 	}
 
@@ -118,9 +124,13 @@ export function fireworksLLMRegistry(): Record<string, () => LLM> {
 	};
 }
 export function fireworksLlama3_70B(): LLM {
-	return new FireworksLLM('LLama3 70b-i (Fireworks)', 'accounts/fireworks/models/llama-v3-70b-instruct', 8000, 
-		(input: string) => (input.length * 0.9) / 1_000_000, 
-		(output: string) => (output.length * 0.9) / 1_000_000);
+	return new FireworksLLM(
+		'LLama3 70b-i (Fireworks)',
+		'accounts/fireworks/models/llama-v3-70b-instruct',
+		8000,
+		(input: string) => (input.length * 0.9) / 1_000_000,
+		(output: string) => (output.length * 0.9) / 1_000_000,
+	);
 }
 
 export function fireworksLLmFromModel(model: string): LLM | null {

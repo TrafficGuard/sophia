@@ -21,15 +21,23 @@ export function deepseekLLMRegistry(): Record<string, () => LLM> {
 }
 
 export function deepseekCoder(): LLM {
-	return new DeepseekLLM('DeepSeek Coder', 'deepseek-coder', 32000, 
-		(input: string) => (input.length * 0.14) / (1_000_000 * 3.5), 
-		(output: string) => (output.length * 0.28) / (1_000_000 * 3.5));
+	return new DeepseekLLM(
+		'DeepSeek Coder',
+		'deepseek-coder',
+		32000,
+		(input: string) => (input.length * 0.14) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 0.28) / (1_000_000 * 3.5),
+	);
 }
 
 export function deepseekChat(): LLM {
-	return new DeepseekLLM('DeepSeek Chat', 'deepseek-chat', 32000, 
-		(input: string) => (input.length * 0.14) / (1_000_000 * 3.5), 
-		(output: string) => (output.length * 0.28) / (1_000_000 * 3.5));
+	return new DeepseekLLM(
+		'DeepSeek Chat',
+		'deepseek-chat',
+		32000,
+		(input: string) => (input.length * 0.14) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 0.28) / (1_000_000 * 3.5),
+	);
 }
 
 /**
@@ -51,7 +59,13 @@ export class DeepseekLLM extends BaseLLM {
 		return this._client;
 	}
 
-	constructor(displayName: string, model: string, maxTokens: number, inputCostPerToken: number, outputCostPerToken: number) {
+	constructor(
+		displayName: string,
+		model: string,
+		maxTokens: number,
+		inputCostPerToken: (input: string) => number,
+		outputCostPerToken: (output: string) => number,
+	) {
 		super(displayName, DEEPSEEK_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
 	}
 

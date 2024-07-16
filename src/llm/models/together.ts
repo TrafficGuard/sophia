@@ -20,9 +20,13 @@ export function togetherLLMRegistry(): Record<string, () => LLM> {
 }
 
 export function togetherLlama3_70B(): LLM {
-	return new TogetherLLM('Llama3 70b (Together)', 'meta-llama/Llama-3-70b-chat-hf', 8000, 
-		(input: string) => (input.length * 0.9) / 1_000_000, 
-		(output: string) => (output.length * 0.9) / 1_000_000);
+	return new TogetherLLM(
+		'Llama3 70b (Together)',
+		'meta-llama/Llama-3-70b-chat-hf',
+		8000,
+		(input: string) => (input.length * 0.9) / 1_000_000,
+		(output: string) => (output.length * 0.9) / 1_000_000,
+	);
 }
 /**
  * Together AI models
@@ -40,7 +44,13 @@ export class TogetherLLM extends BaseLLM {
 		return this._client;
 	}
 
-	constructor(displayName: string, model: string, maxTokens: number, inputCostPerToken: number, outputCostPerToken: number) {
+	constructor(
+		displayName: string,
+		model: string,
+		maxTokens: number,
+		inputCostPerToken: (input: string) => number,
+		outputCostPerToken: (output: string) => number,
+	) {
 		super(displayName, TOGETHER_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
 	}
 

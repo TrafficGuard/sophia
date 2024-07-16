@@ -28,21 +28,30 @@ export function anthropicLLMRegistry(): Record<string, () => LLM> {
 // https://docs.anthropic.com/en/docs/glossary#tokens
 // For Claude, a token approximately represents 3.5 English characters
 export function Claude3_Opus() {
-	return new Anthropic('Claude 3 Opus', 'claude-3-opus-20240229', 
-		(input: string) => (input.length * 15) / (1_000_000 * 3.5), 
-		(output: string) => (output.length * 75) / (1_000_000 * 3.5));
+	return new Anthropic(
+		'Claude 3 Opus',
+		'claude-3-opus-20240229',
+		(input: string) => (input.length * 15) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 75) / (1_000_000 * 3.5),
+	);
 }
 
 export function Claude3_5_Sonnet() {
-	return new Anthropic('Claude 3.5 Sonnet', 'claude-3-5-sonnet-20240620', 
-		(input: string) => (input.length * 3) / (1_000_000 * 3.5), 
-		(output: string) => (output.length * 15) / (1_000_000 * 3.5));
+	return new Anthropic(
+		'Claude 3.5 Sonnet',
+		'claude-3-5-sonnet-20240620',
+		(input: string) => (input.length * 3) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 15) / (1_000_000 * 3.5),
+	);
 }
 
 export function Claude3_Haiku() {
-	return new Anthropic('Claude 3 Haiku', 'claude-3-haiku-20240307', 
-		(input: string) => (input.length * 0.25) / (1_000_000 * 3.5), 
-		(output: string) => (output.length * 1.25) / (1_000_000 * 3.5));
+	return new Anthropic(
+		'Claude 3 Haiku',
+		'claude-3-haiku-20240307',
+		(input: string) => (input.length * 0.25) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 1.25) / (1_000_000 * 3.5),
+	);
 }
 
 export function anthropicLLmFromModel(model: string): LLM | null {

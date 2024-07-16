@@ -37,21 +37,36 @@ export function vertexLLMRegistry(): Record<string, () => LLM> {
 
 // gemini-1.5-pro-latest
 export function Gemini_1_5_Pro(version = '001') {
-	return new VertexLLM('Gemini 1.5 Pro', VERTEX_SERVICE, `gemini-1.5-pro-${version}`, 1_000_000, 
-		(input: string) => (input.length * 0.00125) / 1000, 
-		(output: string) => (output.length * 0.00375) / 1000);
+	return new VertexLLM(
+		'Gemini 1.5 Pro',
+		VERTEX_SERVICE,
+		`gemini-1.5-pro-${version}`,
+		1_000_000,
+		(input: string) => (input.length * 0.00125) / 1000,
+		(output: string) => (output.length * 0.00375) / 1000,
+	);
 }
 
 export function Gemini_1_5_Experimental() {
-	return new VertexLLM('Gemini experimental', VERTEX_SERVICE, 'gemini-experimental', 1_000_000, 
-		(input: string) => (input.length * 0.0036) / 1000, 
-		(output: string) => (output.length * 0.018) / 1000);
+	return new VertexLLM(
+		'Gemini experimental',
+		VERTEX_SERVICE,
+		'gemini-experimental',
+		1_000_000,
+		(input: string) => (input.length * 0.0036) / 1000,
+		(output: string) => (output.length * 0.018) / 1000,
+	);
 }
 
 export function Gemini_1_5_Flash(version = '001') {
-	return new VertexLLM('Gemini 1.5 Flash', VERTEX_SERVICE, `gemini-1.5-flash-${version}`, 1_000_000, 
-		(input: string) => (input.length * 0.000125) / 1000, 
-		(output: string) => (output.length * 0.000375) / 1000);
+	return new VertexLLM(
+		'Gemini 1.5 Flash',
+		VERTEX_SERVICE,
+		`gemini-1.5-flash-${version}`,
+		1_000_000,
+		(input: string) => (input.length * 0.000125) / 1000,
+		(output: string) => (output.length * 0.000375) / 1000,
+	);
 }
 
 /**
@@ -134,7 +149,7 @@ class VertexLLM extends BaseLLM {
 				logger.error(e);
 			}
 
-			const inputCost = this.getInputCostPerToken()(prompt);
+			const inputCost = this.getInputCostPerToken()(userPrompt + (systemPrompt ?? ''));
 			const outputCost = this.getOutputCostPerToken()(responseText);
 			const cost = inputCost + outputCost;
 
