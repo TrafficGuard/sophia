@@ -1,9 +1,9 @@
 import util from 'util';
+import { funcClass } from '#functionSchema/functionDecorators';
+import { FileSystem } from '#functions/storage/filesystem';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
 import { execCmd, execCommand, failOnError } from '#utils/exec';
-import { funcClass } from '../../functionDefinition/functionDecorators';
-import { FileSystem } from '../filesystem';
 import { VersionControlSystem } from './versionControlSystem';
 const exec = util.promisify(require('child_process').exec);
 

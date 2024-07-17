@@ -5,7 +5,7 @@ import { promisify } from 'util';
 import { ClassDeclaration, Decorator, JSDoc, JSDocTag, MethodDeclaration, ParameterDeclaration, Project } from 'ts-morph';
 import { logger } from '#o11y/logger';
 import { FUNC_DECORATOR_NAME } from './functionDecorators';
-import { FunctionDefinition, FunctionParameter } from './functions';
+import { FunctionParameter, FunctionSchema } from './functions';
 
 const writeFileAsync = promisify(writeFile);
 
@@ -14,7 +14,7 @@ const CACHED_BASE_PATH = '.nous/functions/';
 /**
  * Parses a source file which is expected to have a class with the @funClass decorator.
  *
- * The JSON function definition is cached to file to avoid the overhead of ts-morph on startup.
+ * The JSON function schema is cached to file to avoid the overhead of ts-morph on startup.
  *
  * With the example class:
  * <code>
@@ -68,9 +68,9 @@ const CACHED_BASE_PATH = '.nous/functions/';
  *   }
  * }
  * @param sourceFilePath the full path to the source file
- * @returns An array of FunctionDefinition objects
+ * @returns An array of FunctionSchema objects
  */
-export function functionDefinitionParser(sourceFilePath: string): Record<string, FunctionDefinition> {
+export function functionSchemaParser(sourceFilePath: string): Record<string, FunctionSchema> {
 	const cwd = process.cwd();
 	let cachedPath = path.relative(cwd, sourceFilePath);
 	// trim the .ts file extension
@@ -80,24 +80,24 @@ export function functionDefinitionParser(sourceFilePath: string): Record<string,
 	const sourceUpdatedTimestamp = getFileUpdatedTimestamp(sourceFilePath);
 	const jsonUpdatedTimestamp = getFileUpdatedTimestamp(`${cachedPath}.json`);
 
-	// If the cached definitions are newer than the source file, then we can use them
+	// If the cached schemas are newer than the source file, then we can use them
 	if (jsonUpdatedTimestamp && jsonUpdatedTimestamp > sourceUpdatedTimestamp) {
 		try {
 			const json = readFileSync(`${cachedPath}.json`).toString();
-			logger.debug(`Loading cached definitions from ${cachedPath}.json`);
+			logger.debug(`Loading cached function schemas from ${cachedPath}.json`);
 			return JSON.parse(json);
 		} catch (e) {
-			logger.info('Error loading cached definitions: ', e.message);
+			logger.info('Error loading cached function schemas: ', e.message);
 		}
 	}
 
-	logger.info(`Generating definition for ${sourceFilePath}`);
+	logger.info(`Generating schema for ${sourceFilePath}`);
 	const project = new Project();
 	const sourceFile = project.createSourceFile('temp.ts', readFileSync(sourceFilePath, 'utf8'));
 
 	const classes = sourceFile.getClasses();
 
-	const functionDefinitions: Record<string, FunctionDefinition> = {};
+	const functionSchemas: Record<string, FunctionSchema> = {};
 
 	classes.forEach((cls: ClassDeclaration) => {
 		const className = cls.getName();
@@ -110,7 +110,7 @@ export function functionDefinitionParser(sourceFilePath: string): Record<string,
 			if (!hasFuncDecorator) return;
 
 			if (method.getJsDocs().length === 0) {
-				logger.warn(`No JSDocs found for ${methodName}. Skipping function definition`);
+				logger.warn(`No JSDocs found for ${methodName}. Skipping function schema`);
 				return;
 			}
 
@@ -152,19 +152,19 @@ export function functionDefinitionParser(sourceFilePath: string): Record<string,
 				if (paramDef.description) params.push(paramDef);
 			});
 
-			const funcDef: FunctionDefinition = {
+			const funcDef: FunctionSchema = {
 				class: className,
 				name: `${className}.${methodName}`,
 				description: methodDescription,
 				parameters: params,
 			};
 			if (returns) funcDef.returns = returns;
-			functionDefinitions[funcDef.name] = funcDef;
+			functionSchemas[funcDef.name] = funcDef;
 		});
 	});
 	fs.mkdirSync(path.join(cachedPath, '..'), { recursive: true });
-	writeFileAsync(`${cachedPath}.json`, JSON.stringify(functionDefinitions, null, 2)).catch((e) => logger.info(`Error writing cached definition: ${e.message}`));
-	return functionDefinitions;
+	writeFileAsync(`${cachedPath}.json`, JSON.stringify(functionSchemas, null, 2)).catch((e) => logger.info(`Error writing cached schema: ${e.message}`));
+	return functionSchemas;
 }
 
 function getFileUpdatedTimestamp(filePath: string): Date | null {

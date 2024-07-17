@@ -1,4 +1,4 @@
-import { func, funcClass } from '../../../functionDefinition/functionDecorators';
+import { func, funcClass } from '#functionSchema/functionDecorators';
 import { LanguageTools } from '../languageTools';
 
 @funcClass(__filename)

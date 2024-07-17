@@ -77,7 +77,7 @@ You task it to detect key information (language/runtime and build/test commands)
 
 For the "files" return value you will select the file names of only a few key files (documentation, project configuration, and optionally a select few entrypoint files) that will be later read and analysed to determine the commands. Do not include lock files for 3rd party code such as package-lock.json
 
-You must respond only in JSON format matching the ProjectDetection interface in following TypeScript definitions:
+You must respond only in JSON format matching the ProjectDetection interface in following TypeScript types:
 
 interface ProjectDetections {
   /** The folder which contains all the project configuration files (eg. package.json for node.js, pom.xml for Java). Often the root folder ("./") but not always */

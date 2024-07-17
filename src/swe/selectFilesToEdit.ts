@@ -1,5 +1,5 @@
 import { agentContext, getFileSystem, llms } from '#agent/agentContext';
-import { FileSystem } from '#functions/filesystem';
+import { FileSystem } from '#functions/storage/filesystem';
 import { logger } from '#o11y/logger';
 import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
 import { ProjectInfo } from './projectDetection';

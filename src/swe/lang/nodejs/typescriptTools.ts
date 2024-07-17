@@ -1,9 +1,9 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'path';
 import { getFileSystem } from '#agent/agentContext';
+import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 import { ExecResult, execCommand, failOnError } from '#utils/exec';
-import { func, funcClass } from '../../../functionDefinition/functionDecorators';
 import { LanguageTools } from '../languageTools';
 
 @funcClass(__filename)

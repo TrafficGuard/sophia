@@ -1,6 +1,6 @@
 import { agentContext } from '#agent/agentContext';
+import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
-import { func, funcClass } from '../functionDefinition/functionDecorators';
 
 export const AGENT_COMPLETED_NAME = 'Agent.completed';
 

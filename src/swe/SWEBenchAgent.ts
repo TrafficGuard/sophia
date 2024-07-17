@@ -7,7 +7,7 @@
 // import { span } from '#o11y/trace';
 // import { ExecResult, ExecResults, execCmd, execCommand } from '#utils/exec';
 // import { cacheRetry } from '../cache/cacheRetry';
-// import { func, funcClass } from '../functionDefinition/functionDecorators';
+// import { func, funcClass } from '../functionSchema/functionDecorators';
 // import { CodeEditingAgent } from './codeEditingAgent';
 // import { ProjectInfo, detectProjectInfo } from './projectDetection';
 // import { basePrompt } from './prompt';

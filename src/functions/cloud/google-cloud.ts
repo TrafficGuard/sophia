@@ -1,6 +1,5 @@
-import { agentContext } from '#agent/agentContext';
-import { checkExecResult, execCommand } from '#utils/exec';
-import { func, funcClass } from '../functionDefinition/functionDecorators';
+import { func, funcClass } from '#functionSchema/functionDecorators';
+import { execCommand } from '#utils/exec';
 
 @funcClass(__filename)
 export class GoogleCloud {

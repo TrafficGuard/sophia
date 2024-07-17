@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { func, funcClass } from '../functionDefinition/functionDecorators';
+import { func, funcClass } from '#functionSchema/functionDecorators';
 
 /**
  * A class to store files on the local file system

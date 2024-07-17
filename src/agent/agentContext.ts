@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import { AsyncLocalStorage } from 'async_hooks';
 import { LlmFunctions } from '#agent/LlmFunctions';
 import { RunAgentConfig } from '#agent/agentRunner';
-import { FileSystem } from '#functions/filesystem';
+import { FileSystem } from '#functions/storage/filesystem';
 import { FunctionCall, FunctionCallResult, LLM } from '#llm/llm';
 import { deserializeLLMs } from '#llm/llmFactory';
 import { logger } from '#o11y/logger';

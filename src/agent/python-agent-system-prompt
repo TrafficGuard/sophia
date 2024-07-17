@@ -95,15 +95,15 @@ To complete the task, you will have access to the following functions:
 
 - Use the Agent_requestFeedback function when:
   - Clarification is necessary, or
-  - To verify assumptions when not highly confident
+  - To verify assumptions when confidence is low
 
 Example scenario:
 If a user requests an action involving a specific item (e.g., "read the file agentcontext.ts"):
 - Don't assume the exact naming or location.
 - Look for variations (e.g., "agentContext.ts", "AgentContext.ts") and extend the search to relevant areas (e.g., current directory and subdirectories).
 - If there is a single match, then assume its the one, and verify yourself if possible.
-- If there's zero matches then request feedback.
-- If there's multiple matches, then return the values to analyse yourself first. Select one if its clear from the overall context, otherwise request feedback.
+- If there is zero matches when one or more is definitely expected, then request feedback.
+- If there are multiple matches, then return the values to analyse yourself first. Select one if its clear from the overall context, otherwise request feedback.
 
 Remember: The goal is to transform ambiguous or contextual information into clear, specific, and actionable instructions or queries.
 

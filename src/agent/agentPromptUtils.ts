@@ -59,15 +59,15 @@ export function buildFunctionCallHistoryPrompt(): string {
 }
 
 /**
- * Update the system prompt to include all the function definitions available to the agent.
+ * Update the system prompt to include all the function schemas available to the agent.
  * Requires the system prompt to contain <functions></functions>
  * @param systemPrompt {string} the initial system prompt
- * @param functionDefinitions {string} the function definitions
+ * @param functionSchemas {string} the function schemas
  * @returns the updated system prompt
  */
-export function updateFunctionDefinitions(systemPrompt: string, functionDefinitions: string): string {
+export function updateFunctionSchemas(systemPrompt: string, functionSchemas: string): string {
 	const regex = /<functions>[\s\S]*?<\/functions>/g;
-	const updatedPrompt = systemPrompt.replace(regex, `<functions>${functionDefinitions}</functions>`);
-	if (!updatedPrompt.includes(functionDefinitions)) throw new Error('Unable to update function definitions. Regex replace failed');
+	const updatedPrompt = systemPrompt.replace(regex, `<functions>${functionSchemas}</functions>`);
+	if (!updatedPrompt.includes(functionSchemas)) throw new Error('Unable to update function schemas. Regex replace failed');
 	return updatedPrompt;
 }

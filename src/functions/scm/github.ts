@@ -2,12 +2,12 @@ import { existsSync } from 'fs';
 import path, { join } from 'path';
 import { request } from '@octokit/request';
 import { agentContext, getFileSystem } from '#agent/agentContext';
+import { func, funcClass } from '#functionSchema/functionDecorators';
 import { SourceControlManagement } from '#functions/scm/sourceControlManagement';
 import { logger } from '#o11y/logger';
 import { functionConfig } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
 import { checkExecResult, execCmd, execCommand, failOnError } from '#utils/exec';
-import { func, funcClass } from '../../functionDefinition/functionDecorators';
 import { GitProject } from './gitProject';
 
 type RequestType = typeof request;

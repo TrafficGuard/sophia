@@ -1,5 +1,5 @@
 import { FunctionDeclarationSchema, FunctionDeclarationSchemaType, Tool } from '@google-cloud/vertexai';
-import { FunctionDefinition, FunctionParameter } from '../../functionDefinition/functions';
+import { FunctionParameter, FunctionSchema } from '#functionSchema/functions';
 
 function convertFunctionParameterToFunctionDeclarationSchema(functionParameter: FunctionParameter): FunctionDeclarationSchema {
 	const properties: { [key: string]: any } = {};
@@ -29,8 +29,8 @@ function convertTypeToFunctionDeclarationSchemaType(type: string): FunctionDecla
 	}
 }
 
-export function convertFunctionDefinitionsToTool(functionDefinitions: FunctionDefinition[]): Tool {
-	const functionDeclarations = functionDefinitions.map((functionDefinition) => {
+export function convertFunctionDefinitionsToTool(functionSchemas: FunctionSchema[]): Tool {
+	const functionDeclarations = functionSchemas.map((functionDefinition) => {
 		const parameters: FunctionDeclarationSchema = {
 			type: FunctionDeclarationSchemaType.OBJECT,
 			properties: {},

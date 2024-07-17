@@ -1,8 +1,8 @@
 import axios, { AxiosResponse } from 'axios';
 import { logger } from '#o11y/logger';
 
+import { func, funcClass } from '#functionSchema/functionDecorators';
 import { currentUser, functionConfig } from '#user/userService/userContext';
-import { func, funcClass } from '../functionDefinition/functionDecorators';
 
 export interface SlackConfig {
 	token: string;

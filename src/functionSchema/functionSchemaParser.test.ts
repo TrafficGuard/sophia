@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { func, funcClass } from './functionDecorators';
-import { functionDefinitionParser } from './functionDefinitionParser';
-import { FunctionDefinition } from './functions';
+import { functionSchemaParser } from './functionSchemaParser';
+import { FunctionSchema } from './functions';
 
 @funcClass(__filename)
 export class TestClass {
@@ -38,15 +38,15 @@ export class TestClass {
 }
 
 describe('functionDefinitionParser', () => {
-	let functionDefinitions: Record<string, FunctionDefinition>;
+	let functionSchemas: Record<string, FunctionSchema>;
 
 	before(async () => {
-		functionDefinitions = functionDefinitionParser(__filename);
+		functionSchemas = functionSchemaParser(__filename);
 	});
 
 	describe('parseDefinitions', () => {
 		it('should parse simple method correctly', () => {
-			expect(functionDefinitions['TestClass.simpleMethod']).to.deep.equal({
+			expect(functionSchemas['TestClass.simpleMethod']).to.deep.equal({
 				class: 'TestClass',
 				name: 'TestClass.simpleMethod',
 				description: 'Simple method without parameters',
@@ -55,7 +55,7 @@ describe('functionDefinitionParser', () => {
 		});
 
 		it('should parse method with parameters correctly', () => {
-			expect(functionDefinitions['TestClass.methodWithParams']).to.deep.equal({
+			expect(functionSchemas['TestClass.methodWithParams']).to.deep.equal({
 				class: 'TestClass',
 				name: 'TestClass.methodWithParams',
 				description: 'Method with parameters',
@@ -67,7 +67,7 @@ describe('functionDefinitionParser', () => {
 		});
 
 		it('should parse method with optional parameter correctly', () => {
-			expect(functionDefinitions['TestClass.methodWithOptionalParam']).to.deep.equal({
+			expect(functionSchemas['TestClass.methodWithOptionalParam']).to.deep.equal({
 				class: 'TestClass',
 				name: 'TestClass.methodWithOptionalParam',
 				description: 'Method with optional parameter',
@@ -79,7 +79,7 @@ describe('functionDefinitionParser', () => {
 		});
 
 		it('should parse method with return type correctly', () => {
-			expect(functionDefinitions['TestClass.methodWithReturnType']).to.deep.equal({
+			expect(functionSchemas['TestClass.methodWithReturnType']).to.deep.equal({
 				class: 'TestClass',
 				name: 'TestClass.methodWithReturnType',
 				description: 'Method with return type',

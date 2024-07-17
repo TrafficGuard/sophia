@@ -1,9 +1,9 @@
 import { Agent } from '#agent/agentFunctions';
+import { FunctionSchema, getFunctionSchemas } from '#functionSchema/functions';
 import { FunctionCall } from '#llm/llm';
 import { logger } from '#o11y/logger';
-import { FunctionDefinition, getFunctionDefinitions } from '../functionDefinition/functions';
 
-import { functionFactory } from '../functionDefinition/functionDecorators';
+import { functionFactory } from '#functionSchema/functionDecorators';
 
 /**
  * Holds the instances of the classes with function callable methods.
@@ -79,15 +79,15 @@ export class LlmFunctions {
 		} else if (args.length === 1) {
 			result = await func.call(functionClassInstance, args[0]);
 		} else {
-			const functionDefinitions: Record<string, FunctionDefinition> = getFunctionDefinitions(functionClassInstance);
-			let functionDefinition = functionDefinitions[functionName];
+			const functionSchemas: Record<string, FunctionSchema> = getFunctionSchemas(functionClassInstance);
+			let functionDefinition = functionSchemas[functionName];
 			if (!functionDefinition) {
 				// Seems bit of a hack, why coming through in both formats? Also doing this in functionDecorators.ts
-				functionDefinition = functionDefinitions[`${functionClass}.${functionName}`];
+				functionDefinition = functionSchemas[`${functionClass}.${functionName}`];
 			}
-			if (!functionDefinition) throw new Error(`No function definition found for ${functionName}.  Valid functions are ${Object.keys(functionDefinitions)}`);
+			if (!functionDefinition) throw new Error(`No function schema found for ${functionName}.  Valid functions are ${Object.keys(functionSchemas)}`);
 			if (!functionDefinition.parameters) {
-				logger.error(`${functionClass}.${functionName} definition doesnt have any parameters`);
+				logger.error(`${functionClass}.${functionName} schema doesnt have any parameters`);
 				logger.info(functionDefinition);
 			}
 			const args: any[] = new Array(functionDefinition.parameters.length);

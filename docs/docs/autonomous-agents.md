@@ -25,7 +25,7 @@ The autonomous agent always has four function available:
 - `Agent.saveMemory`
 - `Agent.deleteMemory`
 
-The `requestFeedback` function definition in the system prompt lets the LLM know it can request a decision or additional details.
+The `requestFeedback` function in the system prompt lets the LLM know it can request a decision or additional details.
 
 If you would like to have input at a particular step, then in your prompt ask the model to request feedback at that point.
 

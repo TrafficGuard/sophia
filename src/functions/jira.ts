@@ -1,10 +1,9 @@
 import axios, { AxiosInstance } from 'axios';
 import { logger } from '#o11y/logger';
-import { envVar } from '#utils/env-var';
 import { cacheRetry } from '../cache/cacheRetry';
 
-import { currentUser, functionConfig } from '#user/userService/userContext';
-import { func, funcClass } from '../functionDefinition/functionDecorators';
+import { func, funcClass } from '#functionSchema/functionDecorators';
+import { functionConfig } from '#user/userService/userContext';
 
 export interface JiraConfig {
 	baseUrl: string;

@@ -1,6 +1,7 @@
 import path from 'path';
 import { agentContext, getFileSystem, llms } from '#agent/agentContext';
-import { FileSystem } from '#functions/filesystem';
+import { func, funcClass } from '#functionSchema/functionDecorators';
+import { FileSystem } from '#functions/storage/filesystem';
 import { Perplexity } from '#functions/web/perplexity';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
@@ -9,7 +10,6 @@ import { reviewChanges } from '#swe/reviewChanges';
 import { execCommand } from '#utils/exec';
 import { appContext } from '../app';
 import { cacheRetry } from '../cache/cacheRetry';
-import { func, funcClass } from '../functionDefinition/functionDecorators';
 import { CodeEditor } from './codeEditor';
 import { ProjectInfo, detectProjectInfo } from './projectDetection';
 import { basePrompt } from './prompt';

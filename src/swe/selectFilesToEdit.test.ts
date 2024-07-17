@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { FileSystem } from '#functions/filesystem';
+import { FileSystem } from '#functions/storage/filesystem';
 import { removeNonExistingFiles } from '#swe/selectFilesToEdit';
 
 describe('removeNonExistingFiles', () => {

@@ -7,8 +7,8 @@ import { logger } from '#o11y/logger';
 import { AppFastifyInstance } from '../../app';
 
 import { startAgent } from '#agent/agentRunner';
+import { functionFactory } from '#functionSchema/functionDecorators';
 import { currentUser } from '#user/userService/userContext';
-import { functionFactory } from '../../functionDefinition/functionDecorators';
 
 const v1BasePath = '/api/agent/v1';
 export async function agentStartRoute(fastify: AppFastifyInstance) {

@@ -19,6 +19,7 @@ export interface VersionControlSystem {
 
 	switchToBranch(branchName: string): Promise<void>;
 
+	/** Gets the current branch name */
 	getBranchName(): Promise<string>;
 
 	/** @return the SHA value for the HEAD commit */

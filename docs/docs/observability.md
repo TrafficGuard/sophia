@@ -44,7 +44,7 @@ The `TRACE_AUTO_INSTRUMENT` variable enables the trace instrumentation from the 
 
 ## Tracing code
 
-The `@func` annotation also creates a span for a function call, in addition to registering its function definition.
+The `@func` annotation also creates a span for a function call, in addition to registering its function schema.
 
 The `@span` annotation is available to create trace spans for any other class methods.
 

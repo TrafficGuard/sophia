@@ -1,15 +1,11 @@
-import { readFileSync } from 'fs';
-import readline from 'readline';
 import { LlmFunctions } from '#agent/LlmFunctions';
-import { AgentContext, AgentLLMs, agentContextStorage, createContext, llms } from '#agent/agentContext';
+import { AgentContext, AgentLLMs, createContext, llms } from '#agent/agentContext';
 import { AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
 import { runPythonAgent } from '#agent/pythonAgentRunner';
 import { runXmlAgent } from '#agent/xmlAgentRunner';
 import { FunctionCall, FunctionCallResult } from '#llm/llm';
 import { logger } from '#o11y/logger';
-import { startSpan } from '#o11y/trace';
 import { User } from '#user/user';
-import { sleep } from '#utils/async-utils';
 import { appContext } from '../app';
 
 export const SUPERVISOR_RESUMED_FUNCTION_NAME = 'Supervisor.Resumed';
@@ -188,35 +184,4 @@ export function notificationMessage(agent: AgentContext): string {
 function getLastFunctionCallArg(agent: AgentContext) {
 	const result: FunctionCallResult = agent.functionCallHistory.slice(-1)[0];
 	return Object.values(result.parameters)[0];
-}
-
-/**
- * Adding a human in the loop, so it doesn't consume all of your budget
- */
-
-export async function waitForInput() {
-	const span = startSpan('humanInLoop');
-
-	await appContext().agentStateService.updateState(agentContextStorage.getStore(), 'hil');
-
-	// Beep beep!
-	process.stdout.write('\u0007');
-	await sleep(100);
-	process.stdout.write('\u0007');
-
-	const rl = readline.createInterface({
-		input: process.stdin,
-		output: process.stdout,
-	});
-
-	const question = (prompt) =>
-		new Promise((resolve) => {
-			rl.question(prompt, resolve);
-		});
-
-	await (async () => {
-		await question('Press enter to continue...');
-		rl.close();
-	})();
-	span.end();
 }

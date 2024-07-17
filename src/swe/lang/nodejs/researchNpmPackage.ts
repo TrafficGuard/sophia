@@ -1,8 +1,8 @@
 import { agentContext, getFileSystem } from '#agent/agentContext';
+import { func, funcClass } from '#functionSchema/functionDecorators';
 import { PublicWeb } from '#functions/web/web';
 import { logger } from '#o11y/logger';
 import { cacheRetry } from '../../../cache/cacheRetry';
-import { func, funcClass } from '../../../functionDefinition/functionDecorators';
 
 export interface NpmPackageInfo {
 	docUrl: string;

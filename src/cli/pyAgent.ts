@@ -2,7 +2,7 @@ import '#fastify/trace-init/trace-init';
 
 import { readFileSync } from 'fs';
 import { startAgent } from '#agent/agentRunner';
-import { FileSystem } from '#functions/filesystem';
+import { FileSystem } from '#functions/storage/filesystem';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
 import { ClaudeLLMs } from '#llm/models/anthropic';
@@ -20,7 +20,7 @@ export async function main() {
 		llms = ClaudeVertexLLMs();
 	}
 
-	const functions = [FileSystem]; // , CodeEditingAgent, Perplexity, TypescriptTools
+	const functions = [FileSystem, CodeEditingAgent, Perplexity]; // , CodeEditingAgent, Perplexity, TypescriptTools
 
 	const args = process.argv.slice(2);
 	const initialPrompt = args.length > 0 ? args.join(' ') : readFileSync('src/cli/agent-in', 'utf-8');

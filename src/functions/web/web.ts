@@ -10,8 +10,8 @@ import { fileExistsAsync, fileExistsSync } from 'tsconfig-paths/lib/filesystem';
 import { sleep } from '#utils/async-utils';
 const puppeteer = require('puppeteer');
 import { Browser } from 'puppeteer';
+import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
-import { func, funcClass } from '../../functionDefinition/functionDecorators';
 
 // For Node.js
 const TurndownService = require('turndown');

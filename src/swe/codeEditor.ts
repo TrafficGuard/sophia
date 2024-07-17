@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import { promisify } from 'util';
 import { addCost, agentContext, getFileSystem } from '#agent/agentContext';
+import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 import { getActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { execCommand } from '#utils/exec';
-import { func, funcClass } from '../functionDefinition/functionDecorators';
 
 @funcClass(__filename)
 export class CodeEditor {

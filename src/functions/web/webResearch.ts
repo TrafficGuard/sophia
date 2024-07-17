@@ -1,7 +1,7 @@
 import { llms } from '#agent/agentContext';
+import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 import { cacheRetry } from '../../cache/cacheRetry';
-import { func, funcClass } from '../../functionDefinition/functionDecorators';
 import { OrganicSearchResult, PUBLIC_WEB } from './web';
 
 // https://github.com/searxng/searxng

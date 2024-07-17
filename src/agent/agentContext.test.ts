@@ -3,7 +3,7 @@ import sinon from 'sinon';
 import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext, createContext, deserializeAgentContext, serializeContext } from '#agent/agentContext';
 import { RunAgentConfig } from '#agent/agentRunner';
-import { FileSystem } from '#functions/filesystem';
+import { FileSystem } from '#functions/storage/filesystem';
 import { UtilFunctions } from '#functions/util';
 import { GPT4 } from '#llm/models/openai';
 import { appContext } from '../app';

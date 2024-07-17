@@ -2,10 +2,10 @@ import { logger } from '#o11y/logger';
 
 import OpenAI from 'openai';
 import { addCost, agentContext, llms } from '#agent/agentContext';
+import { func, funcClass } from '#functionSchema/functionDecorators';
 import { functionConfig } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
 import { cacheRetry } from '../../cache/cacheRetry';
-import { func, funcClass } from '../../functionDefinition/functionDecorators';
 
 const log = logger.child({ class: 'Perplexity' });
 

@@ -10,6 +10,7 @@ import {
 	ProjectSchema,
 } from '@gitbeaker/rest';
 import { agentContext, getFileSystem, llms } from '#agent/agentContext';
+import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
 import { ICodeReview, loadCodeReviews } from '#swe/codeReview/codeReviewParser';
@@ -18,7 +19,6 @@ import { allSettledAndFulFilled } from '#utils/async-utils';
 import { envVar } from '#utils/env-var';
 import { checkExecResult, execCmd, execCommand } from '#utils/exec';
 import { cacheRetry } from '../../cache/cacheRetry';
-import { func, funcClass } from '../../functionDefinition/functionDecorators';
 import { UtilFunctions } from '../util';
 import { GitProject } from './gitProject';
 import { SourceControlManagement } from './sourceControlManagement';

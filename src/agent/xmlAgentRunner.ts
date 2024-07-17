@@ -1,16 +1,16 @@
 import { readFileSync } from 'fs';
 import { Span, SpanStatusCode } from '@opentelemetry/api';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
-import { buildFileSystemPrompt, buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateFunctionDefinitions } from '#agent/agentPromptUtils';
-import { notificationMessage, summariseLongFunctionOutput, waitForInput } from '#agent/agentRunner';
+import { buildFileSystemPrompt, buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
+import { notificationMessage, summariseLongFunctionOutput } from '#agent/agentRunner';
+import { agentHumanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
 import { getServiceName } from '#fastify/trace-init/trace-init';
-import { Slack } from '#functions/slack';
+import { FunctionSchema, getAllFunctionSchemas } from '#functionSchema/functions';
 import { FunctionResponse } from '#llm/llm';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { envVar } from '#utils/env-var';
 import { appContext } from '../app';
-import { FunctionDefinition, getAllFunctionDefinitions } from '../functionDefinition/functions';
 import { AgentContext, agentContext, agentContextStorage, llms } from './agentContext';
 
 export const XML_AGENT_SPAN = 'XmlAgent';
@@ -32,8 +32,8 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 
 	const agentFunctions = agent.functions;
 
-	const functionsXml = convertJsonToXml(getAllFunctionDefinitions(agentFunctions.getFunctionInstances()));
-	const systemPromptWithFunctions = updateFunctionDefinitions(xmlSystemPrompt, functionsXml);
+	const functionsXml = convertJsonToXml(getAllFunctionSchemas(agentFunctions.getFunctionInstances()));
+	const systemPromptWithFunctions = updateFunctionSchemas(xmlSystemPrompt, functionsXml);
 
 	// Human in the loop settings
 	// How often do we require human input to avoid misguided actions and wasting money
@@ -75,7 +75,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 				let controlError = false;
 				try {
 					if (hilCount && countSinceHil === hilCount) {
-						await waitForInput();
+						await agentHumanInTheLoop(`Agent control loop has performed ${hilCount} iterations`);
 						countSinceHil = 0;
 					}
 					countSinceHil++;
@@ -86,8 +86,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 					costSinceHil += newCosts;
 					logger.debug(`Spent $${costSinceHil.toFixed(2)} since last input. Total cost $${agentContextStorage.getStore().cost.toFixed(2)}`);
 					if (hilBudget && costSinceHil > hilBudget) {
-						// format costSinceHil to 2 decimal places
-						await waitForInput();
+						await agentHumanInTheLoop(`Agent cost has increased by USD\$${costSinceHil.toFixed(2)}`);
 						costSinceHil = 0;
 					}
 
@@ -222,28 +221,21 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 		let message = notificationMessage(agent);
 		message += `\n${uiUrl}/agent/${agent.agentId}`;
 		logger.info(message);
-
-		const slackConfig = agent.user.functionConfig[Slack.name];
-		// TODO check for env vars
-		if (slackConfig?.webhookUrl || slackConfig?.token) {
-			try {
-				await new Slack().sendMessage(message);
-			} catch (e) {
-				logger.error(e, 'Failed to send supervisor notification message');
-			}
+		try {
+			await notifySupervisor(agent, message);
+		} catch (e) {
+			logger.warn(e`Failed to send supervisor notification message ${message}`);
 		}
 	});
 	return agent.agentId; //{ agentId: agent.agentId, execution };
 }
 
-class HumanInLoopReturn extends Error {}
-
 /**
- * Converts the JSON function definitions to the XML format described in the xml-agent-system-prompt
- * @param jsonDefinitions The JSON object containing function definitions
- * @returns A string containing the XML representation of the function definitions
+ * Converts the JSON function schemas to the XML format described in the xml-agent-system-prompt
+ * @param jsonDefinitions The JSON object containing function schemas
+ * @returns A string containing the XML representation of the function schemas
  */
-function convertJsonToXml(jsonDefinitions: FunctionDefinition[]): string {
+function convertJsonToXml(jsonDefinitions: FunctionSchema[]): string {
 	let xmlOutput = '<functions>\n';
 
 	for (const funcDef of jsonDefinitions) {

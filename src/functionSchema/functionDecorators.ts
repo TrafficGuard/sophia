@@ -2,8 +2,8 @@ import { Span } from '@opentelemetry/api';
 import { agentContext } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
 import { getTracer, setFunctionSpanAttributes, withActiveSpan } from '#o11y/trace';
-import { functionDefinitionParser } from './functionDefinitionParser';
-import { FunctionDefinition, getFunctionDefinitions, setFunctionDefinitions } from './functions';
+import { functionSchemaParser } from './functionSchemaParser';
+import { FunctionSchema, getFunctionSchemas, setFunctionSchemas } from './functions';
 
 export const FUNC_DECORATOR_NAME = 'func';
 
@@ -28,14 +28,14 @@ export function func() {
 			const className = Object.getPrototypeOf(this).constructor.name;
 			const functionName = `${className}.${methodName}`;
 			// NOTE - modification, build attributeExtractors from all the arguments
-			const funcDefinitions = getFunctionDefinitions(this);
-			let funcDef: FunctionDefinition = funcDefinitions[functionName];
+			const funcDefinitions = getFunctionSchemas(this);
+			let funcDef: FunctionSchema = funcDefinitions[functionName];
 			if (!funcDef) {
 				// Same hack in LlmFunction.ts
 				funcDef = funcDefinitions[methodName];
 			}
 			if (!funcDef)
-				throw new Error(`No function definition found for ${functionName}. Does the method have JSDoc?. Valid functions are ${Object.keys(funcDefinitions)}`);
+				throw new Error(`No function schema found for ${functionName}. Does the method have JSDoc?. Valid functions are ${Object.keys(funcDefinitions)}`);
 			const attributeExtractors = {};
 			if (funcDef.parameters === undefined) throw new Error(`No parameters defined for ${functionName}`);
 			for (const param of funcDef.parameters) {
@@ -63,13 +63,13 @@ export const functionFactory = {};
 
 /**
  * Decorator for classes which contain functions to make available to the LLMs.
- * This is required so ts-morph can read the source code to dynamically generate the definitions.
+ * This is required so ts-morph can read the source code to dynamically generate the schemas.
  * @param filename Must be __filename
  */
 export function funcClass(filename: string) {
 	return function ClassDecorator<C extends new (...args: any[]) => any>(target: C, _ctx: ClassDecoratorContext) {
 		functionFactory[target.name] = target;
-		setFunctionDefinitions(target, functionDefinitionParser(filename));
+		setFunctionSchemas(target, functionSchemaParser(filename));
 		return target;
 	};
 }

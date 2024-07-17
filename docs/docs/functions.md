@@ -1,15 +1,15 @@
 # LLM Function calling
 
-Nous provides an automated way to create LLM functions definitions, avoiding the duplicate work of creating a function definition separate from the code implementation. 
+Nous provides an automated way to create LLM functions schemas, avoiding the duplicate work of creating a function schema separate from the code implementation. 
 
-The *ts-morph* package is used to parse the source code at build-time/runtime to generate the definitions.
+The *ts-morph* package is used to parse the source code at build-time/runtime to generate the schemas.
 
 ## Defining functions
 
 The following is an example of a class which exposes class methods as callable functions by the LLM agents.
 
 ```typescript
-import { func, funcClass } from '#functionDefinition/functions';
+import { func, funcClass } from '#functionSchema/functions';
 
 @funcClass(__filename)
 export class Jira {
@@ -32,15 +32,15 @@ export class Jira {
 }
 ```
 
-The `@funcClass(__filename)` annotation must be on the class so ts-morph can find the source file, and to register the functions.
+The `@funcClass(__filename)` annotation must be on the class so ts-morph can find the source file, generate the function schema and register it.
 
 The `@func()` annotation must be on each class method to be exposed as a LLM callable function.
 
-If the definition files don't exist at runtime then they will automatically be generated. To improve startup time
-the definition files are cached under the folder `.nous/functions` and only re-built if the source file modified date is newer. 
-Also, the definition files can be generated at build time with the `npm run functions` script.
+If the schema files don't exist at runtime then they will automatically be generated. To improve startup time
+the schema files are cached under the folder `.nous/functions` and only re-built if the source file modified date is newer. 
+Also, the schema files can be generated at build time with the `npm run functionSchemas` script.
 
-Function calling agents can transform the object implementing the [FunctionDefinition](https://github.com/TrafficGuard/nous/blob/main/src/functionDefinition/functions.ts#L13)
+Function calling agents can transform the object implementing the [FunctionSchema](https://github.com/TrafficGuard/nous/blob/main/src/functionSchema/functions.ts#L13)
 interface into the format required, e.g. the custom XML format, or native function calling types for OpenAI, Anthropic, Gemini etc.
 
 The `@func` annotation also adds OpenTelemetry tracing to the function call.
@@ -73,6 +73,6 @@ so its possibly to dynamically change which functions are available in a long-ru
 ## Application registration
 
 To ensure the all functions have been registered when the application is running, add the function class to the array in `functionRegistry.ts`.
-This is required by the web interface for the function selection list to be complete and for the `npm run functions` command to pre-build all the definitions.
+This is required by the web interface for the function selection list to be complete and for the `npm run functionsSchemas` command to pre-build all the schema.
 
 See the [Tools/Integrations](integrations.md) page for information on the provided function callable integrations.

@@ -5,6 +5,8 @@ import { promisify } from 'util';
 import ignore from 'ignore';
 import Pino from 'pino';
 import { agentContext } from '#agent/agentContext';
+import { func, funcClass } from '#functionSchema/functionDecorators';
+import { parseArrayParameterValue } from '#functionSchema/functionUtils';
 import { Git } from '#functions/scm/git';
 import { VersionControlSystem } from '#functions/scm/versionControlSystem';
 import { UtilFunctions } from '#functions/util';
@@ -12,8 +14,6 @@ import { logger } from '#o11y/logger';
 import { spawnCommand } from '#utils/exec';
 import { CDATA_END, CDATA_START } from '#utils/xml-utils';
 import { needsCDATA } from '#utils/xml-utils';
-import { func, funcClass } from '../functionDefinition/functionDecorators';
-import { parseArrayParameterValue } from '../functionDefinition/functionUtils';
 const fs = {
 	readFile: promisify(readFile),
 	stat: promisify(stat),
@@ -38,10 +38,17 @@ type FileFilter = (filename: string) => boolean;
 @funcClass(__filename)
 export class FileSystem {
 	/** The path relative to the basePath */
-	private workingDirectory = './';
+	private _workingDirectory = './';
 	vcs: VersionControlSystem | null = null;
 	log: Pino.Logger;
 
+	get workingDirectory(): string {
+		return this._workingDirectory;
+	}
+
+	set workingDirectory(newName: string) {
+		this._workingDirectory = newName;
+	}
 	/**
 	 * @param basePath The root folder allowed to be accessed by this file system instance. This should only be accessed by system level
 	 * functions. Generally getWorkingDirectory() should be used
@@ -170,8 +177,8 @@ export class FileSystem {
 	async searchFilesMatchingName(fileNameRegex: string): Promise<string> {
 		// --count Only show count of line matches for each file
 		// const { stdout, stderr, exitCode } = await execCommand(`rg --count ${regex}`);
-		const results = await spawnCommand(`find . -print | grep -i '${fileNameRegex}'`);
-		if (results.exitCode > 0) throw new Error(results.stderr);
+		const results = await spawnCommand(`find . -print | grep -i ${arg(fileNameRegex)}`);
+		if (results.exitCode > 1) throw new Error(results.stderr);
 		return results.stdout;
 	}
 
@@ -207,10 +214,10 @@ export class FileSystem {
 			const relativePath = path.relative(this.getWorkingDirectory(), path.join(this.getWorkingDirectory(), dirPath, direntName));
 
 			if (!ig.ignores(relativePath)) {
-				files.push(path.join(dirPath, dirent.name));
+				files.push(dirent.name);
 			}
 		}
-		return files.map((file) => file.replace(`${this.getWorkingDirectory()}/`, ''));
+		return files; //files.map((file) => file.substring(file.lastIndexOf(path.sep, file.length - 1)));
 	}
 
 	/**
@@ -269,18 +276,31 @@ export class FileSystem {
 	}
 
 	/**
-	 * Gets the contents of a local file on the file system.
+	 * Gets the contents of a local file on the file system. If the user has only provided a filename you may need to find the full path using the searchFilesMatchingName function.
 	 * @param filePath The file path to read the contents of (e.g. src/index.ts)
 	 * @returns the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
 	 */
 	@func()
 	async getFileContents(filePath: string): Promise<string> {
+		// TODO if the file doesn't exist search recursively for the filename, and if there is one result then return that
 		logger.info(`getFileContents: ${filePath}`);
 		// A filePath starts with / is it relative to FileSystem.basePath, otherwise its relative to FileSystem.workingDirectory
 		const fullPath = filePath.startsWith('/') ? resolve(this.getWorkingDirectory(), filePath.slice(1)) : resolve(this.getWorkingDirectory(), filePath);
+
+		// if (!existsSync(fullPath)) {
+		// 	try {
+		// 		const matches = await this.searchFilesMatchingName(filePath);
+		// 		if (existsSync(matches)) {
+		// 			fullPath = matches;
+		// 		}
+		// 	} catch (e) {
+		// 		console.log(e);
+		// 	}
+		// }
+
 		// const fullPath = path.join(this.basePath, filePath);
 		logger.info(`Reading file ${fullPath}`);
-		return fs.readFile(fullPath, 'utf8');
+		return await fs.readFile(fullPath, 'utf8');
 	}
 
 	/**
@@ -345,13 +365,18 @@ export class FileSystem {
 	 */
 	@func()
 	async fileExists(filePath: string): Promise<boolean> {
+		logger.info(`fileExists: ${filePath}`);
 		// Check if we've been given an absolute path
 		if (filePath.startsWith('/')) {
 			try {
+				logger.info(`fileExists: ${filePath}`);
 				await fs.access(filePath);
 				return true;
 			} catch {}
 		}
+		logger.info(`basePath ${this.basePath}`);
+		logger.info(`this.workingDirectory ${this.workingDirectory}`);
+		logger.info(`getWorkingDirectory() ${this.getWorkingDirectory()}`);
 		const path = filePath.startsWith('/') ? resolve(this.basePath, filePath.slice(1)) : resolve(this.basePath, this.workingDirectory, filePath);
 		try {
 			logger.info(`fileExists: ${path}`);
@@ -367,7 +392,7 @@ export class FileSystem {
 	 * @param filePath The file path (either full filesystem path or relative to current working directory)
 	 * @param contents The contents to write to the file
 	 */
-	@func()
+	// @func()
 	async writeFile(filePath: string, contents: string): Promise<void> {
 		const fileSystemPath = filePath.startsWith(this.basePath) ? filePath : join(this.getWorkingDirectory(), filePath);
 		logger.info(`Writing file "${filePath}" to ${fileSystemPath}`);
@@ -379,7 +404,7 @@ export class FileSystem {
 	 * @param filePath the file to edit
 	 * @param descriptionOfChanges a natual language description of the changes to make to the file contents
 	 */
-	@func()
+	// @func()
 	async updateFileContentsAsRequired(filePath: string, descriptionOfChanges: string): Promise<void> {
 		const contents = await this.getFileContents(filePath);
 		const updatedContent = await new UtilFunctions().processText(contents, descriptionOfChanges);

@@ -2,7 +2,7 @@ import '#fastify/trace-init/trace-init';
 
 import { readFileSync } from 'fs';
 import { startAgent } from '#agent/agentRunner';
-import { FileSystem } from '#functions/filesystem';
+import { FileSystem } from '#functions/storage/filesystem';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
 import { ClaudeLLMs } from '#llm/models/anthropic';

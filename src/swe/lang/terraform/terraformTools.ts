@@ -1,5 +1,5 @@
 import { getFileSystem } from '#agent/agentContext';
-import { funcClass } from '../../../functionDefinition/functionDecorators';
+import { funcClass } from '#functionSchema/functionDecorators';
 import { LanguageTools } from '../languageTools';
 
 @funcClass(__filename)
