@@ -65,7 +65,7 @@ describe('LocalFileStore', () => {
     const localFileStore = new LocalFileStore();
     const nonExistentFile = 'non-existent-file.txt';
 
-    return expect(localFileStore.getFile(nonExistentFile)).to.be.rejected;
+    return expect(localFileStore.getFile(nonExistentFile)).to.be.rejectedWith(Error);
   });
 
   afterEach(async () => {
