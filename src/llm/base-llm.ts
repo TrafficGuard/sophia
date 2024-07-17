@@ -60,25 +60,4 @@ export abstract class BaseLLM implements LLM {
 	getDisplayName(): string {
 		return this.displayName;
 	}
-
-	formatFunctionResult(functionName: string, result: any): string {
-		return `<function_results>
-        <result>
-        <function_name>${functionName}</function_name>
-        <stdout>${CDATA_START}
-        ${JSON.stringify(result)}
-        ${CDATA_END}</stdout>
-        </result>
-        </function_results>
-        `;
-	}
-
-	formatFunctionError(functionName: string, error: any): string {
-		return `<function_results>
-		<function_name>${functionName}</function_name>
-        <error>${CDATA_START}
-        ${JSON.stringify(error)}
-        ${CDATA_END}</error>
-        </function_results>`;
-	}
 }

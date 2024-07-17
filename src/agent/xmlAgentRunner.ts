@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { Span, SpanStatusCode } from '@opentelemetry/api';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
 import { buildFileSystemPrompt, buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
-import { notificationMessage, summariseLongFunctionOutput } from '#agent/agentRunner';
+import { formatFunctionError, formatFunctionResult, notificationMessage, summariseLongFunctionOutput } from '#agent/agentRunner';
 import { agentHumanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
 import { getServiceName } from '#fastify/trace-init/trace-init';
 import { FunctionSchema, getAllFunctionSchemas } from '#functionSchema/functions';
@@ -145,10 +145,10 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 					for (const functionCall of functionCalls) {
 						try {
 							const functionResponse: any = await agentFunctions.callFunction(functionCall);
-							const functionResult = agentLLM.formatFunctionResult(functionCall.function_name, functionResponse);
+							const functionResult = formatFunctionResult(functionCall.function_name, functionResponse);
 							// if (functionResult.startsWith('<response>')) functionResult = functionResult.slice(10); // do we need this here? seem more for the agent control loop response
 							// The trailing </response> will be removed as it's a stop word for the LLMs
-							functionResults.push(agentLLM.formatFunctionResult(functionCall.function_name, functionResponse));
+							functionResults.push(formatFunctionResult(functionCall.function_name, functionResponse));
 							const functionResponseString = JSON.stringify(functionResponse ?? '');
 
 							// To minimise the function call history size becoming too large (i.e. expensive & slow) we'll create a summary for responses which are quite long
@@ -181,7 +181,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 							logger.error(e, 'Function error');
 							agent.error = e.toString();
 							await agentStateService.save(agent);
-							functionResults.push(agentLLM.formatFunctionError(functionCall.function_name, e));
+							functionResults.push(formatFunctionError(functionCall.function_name, e));
 							// currentPrompt += `\n${llm.formatFunctionError(functionCalls.function_name, e)}`;
 
 							agent.functionCallHistory.push({

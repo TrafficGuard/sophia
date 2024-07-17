@@ -71,20 +71,6 @@ export interface LLM {
 	 */
 	getId(): string;
 
-	/**
-	 * Formats the output of a successful function call
-	 * @param functionName
-	 * @param result
-	 */
-	formatFunctionResult(functionName: string, result: any): string;
-
-	/**
-	 * Formats the output of a failed function call
-	 * @param functionName
-	 * @param error
-	 */
-	formatFunctionError(functionName: string, error: any): string;
-
 	/** The maximum number of input tokens */
 	getMaxInputTokens(): number;
 }
@@ -104,7 +90,7 @@ export interface FunctionCalls {
 }
 
 export interface FunctionCall {
-	function_name: string;
+	function_name: string; // underscore to match xml element name
 	parameters: { [key: string]: any };
 }
 

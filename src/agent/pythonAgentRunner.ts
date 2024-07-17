@@ -1,9 +1,9 @@
 import { readFileSync } from 'fs';
 import { Span, SpanStatusCode } from '@opentelemetry/api';
-import { loadPyodide } from 'pyodide';
+import { PyodideInterface, loadPyodide } from 'pyodide';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
 import { buildFileSystemPrompt, buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
-import { notificationMessage } from '#agent/agentRunner';
+import { formatFunctionError, formatFunctionResult, notificationMessage } from '#agent/agentRunner';
 import { agentHumanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
 import { getServiceName } from '#fastify/trace-init/trace-init';
 import { FunctionParameter, FunctionSchema, getAllFunctionSchemas } from '#functionSchema/functions';
@@ -17,7 +17,11 @@ const stopSequences = ['</response>'];
 
 const pythonSystemPrompt = readFileSync('src/agent/python-agent-system-prompt').toString();
 
+let pyodide: PyodideInterface;
+
 export async function runPythonAgent(agent: AgentContext): Promise<string> {
+	if (!pyodide) pyodide = await loadPyodide();
+
 	const agentStateService = appContext().agentStateService;
 	agent.state = 'agent';
 
@@ -108,7 +112,6 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 					let pythonScriptResult: any;
 					let pyodideError: Error | undefined;
 					let pythonScript: string | undefined;
-					const pyodide = await loadPyodide();
 
 					const functionInstances = agent.functions.getFunctionInstanceMap();
 					const defs = getAllFunctionSchemas(Object.values(functionInstances));
@@ -129,7 +132,7 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 									stdout: JSON.stringify(functionResponse),
 									// stdoutSummary: outputSummary,
 								});
-								functionResults.push(agentLLM.formatFunctionResult(def.name, functionResponse));
+								functionResults.push(formatFunctionResult(def.name, functionResponse));
 								return functionResponse;
 							} catch (e) {
 								anyFunctionCallErrors = true;
@@ -137,7 +140,7 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 								logger.error(e, 'Function error');
 								agent.error = e.toString();
 								await agentStateService.save(agent);
-								functionResults.push(agentLLM.formatFunctionError(def.name, e));
+								functionResults.push(formatFunctionError(def.name, e));
 								// currentPrompt += `\n${llm.formatFunctionError(functionCalls.function_name, e)}`;
 
 								agent.functionCallHistory.push({

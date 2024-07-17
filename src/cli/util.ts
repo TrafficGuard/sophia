@@ -13,7 +13,9 @@ import { MultiLLM } from '#llm/multi-llm';
 import { ICodeReview, loadCodeReviews } from '#swe/codeReview/codeReviewParser';
 import { appContext } from '../app';
 
+import { writeFileSync } from 'fs';
 import { RunAgentConfig } from '#agent/agentRunner';
+import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
 import { envVarHumanInLoopSettings } from './cliHumanInLoop';
 
 // For running random bits of code
@@ -47,6 +49,9 @@ async function main() {
 	const context: AgentContext = createContext(config);
 
 	agentContextStorage.enterWith(context);
+
+	const map = await new TypescriptTools().generateProjectMap();
+	writeFileSync('tg/ts-map.xml', map);
 }
 
 main()

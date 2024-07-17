@@ -6,6 +6,7 @@ import { runXmlAgent } from '#agent/xmlAgentRunner';
 import { FunctionCall, FunctionCallResult } from '#llm/llm';
 import { logger } from '#o11y/logger';
 import { User } from '#user/user';
+import { CDATA_END, CDATA_START } from '#utils/xml-utils';
 import { appContext } from '../app';
 
 export const SUPERVISOR_RESUMED_FUNCTION_NAME = 'Supervisor.Resumed';
@@ -184,4 +185,35 @@ export function notificationMessage(agent: AgentContext): string {
 function getLastFunctionCallArg(agent: AgentContext) {
 	const result: FunctionCallResult = agent.functionCallHistory.slice(-1)[0];
 	return Object.values(result.parameters)[0];
+}
+
+/**
+ * Formats the output of a successful function call
+ * @param functionName
+ * @param result
+ */
+export function formatFunctionResult(functionName: string, result: any): string {
+	return `<function_results>
+        <result>
+        <function_name>${functionName}</function_name>
+        <stdout>${CDATA_START}
+        ${JSON.stringify(result)}
+        ${CDATA_END}</stdout>
+        </result>
+        </function_results>
+        `;
+}
+
+/**
+ * Formats the output of a failed function call
+ * @param functionName
+ * @param error
+ */
+export function formatFunctionError(functionName: string, error: any): string {
+	return `<function_results>
+		<function_name>${functionName}</function_name>
+        <error>${CDATA_START}
+        ${JSON.stringify(error)}
+        ${CDATA_END}</error>
+        </function_results>`;
 }
