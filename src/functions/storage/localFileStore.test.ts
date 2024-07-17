@@ -1,12 +1,25 @@
-import {expect} from 'chai';
-import chaiAsPromised from 'chai-as-promised';
+import { expect } from 'chai';
+import fs from 'fs';
+import path from 'path';
+import { agentContextStorage } from '#agent/agentContext';
 import { LocalFileStore } from './localFileStore';
-import * as fs from 'fs';
-import * as path from 'path';
 
-// chai.use(chaiAsPromised);
+function setupMockAgentContext(agentId: string) {
+  return agentContextStorage.run({ agentId } as any, () => {});
+}
 
-describe.only('LocalFileStore', () => {
+describe('LocalFileStore', () => {
+  const testAgentId = 'test-agent-id';
+  const basePath = path.join(process.cwd(), '.nous', 'filestore', testAgentId);
+
+  beforeEach(() => {
+    setupMockAgentContext(testAgentId);
+  });
+
+  afterEach(async () => {
+    await fs.promises.rm(basePath, { recursive: true, force: true });
+  });
+
   it('should save a file successfully', async () => {
     const localFileStore = new LocalFileStore();
     const filename = 'test-file.txt';
@@ -14,12 +27,9 @@ describe.only('LocalFileStore', () => {
 
     await localFileStore.saveFile(filename, contents);
 
-    const fullPath = path.resolve(__dirname, filename);
+    const fullPath = path.join(basePath, filename);
     const savedContents = await fs.promises.readFile(fullPath, 'utf8');
     expect(savedContents).to.equal(contents);
-
-    // Clean up
-    await fs.promises.unlink(fullPath);
   });
 
   it('should retrieve file contents successfully', async () => {
@@ -27,14 +37,12 @@ describe.only('LocalFileStore', () => {
     const filename = 'test-file.txt';
     const contents = 'Test content';
 
-    const fullPath = path.resolve(__dirname, filename);
+    const fullPath = path.join(basePath, filename);
+    await fs.promises.mkdir(path.dirname(fullPath), { recursive: true });
     await fs.promises.writeFile(fullPath, contents, 'utf8');
 
     const retrievedContents = await localFileStore.getFile(filename);
     expect(retrievedContents).to.equal(contents);
-
-    // Clean up
-    await fs.promises.unlink(fullPath);
   });
 
   it('should list files in the current directory', async () => {
@@ -43,7 +51,8 @@ describe.only('LocalFileStore', () => {
 
     // Create test files
     for (const file of testFiles) {
-      const fullPath = path.resolve(__dirname, file);
+      const fullPath = path.join(basePath, file);
+      await fs.promises.mkdir(path.dirname(fullPath), { recursive: true });
       await fs.promises.writeFile(fullPath, 'Test content', 'utf8');
     }
 
@@ -52,29 +61,12 @@ describe.only('LocalFileStore', () => {
     for (const file of testFiles) {
       expect(listedFiles).to.include(file);
     }
-
-    // Clean up
-    for (const file of testFiles) {
-      const fullPath = path.resolve(__dirname, file);
-      await fs.promises.unlink(fullPath);
-    }
   });
 
-  it('should throw an error when trying to get a non-existent file', () => {
+  it('should throw an error when trying to get a non-existent file', async () => {
     const localFileStore = new LocalFileStore();
     const nonExistentFile = 'non-existent-file.txt';
 
-    // return expect(localFileStore.getFile(nonExistentFile)).to.be.rejectedWith(Error);
-  });
-
-  afterEach(async () => {
-    const localFileStore = new LocalFileStore();
-    const files = await localFileStore.listFiles();
-    for (const file of files) {
-      if (file.startsWith('test-')) {
-        const fullPath = path.resolve(__dirname, file);
-        await fs.promises.unlink(fullPath);
-      }
-    }
+    await expect(localFileStore.getFile(nonExistentFile)).to.be.rejectedWith(Error);
   });
 });
