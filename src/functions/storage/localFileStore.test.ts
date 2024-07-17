@@ -3,7 +3,6 @@ import chaiAsPromised from 'chai-as-promised';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
-const should = chai.should();
 import fs from 'fs';
 import path from 'path';
 import { agentContextStorage } from '#agent/agentContext';
@@ -72,6 +71,6 @@ describe('LocalFileStore', () => {
     const localFileStore = new LocalFileStore();
     const nonExistentFile = 'non-existent-file.txt';
 
-    await expect(localFileStore.getFile(nonExistentFile)).to.eventually.be.rejectedWith(Error);
+    return expect(localFileStore.getFile(nonExistentFile)).to.be.rejectedWith(Error);
   });
 });
