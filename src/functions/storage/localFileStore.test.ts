@@ -1,7 +1,8 @@
-import chai, { expect } from 'chai';
+import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 
 chai.use(chaiAsPromised);
+const expect = chai.expect;
 import fs from 'fs';
 import path from 'path';
 import { agentContextStorage } from '#agent/agentContext';
@@ -66,10 +67,10 @@ describe('LocalFileStore', () => {
     }
   });
 
-  it('should throw an error when trying to get a non-existent file', () => {
+  it('should throw an error when trying to get a non-existent file', async () => {
     const localFileStore = new LocalFileStore();
     const nonExistentFile = 'non-existent-file.txt';
 
-    return expect(localFileStore.getFile(nonExistentFile)).to.eventually.be.rejectedWith(Error);
+    await expect(localFileStore.getFile(nonExistentFile)).to.be.rejectedWith(Error);
   });
 });
