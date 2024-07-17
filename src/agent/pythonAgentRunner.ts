@@ -29,7 +29,7 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 
 	const agentLLM = llms().hard;
 
-	const userRequestXml = `<user_request>${agent.userPrompt}</user_request>\n`;
+	const userRequestXml = `<user_request>\n${agent.userPrompt}\n</user_request>\n`;
 	let currentPrompt = agent.inputPrompt;
 
 	const functions = agent.functions;
