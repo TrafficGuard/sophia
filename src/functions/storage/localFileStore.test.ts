@@ -1,7 +1,10 @@
-import { expect } from 'chai';
+import chai, { expect } from 'chai';
+import chaiAsPromised from 'chai-as-promised';
 import { LocalFileStore } from './localFileStore';
 import * as fs from 'fs';
 import * as path from 'path';
+
+chai.use(chaiAsPromised);
 
 describe('LocalFileStore', () => {
   it('should save a file successfully', async () => {
@@ -61,7 +64,7 @@ describe('LocalFileStore', () => {
     const localFileStore = new LocalFileStore();
     const nonExistentFile = 'non-existent-file.txt';
 
-    await expect(localFileStore.getFile(nonExistentFile)).to.be.rejectedWith(Error);
+    await expect(localFileStore.getFile(nonExistentFile)).to.be.rejected;
   });
 
   afterEach(async () => {
