@@ -1,8 +1,11 @@
-import {expect} from 'chai';
+import chai, { expect } from 'chai';
+import chaiAsPromised from 'chai-as-promised';
 import fs from 'fs';
 import path from 'path';
 import { agentContextStorage } from '#agent/agentContext';
 import { LocalFileStore } from './localFileStore';
+
+chai.use(chaiAsPromised);
 
 function setupMockAgentContext(agentId: string) {
   return agentContextStorage.run({ agentId } as any, () => {});
