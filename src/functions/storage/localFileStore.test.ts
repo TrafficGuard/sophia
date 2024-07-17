@@ -1,6 +1,4 @@
 import {expect} from 'chai';
-// import chaiAsPromised from 'chai-as-promised';
-// chai.use(chaiAsPromised);
 import fs from 'fs';
 import path from 'path';
 import { agentContextStorage } from '#agent/agentContext';
@@ -22,46 +20,58 @@ describe('LocalFileStore', () => {
     await fs.promises.rm(basePath, { recursive: true, force: true });
   });
 
-  it('should save a file successfully', async () => {
+  it('should save a file successfully with metadata', async () => {
     const localFileStore = new LocalFileStore();
     const filename = 'test-file.txt';
     const contents = 'Test content';
+    const description = 'Test file description';
 
-    await localFileStore.saveFile(filename, contents);
+    await localFileStore.saveFile(filename, contents, description);
 
     const fullPath = path.join(basePath, filename);
     const savedContents = await fs.promises.readFile(fullPath, 'utf8');
     expect(savedContents).to.equal(contents);
+
+    const metadataPath = path.join(basePath, '.metadata.json');
+    const metadataContents = await fs.promises.readFile(metadataPath, 'utf8');
+    const metadata = JSON.parse(metadataContents);
+    expect(metadata[filename]).to.exist;
+    expect(metadata[filename].description).to.equal(description);
   });
 
   it('should retrieve file contents successfully', async () => {
     const localFileStore = new LocalFileStore();
     const filename = 'test-file.txt';
     const contents = 'Test content';
+    const description = 'Test file description';
 
-    const fullPath = path.join(basePath, filename);
-    await fs.promises.mkdir(path.dirname(fullPath), { recursive: true });
-    await fs.promises.writeFile(fullPath, contents, 'utf8');
+    await localFileStore.saveFile(filename, contents, description);
 
     const retrievedContents = await localFileStore.getFile(filename);
     expect(retrievedContents).to.equal(contents);
   });
 
-  it('should list files in the current directory', async () => {
+  it('should list files with metadata', async () => {
     const localFileStore = new LocalFileStore();
-    const testFiles = ['test-file1.txt', 'test-file2.txt'];
+    const testFiles = [
+      { name: 'test-file1.txt', content: 'Test content 1', description: 'Description 1' },
+      { name: 'test-file2.txt', content: 'Test content 2', description: 'Description 2' },
+    ];
 
     // Create test files
     for (const file of testFiles) {
-      const fullPath = path.join(basePath, file);
-      await fs.promises.mkdir(path.dirname(fullPath), { recursive: true });
-      await fs.promises.writeFile(fullPath, 'Test content', 'utf8');
+      await localFileStore.saveFile(file.name, file.content, file.description);
     }
 
     const listedFiles = await localFileStore.listFiles();
 
+    expect(listedFiles).to.have.lengthOf(testFiles.length);
     for (const file of testFiles) {
-      expect(listedFiles).to.include(file);
+      const listedFile = listedFiles.find(f => f.filename === file.name);
+      expect(listedFile).to.exist;
+      expect(listedFile.description).to.equal(file.description);
+      expect(listedFile.sizeKb).to.match(/^\d+\.\d{2}$/);
+      expect(listedFile.lastUpdated).to.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
     }
   });
 
@@ -69,6 +79,6 @@ describe('LocalFileStore', () => {
     const localFileStore = new LocalFileStore();
     const nonExistentFile = 'non-existent-file.txt';
 
-    // return expect(localFileStore.getFile(nonExistentFile)).to.be.rejectedWith(Error);
+    await expect(localFileStore.getFile(nonExistentFile)).to.be.rejectedWith(Error);
   });
 });
