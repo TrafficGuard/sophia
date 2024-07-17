@@ -6,7 +6,6 @@ import { agentContextStorage } from '#agent/agentContext';
 import { LocalFileStore } from './localFileStore';
 
 chai.use(chaiAsPromised);
-const { assert } = chai;
 
 function setupMockAgentContext(agentId: string) {
   return agentContextStorage.run({ agentId } as any, () => {});
@@ -83,6 +82,6 @@ describe('LocalFileStore', () => {
     const localFileStore = new LocalFileStore();
     const nonExistentFile = 'non-existent-file.txt';
 
-    await assert.isRejected(localFileStore.getFile(nonExistentFile), Error);
+    await expect(localFileStore.getFile(nonExistentFile)).to.be.rejectedWith(Error);
   });
 });
