@@ -1,6 +1,11 @@
 export interface LanguageTools {
 	/**
-	 * Creates an outline of the project that is suitable for RAG
+	 * Gets formatted string of the installed packages
+	 */
+	getInstalledPackages(): Promise<string>;
+
+	/**
+	 * Creates an outline of the project that is suitable for retrieval augmented generation
 	 */
 	generateProjectMap(): Promise<string>;
 

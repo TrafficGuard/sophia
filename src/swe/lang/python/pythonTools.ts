@@ -11,4 +11,8 @@ export class PythonTools implements LanguageTools {
 	}
 
 	async installPackage(packageName: string): Promise<void> {}
+
+	getInstalledPackages(): Promise<string> {
+		return Promise.resolve('');
+	}
 }

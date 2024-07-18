@@ -1,4 +1,6 @@
 import { agentContext, getFileSystem } from '#agent/agentContext';
+import { FileMetadata, FileStore } from '#functions/storage/filestore';
+import { FileSystem } from '#functions/storage/filesystem';
 
 /**
  * @return An XML representation of the agent's memory
@@ -14,16 +16,36 @@ export function buildMemoryPrompt(): string {
 }
 
 /**
- * @return An XML representation of the agent's memory
+ * Build the information for the FileSystem and FileStore tools, if they have been selected for the agent
  */
-export function buildFileSystemPrompt(): string {
+export async function buildFilePrompt(): Promise<string> {
+	return (await buildFileStorePrompt()) + buildFileSystemPrompt();
+}
+/**
+ * @return An XML representation of the FileSystem tool state
+ */
+function buildFileSystemPrompt(): string {
 	const functions = agentContext().functions;
-	if (!functions.getFunctionClassNames().includes('FileSystem')) return '';
+	if (!functions.getFunctionClassNames().includes(FileSystem.name)) return '';
 	const fileSystem = getFileSystem();
 	return `\n<file_system>
-			<base_path>${fileSystem.basePath}</base_path>
-			<current_working_directory>${fileSystem.getWorkingDirectory()}</current_working_directory>
-			</file_system>
+	<base_path>${fileSystem.basePath}</base_path>
+	<current_working_directory>${fileSystem.getWorkingDirectory()}</current_working_directory>
+</file_system>
+`;
+}
+
+/**
+ * @returnAn XML representation of the FileStore tool if one exists in the agents functions
+ */
+async function buildFileStorePrompt(): Promise<string> {
+	const fileStore = agentContext().functions.getFunctionType('filestore') as FileStore;
+	if (!fileStore) return '';
+	const files: FileMetadata[] = await fileStore.listFiles();
+	if (!files.length) return '';
+	return `\n<filestore>
+${JSON.stringify(files)}
+</filestore>
 `;
 }
 
@@ -33,6 +55,7 @@ export function buildFileSystemPrompt(): string {
 export function buildFunctionCallHistoryPrompt(): string {
 	const functionCalls = agentContext().functionCallHistory;
 	let result = '<function_call_history>\n';
+	if (functionCalls.length) result += '<!-- Oldest -->';
 	for (const call of functionCalls) {
 		let params = '';
 		for (let [name, value] of Object.entries(call.parameters)) {
@@ -54,6 +77,7 @@ export function buildFunctionCallHistoryPrompt(): string {
 		}
 		result += `<function_call>\n ${call.function_name}({${params}})\n ${output}</function_call>\n`;
 	}
+	if (functionCalls.length) result += '<!-- Newest -->';
 	result += '</function_call_history>\n';
 	return result;
 }

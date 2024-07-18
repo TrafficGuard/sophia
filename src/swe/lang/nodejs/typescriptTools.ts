@@ -69,4 +69,40 @@ export class TypescriptTools implements LanguageTools {
 
 		if (result.exitCode > 0) throw new Error(`${result.stdout}\n${result.stderr}`);
 	}
+
+	async getInstalledPackages(): Promise<string> {
+		try {
+			const fileContent = await getFileSystem().readFile('package.json');
+			const packageJson = JSON.parse(fileContent);
+
+			let info = '<installed_packages>\n';
+
+			// Include dependencies and peerDependencies
+			const productionDependencies = {
+				...packageJson.dependencies,
+				...packageJson.peerDependencies,
+			};
+
+			info += '<production>\n';
+			for (const [pkg, version] of Object.entries(productionDependencies)) {
+				info += `${pkg}: ${version}\n`;
+			}
+			info += '</production>\n';
+
+			// Include devDependencies if they exist
+			if (packageJson.devDependencies) {
+				info += '<development>\n';
+				for (const [pkg, version] of Object.entries(packageJson.devDependencies)) {
+					info += `${pkg}: ${version}\n`;
+				}
+				info += '</development>\n';
+			}
+
+			info += '</installed_packages>';
+
+			return info;
+		} catch (error) {
+			throw new Error(`Error reading package.json: ${error.message}`);
+		}
+	}
 }

@@ -45,7 +45,7 @@ export async function detectProjectInfo(): Promise<ProjectInfo[]> {
 	logger.info('detectProjectInfo');
 	const fileSystem = getFileSystem();
 	if (await fileSystem.fileExists('projectInfo.json')) {
-		const projectInfoJson = await fileSystem.getFileContents('projectInfo.json');
+		const projectInfoJson = await fileSystem.readFile('projectInfo.json');
 		logger.info(`loaded projectInfo.json ${JSON.stringify(projectInfoJson)}`);
 		logger.info(projectInfoJson);
 		// TODO check projectInfo matches the format we expect
@@ -137,7 +137,7 @@ Then the output would be:
 
 	const projectDetection = projectDetections.projects[0];
 	const projectDetectionFiles = projectDetection.files.filter((filename) => !filename.includes('package-lock.json') && !filename.includes('yarn.lock'));
-	const projectDetectionFileContents = await fileSystem.getMultipleFileContentsAsXml(projectDetectionFiles);
+	const projectDetectionFileContents = await fileSystem.readFilesAsXml(projectDetectionFiles);
 
 	const projectScripts: ProjectScripts = await llms().medium.generateJson(
 		`${projectDetectionFileContents}.\n 

@@ -30,7 +30,7 @@ export function buildPrompt(args: {
 export class SoftwareDeveloperAgent {
 	/**
 	 * Runs the software developer agent to complete the user request/requirements. This will find the appropriate Git project/repository, clone it, make the changes, compile and test if applicable, commit and create a pull/merge request to review.
-	 * @param requirements the requirements to implement. Provide ALL the details that might be required by this agent to complete the requirements task.
+	 * @param requirements the requirements to implement. Provide ALL the details that might be required by this agent to complete the requirements task. Do not refer to details in memory etc, you must provide the actual details.
 	 */
 	@func()
 	async runSoftwareDeveloperWorkflow(requirements: string): Promise<void> {

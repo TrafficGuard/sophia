@@ -84,6 +84,6 @@ export class NpmPackages {
 		}
 		const files = await fileSystem.listFilesRecursively(`node_modules/${npmPackageName}`);
 		const dtsFiles = files.filter((filename) => filename.endsWith('.d.ts'));
-		return fileSystem.getMultipleFileContentsAsXml(dtsFiles);
+		return fileSystem.readFilesAsXml(dtsFiles);
 	}
 }

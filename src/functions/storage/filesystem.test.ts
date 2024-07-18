@@ -127,7 +127,7 @@ describe('FileSystem', () => {
 		const fileSystem = new FileSystem();
 		it('should include files', async () => {
 			const paths = ['package.json', '/README.md', '/src/index.ts'];
-			const contents: string = await fileSystem.getMultipleFileContentsAsXml(paths);
+			const contents: string = await fileSystem.readFilesAsXml(paths);
 
 			expect(contents).to.include('file_content file_path="package.json"');
 			expect(contents).to.include('file_content file_path="README.md"');
@@ -135,11 +135,11 @@ describe('FileSystem', () => {
 		});
 		it('should include files in the src directory', async () => {
 			fileSystem.setWorkingDirectory('./src');
-			let xml: string = await fileSystem.getMultipleFileContentsAsXml('./index.ts');
+			let xml: string = await fileSystem.readFilesAsXml('./index.ts');
 			expect(xml).to.include('file_path="index.ts"');
-			xml = await fileSystem.getMultipleFileContentsAsXml('/index.ts');
+			xml = await fileSystem.readFilesAsXml('/index.ts');
 			expect(xml).to.include('file_path="index.ts"');
-			xml = await fileSystem.getMultipleFileContentsAsXml('index.ts');
+			xml = await fileSystem.readFilesAsXml('index.ts');
 			expect(xml).to.include('file_path="index.ts"');
 		});
 	});
@@ -148,21 +148,21 @@ describe('FileSystem', () => {
 		const fileSystem = new FileSystem();
 		it('should get the file contents for the current directory', async () => {
 			const samplePackageJsonContents = '@opentelemetry/instrumentation-http';
-			let contents: string = await fileSystem.getFileContents('package.json');
+			let contents: string = await fileSystem.readFile('package.json');
 			expect(contents).to.include(samplePackageJsonContents);
-			contents = await fileSystem.getFileContents('/package.json');
+			contents = await fileSystem.readFile('/package.json');
 			expect(contents).to.include(samplePackageJsonContents);
-			contents = await fileSystem.getFileContents('./package.json');
+			contents = await fileSystem.readFile('./package.json');
 			expect(contents).to.include(samplePackageJsonContents);
 		});
 		it('should get the file contents in the working directory', async () => {
 			fileSystem.setWorkingDirectory('./src');
 			const sampleIndexTsContents = '#fastify/trace-init';
-			let contents: string = await fileSystem.getFileContents('index.ts');
+			let contents: string = await fileSystem.readFile('index.ts');
 			expect(contents).to.include(sampleIndexTsContents);
-			contents = await fileSystem.getFileContents('/index.ts');
+			contents = await fileSystem.readFile('/index.ts');
 			expect(contents).to.include(sampleIndexTsContents);
-			contents = await fileSystem.getFileContents('./index.ts');
+			contents = await fileSystem.readFile('./index.ts');
 			expect(contents).to.include(sampleIndexTsContents);
 		});
 	});

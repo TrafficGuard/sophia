@@ -16,7 +16,7 @@ export interface CompileErrorAnalysisDetails extends CompileErrorAnalysis {
 }
 
 export async function analyzeCompileErrors(compilerOutput: string, initialFileSelection: string[]): Promise<CompileErrorAnalysis> {
-	const fileContents = `<file_contents>\n${await getFileSystem().getMultipleFileContentsAsXml(initialFileSelection)}\n</file_contents>`;
+	const fileContents = `<file_contents>\n${await getFileSystem().readFilesAsXml(initialFileSelection)}\n</file_contents>`;
 	const fileList = `<project_filenames>\n${(await getFileSystem().listFilesRecursively()).join('\n')}\n</project_filenames>`;
 	const compileOutputXml = `<compiler_output>\n${compilerOutput}\n</compiler_output>`;
 

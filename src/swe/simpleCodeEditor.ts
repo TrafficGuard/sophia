@@ -15,7 +15,7 @@ export class SimpleCodeEditor {
 	async makeChanges(requirements: string, files: string | string[]): Promise<void> {
 		//if(files.trim().startsWith())
 		// await new CodeEditor().editFilesToMeetRequirements(requirements, files);
-		const fileContents = await getFileSystem().getMultipleFileContentsAsXml(files);
+		const fileContents = await getFileSystem().readFilesAsXml(files);
 		const prompt = buildPrompt({
 			information: fileContents,
 			requirements,

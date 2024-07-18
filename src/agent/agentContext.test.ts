@@ -31,6 +31,17 @@ describe('agentContext', () => {
 			agentContext.fileSystem.setWorkingDirectory('./workingDir');
 			agentContext.functions.addFunctionClass(UtilFunctions);
 			agentContext.memory.memory_key = 'memory_value';
+			agentContext.functionCallHistory.push({
+				function_name: 'func',
+				parameters: {
+					p1: 'v1',
+					p2: true,
+				},
+				stdout: 'output',
+				stderr: 'errors',
+				stdoutSummary: 'outSummary',
+				stderrSummary: 'stderrSummary',
+			});
 			const serialized = serializeContext(agentContext);
 			const serializedToString: string = JSON.stringify(serialized);
 

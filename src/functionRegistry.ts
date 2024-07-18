@@ -18,7 +18,7 @@ export function functionRegistry(): Array<new () => any> {
 		CodeEditingAgent,
 		FileSystem,
 		GitLab,
-		GitHub,
+		// GitHub, // Error: More than one function classes found implementing SourceControlManagement
 		GoogleCloud,
 		Jira,
 		Perplexity,

@@ -1,32 +1,31 @@
 import fs from 'fs';
 import path from 'path';
-import {agentContext, getFileSystem} from '#agent/agentContext';
+import { agentContext } from '#agent/agentContext';
 import { func, funcClass } from '#functionSchema/functionDecorators';
-import { envVar } from '#utils/env-var';
-
-interface FileMetadata {
-  filename: string;
-  description: string;
-  sizeKb: string;
-  lastUpdated: string;
-}
+import { FileMetadata, FileStore } from '#functions/storage/filestore';
+import { ToolType } from '#functions/toolType';
 
 /**
- * A class to store files on the local file system
+ * FileStore implementation that stores files on the local file system.
+ * Uses the native filesystem, and not FileSystem.read/writeFile, to store the agents files in a known place.
  */
 @funcClass(__filename)
-export class LocalFileStore {
+export class LocalFileStore implements FileStore {
 	private basePath: string;
 
 	constructor() {
 		this.basePath = path.join(process.cwd(), '.nous', 'filestore');
 	}
 
+	getToolType(): ToolType {
+		return 'filestore';
+	}
+
 	/**
 	 * Saves the contents to a file with the given filename and updates metadata.
 	 * @param {string} filename - The name of the file to save.
 	 * @param {string} contents - The contents to save to the file.
-	 * @param {string} description - A description of the file.
+	 * @param {string} description - A description of the contents which can be used to identify it later.
 	 * @returns {Promise<void>}
 	 */
 	@func()
@@ -98,7 +97,7 @@ export class LocalFileStore {
 				fileMetadata.push({
 					filename: file,
 					description: metadata[file]?.description || '',
-					sizeKb: (stats.size / 1024).toFixed(2),
+					sizeKb: (stats.size / 1024).toFixed(0), // TODO rename to size and convert to readable format 20k, 1.54m 4.23g
 					lastUpdated: stats.mtime.toISOString(),
 				});
 			}

@@ -13,10 +13,12 @@ import { agentContextStorage } from '#agent/agentContext';
 import { setTracer } from '#o11y/trace';
 
 let initialized = false;
+let optelNodeSdk: opentelemetry.NodeSDK;
 
 export function getServiceName(): string | undefined {
 	return process.env.TRACE_SERVICE_NAME ?? process.env.K_SERVICE;
 }
+
 /**
  * This needs to be required/imported as early as possible in the startup sequence
  * before the modules it instruments are loaded.
@@ -58,7 +60,7 @@ function initTrace(): void {
 		// const provider = new NodeTracerProvider();
 		// provider.register();
 
-		const sdk = new opentelemetry.NodeSDK({
+		optelNodeSdk = new opentelemetry.NodeSDK({
 			resource: new Resource({
 				[SemanticResourceAttributes.SERVICE_NAME]: traceServiceName,
 			}),
@@ -94,17 +96,26 @@ function initTrace(): void {
 		// this enables the API to record telemetry
 		// If we still have issues with modules loading before being instrumentation is ready then we
 		// would need to start the server in the then() callback like in https://lightstep.com/blog/opentelemetry-nodejs
-		sdk.start();
+		optelNodeSdk.start();
 
 		// gracefully shut down the SDK on process exit
 		process.on('SIGTERM', () => {
-			sdk.shutdown().catch((error: unknown) => console.warn('Error terminating tracing %o', error));
+			optelNodeSdk.shutdown().catch((error: unknown) => console.warn('Error terminating tracing %o', error));
 		});
 
 		const tracer = trace.getTracer(traceServiceName);
 		setTracer(tracer, agentContextStorage);
 	} else {
 		setTracer(null, agentContextStorage);
+	}
+}
+
+export async function shutdownTrace(): Promise<void> {
+	try {
+		await optelNodeSdk.shutdown();
+		console.log('Successfully flushed all buffered spans.');
+	} catch (error) {
+		console.error('Error shutting down trace:', error.message);
 	}
 }
 

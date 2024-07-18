@@ -12,4 +12,8 @@ export class TerraformTools implements LanguageTools {
 	installPackage(packageName: string): Promise<void> {
 		throw new Error('New Terraform modules are added by editing the source code');
 	}
+
+	getInstalledPackages(): Promise<string> {
+		return Promise.resolve('');
+	}
 }

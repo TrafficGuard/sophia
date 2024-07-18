@@ -7,6 +7,7 @@ import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
 import { CompileErrorAnalysis, CompileErrorAnalysisDetails, analyzeCompileErrors } from '#swe/analyzeCompileErrors';
 import { reviewChanges } from '#swe/reviewChanges';
+import { supportingInformation } from '#swe/supportingInformation';
 import { execCommand } from '#utils/exec';
 import { appContext } from '../app';
 import { cacheRetry } from '../cache/cacheRetry';
@@ -32,7 +33,7 @@ export class CodeEditingAgent {
 	/**
 	 * Runs a workflow which edits the code repository to implement the requirements, and committing changes to version control.
 	 * It also compiles, formats, lints, and runs tests where applicable.
-	 * @param requirements The detailed requirements to implement, including supporting documentation and code samples.
+	 * @param requirements The detailed requirements to implement, including supporting documentation and code samples. Do not refer to details in memory etc, you must provide the actual details.
 	 */
 	@func()
 	async runCodeEditWorkflow(requirements: string, projectInfo?: ProjectInfo): Promise<CompileErrorAnalysis | null> {
@@ -56,7 +57,7 @@ export class CodeEditingAgent {
 		logger.info(initialSelectedFiles, 'Initial selected files');
 
 		// Perform a first pass on the files to generate an implementation specification
-		const implementationDetailsPrompt = `${await fs.getMultipleFileContentsAsXml(initialSelectedFiles)}
+		const implementationDetailsPrompt = `${await fs.readFilesAsXml(initialSelectedFiles)}
 		<requirements>${requirements}</requirements>
 		You are a senior software engineer. Your task is to review the provided user requirements against the code provided and produce an implementation design specification to give to a developer to implement the changes in the provided files.
 		Do not provide any details of verification commands etc as the CI/CD build will run integration tests. Only detail the changes required in the files for the pull request.
@@ -69,6 +70,7 @@ export class CodeEditingAgent {
 
 		let compileErrorAnalysis: CompileErrorAnalysisDetails | null = null;
 		let compileErrorSearchResults: string[] = [];
+		let compileErrorSummaries: string[] = [];
 		/* The git commit sha of the last commit which compiled successfully. We store this so when there are one or more commits
 		   which don't compile, we can provide the diff since the last good commit to help identify causes of compile issues. */
 		let compiledCommitSha: string | null = agentContext().memory.compiledCommitSha;
@@ -88,9 +90,10 @@ export class CodeEditingAgent {
 				}
 
 				const codeEditorFiles: string[] = [...initialSelectedFiles];
-				let codeEditorRequirements = implementationRequirements;
+				// Start with the installed packages list and project conventions
+				let codeEditorRequirements = await supportingInformation(projectInfo);
 
-				// If the previous edit caused compile errors then we will create a requirements specifically for fixing any compile errors first before making more functionality changes
+				// If the project doesn't compile or previous edit caused compile errors then we will create a requirements specifically for fixing any compile errors first before making more functionality changes
 				if (compileErrorAnalysis) {
 					const installPackages = compileErrorAnalysis.installPackages ?? [];
 					for (const packageName of installPackages) await projectInfo.languageTools?.installPackage(packageName);
@@ -105,15 +108,37 @@ export class CodeEditingAgent {
 						}
 					}
 
+					if (compileErrorSummaries.length) {
+						compileFixRequirements += '<compile-error-history>\n';
+						for (const summary of compileErrorSummaries) compileFixRequirements += '<compile-error-summary>${summary}</compile-error-summary>\n';
+						compileFixRequirements += '</compile-error-history>\n';
+					}
 					compileFixRequirements += compileErrorSearchResults.map((result) => `<research>${result}</research>\n`).join();
-					compileFixRequirements += `<diff>${await git.getDiff(compiledCommitSha)}</diff>\n`;
-					compileFixRequirements += `<compile-errors>${compileErrorAnalysis.compilerOutput}</compile-errors>\n`;
-					compileFixRequirements += 'When the git diff was applied, building the app results in the provided compile errors.\n';
-					if (installPackages.length) compileFixRequirements += `The following packages have now been installed: ${installPackages.join(', ')}.\n`;
-					compileFixRequirements += 'Please pay attention to detail and fix all of the the compile errors}';
+					compileFixRequirements += `<compilerr-errors>${compileErrorAnalysis.compilerOutput}</compilerr-errors>\n\n`;
+					if (compiledCommitSha) {
+						compileFixRequirements += `<diff>${await git.getDiff(compiledCommitSha)}</diff>\n`;
+						compileFixRequirements +=
+							'The above diff has introduced compile errors. With the analysis of the compiler errors, first focus on analysing the diff for any obvious syntax and type errors and then analyse the files you are allowed to edit.\n';
+					} else {
+						compileFixRequirements +=
+							'The project is not currently compiling. Analyse the compiler errors to identify the fixes required in the source code.\n';
+					}
+					if (compileErrorSummaries.length) {
+						compileFixRequirements +=
+							'Your previous attempts have not fixed the compiler errors. A summary of the errors after previous attempts to fix have been provided.\n' +
+							'If you are getting the same errors then try a different approach or provide a researchQuery to find the correct API usage.\n';
+					}
+
+					if (installPackages.length)
+						compileFixRequirements += `The following packages have now been installed: ${installPackages.join(
+							', ',
+						)} which will fix any errors relating to these packages not being found.\n`;
 					codeEditorRequirements = compileFixRequirements;
 
 					codeEditorFiles.push(...(compileErrorAnalysis.additionalFiles ?? []));
+				} else {
+					// project is compiling, lets implement the requirements
+					codeEditorRequirements += implementationRequirements;
 				}
 
 				await new CodeEditor().editFilesToMeetRequirements(codeEditorRequirements, codeEditorFiles);
@@ -124,6 +149,7 @@ export class CodeEditingAgent {
 
 				// Check the changes compile
 				await this.compile(projectInfo);
+
 				// Update the compiled commit state
 				compiledCommitSha = await git.getHeadSha();
 				const agent = agentContext();
@@ -131,6 +157,7 @@ export class CodeEditingAgent {
 				await appContext().agentStateService.save(agent);
 				compileErrorAnalysis = null;
 				compileErrorSearchResults = [];
+				compileErrorSummaries = [];
 
 				break;
 			} catch (e) {

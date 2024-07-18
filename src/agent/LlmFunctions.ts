@@ -4,6 +4,7 @@ import { FunctionCall } from '#llm/llm';
 import { logger } from '#o11y/logger';
 
 import { functionFactory } from '#functionSchema/functionDecorators';
+import { GetToolType, ToolType, toolType } from '#functions/toolType';
 
 /**
  * Holds the instances of the classes with function callable methods.
@@ -46,6 +47,10 @@ export class LlmFunctions {
 
 	getFunctionClassNames(): string[] {
 		return Object.keys(this.functionInstances);
+	}
+
+	getFunctionType(type: ToolType) {
+		return Object.values(this.functionInstances).find((obj) => toolType(obj) === type);
 	}
 
 	addFunctionInstance(functionClassInstance: object, name: string): void {

@@ -68,7 +68,7 @@ export class CodeEditor {
 		const { stdout, stderr, exitCode } = await execCommand(cmd, { envVars: env });
 		logger.debug(stdout + stderr);
 
-		const llmHistory = await getFileSystem().getFileContents(llmHistoryFile);
+		const llmHistory = await getFileSystem().readFile(llmHistoryFile);
 		const parsedInput = this.parseAiderInput(llmHistory);
 		const parsedOutput = this.parseAiderOutput(llmHistory);
 

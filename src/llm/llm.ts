@@ -121,7 +121,7 @@ export function logTextGeneration(originalMethod: any, context: ClassMethodDecor
 		if (args.length > 1 && args[1]) {
 			logger.info(`= SYSTEM PROMPT ===================================================\n${args[1]}`);
 		}
-		logger.info(`= USER PROMPT =================================================================\n${args[1]}`);
+		logger.info(`= USER PROMPT =================================================================\n${args[0]}`);
 
 		const start = Date.now();
 		const result = await originalMethod.call(this, ...args);

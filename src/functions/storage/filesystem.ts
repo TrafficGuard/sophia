@@ -25,8 +25,9 @@ const fs = {
 type FileFilter = (filename: string) => boolean;
 
 /**
- * Provides functions for LLMs to access the file system. As these functions are automatically included in the
- * OpenTelemetry tracing, it's recommended that most file system access should use the functions here for observability.
+ * Provides functions for LLMs to access the file system. Tools should generally use the functions as
+ * - They are automatically included in OpenTelemetry tracing
+ * - They use the working directory, so Nous can perform its actions outside the process running directory.
  *
  * The FileSystem is constructed with the basePath property which is like a virtual root.
  * Then the workingDirectory property is relative to the basePath.
@@ -135,7 +136,7 @@ export class FileSystem {
 	 */
 	async getFileContentsRecursively(dirPath: string): Promise<Map<string, string>> {
 		const filenames = await this.listFilesRecursively(dirPath);
-		return await this.getMultipleFileContents(filenames);
+		return await this.readFiles(filenames);
 	}
 
 	/**
@@ -147,7 +148,7 @@ export class FileSystem {
 	@func()
 	async getFileContentsRecursivelyAsXml(dirPath: string, storeToMemory: boolean): Promise<string> {
 		const filenames = await this.listFilesRecursively(dirPath);
-		const contents = await this.getMultipleFileContentsAsXml(filenames);
+		const contents = await this.readFilesAsXml(filenames);
 		if (storeToMemory) agentContext().memory[`file-contents-${join(this.getWorkingDirectory(), dirPath)}`] = contents;
 		return contents;
 	}
@@ -281,7 +282,7 @@ export class FileSystem {
 	 * @returns the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
 	 */
 	@func()
-	async getFileContents(filePath: string): Promise<string> {
+	async readFile(filePath: string): Promise<string> {
 		// TODO if the file doesn't exist search recursively for the filename, and if there is one result then return that
 		logger.info(`getFileContents: ${filePath}`);
 		// A filePath starts with / is it relative to FileSystem.basePath, otherwise its relative to FileSystem.workingDirectory
@@ -304,13 +305,13 @@ export class FileSystem {
 	}
 
 	/**
-	 * Gets the contents of a local file on the file system.
+	 * Gets the contents of a local file on the file system and returns it in XML tags
 	 * @param filePath The file path to read the contents of (e.g. src/index.ts)
-	 * @returns the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
+	 * @returns the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents>
 	 */
 	@func()
-	async getFileContentsAsXML(filePath: string): Promise<string> {
-		return `<file_content file_path="${filePath}">\n${await this.getFileContents(filePath)}\n</file_contents>\n`;
+	async readFileAsXML(filePath: string): Promise<string> {
+		return `<file_content file_path="${filePath}">\n${await this.readFile(filePath)}\n</file_contents>\n`;
 	}
 
 	/**
@@ -318,7 +319,7 @@ export class FileSystem {
 	 * @param filePaths {Array<string>} The files paths to read the contents
 	 * @returns {Promise<Map<string, string>>} the contents of the files in a Map object keyed by the file path
 	 */
-	async getMultipleFileContents(filePaths: string[]): Promise<Map<string, string>> {
+	async readFiles(filePaths: string[]): Promise<Map<string, string>> {
 		const mapResult = new Map<string, string>();
 		for (const relativeFilePath of filePaths) {
 			const filePath = path.join(this.getWorkingDirectory(), relativeFilePath);
@@ -338,11 +339,11 @@ export class FileSystem {
 	 * @returns {Promise<string>} the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
 	 */
 	@func()
-	async getMultipleFileContentsAsXml(filePaths: string | string[]): Promise<string> {
+	async readFilesAsXml(filePaths: string | string[]): Promise<string> {
 		if (!Array.isArray(filePaths)) {
 			filePaths = parseArrayParameterValue(filePaths);
 		}
-		const fileContents: Map<string, string> = await this.getMultipleFileContents(filePaths);
+		const fileContents: Map<string, string> = await this.readFiles(filePaths);
 		return this.formatFileContentsAsXml(fileContents);
 	}
 
@@ -367,19 +368,19 @@ export class FileSystem {
 	async fileExists(filePath: string): Promise<boolean> {
 		logger.info(`fileExists: ${filePath}`);
 		// Check if we've been given an absolute path
-		if (filePath.startsWith('/')) {
+		if (filePath.startsWith(this.basePath)) {
 			try {
 				logger.info(`fileExists: ${filePath}`);
 				await fs.access(filePath);
 				return true;
 			} catch {}
 		}
-		logger.info(`basePath ${this.basePath}`);
-		logger.info(`this.workingDirectory ${this.workingDirectory}`);
-		logger.info(`getWorkingDirectory() ${this.getWorkingDirectory()}`);
+		// logger.info(`basePath ${this.basePath}`);
+		// logger.info(`this.workingDirectory ${this.workingDirectory}`);
+		// logger.info(`getWorkingDirectory() ${this.getWorkingDirectory()}`);
 		const path = filePath.startsWith('/') ? resolve(this.basePath, filePath.slice(1)) : resolve(this.basePath, this.workingDirectory, filePath);
 		try {
-			logger.info(`fileExists: ${path}`);
+			// logger.info(`fileExists: ${path}`);
 			await fs.access(path);
 			return true;
 		} catch {
@@ -400,13 +401,13 @@ export class FileSystem {
 	}
 
 	/**
-	 * Makes changes to the contents of a single file (using a LLM)
-	 * @param filePath the file to edit
-	 * @param descriptionOfChanges a natual language description of the changes to make to the file contents
+	 * Reads a file, then transforms the contents using a LLM to perform the described changes, then writes back to the file.
+	 * @param filePath {string} The file to update
+	 * @param descriptionOfChanges {string} A natual language description of the changes to make to the file contents
 	 */
-	// @func()
-	async updateFileContentsAsRequired(filePath: string, descriptionOfChanges: string): Promise<void> {
-		const contents = await this.getFileContents(filePath);
+	@func()
+	async editFileContents(filePath: string, descriptionOfChanges: string): Promise<void> {
+		const contents = await this.readFile(filePath);
 		const updatedContent = await new UtilFunctions().processText(contents, descriptionOfChanges);
 		await this.writeFile(filePath, updatedContent);
 	}

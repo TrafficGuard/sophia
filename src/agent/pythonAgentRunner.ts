@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { Span, SpanStatusCode } from '@opentelemetry/api';
 import { PyodideInterface, loadPyodide } from 'pyodide';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
-import { buildFileSystemPrompt, buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
+import { buildFilePrompt, buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
 import { formatFunctionError, formatFunctionResult, notificationMessage } from '#agent/agentRunner';
 import { agentHumanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
 import { getServiceName } from '#fastify/trace-init/trace-init';
@@ -15,12 +15,13 @@ import { AgentContext, agentContext, agentContextStorage, llms } from './agentCo
 
 const stopSequences = ['</response>'];
 
-const pythonSystemPrompt = readFileSync('src/agent/python-agent-system-prompt').toString();
-
 let pyodide: PyodideInterface;
 
 export async function runPythonAgent(agent: AgentContext): Promise<string> {
 	if (!pyodide) pyodide = await loadPyodide();
+
+	// Hot reload (TODO only when not deployed)
+	const pythonSystemPrompt = readFileSync('src/agent/python-agent-system-prompt').toString();
 
 	const agentStateService = appContext().agentStateService;
 	agent.state = 'agent';
@@ -90,35 +91,36 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 						costSinceHil = 0;
 					}
 
+					const filePrompt = await buildFilePrompt();
 					if (!currentPrompt.includes('<function_call_history>')) {
-						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + buildFileSystemPrompt() + currentPrompt;
+						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + filePrompt + currentPrompt;
 					}
 
-					const llmResponse: string = await agentLLM.generateText(currentPrompt, systemPromptWithFunctions, {
-						id: 'generateFunctionCalls',
+					const llmGenerateScriptResponse: string = await agentLLM.generateText(currentPrompt, systemPromptWithFunctions, {
+						id: 'generatePythonScript',
 						stopSequences,
 					});
 
-					const pythonCode = extractPythonCode(llmResponse);
+					const pythonCode = extractPythonCode(llmGenerateScriptResponse);
 
-					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + buildFileSystemPrompt() + userRequestXml + llmResponse;
+					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + filePrompt + userRequestXml + llmGenerateScriptResponse;
 
 					agent.state = 'functions';
 					agent.inputPrompt = currentPrompt;
 					agent.invoking = []; // pythonCode
 					await agentStateService.save(agent);
 
-					const functionResults = [];
+					// The XML formatted results of the function call(s)
+					const functionResults: string[] = [];
 					let pythonScriptResult: any;
-					let pyodideError: Error | undefined;
-					let pythonScript: string | undefined;
+					let pythonScript = '';
 
 					const functionInstances = agent.functions.getFunctionInstanceMap();
-					const defs = getAllFunctionSchemas(Object.values(functionInstances));
+					const schemas: FunctionSchema[] = getAllFunctionSchemas(Object.values(functionInstances));
 					const jsGlobals = {};
-					for (const def of defs) {
-						const [className, method] = def.name.split('.');
-						jsGlobals[def.name.replace('.', '_')] = async (...args) => {
+					for (const schema of schemas) {
+						const [className, method] = schema.name.split('.');
+						jsGlobals[schema.name.replace('.', '_')] = async (...args) => {
 							// agent.invoking.push()
 							try {
 								const functionResponse = await functionInstances[className][method](...args);
@@ -126,13 +128,17 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 								// we'll create a summary for responses which are quite long
 								// const outputSummary = await summariseLongFunctionOutput(functionResponse)
 
+								const parameters: { [key: string]: any } = {};
+								for (let index = 0; index < args.length; index++) parameters[schema.parameters[index].name] = args[index];
+
+								schema.parameters;
 								agent.functionCallHistory.push({
-									function_name: def.name,
-									parameters: args, // TODO map to key/value from param definitions
+									function_name: schema.name,
+									parameters,
 									stdout: JSON.stringify(functionResponse),
-									// stdoutSummary: outputSummary,
+									// stdoutSummary: outputSummary, TODO
 								});
-								functionResults.push(formatFunctionResult(def.name, functionResponse));
+								functionResults.push(formatFunctionResult(schema.name, functionResponse));
 								return functionResponse;
 							} catch (e) {
 								anyFunctionCallErrors = true;
@@ -140,27 +146,40 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 								logger.error(e, 'Function error');
 								agent.error = e.toString();
 								await agentStateService.save(agent);
-								functionResults.push(formatFunctionError(def.name, e));
+								functionResults.push(formatFunctionError(schema.name, e));
 								// currentPrompt += `\n${llm.formatFunctionError(functionCalls.function_name, e)}`;
 
 								agent.functionCallHistory.push({
-									function_name: def.name,
+									function_name: schema.name,
 									parameters: args, // TODO map to key/value from param schema
 									stderr: agent.error,
+									// stderrSummary: outputSummary, TODO
 								});
 								throw e;
 							}
 						};
 					}
 					const globals = pyodide.toPy(jsGlobals);
-					// Could optimise the imports by checking what the llm generated code uses
-					// The available imports is defined in the system prompt
-					try {
-						pythonScript = `
-import json
-import re
-import math
-import datetime
+
+					pyodide.setStdout({
+						batched: (output) => {
+							logger.info(`Script stdout: ${JSON.stringify(output)}`);
+						},
+					});
+					pyodide.setStderr({
+						batched: (output) => {
+							logger.info(`Script stderr: ${JSON.stringify(output)}`);
+						},
+					});
+
+					const allowedImports = ['json', 're', 'math', 'datetime'];
+					// Add the imports of the allowed packages being used
+					pythonScript = allowedImports
+						.filter((pkg) => pythonScript.includes(`${pkg}.`))
+						.map((pkg) => `import ${pkg}\n`)
+						.join();
+
+					pythonScript += `
 from typing import List, Dict, Tuple, Optional, Union
 
 async def main():
@@ -170,77 +189,62 @@ ${pythonCode
 	.join('\n')}
 
 main()`.trim();
-						// logger.info(pythonScript);
-						// console.log('Original');
 
-						// pythonScript = await llms().medium.generateText(
-						// 	`${pythonScript}\n\nPlease format this Python script correctly with 4 spaces for an indent. Output only the re-formatted script. Do not chat, do not output markdown ticks, etc. Only the code`,
-						// 	null,
-						// 	{ id: 'Reformat Python script' },
-						// );
-						// console.log('Formatted');
-						// console.log(pythonScript);
-						logger.flush();
-						console.log(pythonScript);
-
-						// IndentationError
-
-						pyodide.setStdout({
-							batched: (output) => {
-								logger.info(`Script stdout: ${JSON.stringify(output)}`);
-							},
-						});
-						pyodide.setStderr({
-							batched: (output) => {
-								logger.info(`Script stderr: ${JSON.stringify(output)}`);
-							},
-						});
-						const result = await pyodide.runPythonAsync(pythonScript, { globals });
-						pythonScriptResult = result?.toJs ? result.toJs() : result;
-						logger.info(pythonScriptResult, 'pyodide result');
-						if (result?.destroy) result.destroy();
-					} catch (e) {
-						pyodideError = e;
-						logger.error(`Pyodide error ${e.message}`);
-						logger.error(e);
-
-						const prompt = `${functionsXml}\n<python>\n${pythonScript}</python>\n<error>${e.message}</error>\nPlease adjust/reformat the Python script to fix the issue. Output only the updated code. Do no chat, do not output markdown ticks. Only the updated code.`;
-						pythonScript = await llms().hard.generateText(prompt, null, { id: 'Fix python script error' });
-						// console.log('Fixed? script');
-						// console.log(pythonScript);
+					try {
 						try {
+							// Initial execution attempt
+							const result = await pyodide.runPythonAsync(pythonScript, { globals });
+							pythonScriptResult = result?.toJs ? result.toJs() : result;
+							logger.info(pythonScriptResult, 'Script result');
+							if (result?.destroy) result.destroy();
+						} catch (e) {
+							// Attempt to fix Syntax/indentation errors and retry
+							// Otherwise let execution errors re-throw.
+							if (e.type !== 'IndentationError' && e.type !== 'SyntaxError') throw e;
+
+							// Fix the compile issues in the script
+							const prompt = `${functionsXml}\n<python>\n${pythonScript}</python>\n<error>${e.message}</error>\nPlease adjust/reformat the Python script to fix the issue. Output only the updated code. Do no chat, do not output markdown ticks. Only the updated code.`;
+							pythonScript = await llms().hard.generateText(prompt, null, { id: 'Fix python script error' });
+
+							// Re-try execution of fixed syntax/indentation error
 							const result = await pyodide.runPythonAsync(pythonScript, { globals });
 							pythonScriptResult = result?.toJs ? result.toJs() : result;
 							if (result?.destroy) result.destroy();
-							logger.info(pythonScriptResult, 'pyodide result');
-						} catch (e) {
-							const error = new Error(`Error executing script:\n${pythonScript}`);
-							error.stack = e.stack;
+							logger.info(pythonScriptResult, 'Script result');
 						}
+
+						const lastFunctionCall = agent.functionCallHistory[agent.functionCallHistory.length - 1];
+
+						// Should force completed/requestFeedback to exit the script - throw a particular Error class
+						if (lastFunctionCall.function_name === AGENT_COMPLETED_NAME) {
+							logger.info('Task completed');
+							agent.state = 'completed';
+							completed = true;
+						} else if (lastFunctionCall.function_name === AGENT_REQUEST_FEEDBACK) {
+							logger.info('Feedback requested');
+							agent.state = 'feedback';
+							requestFeedback = true;
+						} else {
+							if (!anyFunctionCallErrors && !completed && !requestFeedback) agent.state = 'agent';
+						}
+					} catch (e) {
+						// functionErrorCount++;
+						anyFunctionCallErrors = true;
+						agent.state = 'error';
+						logger.error(e, 'Function error');
+						agent.error = e.message;
+						if (e.stack) agent.error += `\n${e.stack}`;
+						await agentStateService.save(agent);
 					}
-
-					const lastFunctionCall = agent.functionCallHistory[agent.functionCallHistory.length - 1];
-
-					// Should check if completed or requestFeedback then there's no more function calls
-					if (pyodideError) {
-					} else if (lastFunctionCall.function_name === AGENT_COMPLETED_NAME) {
-						logger.info('Task completed');
-						agent.state = 'completed';
-						completed = true;
-					} else if (lastFunctionCall.function_name === AGENT_REQUEST_FEEDBACK) {
-						logger.info('Feedback requested');
-						agent.state = 'feedback';
-						requestFeedback = true;
-					} else {
-						if (!anyFunctionCallErrors && !completed && !requestFeedback) agent.state = 'agent';
-					}
-
 					// Function invocations are complete
 					// span.setAttribute('functionCalls', pythonCode.map((functionCall) => functionCall.function_name).join(', '));
 
+					// The agent should store important values in memory
+					// functionResults
+
 					// This section is duplicated in the provideFeedback function
 					agent.invoking = [];
-					currentPrompt = `${userRequestXml}\n${llmResponse}\n<python-result>${pythonScriptResult}</python-result>`;
+					currentPrompt = `${userRequestXml}\n${llmGenerateScriptResponse}\n<python-result>${pythonScriptResult}</python-result>`;
 				} catch (e) {
 					span.setStatus({ code: SpanStatusCode.ERROR, message: e.toString() });
 					logger.error(e, 'Control loop error');

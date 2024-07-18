@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { Span, SpanStatusCode } from '@opentelemetry/api';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
-import { buildFileSystemPrompt, buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
+import { buildFilePrompt, buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
 import { formatFunctionError, formatFunctionResult, notificationMessage, summariseLongFunctionOutput } from '#agent/agentRunner';
 import { agentHumanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
 import { getServiceName } from '#fastify/trace-init/trace-init';
@@ -17,9 +17,10 @@ export const XML_AGENT_SPAN = 'XmlAgent';
 
 const stopSequences = ['</response>'];
 
-const xmlSystemPrompt = readFileSync('src/agent/xml-agent-system-prompt').toString();
-
 export async function runXmlAgent(agent: AgentContext): Promise<string> {
+	// Hot reload (TODO only when not deployed)
+	const xmlSystemPrompt = readFileSync('src/agent/xml-agent-system-prompt').toString();
+
 	const agentStateService = appContext().agentStateService;
 	agent.state = 'agent';
 
@@ -89,9 +90,10 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 						await agentHumanInTheLoop(`Agent cost has increased by USD\$${costSinceHil.toFixed(2)}`);
 						costSinceHil = 0;
 					}
+					const filePrompt = await buildFilePrompt();
 
 					if (!currentPrompt.includes('<function_call_history>')) {
-						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + buildFileSystemPrompt() + currentPrompt;
+						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + filePrompt + currentPrompt;
 					}
 
 					if (agent.error) {
@@ -113,7 +115,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 							stopSequences,
 						});
 					}
-					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + buildFileSystemPrompt() + userRequestXml + functionResponse.textResponse;
+					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + filePrompt + userRequestXml + functionResponse.textResponse;
 					const functionCalls = functionResponse.functions.functionCalls;
 
 					if (!functionCalls.length) {
@@ -127,8 +129,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 							stopSequences,
 						});
 						// retrying
-						currentPrompt =
-							buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + buildFileSystemPrompt() + userRequestXml + functionCallResponse.textResponse;
+						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + filePrompt + userRequestXml + functionCallResponse.textResponse;
 						const functionCalls = functionCallResponse.functions.functionCalls;
 						if (!functionCalls.length) {
 							throw new Error('Found no function invocations');
@@ -140,7 +141,8 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 					agent.invoking.push(...functionCalls);
 					await agentStateService.save(agent);
 
-					const functionResults = [];
+					// The XML formatted results of the function call(s)
+					const functionResults: string[] = [];
 
 					for (const functionCall of functionCalls) {
 						try {
@@ -179,7 +181,8 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 							anyFunctionCallErrors = true;
 							agent.state = 'error';
 							logger.error(e, 'Function error');
-							agent.error = e.toString();
+							agent.error = e.message;
+							if (e.stack) agent.error += `\n${e.stack}`;
 							await agentStateService.save(agent);
 							functionResults.push(formatFunctionError(functionCall.function_name, e));
 							// currentPrompt += `\n${llm.formatFunctionError(functionCalls.function_name, e)}`;
@@ -197,6 +200,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 
 					// This section is duplicated in the provideFeedback function
 					agent.invoking = [];
+					// TODO allow a configurable number of errors before human-in-the-loop required
 					if (!anyFunctionCallErrors && !completed && !requestFeedback) agent.state = 'agent';
 					currentPrompt = `${userRequestXml}\n${functionResponse.textResponse}\n${functionResults.join('\n')}`;
 				} catch (e) {
