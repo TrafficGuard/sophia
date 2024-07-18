@@ -131,7 +131,10 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 								const parameters: { [key: string]: any } = {};
 								for (let index = 0; index < args.length; index++) parameters[schema.parameters[index].name] = args[index];
 
-								schema.parameters;
+								// Don't need to duplicate the content in the function call history
+								// TODO Would be nice to save over-written memory keys for history/debugging
+								if (method === 'saveMemory') parameters.content = undefined;
+
 								agent.functionCallHistory.push({
 									function_name: schema.name,
 									parameters,

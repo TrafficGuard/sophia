@@ -1,12 +1,30 @@
 <mat-tab-group *ngIf="agentDetails" [(selectedIndex)]="selectedTabIndex" (selectedIndexChange)="onTabChange($event)">
   <mat-tab label="Details">
-    <mat-icon (click)="refreshAgentDetails()">refresh</mat-icon>
+    <div>
+      <mat-icon (click)="refreshAgentDetails()">refresh</mat-icon>
+      <a href="{{ agentUrl(agentDetails)}}" target="_blank">gcp</a>
+    </div>
+
 
     <mat-card *ngIf="agentDetails.state === 'feedback'">
       <form [formGroup]="feedbackForm" (ngSubmit)="onSubmitFeedback()">
         <mat-card-title>Feedback Requested</mat-card-title>
-        <mat-card-content>
-          <span class="fixed-width-field"><strong>Feedback:</strong></span>
+        <mat-card-content style="margin-bottom: 0; margin-top: 15px">
+          <div *ngIf="agentDetails.feedbackMessage" class="agent-feedback-message" style="width: 1000px; margin-bottom: 20px">
+            <strong>Agent's Feedback Request:</strong>
+            <p>{{ agentDetails.feedbackMessage }}</p>
+          </div>
+          <mat-expansion-panel *ngIf="agentDetails.functionCallHistory && agentDetails.functionCallHistory.length > 0" style="width: 1000px; margin-bottom: 20px">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <span style="margin-right: 5px"><strong>Question:</strong></span>
+                <!-- Needs to match Agent.requestFeedback arg name -->
+                <span class="expansion-preview">{{ agentDetails.functionCallHistory[agentDetails.functionCallHistory.length - 1].parameters.request.trim() | slice : 0 : 140 }}...</span>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <!-- prettier-ignore -->
+            <div matExpansionPanelContent style="white-space: pre-wrap">{{ agentDetails.functionCallHistory[agentDetails.functionCallHistory.length - 1].parameters.request.trim() }}</div>
+          </mat-expansion-panel>
           <mat-form-field appearance="fill" class="full-width">
             <textarea
               matInput
@@ -16,10 +34,11 @@
             ></textarea>
           </mat-form-field>
         </mat-card-content>
-        <mat-card-actions>
-          <button mat-raised-button color="primary" type="submit" [disabled]="!feedbackForm.valid">
-            Submit Feedback
+        <mat-card-actions style="margin-bottom: 0">
+          <button mat-raised-button color="primary" type="submit" [disabled]="!feedbackForm.valid || isSubmitting">
+            {{ isSubmitting ? 'Submitting...' : 'Submit Feedback' }}
           </button>
+          <button mat-raised-button (click)="cancelAgent()" [disabled]="isSubmitting">Cancel Agent</button>
         </mat-card-actions>
       </form>
     </mat-card>
@@ -36,7 +55,7 @@
               </mat-panel-title>
             </mat-expansion-panel-header>
             <!-- prettier-ignore -->
-            <div matExpansionPanelContent style="white-space: pre">{{ agentDetails.error }}</div>
+            <div matExpansionPanelContent style="white-space: pre-wrap">{{ agentDetails.error }}</div>
           </mat-expansion-panel>
           <mat-form-field appearance="fill" class="full-width">
             <textarea
@@ -137,7 +156,7 @@
             </mat-panel-title>
           </mat-expansion-panel-header>
           <!-- prettier-ignore -->
-          <div matExpansionPanelContent style="white-space: pre">{{ agentDetails.userPrompt }}</div>
+          <div matExpansionPanelContent style="white-space: pre-wrap">{{ agentDetails.userPrompt }}</div>
         </mat-expansion-panel>
 
         <mat-expansion-panel
@@ -154,7 +173,7 @@
             </mat-panel-title>
           </mat-expansion-panel-header>
           <!-- prettier-ignore -->
-          <div matExpansionPanelContent style="white-space: pre">{{ output }}</div>
+          <div matExpansionPanelContent style="white-space: pre-wrap">{{ output }}</div>
         </mat-expansion-panel>
 
         <!--
@@ -214,14 +233,14 @@
         <mat-card-title>{{ entry.key }}</mat-card-title>
         <mat-card-content>
           <!-- prettier-ignore -->
-          <div style="white-space: pre">{{ entry.value }}</div>
+          <div style="white-space: pre-wrap">{{ entry.value }}</div>
         </mat-card-content>
       </mat-card>
     </div>
   </mat-tab>
 
   <mat-tab label="Function Calls">
-    <mat-card *ngFor="let invoked of agentDetails.functionCallHistory; let i = index">
+    <mat-card *ngFor="let invoked of agentDetails.functionCallHistory.slice().reverse(); let i = index">
       <mat-card-title>{{ invoked.function_name }}</mat-card-title>
       <mat-card-content>
         <div *ngFor="let param of invoked.parameters | keyvalue">
@@ -244,7 +263,7 @@
           </mat-expansion-panel-header>
           <div
             matExpansionPanelContent
-            style="white-space: pre"
+            style="white-space: pre-wrap"
             [innerHTML]="convertNewlinesToHtml(invoked.stdoutSummary ?? invoked.stdout)"
           ></div>
         </mat-expansion-panel>
@@ -263,7 +282,7 @@
           </mat-expansion-panel-header>
           <div
             matExpansionPanelContent
-            style="white-space: pre"
+            style="white-space: pre-wrap"
             [innerHTML]="convertNewlinesToHtml(invoked.stderrSummary ?? invoked.stderr)"
           ></div>
         </mat-expansion-panel>
@@ -303,7 +322,7 @@
             </mat-panel-title>
           </mat-expansion-panel-header>
           <!-- prettier-ignore -->
-          <div matExpansionPanelContent style="white-space: pre">{{ call.request.systemPrompt?.text }}</div>
+          <div matExpansionPanelContent style="white-space: pre-wrap">{{ call.request.systemPrompt?.text }}</div>
         </mat-expansion-panel>
 
         <mat-expansion-panel
@@ -320,7 +339,7 @@
             </mat-panel-title>
           </mat-expansion-panel-header>
           <!-- prettier-ignore -->
-          <div matExpansionPanelContent style="white-space: pre">{{ extractFunctionCallHistory(call.request.userPromptText) }}</div>
+          <div matExpansionPanelContent style="white-space: pre-wrap">{{ extractFunctionCallHistory(call.request.userPromptText) }}</div>
         </mat-expansion-panel>
 
         <mat-expansion-panel
@@ -337,7 +356,7 @@
             </mat-panel-title>
           </mat-expansion-panel-header>
           <!-- prettier-ignore -->
-          <div matExpansionPanelContent style="white-space: pre">{{ extractMemoryContent(call.request.userPromptText) }}</div>
+          <div matExpansionPanelContent style="white-space: pre-wrap">{{ extractMemoryContent(call.request.userPromptText) }}</div>
         </mat-expansion-panel>
 
         <mat-expansion-panel (opened)="call.userPromptExpanded = true" (closed)="call.userPromptExpanded = false">
@@ -350,7 +369,7 @@
             </mat-panel-title>
           </mat-expansion-panel-header>
           <!-- prettier-ignore -->
-          <div matExpansionPanelContent style="white-space: pre">{{ removeFunctionCallHistory(removeMemoryContent(call.request.userPromptText)) }}</div>
+          <div matExpansionPanelContent style="white-space: pre-wrap">{{ removeFunctionCallHistory(removeMemoryContent(call.request.userPromptText)) }}</div>
         </mat-expansion-panel>
         <mat-expansion-panel (opened)="call.responseTextExpanded = true" (closed)="call.responseTextExpanded = false">
           <mat-expansion-panel-header>
@@ -362,7 +381,7 @@
             </mat-panel-title>
           </mat-expansion-panel-header>
           <!-- prettier-ignore -->
-          <div matExpansionPanelContent style="white-space: pre">{{ call.response.responseText }}</div>
+          <div matExpansionPanelContent style="white-space: pre-wrap">{{ call.response.responseText }}</div>
         </mat-expansion-panel>
 
         <!--

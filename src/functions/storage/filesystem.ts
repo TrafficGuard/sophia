@@ -1,4 +1,4 @@
-import { access, existsSync, mkdir, readFile, readdir, stat, writeFileSync } from 'node:fs';
+import { access, existsSync, lstat, mkdir, readFile, readdir, stat, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import path, { join } from 'path';
 import { promisify } from 'util';
@@ -20,6 +20,7 @@ const fs = {
 	readdir: promisify(readdir),
 	access: promisify(access),
 	mkdir: promisify(mkdir),
+	lstat: promisify(lstat),
 };
 
 type FileFilter = (filename: string) => boolean;
@@ -186,11 +187,11 @@ export class FileSystem {
 	/**
 	 * Lists the file and folder names in a single directory.
 	 * Folder names will end with a /
-	 * @param dirPath the folder to list the files in
+	 * @param dirPath the folder to list the files in. Defaults to the working directory
 	 * @returns the list of file and folder names
 	 */
 	@func()
-	async listFilesInDirectory(dirPath: string): Promise<string[]> {
+	async listFilesInDirectory(dirPath = '.'): Promise<string[]> {
 		const rootPath = path.join(this.basePath, dirPath);
 		const filter: FileFilter = (name) => true;
 		const ig = ignore();
@@ -412,7 +413,90 @@ export class FileSystem {
 		await this.writeFile(filePath, updatedContent);
 	}
 
-	// https://github.com/BurntSushi/ripgrep
+	private async loadGitignore(dirPath: string) {
+		const ig = ignore();
+		const gitignorePath = path.join(dirPath, '.gitignore');
+		try {
+			const gitignoreContent = await fs.readFile(gitignorePath, 'utf-8');
+			ig.add(gitignoreContent);
+		} catch (error) {
+			console.log('No .gitignore file found, continuing without ignore patterns.');
+		}
+		return ig;
+	}
+
+	private async isDirectory(source: string): Promise<boolean> {
+		const stats = await fs.lstat(source);
+		return stats.isDirectory();
+	}
+
+	// @param {string} [prefix=''] - The prefix to use for indentation (used in recursive calls).
+	// @param {object} [ig=ignore()] - An ignore object to handle .gitignore rules.
+	/**
+	 * Generates a textual representation of a directory tree structure.
+	 *
+	 * This function recursively traverses the given directory, respecting .gitignore rules,
+	 * and produces an indented string representation of the file system hierarchy.
+	 *
+	 * @param {string} dirPath - The path of the directory to generate the tree for, defaulting to working directory
+	 * @returns {Promise<string>} A string representation of the directory tree.
+	 *
+	 * @example
+	 * Assuming the following directory structure:
+	 * ./
+	 *  ├── file1.txt
+	 *  ├── images/
+	 *  │   ├── logo.png
+	 *  └── src/
+	 *      └── utils/
+	 *          └── helper.js
+	 *
+	 * The output would be
+	 * file1.txt
+	 * images/
+	 *   logo.png
+	 * src/
+	 *   utils/
+	 *     helper.js
+	 */
+	@func()
+	async getFileSystemTree(dirPath: string = this.workingDirectory, prefix = '', ig = ignore()): Promise<string> {
+		if (path.basename(dirPath) === '.git') return '';
+
+		let result = '';
+		const items = await fs.readdir(dirPath);
+
+		// Gather information about each item
+		const itemsInfo = await Promise.all(
+			items.map(async (item) => {
+				const fullPath = path.join(dirPath, item);
+				const isDir = await this.isDirectory(fullPath);
+				return { name: item, isDirectory: isDir };
+			}),
+		);
+
+		// Sort items: files first, then directories, both alphabetically
+		const sortedItems = itemsInfo.sort((a, b) => {
+			if (a.isDirectory === b.isDirectory) return a.name.localeCompare(b.name);
+			return a.isDirectory ? 1 : -1;
+		});
+
+		for (const item of sortedItems) {
+			const fullPath = path.join(dirPath, item.name);
+			const relativeFullPath = path.relative(process.cwd(), fullPath);
+
+			if (ig.ignores(relativeFullPath)) continue;
+
+			if (item.isDirectory) {
+				result += `${prefix}${item.name}/\n`;
+				result += await this.getFileSystemTree(fullPath, `${prefix}  `, ig);
+			} else {
+				result += `${prefix}${item.name}\n`;
+			}
+		}
+
+		return result;
+	}
 }
 
 /**

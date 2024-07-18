@@ -17,7 +17,11 @@ export async function reviewChanges(requirements: string, devBranch: string): Pr
 		action:
 			'Do the changes in the diff satisfy the requirements, and explain why? Are there any redundant changes in the diff? Was any code removed in the changes which should not have been? Review the style of the code changes in the diff carefully against the original code.  Do the changes follow all of the style conventions of the original code? Explain why.\n' +
 			'Review your analysis decide if any more code editing needs to be done, responding in the following format:' +
-			'<json>["description of change 1"]</json>\n' +
+			'<json>' +
+			'[' +
+			'	"description of change 1 on a single line",' +
+			'	"description of another change required on a single line",' +
+			']</json>\n' +
 			'\n' +
 			'If you are satified then return an empty array. If there are changes to be made then provided detailed focused instruction on what to change in each array item',
 	});
