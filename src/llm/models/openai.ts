@@ -15,28 +15,17 @@ export const OPENAI_SERVICE = 'openai';
 
 export function openAiLLMRegistry(): Record<string, () => LLM> {
 	return {
-		'openai:gpt-4-turbo-preview': () => openaiLLmFromModel('gpt-4-turbo'),
 		'openai:gpt-4o': () => openaiLLmFromModel('gpt-4o'),
+		'openai:gpt-4o-mini': () => openaiLLmFromModel('gpt-4o-mini'),
 	};
 }
 
-type Model = 'gpt-4o' | 'gpt-4-turbo-preview' | 'gpt-4-vision-preview' | 'gpt-4' | 'gpt-4-32k' | 'gpt-3.5-turbo' | 'gpt-3.5-turbo-16k';
+type Model = 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-vision-preview' | 'gpt-4' | 'gpt-4-32k' | 'gpt-3.5-turbo' | 'gpt-3.5-turbo-16k';
 
 export function openaiLLmFromModel(model: string): LLM {
-	if (model.startsWith('gpt-4-turbo')) return GPT4();
+	if (model.startsWith('gpt-4o-mini')) return GPT4oMini();
 	if (model.startsWith('gpt-4o')) return GPT4o();
 	throw new Error(`Unsupported ${OPENAI_SERVICE} model: ${model}`);
-}
-
-// 1 token ~= 4 chars
-export function GPT4() {
-	return new OpenAI(
-		'GPT4-turbo',
-		'gpt-4-turbo-preview',
-		128_000,
-		(input: string) => (input.length * 10) / (1_000_000 * 4),
-		(output: string) => (output.length * 30) / (1_000_000 * 4),
-	);
 }
 
 export function GPT4o() {
@@ -46,6 +35,16 @@ export function GPT4o() {
 		128_000,
 		(input: string) => (input.length * 5) / (1_000_000 * 4),
 		(output: string) => (output.length * 15) / (1_000_000 * 4),
+	);
+}
+
+export function GPT4oMini() {
+	return new OpenAI(
+		'GPT4o mini',
+		'gpt-4o-mini',
+		128_000,
+		(input: string) => (input.length * 0.15) / (1_000_000 * 4),
+		(output: string) => (output.length * 0.60) / (1_000_000 * 4),
 	);
 }
 
