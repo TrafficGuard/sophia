@@ -44,7 +44,7 @@ export function GPT4oMini() {
 		'gpt-4o-mini',
 		128_000,
 		(input: string) => (input.length * 0.15) / (1_000_000 * 4),
-		(output: string) => (output.length * 0.60) / (1_000_000 * 4),
+		(output: string) => (output.length * 0.6) / (1_000_000 * 4),
 	);
 }
 

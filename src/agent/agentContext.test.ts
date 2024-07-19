@@ -12,10 +12,10 @@ describe('agentContext', () => {
 	describe('serialisation', () => {
 		it('should be be identical after serialisation and deserialization', async () => {
 			const llms = {
-				easy: GPT4(),
-				medium: GPT4(),
-				hard: GPT4(),
-				xhard: GPT4(),
+				easy: GPT4o(),
+				medium: GPT4o(),
+				hard: GPT4o(),
+				xhard: GPT4o(),
 			};
 			const functions = new LlmFunctions();
 			functions.addFunctionClass(FileSystem);

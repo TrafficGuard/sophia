@@ -30,7 +30,7 @@ const utilLLMs: AgentLLMs = {
 	easy: sonnet,
 	medium: sonnet,
 	hard: sonnet,
-	xhard: new MultiLLM([sonnet, GPT4(), Gemini_1_5_Pro()], 3),
+	xhard: new MultiLLM([sonnet, GPT4o(), Gemini_1_5_Pro()], 3),
 };
 
 async function main() {
