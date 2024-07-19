@@ -21,14 +21,33 @@ export type TaskLevel = 'easy' | 'medium' | 'hard' | 'xhard';
 export type AgentLLMs = Record<TaskLevel, LLM>;
 
 /**
- * agent - waiting for the agent control loop to plan
- * functions - waiting for the function call(s) to complete
+ * agent - waiting for the agent LLM call(s) to generate control loop update
+ * functions - waiting for the planned function call(s) to complete
  * error - the agent control loop has errored
- * hil - the agent is waiting human confirmation to continue
- * feedback - the agent is waiting human feedback for a decision
- * completed - the agent has finished
+ * hil - deprecated for humanInLoop_agent and humanInLoop_tool
+ * hitl_threshold - If the agent has reached budget or iteration thresholds. At this point the agent is not executing any LLM/function calls.
+ * hitl_tool - When a function has request HITL in the function calling part of the control loop
+ * hitl_feedback - the agent has requested human feedback for a decision. At this point the agent is not executing any LLM/function calls.
+ * hil - deprecated version of hitl_feedback
+ * feedback - deprecated version of hitl_feedback
+ * child_agents - waiting for child agents to complete
+ * completed - the agent has called the completed function.
+ * shutdown - if the agent has been instructed by the system to pause (e.g. for server shutdown)
+ * timeout - for chat agents when there hasn't been a user input for a configured amount of time
  */
-export type AgentRunningState = 'agent' | 'functions' | 'error' | 'hil' | 'feedback' | 'completed';
+export type AgentRunningState =
+	| 'agent'
+	| 'functions'
+	| 'error'
+	| 'hil'
+	| 'hitl_threshold'
+	| 'hitl_tool'
+	| 'feedback'
+	| 'hitl_feedback'
+	| 'completed'
+	| 'shutdown'
+	| 'child_agents'
+	| 'timeout';
 
 /**
  * The state of an agent.
