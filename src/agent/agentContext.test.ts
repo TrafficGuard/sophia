@@ -5,7 +5,7 @@ import { AgentContext, createContext, deserializeAgentContext, serializeContext 
 import { RunAgentConfig } from '#agent/agentRunner';
 import { FileSystem } from '#functions/storage/filesystem';
 import { UtilFunctions } from '#functions/util';
-import { GPT4 } from '#llm/models/openai';
+import { GPT4o } from '#llm/models/openai';
 import { appContext } from '../app';
 
 describe('agentContext', () => {
