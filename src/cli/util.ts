@@ -7,7 +7,7 @@ import { Slack } from '#functions/slack';
 import { FileSystem } from '#functions/storage/filesystem';
 import { Claude3_Opus, ClaudeLLMs } from '#llm/models/anthropic';
 import { Claude3_5_Sonnet_Vertex, Claude3_Haiku_Vertex, Claude3_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
-import { GPT4, GPT4o } from '#llm/models/openai';
+import { GPT4 } from '#llm/models/openai';
 import { Gemini_1_5_Pro } from '#llm/models/vertexai';
 import { MultiLLM } from '#llm/multi-llm';
 import { ICodeReview, loadCodeReviews } from '#swe/codeReview/codeReviewParser';

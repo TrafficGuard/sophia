@@ -19,7 +19,31 @@ export function groqLLMRegistry(): Record<string, () => LLM> {
 		'groq:mixtral-8x7b-32768': groqMixtral8x7b,
 		'groq:gemma-7b-it': groqGemma7bIt,
 		'groq:llama3-70b-8192': groqLlama3_70B,
+		'groq:gemma2-9b-it': groqGemma2_9b,
+		'groq:llama3-8b-8192': groqLlama3_8b,
 	};
+}
+
+export function groqGemma2_9b(): LLM {
+	return new GroqLLM(
+		'Gemma2 9b-it (Groq)',
+		GROQ_SERVICE,
+		'gemma2-9b-it',
+		8_192,
+		(input: string) => (input.length * 0.2) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 0.2) / (1_000_000 * 3.5),
+	);
+}
+
+export function groqLlama3_8b(): LLM {
+	return new GroqLLM(
+		'LLaMA3 8b (Groq)',
+		GROQ_SERVICE,
+		'llama3-8b-8192',
+		8_192,
+		(input: string) => (input.length * 0.05) / (1_000_000 * 4),
+		(output: string) => (output.length * 0.08) / (1_000_000 * 4),
+	);
 }
 
 export function groqMixtral8x7b(): LLM {
