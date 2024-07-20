@@ -177,8 +177,23 @@ describe('FileSystem', () => {
 	 *
 	 */
 	describe('getFileSystemTree', () => {
-		it('should', async () => {
-			// expect().to.equal();
+		it('should respect nested .gitignore files', async () => {
+			const fileSystem = new FileSystem();
+			const tree = await fileSystem.getFileSystemTree();
+
+			// Check that root-level .gitignore is respected
+			expect(tree).not.to.include('node_modules/');
+			expect(tree).not.to.include('.idea/');
+
+			// Check that frontend/.gitignore is respected
+			expect(tree).to.include('frontend/');
+			expect(tree).not.to.include('frontend/node_modules/');
+			expect(tree).not.to.include('frontend/.angular/');
+
+			// Check that some expected files/directories are included
+			expect(tree).to.include('package.json');
+			expect(tree).to.include('src/');
+			expect(tree).to.include('frontend/src/');
 		});
 	});
 });
