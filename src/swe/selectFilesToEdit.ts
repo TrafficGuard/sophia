@@ -90,7 +90,7 @@ Respond with a JSON object in the following format:
 }
 
 export async function removeUnrelatedFiles(requirements: string, fileSelection: SelectFilesResponse): Promise<SelectFilesResponse> {
-	async function analyzeFile(file: SelectedFiles): Promise<{ file: SelectedFiles; isRelated: boolean }> {
+	async function analyzeFile(file: SelectedFiles): Promise<{ file: SelectedFiles; isRelated: boolean; explanation: string }> {
 		const fileSystem = getFileSystem();
 		const fileContents = await fileSystem.readFile(file.path);
 		const prompt = createAnalysisPrompt(requirements, file, fileContents);
@@ -104,19 +104,28 @@ export async function removeUnrelatedFiles(requirements: string, fileSelection: 
 		return {
 			file,
 			isRelated: (jsonResult as any).isRelated,
+			explanation: (jsonResult as any).explanation,
 		};
 	}
 
 	const allFiles = [...fileSelection.primaryFiles, ...fileSelection.secondaryFiles];
 	const analysisResults = await Promise.all(allFiles.map(analyzeFile));
 
-	const filteredPrimaryFiles = fileSelection.primaryFiles.filter((file) =>
-		analysisResults.find((result) => result.file.path === file.path && result.isRelated),
-	);
+	const filteredPrimaryFiles = fileSelection.primaryFiles.filter((file) => {
+		const result = analysisResults.find((result) => result.file.path === file.path);
+		if (result && !result.isRelated) {
+			logger.info(`Removed unrelated primary file: ${file.path}. Reason: ${result.explanation}`);
+		}
+		return result && result.isRelated;
+	});
 
-	const filteredSecondaryFiles = fileSelection.secondaryFiles.filter((file) =>
-		analysisResults.find((result) => result.file.path === file.path && result.isRelated),
-	);
+	const filteredSecondaryFiles = fileSelection.secondaryFiles.filter((file) => {
+		const result = analysisResults.find((result) => result.file.path === file.path);
+		if (result && !result.isRelated) {
+			logger.info(`Removed unrelated secondary file: ${file.path}. Reason: ${result.explanation}`);
+		}
+		return result && result.isRelated;
+	});
 
 	return {
 		primaryFiles: filteredPrimaryFiles,
