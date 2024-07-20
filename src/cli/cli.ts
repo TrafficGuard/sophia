@@ -6,7 +6,7 @@ export interface CliOptions {
 	resumeLastRun: boolean;
 }
 
-function parseProcessArgs(args: string[]): { resumeLastRun: boolean; remainingArgs: string[] } {
+export function parseProcessArgs(args: string[]): { resumeLastRun: boolean; remainingArgs: string[] } {
     let resumeLastRun = false;
     let i = 0;
     for (; i < args.length; i++) {
