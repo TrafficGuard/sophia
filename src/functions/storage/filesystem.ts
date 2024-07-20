@@ -453,6 +453,10 @@ export class FileSystem {
 		return ig;
 	}
 
+	/**
+	 *
+	 * @param dirPath
+	 */
 	@func()
 	async getFileSystemTree(dirPath: string = '.', prefix = '', parentIg?: Ignore): Promise<string> {
 		const fullPath = path.join(this.getWorkingDirectory(), dirPath);
