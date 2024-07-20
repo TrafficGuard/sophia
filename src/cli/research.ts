@@ -26,7 +26,7 @@ llms = Ollama_LLMs();
 export async function main() {
 	const systemPrompt = readFileSync('src/cli/research-system', 'utf-8');
 
-	const { initialPrompt, resumeLastRun } = parseCliOptions(process.argv);
+	const { initialPrompt, resumeLastRun } = parseProcessArgs();
 
 	console.log(`Prompt: ${initialPrompt}`);
 

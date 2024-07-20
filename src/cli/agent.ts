@@ -23,7 +23,7 @@ export async function main() {
 	functions = [FileSystem, SoftwareDeveloperAgent, Perplexity, PublicWeb];
 	functions = [CodeEditingAgent, Perplexity];
 
-	const { initialPrompt, resumeLastRun } = parseCliOptions(process.argv);
+	const { initialPrompt, resumeLastRun } = parseProcessArgs();
 
 	let lastRunAgentId: string | null = null;
 	if (resumeLastRun) {
