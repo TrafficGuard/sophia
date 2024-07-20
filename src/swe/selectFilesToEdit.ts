@@ -95,7 +95,7 @@ Respond with a JSON object in the following format:
 }
 `;
 
-	const jsonResult = await llms().easy.generateJson(prompt, 'You are an expert software developer tasked with identifying relevant files for a coding task.', { temperature: 0.3 });
+	const jsonResult = await llms().easy.generateJson(prompt, 'You are an expert software developer tasked with identifying relevant files for a coding task.', { temperature: 0.3, id: 'removeUnrelatedFiles' });
 
 	const fileAnalysis = (jsonResult as any).fileAnalysis;
 
