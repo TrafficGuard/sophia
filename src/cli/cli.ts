@@ -6,21 +6,23 @@ export interface CliOptions {
 	resumeLastRun: boolean;
 }
 
-export function parseProcessArgs(): CliOptions {
-	const args = process.argv.slice(2);
-	let resumeLastRun = false;
-	let initialPrompt = '';
+function parseProcessArgs(args: string[]): { resumeLastRun: boolean; remainingArgs: string[] } {
+    let resumeLastRun = false;
+    let i = 0;
+    for (; i < args.length; i++) {
+        if (args[i] === '-r') {
+            resumeLastRun = true;
+        } else {
+            break;
+        }
+    }
+    return { resumeLastRun, remainingArgs: args.slice(i) };
+}
 
-	for (let i = 0; i < args.length; i++) {
-		if (args[i] === '-r') {
-			resumeLastRun = true;
-		} else {
-			initialPrompt = args.slice(i).join(' ');
-			break;
-		}
-	}
-
-	return { initialPrompt, resumeLastRun };
+export function parseCliArgs(): CliOptions {
+    const { resumeLastRun, remainingArgs } = parseProcessArgs(process.argv.slice(2));
+    const initialPrompt = remainingArgs.join(' ');
+    return { initialPrompt, resumeLastRun };
 }
 
 export function saveAgentId(scriptName: string, agentId: string): void {
