@@ -421,7 +421,7 @@ export class FileSystem {
 			const gitignoreContent = await fs.readFile(gitignorePath, 'utf-8');
 			ig.add(gitignoreContent);
 		} catch (error) {
-			console.log('No .gitignore file found, continuing without ignore patterns.');
+			// console.log('No .gitignore file found, continuing without ignore patterns.');
 		}
 		return ig;
 	}
@@ -504,17 +504,6 @@ export class FileSystem {
 		return result;
 	}
 
-	private async loadGitignore(dirPath: string): Promise<any> {
-		const ig = ignore();
-		const gitignorePath = path.join(dirPath, '.gitignore');
-		try {
-			const gitignoreContent = await fs.readFile(gitignorePath, 'utf-8');
-			ig.add(gitignoreContent);
-		} catch (error) {
-			// No .gitignore file found, continue without ignore patterns
-		}
-		return ig;
-	}
 }
 
 /**
