@@ -49,5 +49,6 @@ export function getLastRunAgentId(scriptName: string): string | undefined {
 	if (existsSync(filePath)) {
 		return readFileSync(filePath, 'utf-8').trim();
 	}
+	logger.warn(`No agent to resume for ${scriptName} script`);
 	return undefined;
 }

@@ -127,7 +127,7 @@ export class CodeEditingAgent {
 						compileFixRequirements +=
 							'The project is not currently compiling. Analyse the compiler errors to identify the fixes required in the source code.\n';
 					}
-					if (compileErrorSummaries.length) {
+					if (compileErrorSummaries.length > 1) {
 						compileFixRequirements +=
 							'Your previous attempts have not fixed the compiler errors. A summary of the errors after previous attempts to fix have been provided.\n' +
 							'If you are getting the same errors then try a different approach or provide a researchQuery to find the correct API usage.\n';
@@ -171,7 +171,8 @@ export class CodeEditingAgent {
 				const compileErrorOutput = e.message;
 				logger.error(`Compile Error Output: ${compileErrorOutput}`);
 				// TODO handle code editor error separately - what failure modes does it have (invalid args, git error etc)?
-				compileErrorAnalysis = await analyzeCompileErrors(compileErrorOutput, initialSelectedFiles);
+				compileErrorAnalysis = await analyzeCompileErrors(compileErrorOutput, initialSelectedFiles, compileErrorSummaries);
+				compileErrorSummaries.push(compileErrorAnalysis.compileIssuesSummary);
 			}
 		}
 
@@ -266,6 +267,7 @@ export class CodeEditingAgent {
 		if (!projectInfo.test) return null;
 		let testErrorOutput = null;
 		let errorAnalysis: CompileErrorAnalysis = null;
+		const compileErrorHistory = [];
 		const MAX_ATTEMPTS = 2;
 		for (let i = 0; i < MAX_ATTEMPTS; i++) {
 			try {
@@ -279,7 +281,7 @@ export class CodeEditingAgent {
 			} catch (e) {
 				testErrorOutput = e.message;
 				logger.info(`Test error output: ${testErrorOutput}`);
-				errorAnalysis = await analyzeCompileErrors(testErrorOutput, initialSelectedFiles);
+				errorAnalysis = await analyzeCompileErrors(testErrorOutput, initialSelectedFiles, compileErrorHistory);
 			}
 		}
 		return errorAnalysis;

@@ -1,3 +1,4 @@
+import { writeFileSync } from 'fs';
 import fs from 'node:fs';
 import { promisify } from 'util';
 import { addCost, agentContext, getFileSystem } from '#agent/agentContext';
@@ -60,10 +61,13 @@ export class CodeEditor {
 
 		await promisify(fs.mkdir)('.nous/aider/llm-history', { recursive: true });
 		const llmHistoryFile = `.nous/aider/llm-history/${agentContext().agentId}-${Date.now()}`;
+		writeFileSync(llmHistoryFile, '');
 
 		const cmd = `aider --skip-check-update --yes ${modelArg} --llm-history-file="${llmHistoryFile}" --message-file=${messageFilePath} ${filesToEdit
 			.map((file) => `"${file}"`)
 			.join(' ')}`;
+
+		// TODO
 
 		const { stdout, stderr, exitCode } = await execCommand(cmd, { envVars: env });
 		logger.debug(stdout + stderr);
