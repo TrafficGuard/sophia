@@ -414,25 +414,6 @@ export class FileSystem {
 		await this.writeFile(filePath, updatedContent);
 	}
 
-	private async loadGitignore(dirPath: string) {
-		const ig = ignore();
-		const gitignorePath = path.join(dirPath, '.gitignore');
-		try {
-			const gitignoreContent = await fs.readFile(gitignorePath, 'utf-8');
-			ig.add(gitignoreContent);
-		} catch (error) {
-			// console.log('No .gitignore file found, continuing without ignore patterns.');
-		}
-		return ig;
-	}
-
-	private async isDirectory(source: string): Promise<boolean> {
-		const stats = await fs.lstat(source);
-		return stats.isDirectory();
-	}
-
-	// @param {string} [prefix=''] - The prefix to use for indentation (used in recursive calls).
-	// @param {object} [ig=ignore()] - An ignore object to handle .gitignore rules.
 	/**
 	 * Generates a textual representation of a directory tree structure.
 	 *
@@ -462,42 +443,43 @@ export class FileSystem {
 	 */
 	@func()
 	async getFileSystemTree(dirPath: string = '.', prefix = ''): Promise<string> {
-		if (path.basename(dirPath) === '.git') return '';
+		const fullPath = path.join(this.getWorkingDirectory(), dirPath);
+		if (path.basename(fullPath) === '.git') return '';
 
 		let result = '';
-		const items = await fs.readdir(dirPath);
+		const ig = ignore();
+		const gitIgnorePath = path.join(fullPath, '.gitignore');
+		if (existsSync(gitIgnorePath)) {
+			let lines = await fs.readFile(gitIgnorePath, 'utf8').then((data) => data.split('\n'));
+			lines = lines.map((line) => line.trim()).filter((line) => line.length && !line.startsWith('#'));
+			ig.add(lines);
+			ig.add('.git');
+		}
 
-		// Load .gitignore for this directory
-		const ig = await this.loadGitignore(dirPath);
-
-		// Gather information about each item
-		const itemsInfo = await Promise.all(
-			items.map(async (item) => {
-				const fullPath = path.join(dirPath, item);
-				const isDir = await this.isDirectory(fullPath);
-				return { name: item, isDirectory: isDir };
-			}),
-		);
+		const items = await fs.readdir(fullPath);
 
 		// Sort items: files first, then directories, both alphabetically
-		const sortedItems = itemsInfo.sort((a, b) => {
-			if (a.isDirectory === b.isDirectory) return a.name.localeCompare(b.name);
-			return a.isDirectory ? 1 : -1;
+		const sortedItems = items.sort((a, b) => {
+			const aIsDir = existsSync(path.join(fullPath, a)) && fs.lstatSync(path.join(fullPath, a)).isDirectory();
+			const bIsDir = existsSync(path.join(fullPath, b)) && fs.lstatSync(path.join(fullPath, b)).isDirectory();
+			if (aIsDir === bIsDir) return a.localeCompare(b);
+			return aIsDir ? 1 : -1;
 		});
 
 		for (const item of sortedItems) {
-			const fullPath = path.join(dirPath, item.name);
-			const relativeFullPath = path.relative(this.getWorkingDirectory(), fullPath);
+			const itemPath = path.join(fullPath, item);
+			const relativeItemPath = path.relative(this.getWorkingDirectory(), itemPath);
 
-			if (ig.ignores(relativeFullPath)) {
+			if (ig.ignores(relativeItemPath)) {
 				continue;
 			}
 
-			if (item.isDirectory) {
-				result += `${prefix}${item.name}/\n`;
-				result += await this.getFileSystemTree(fullPath, `${prefix}  `);
+			const isDir = existsSync(itemPath) && fs.lstatSync(itemPath).isDirectory();
+			if (isDir) {
+				result += `${prefix}${item}/\n`;
+				result += await this.getFileSystemTree(relativeItemPath, `${prefix}  `);
 			} else {
-				result += `${prefix}${item.name}\n`;
+				result += `${prefix}${item}\n`;
 			}
 		}
 
