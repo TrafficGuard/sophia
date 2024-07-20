@@ -1,3 +1,4 @@
+import { createByModelName } from '@microsoft/tiktokenizer';
 import { agentContext, getFileSystem, llms } from '#agent/agentContext';
 import { FileSystem } from '#functions/storage/filesystem';
 import { logger } from '#o11y/logger';
@@ -16,9 +17,14 @@ export interface SelectedFiles {
 
 export async function selectFilesToEdit(requirements: string, projectInfo: ProjectInfo): Promise<SelectFilesResponse> {
 	const tools = projectInfo.languageTools;
-	let repositoryMap = '';
-	if (tools) repositoryMap = await tools.generateProjectMap();
-	else repositoryMap = (await getFileSystem().listFilesRecursively()).join('\n');
+	const repositoryMap = await getFileSystem().getFileSystemTree();
+	if (tools) {
+		// await tools.generateProjectMap();
+	}
+
+	const tokenizer = await createByModelName('gpt-4o');
+	const fileSystemTreeTokens = tokenizer.encode(repositoryMap).length;
+	logger.info(`FileSystem tree tokens: ${fileSystemTreeTokens}`);
 
 	const prompt = `
 <project_map>
@@ -53,12 +59,26 @@ The file paths MUST exist in the <project_map /> file_contents path attributes.
 </example>
 </task>
 `;
-	const response = (await llms().medium.generateJson(prompt, null, { id: 'selectFilesToEdit' })) as SelectFilesResponse;
+	let selectedFiles = (await llms().medium.generateJson(prompt, null, { id: 'selectFilesToEdit' })) as SelectFilesResponse;
 
-	return removeNonExistingFiles(response, getFileSystem());
+	selectedFiles = await removeNonExistingFiles(selectedFiles);
+
+	selectedFiles = await removeUnrelatedFiles(requirements, selectedFiles)
+
+	return selectedFiles;
 }
 
-export async function removeNonExistingFiles(fileSelection: SelectFilesResponse, fileSystem: FileSystem): Promise<SelectFilesResponse> {
+export async function removeUnrelatedFiles(requirements: string, fileSelection: SelectFilesResponse): Promise<SelectFilesResponse> {
+
+	const result = await llms().easy.generateText('user prompt', 'system prompt')
+	const jsonResult = await llms().easy.generateJson('user prompt instruction to return in JSON', 'system prompt')
+
+	return fileSelection
+}
+
+
+export async function removeNonExistingFiles(fileSelection: SelectFilesResponse): Promise<SelectFilesResponse> {
+	const fileSystem = getFileSystem();
 	const primaryFiles = fileSelection.primaryFiles;
 	const secondaryFiles = fileSelection.secondaryFiles;
 
