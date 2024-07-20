@@ -68,9 +68,8 @@ The file paths MUST exist in the <project_map /> file_contents path attributes.
 	return selectedFiles;
 }
 
-export async function removeUnrelatedFiles(requirements: string, fileSelection: SelectFilesResponse): Promise<SelectFilesResponse> {
-	async function analyzeFile(file: SelectedFiles): Promise<{ file: SelectedFiles; isRelated: boolean }> {
-		const prompt = `
+function createAnalysisPrompt(requirements: string, file: SelectedFiles, fileContents: string): string {
+	return `
 Requirements: ${requirements}
 
 Task: Analyze the following file and determine if it is related to the given requirements. 
@@ -79,12 +78,22 @@ A file is considered related if it's likely to be modified or referenced when im
 File: ${file.path}
 Reason for selection: ${file.reason}
 
+File contents:
+${fileContents}
+
 Respond with a JSON object in the following format:
 {
 	"isRelated": true/false,
 	"explanation": "Brief explanation of why the file is related or not"
 }
 `;
+}
+
+export async function removeUnrelatedFiles(requirements: string, fileSelection: SelectFilesResponse): Promise<SelectFilesResponse> {
+	async function analyzeFile(file: SelectedFiles): Promise<{ file: SelectedFiles; isRelated: boolean }> {
+		const fileSystem = getFileSystem();
+		const fileContents = await fileSystem.readFile(file.path);
+		const prompt = createAnalysisPrompt(requirements, file, fileContents);
 
 		const jsonResult = await llms().easy.generateJson(
 			prompt,
