@@ -463,10 +463,8 @@ export class FileSystem {
 		if (path.basename(fullPath) === '.git') return '';
 
 		let result = '';
-		const ig = await this.loadGitignore(fullPath);
-		if (parentIg) {
-			ig.add(parentIg);
-		}
+		const currentIg = await this.loadGitignore(fullPath);
+		const ig = parentIg ? currentIg.add(parentIg) : currentIg;
 
 		const items = await fs.readdir(fullPath);
 
