@@ -17,7 +17,7 @@ describe('removeNonExistingFiles', () => {
 			secondaryFiles: [{ path: randomFilePath, reason: 'reference' }],
 		};
 
-		const result = await removeNonExistingFiles(fileSelection, fileSystem);
+		const result = await removeNonExistingFiles(fileSelection);
 
 		expect(result.primaryFiles).to.have.lengthOf(1);
 		expect(result.primaryFiles[0].path).to.equal(existingFilePath);
