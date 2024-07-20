@@ -53,6 +53,7 @@
     "@google-cloud/storage": "^7.9.0",
     "@google-cloud/vertexai": "^1.1.0",
     "@grpc/grpc-js": "^1.8.0",
+    "@microsoft/tiktokenizer": "^1.0.8",
     "@mozilla/readability": "^0.5.0",
     "@octokit/request": "^5.1.0",
     "@opentelemetry/api": "^1.6.0",

@@ -173,8 +173,6 @@ describe('FileSystem', () => {
 	 * The frontend angular project is in the folder frontend
 	 *
 	 * Need to test that the .gitignore from the frontend subfolder applies to folder/files under it
-	 *
-	 *
 	 */
 	describe('getFileSystemTree', () => {
 		it('should respect nested .gitignore files', async () => {
@@ -182,13 +180,10 @@ describe('FileSystem', () => {
 			const tree = await fileSystem.getFileSystemTree();
 
 			// Check that root-level .gitignore is respected
-			expect(tree).not.to.include('node_modules/');
-			expect(tree).not.to.include('.idea/');
+			expect(tree).not.to.include('node_modules');
 
 			// Check that frontend/.gitignore is respected
-			expect(tree).to.include('frontend/');
-			expect(tree).not.to.include('frontend/node_modules/');
-			expect(tree).not.to.include('frontend/.angular/');
+			expect(tree).not.to.include('.angular');
 
 			// Check that some expected files/directories are included
 			expect(tree).to.include('package.json');

@@ -1,4 +1,5 @@
-import {access, existsSync, lstat, mkdir, readFile, readdir, stat, writeFileSync, lstatSync} from 'node:fs';
+import { readFileSync } from 'fs';
+import { access, existsSync, lstat, lstatSync, mkdir, readFile, readdir, stat, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import path, { join } from 'path';
 import { promisify } from 'util';
@@ -14,7 +15,6 @@ import { logger } from '#o11y/logger';
 import { spawnCommand } from '#utils/exec';
 import { CDATA_END, CDATA_START } from '#utils/xml-utils';
 import { needsCDATA } from '#utils/xml-utils';
-import {readFileSync} from "fs";
 const fs = {
 	readFile: promisify(readFile),
 	stat: promisify(stat),
@@ -230,6 +230,8 @@ export class FileSystem {
 	 */
 	@func()
 	async listFilesRecursively(dirPath = './'): Promise<string[]> {
+		// const dirPath = './'
+		if (dirPath !== './') throw new Error('listFilesRecursively needs to be fixed to work with the dirPath not being the workingDirectory');
 		this.log.debug(`basePath: ${this.basePath}`);
 		this.log.debug(`cwd: ${this.workingDirectory}`);
 		this.log.debug(`cwd(): ${this.getWorkingDirectory()}`);
@@ -414,7 +416,6 @@ export class FileSystem {
 		await this.writeFile(filePath, updatedContent);
 	}
 
-
 	private async loadGitignore(dirPath: string): Promise<Ignore> {
 		const ig = ignore();
 		const gitIgnorePath = path.join(dirPath, '.gitignore');
@@ -456,11 +457,11 @@ export class FileSystem {
 	 *     helper.js
 	 */
 	@func()
-	async getFileSystemTree(dirPath: string = '.'): Promise<string> {
+	async getFileSystemTree(dirPath = './'): Promise<string> {
 		const files = await this.listFilesRecursively(dirPath);
 		const tree = new Map<string, string>();
 
-		files.forEach(file => {
+		files.forEach((file) => {
 			const parts = file.split(path.sep);
 			let currentPath = '';
 			parts.forEach((part, index) => {
@@ -474,7 +475,6 @@ export class FileSystem {
 
 		return Array.from(tree.values()).join('');
 	}
-
 }
 
 /**

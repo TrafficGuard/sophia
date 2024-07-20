@@ -61,6 +61,8 @@ The file paths MUST exist in the <project_map /> file_contents path attributes.
 `;
 	let selectedFiles = (await llms().medium.generateJson(prompt, null, { id: 'selectFilesToEdit' })) as SelectFilesResponse;
 
+	selectedFiles = removeLockFiles(selectedFiles);
+
 	selectedFiles = await removeNonExistingFiles(selectedFiles);
 
 	selectedFiles = await removeUnrelatedFiles(requirements, selectedFiles);
@@ -90,7 +92,7 @@ Respond with a JSON object in the following format:
 }
 
 export async function removeUnrelatedFiles(requirements: string, fileSelection: SelectFilesResponse): Promise<SelectFilesResponse> {
-	async function analyzeFile(file: SelectedFiles): Promise<{ file: SelectedFiles; isRelated: boolean; explanation: string }> {
+	const analyzeFile = async (file: SelectedFiles): Promise<{ file: SelectedFiles; isRelated: boolean; explanation: string }> => {
 		const fileSystem = getFileSystem();
 		const fileContents = await fileSystem.readFile(file.path);
 		const prompt = createAnalysisPrompt(requirements, file, fileContents);
@@ -106,7 +108,7 @@ export async function removeUnrelatedFiles(requirements: string, fileSelection: 
 			isRelated: (jsonResult as any).isRelated,
 			explanation: (jsonResult as any).explanation,
 		};
-	}
+	};
 
 	const allFiles = [...fileSelection.primaryFiles, ...fileSelection.secondaryFiles];
 	const analysisResults = await Promise.all(allFiles.map(analyzeFile));
@@ -116,7 +118,7 @@ export async function removeUnrelatedFiles(requirements: string, fileSelection: 
 		if (result && !result.isRelated) {
 			logger.info(`Removed unrelated primary file: ${file.path}. Reason: ${result.explanation}`);
 		}
-		return result && result.isRelated;
+		return result?.isRelated;
 	});
 
 	const filteredSecondaryFiles = fileSelection.secondaryFiles.filter((file) => {
@@ -124,13 +126,23 @@ export async function removeUnrelatedFiles(requirements: string, fileSelection: 
 		if (result && !result.isRelated) {
 			logger.info(`Removed unrelated secondary file: ${file.path}. Reason: ${result.explanation}`);
 		}
-		return result && result.isRelated;
+		return result?.isRelated;
 	});
 
 	return {
 		primaryFiles: filteredPrimaryFiles,
 		secondaryFiles: filteredSecondaryFiles,
 	};
+}
+
+/**
+ * Remove large files
+ * @param fileSelection
+ */
+function removeLockFiles(fileSelection: SelectFilesResponse): SelectFilesResponse {
+	fileSelection.primaryFiles = fileSelection.primaryFiles.filter((file) => !file.path.endsWith('package-lock.json'));
+	fileSelection.secondaryFiles = fileSelection.secondaryFiles.filter((file) => !file.path.endsWith('package-lock.json'));
+	return fileSelection;
 }
 
 export async function removeNonExistingFiles(fileSelection: SelectFilesResponse): Promise<SelectFilesResponse> {

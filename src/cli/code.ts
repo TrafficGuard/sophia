@@ -22,7 +22,7 @@ async function main() {
 
 	const { initialPrompt, resumeAgentId } = parseProcessArgs();
 
-	console.log(`Prompt: ${prompt}`);
+	console.log(`Prompt: ${initialPrompt}`);
 
 	const config: RunAgentConfig = {
 		agentName: 'cli-code',

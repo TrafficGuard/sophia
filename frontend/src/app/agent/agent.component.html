@@ -2,24 +2,36 @@
   <mat-tab label="Details">
     <div>
       <mat-icon (click)="refreshAgentDetails()">refresh</mat-icon>
-      <a href="{{ agentUrl(agentDetails)}}" target="_blank">gcp</a>
+      <a href="{{ agentUrl(agentDetails) }}" target="_blank">gcp</a>
     </div>
-
 
     <mat-card *ngIf="agentDetails.state === 'feedback'">
       <form [formGroup]="feedbackForm" (ngSubmit)="onSubmitFeedback()">
         <mat-card-title>Feedback Requested</mat-card-title>
         <mat-card-content style="margin-bottom: 0; margin-top: 15px">
-          <div *ngIf="agentDetails.feedbackMessage" class="agent-feedback-message" style="width: 1000px; margin-bottom: 20px">
+          <div
+            *ngIf="agentDetails.feedbackMessage"
+            class="agent-feedback-message"
+            style="width: 1000px; margin-bottom: 20px"
+          >
             <strong>Agent's Feedback Request:</strong>
             <p>{{ agentDetails.feedbackMessage }}</p>
           </div>
-          <mat-expansion-panel *ngIf="agentDetails.functionCallHistory && agentDetails.functionCallHistory.length > 0" style="width: 1000px; margin-bottom: 20px">
+          <mat-expansion-panel
+            *ngIf="agentDetails.functionCallHistory && agentDetails.functionCallHistory.length > 0"
+            style="width: 1000px; margin-bottom: 20px"
+          >
             <mat-expansion-panel-header>
               <mat-panel-title>
                 <span style="margin-right: 5px"><strong>Question:</strong></span>
                 <!-- Needs to match Agent.requestFeedback arg name -->
-                <span class="expansion-preview">{{ agentDetails.functionCallHistory[agentDetails.functionCallHistory.length - 1].parameters.request.trim() | slice : 0 : 140 }}...</span>
+                <span class="expansion-preview"
+                  >{{
+                    agentDetails.functionCallHistory[
+                      agentDetails.functionCallHistory.length - 1
+                    ].parameters.request.trim() | slice : 0 : 140
+                  }}...</span
+                >
               </mat-panel-title>
             </mat-expansion-panel-header>
             <!-- prettier-ignore -->
@@ -70,7 +82,9 @@
           <button mat-raised-button color="primary" type="submit" [disabled]="!errorForm.valid || isResumingError">
             {{ isResumingError ? 'Resuming...' : 'Resume Agent' }}
           </button>
-          <button mat-raised-button color="warn" (click)="cancelAgent()" [disabled]="isResumingError">Cancel Agent</button>
+          <button mat-raised-button color="warn" (click)="cancelAgent()" [disabled]="isResumingError">
+            Cancel Agent
+          </button>
         </mat-card-actions>
       </form>
     </mat-card>

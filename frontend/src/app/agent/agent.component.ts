@@ -382,7 +382,8 @@ export class AgentComponent implements OnInit {
 
   loadLlmCalls(): void {
     if (this.agentId) {
-      this.http.get<any>(`${environment.serverUrl}/llms/calls/agent/${this.agentId}`)
+      this.http
+        .get<any>(`${environment.serverUrl}/llms/calls/agent/${this.agentId}`)
         .pipe(
           catchError((error) => {
             console.error('Error loading LLM calls', error);
@@ -408,7 +409,8 @@ export class AgentComponent implements OnInit {
   }
 
   private loadAgentDetails(agentId: string): void {
-    this.http.get<any>(`${environment.serverUrl}/agent/v1/details/${agentId}`)
+    this.http
+      .get<any>(`${environment.serverUrl}/agent/v1/details/${agentId}`)
       .pipe(
         catchError((error) => {
           console.error('Error loading agent details', error);
@@ -420,11 +422,14 @@ export class AgentComponent implements OnInit {
         if (details) {
           this.agentDetails = details.data;
           this.output = null;
-          if (this.agentDetails &&this.agentDetails.state === 'completed') {
+          if (this.agentDetails && this.agentDetails.state === 'completed') {
             // If the agent has been cancelled after an error then display the error
             // Otherwise display the Agent.completed argument
-            const completed = this.agentDetails.functionCallHistory.length ? this.agentDetails.functionCallHistory.slice(-1)[0] : {};
-            this.output = this.agentDetails.error ?? Object.values(completed.parameters ? Object.values(completed.parameters) : '');
+            const completed = this.agentDetails.functionCallHistory.length
+              ? this.agentDetails.functionCallHistory.slice(-1)[0]
+              : {};
+            this.output =
+              this.agentDetails.error ?? Object.values(completed.parameters ? Object.values(completed.parameters) : '');
           }
           // Initialize expanded states for stdout and stderr
           this.agentDetails.functionCallHistory.forEach((invoked: any) => {
@@ -495,4 +500,6 @@ export class AgentComponent implements OnInit {
   getLlmName(llmId: string): string {
     return this.llmNameMap.get(llmId) || llmId;
   }
+
+  protected readonly JSON = JSON;
 }

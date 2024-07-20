@@ -47,7 +47,19 @@ export interface FunctionCallResult extends FunctionCall {
  * shutdown - if the agent has been instructed by the system to pause (e.g. for server shutdown)
  * timeout - for chat agents when there hasn't been a user input for a configured amount of time
  */
-export type AgentRunningState = 'agent' | 'functions' | 'error' | 'hil' | 'hitl_threshold' | 'hitl_tool' | 'feedback' | 'hitl_feedback' | 'completed' | 'shutdown' | 'child_agents' | 'timeout';
+export type AgentRunningState =
+  | 'agent'
+  | 'functions'
+  | 'error'
+  | 'hil'
+  | 'hitl_threshold'
+  | 'hitl_tool'
+  | 'feedback'
+  | 'hitl_feedback'
+  | 'completed'
+  | 'shutdown'
+  | 'child_agents'
+  | 'timeout';
 
 export interface AgentContext {
   /** Agent instance id - allocated when the agent is first starts */
