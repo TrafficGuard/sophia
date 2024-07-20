@@ -414,6 +414,19 @@ export class FileSystem {
 		await this.writeFile(filePath, updatedContent);
 	}
 
+
+	private async loadGitignore(dirPath: string): Promise<Ignore> {
+		const ig = ignore();
+		const gitIgnorePath = path.join(dirPath, '.gitignore');
+		if (existsSync(gitIgnorePath)) {
+			let lines = await fs.readFile(gitIgnorePath, 'utf8').then((data) => data.split('\n'));
+			lines = lines.map((line) => line.trim()).filter((line) => line.length && !line.startsWith('#'));
+			ig.add(lines);
+		}
+		ig.add('.git');
+		return ig;
+	}
+
 	/**
 	 * Generates a textual representation of a directory tree structure.
 	 *
@@ -440,22 +453,6 @@ export class FileSystem {
 	 * src/
 	 *   utils/
 	 *     helper.js
-	 */
-	private async loadGitignore(dirPath: string): Promise<Ignore> {
-		const ig = ignore();
-		const gitIgnorePath = path.join(dirPath, '.gitignore');
-		if (existsSync(gitIgnorePath)) {
-			let lines = await fs.readFile(gitIgnorePath, 'utf8').then((data) => data.split('\n'));
-			lines = lines.map((line) => line.trim()).filter((line) => line.length && !line.startsWith('#'));
-			ig.add(lines);
-		}
-		ig.add('.git');
-		return ig;
-	}
-
-	/**
-	 *
-	 * @param dirPath
 	 */
 	@func()
 	async getFileSystemTree(dirPath: string = '.', prefix = '', parentIg?: Ignore): Promise<string> {
