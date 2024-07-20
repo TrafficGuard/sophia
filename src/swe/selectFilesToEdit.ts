@@ -63,7 +63,7 @@ The file paths MUST exist in the <project_map /> file_contents path attributes.
 
 	selectedFiles = await removeNonExistingFiles(selectedFiles);
 
-	selectedFiles = await removeUnrelatedFiles(requirements, selectedFiles)
+	selectedFiles = await removeUnrelatedFiles(requirements, selectedFiles);
 
 	return selectedFiles;
 }
@@ -86,31 +86,34 @@ Respond with a JSON object in the following format:
 }
 `;
 
-		const jsonResult = await llms().easy.generateJson(prompt, 'You are an expert software developer tasked with identifying relevant files for a coding task.', { temperature: 0.3, id: `removeUnrelatedFiles_${file.path}` });
+		const jsonResult = await llms().easy.generateJson(
+			prompt,
+			'You are an expert software developer tasked with identifying relevant files for a coding task.',
+			{ temperature: 0.5, id: 'removeUnrelatedFiles' },
+		);
 
 		return {
 			file,
-			isRelated: (jsonResult as any).isRelated
+			isRelated: (jsonResult as any).isRelated,
 		};
 	}
 
 	const allFiles = [...fileSelection.primaryFiles, ...fileSelection.secondaryFiles];
 	const analysisResults = await Promise.all(allFiles.map(analyzeFile));
 
-	const filteredPrimaryFiles = fileSelection.primaryFiles.filter(file => 
-		analysisResults.find(result => result.file.path === file.path && result.isRelated)
+	const filteredPrimaryFiles = fileSelection.primaryFiles.filter((file) =>
+		analysisResults.find((result) => result.file.path === file.path && result.isRelated),
 	);
 
-	const filteredSecondaryFiles = fileSelection.secondaryFiles.filter(file => 
-		analysisResults.find(result => result.file.path === file.path && result.isRelated)
+	const filteredSecondaryFiles = fileSelection.secondaryFiles.filter((file) =>
+		analysisResults.find((result) => result.file.path === file.path && result.isRelated),
 	);
 
 	return {
 		primaryFiles: filteredPrimaryFiles,
-		secondaryFiles: filteredSecondaryFiles
+		secondaryFiles: filteredSecondaryFiles,
 	};
 }
-
 
 export async function removeNonExistingFiles(fileSelection: SelectFilesResponse): Promise<SelectFilesResponse> {
 	const fileSystem = getFileSystem();
