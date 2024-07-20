@@ -2,7 +2,7 @@ import {access, existsSync, lstat, mkdir, readFile, readdir, stat, writeFileSync
 import { resolve } from 'node:path';
 import path, { join } from 'path';
 import { promisify } from 'util';
-import ignore from 'ignore';
+import ignore, { Ignore } from 'ignore';
 import Pino from 'pino';
 import { agentContext } from '#agent/agentContext';
 import { func, funcClass } from '#functionSchema/functionDecorators';
@@ -441,19 +441,27 @@ export class FileSystem {
 	 *   utils/
 	 *     helper.js
 	 */
-	@func()
-	async getFileSystemTree(dirPath: string = '.', prefix = ''): Promise<string> {
-		const fullPath = path.join(this.getWorkingDirectory(), dirPath);
-		if (path.basename(fullPath) === '.git') return '';
-
-		let result = '';
+	private async loadGitignore(dirPath: string): Promise<Ignore> {
 		const ig = ignore();
-		const gitIgnorePath = path.join(fullPath, '.gitignore');
+		const gitIgnorePath = path.join(dirPath, '.gitignore');
 		if (existsSync(gitIgnorePath)) {
 			let lines = await fs.readFile(gitIgnorePath, 'utf8').then((data) => data.split('\n'));
 			lines = lines.map((line) => line.trim()).filter((line) => line.length && !line.startsWith('#'));
 			ig.add(lines);
-			ig.add('.git');
+		}
+		ig.add('.git');
+		return ig;
+	}
+
+	@func()
+	async getFileSystemTree(dirPath: string = '.', prefix = '', parentIg?: Ignore): Promise<string> {
+		const fullPath = path.join(this.getWorkingDirectory(), dirPath);
+		if (path.basename(fullPath) === '.git') return '';
+
+		let result = '';
+		const ig = await this.loadGitignore(fullPath);
+		if (parentIg) {
+			ig.add(parentIg);
 		}
 
 		const items = await fs.readdir(fullPath);
@@ -477,7 +485,7 @@ export class FileSystem {
 			const isDir = existsSync(itemPath) && lstatSync(itemPath).isDirectory();
 			if (isDir) {
 				result += `${prefix}${item}/\n`;
-				result += await this.getFileSystemTree(relativeItemPath, `${prefix}  `);
+				result += await this.getFileSystemTree(relativeItemPath, `${prefix}  `, ig);
 			} else {
 				result += `${prefix}${item}\n`;
 			}
