@@ -69,11 +69,48 @@ The file paths MUST exist in the <project_map /> file_contents path attributes.
 }
 
 export async function removeUnrelatedFiles(requirements: string, fileSelection: SelectFilesResponse): Promise<SelectFilesResponse> {
+	const prompt = `
+Requirements: ${requirements}
 
-	const result = await llms().easy.generateText('user prompt', 'system prompt')
-	const jsonResult = await llms().easy.generateJson('user prompt instruction to return in JSON', 'system prompt')
+Task: Analyze the following list of files and determine if each file is related to the given requirements. 
+A file is considered related if it's likely to be modified or referenced when implementing the requirements.
 
-	return fileSelection
+For each file, provide a boolean indicating if it's related and a brief explanation.
+
+File list:
+${[...fileSelection.primaryFiles, ...fileSelection.secondaryFiles]
+	.map(file => `- ${file.path}: ${file.reason}`)
+	.join('\n')}
+
+Respond with a JSON object in the following format:
+{
+	"fileAnalysis": [
+		{
+			"path": "file/path",
+			"isRelated": true/false,
+			"explanation": "Brief explanation of why the file is related or not"
+		},
+		...
+	]
+}
+`;
+
+	const jsonResult = await llms().easy.generateJson(prompt, 'You are an expert software developer tasked with identifying relevant files for a coding task.', { temperature: 0.3 });
+
+	const fileAnalysis = (jsonResult as any).fileAnalysis;
+
+	const filteredPrimaryFiles = fileSelection.primaryFiles.filter(file => 
+		fileAnalysis.find((analysis: any) => analysis.path === file.path && analysis.isRelated)
+	);
+
+	const filteredSecondaryFiles = fileSelection.secondaryFiles.filter(file => 
+		fileAnalysis.find((analysis: any) => analysis.path === file.path && analysis.isRelated)
+	);
+
+	return {
+		primaryFiles: filteredPrimaryFiles,
+		secondaryFiles: filteredSecondaryFiles
+	};
 }
 
 
