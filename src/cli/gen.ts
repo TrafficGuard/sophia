@@ -32,7 +32,7 @@ async function main() {
 		xhard: mini,
 	};
 
-	const { initialPrompt, resumeLastRun } = parseProcessArgs();
+	const { initialPrompt, resumeLastRun } = parseProcessArgs(process.argv.slice(2));
 
 	let contextInitialPrompt = initialPrompt;
 	if (resumeLastRun) {

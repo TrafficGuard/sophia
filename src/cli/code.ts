@@ -19,7 +19,7 @@ async function main() {
 		agentLlms = ClaudeVertexLLMs();
 	}
 
-	const { initialPrompt, resumeLastRun } = parseProcessArgs();
+	const { initialPrompt, resumeLastRun } = parseProcessArgs(process.argv.slice(2));
 
 	let lastRunAgentId: string | null = null;
 
