@@ -1,8 +1,9 @@
+import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
+
 import { readFileSync } from 'fs';
-import { AgentContext, AgentLLMs } from '#agent/agentContext';
+import { AgentLLMs, llms } from '#agent/agentContext';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
-import '#fastify/trace-init/trace-init';
 import { shutdownTrace } from '#fastify/trace-init/trace-init';
 import { GitLab } from '#functions/scm/gitlab';
 import { ClaudeLLMs } from '#llm/models/anthropic';
@@ -12,10 +13,10 @@ import { initFirestoreApplicationContext } from '../app';
 import { CliOptions, getLastRunAgentId, parseCliOptions, saveAgentId } from './cli';
 
 async function main() {
-	let llms: AgentLLMs = ClaudeLLMs();
+	let agentLlms: AgentLLMs = ClaudeLLMs();
 	if (process.env.GCLOUD_PROJECT) {
 		await initFirestoreApplicationContext();
-		llms = ClaudeVertexLLMs();
+		agentLlms = ClaudeVertexLLMs();
 	}
 
 	const { initialPrompt, resumeLastRun } = parseCliOptions(process.argv);
@@ -40,7 +41,7 @@ async function main() {
 
 	const config: RunAgentConfig = {
 		agentName: 'cli-code',
-		llms,
+		llms: agentLlms,
 		functions: [GitLab], //FileSystem,
 		initialPrompt: prompt,
 		humanInLoop: {

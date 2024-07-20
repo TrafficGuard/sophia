@@ -1,9 +1,10 @@
+import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
+
 import { readFileSync, writeFileSync } from 'fs';
 import * as fs from 'fs';
 import * as path from 'path';
 import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext, AgentLLMs, agentContextStorage, createContext } from '#agent/agentContext';
-import '#fastify/trace-init/trace-init';
 import { LLM } from '#llm/llm';
 import { ClaudeLLMs } from '#llm/models/anthropic';
 import { Claude3_5_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
