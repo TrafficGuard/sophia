@@ -1,9 +1,10 @@
+// import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
+
 // import { readFileSync } from 'fs';
 // import { Span } from '@opentelemetry/api';
 // import { LlmFunctions } from '#agent/LlmFunctions';
 // import { AgentContext, AgentLLMs, agentContextStorage, createContext } from '#agent/agentContext';
 // import { RunAgentConfig } from '#agent/xmlAgentRunner';
-// import '#fastify/trace-init/trace-init';
 // import { FileSystem } from '#functions/storage/filesystem';
 // import { GEMINI_1_5_PRO_LLMS, Gemini_1_5_Pro } from '#llm/models/vertexai';
 // import { withActiveSpan } from '#o11y/trace';

@@ -10,7 +10,7 @@ import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
 import { initFirestoreApplicationContext } from '../app';
-import { CliOptions, getLastRunAgentId, parseCliOptions, saveAgentId } from './cli';
+import { CliOptions, getLastRunAgentId, parseProcessArgs, saveAgentId } from './cli';
 
 export async function main() {
 	let llms = ClaudeLLMs();

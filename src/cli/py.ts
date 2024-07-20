@@ -1,3 +1,5 @@
+import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
+
 import { loadPyodide } from 'pyodide';
 import { Perplexity } from '#functions/web/perplexity';
 import { logger } from '#o11y/logger';

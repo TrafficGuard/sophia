@@ -11,7 +11,7 @@ import { fireworksLlama3_70B } from '#llm/models/fireworks';
 import { GroqLLM, grokLLMs, groqMixtral8x7b } from '#llm/models/groq';
 import { Ollama_LLMs } from '#llm/models/ollama';
 import { togetherLlama3_70B } from '#llm/models/together';
-import { CliOptions, getLastRunAgentId, parseCliOptions, saveAgentId } from './cli';
+import { CliOptions, getLastRunAgentId, parseProcessArgs, saveAgentId } from './cli';
 
 // Usage:
 // npm run research

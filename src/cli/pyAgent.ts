@@ -1,4 +1,4 @@
-import '#fastify/trace-init/trace-init';
+import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
 
 import { readFileSync } from 'fs';
 import { startAgent } from '#agent/agentRunner';

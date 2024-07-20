@@ -13,7 +13,7 @@ import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
 import { initFirestoreApplicationContext } from '../app';
-import { getLastRunAgentId, parseCliOptions, saveAgentId } from './cli';
+import { getLastRunAgentId, parseProcessArgs, saveAgentId } from './cli';
 
 // Used to test the SoftwareDeveloperAgent
 

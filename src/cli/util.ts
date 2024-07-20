@@ -1,6 +1,7 @@
+import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
+
 import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext, AgentLLMs, agentContextStorage, createContext, getFileSystem, llms } from '#agent/agentContext';
-import '#fastify/trace-init/trace-init';
 import { Jira } from '#functions/jira';
 import { GitLab } from '#functions/scm/gitlab';
 import { Slack } from '#functions/slack';

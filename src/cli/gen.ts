@@ -11,7 +11,7 @@ import { Claude3_5_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/models/anthropic
 import { GPT4oMini } from '#llm/models/openai';
 import { currentUser } from '#user/userService/userContext';
 import { initFirestoreApplicationContext } from '../app';
-import { CliOptions, getLastRunAgentId, parseCliOptions, saveAgentId } from './cli';
+import { CliOptions, getLastRunAgentId, parseProcessArgs, saveAgentId } from './cli';
 
 // Usage:
 // npm run chat

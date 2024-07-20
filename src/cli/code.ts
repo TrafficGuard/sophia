@@ -10,7 +10,7 @@ import { ClaudeLLMs } from '#llm/models/anthropic';
 import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { initFirestoreApplicationContext } from '../app';
-import { CliOptions, getLastRunAgentId, parseCliOptions, saveAgentId } from './cli';
+import { CliOptions, getLastRunAgentId, parseProcessArgs, saveAgentId } from './cli';
 
 async function main() {
 	let agentLlms: AgentLLMs = ClaudeLLMs();
