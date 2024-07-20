@@ -1,14 +1,18 @@
 import { getFileSystem, llms } from '#agent/agentContext';
+import { logger } from '#o11y/logger';
 import { buildPrompt } from '#swe/softwareDeveloperAgent';
 
 /**
  * @param requirements
- * @param devBranch the source branch the current branch was branched from
+ * @param sourceBranchOrCommit the source branch or commit to review from
  */
-export async function reviewChanges(requirements: string, devBranch: string): Promise<string> {
+// TODO we'll need to be smarter about what the source branch/commit is to review from
+// as there might not a source branch to compare against, so we need the base commit.
+// Otherwise just review the current files.
+export async function reviewChanges(requirements: string, sourceBranchOrCommit: string): Promise<string> {
 	const prompt = buildPrompt({
 		information: `The following is the git diff of the changes made so far to meet the requirements:\n<diff>\n${await getFileSystem().vcs.getBranchDiff(
-			devBranch,
+			sourceBranchOrCommit,
 		)}\n</diff>`,
 		requirements,
 		// action: 'Do the changes in the diff satisfy the requirements, and why or why not? Do the changes follow the same style as the rest of the code? Are any of the changes redundant?' +
@@ -25,6 +29,8 @@ export async function reviewChanges(requirements: string, devBranch: string): Pr
 			'\n' +
 			'If you are satified then return an empty array. If there are changes to be made then provided detailed focused instruction on what to change in each array item',
 	});
+
+	logger.info(`Reviewing diff from ${sourceBranchOrCommit}`);
 
 	return await llms().hard.generateJson(
 		prompt,

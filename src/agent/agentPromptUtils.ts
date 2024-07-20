@@ -1,6 +1,7 @@
 import { agentContext, getFileSystem } from '#agent/agentContext';
 import { FileMetadata, FileStore } from '#functions/storage/filestore';
 import { FileSystem } from '#functions/storage/filesystem';
+import { FunctionCallResult } from '#llm/llm';
 
 /**
  * @return An XML representation of the agent's memory
@@ -50,18 +51,27 @@ ${JSON.stringify(files)}
 }
 
 /**
- * @return An XML representation of the agent's function call history
+ * @param maxLength {number} The maximum length of the returned string
+ * @return An XML representation of the agent's function call history, limiting the history to a maximum length
+ * of the returned string
  */
-export function buildFunctionCallHistoryPrompt(): string {
-	const functionCalls = agentContext().functionCallHistory;
+export function buildFunctionCallHistoryPrompt(maxLength = 20000): string {
+	const allFunctionCalls: FunctionCallResult[] = agentContext().functionCallHistory;
 	let result = '<function_call_history>\n';
-	if (functionCalls.length) result += '<!-- Oldest -->';
-	for (const call of functionCalls) {
+
+	if (allFunctionCalls.length > 1) result += '<!-- Oldest -->';
+
+	// To maintain a maximum length, we will iterate over the function calls in reverse order
+	let currentLength = result.length; // Start with the length of the result header
+
+	// Iterate over function calls in reverse order (newest first)
+	for (let i = allFunctionCalls.length - 1; i >= 0; i--) {
+		const call = allFunctionCalls[i];
 		let params = '';
 		for (let [name, value] of Object.entries(call.parameters)) {
 			if (Array.isArray(value)) value = JSON.stringify(value, null, ' ');
-			if (typeof value === 'string' && value.length > 150) value = `${value.slice(0, 150)}...`;
-			if (typeof value === 'string') value = value.replace('"', '\\"');
+			// if (typeof value === 'string' && value.length > 150) value = `${value.slice(0, 150)}...`;
+			// if (typeof value === 'string') value = value.replace('"', '\\"');
 			params += `\n  "${name}": "${value}",\n`;
 		}
 		let output = '';
@@ -75,9 +85,21 @@ export function buildFunctionCallHistoryPrompt(): string {
 		} else if (call.stderr) {
 			output += `<error>${call.stderr}</error>\n`;
 		}
-		result += `<function_call>\n ${call.function_name}({${params}})\n ${output}</function_call>\n`;
+
+		// Construct the function call string
+		const functionCallString = `<function_call>\n ${call.function_name}({${params}})\n ${output}</function_call>\n`;
+		const newLength = currentLength + functionCallString.length;
+
+		// Check if adding this function call goes beyond maxLength
+		if (newLength > maxLength) {
+			break; // Stop adding if we exceed the max length
+		}
+
+		result = functionCallString + result; // Prepend to result
+		currentLength = newLength; // Update currentLength
 	}
-	if (functionCalls.length) result += '<!-- Newest -->';
+
+	if (allFunctionCalls.length) result += '<!-- Newest -->';
 	result += '</function_call_history>\n';
 	return result;
 }

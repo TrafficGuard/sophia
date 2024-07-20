@@ -10,7 +10,6 @@ import { appContext } from '../../app';
 import { BaseLLM } from '../base-llm';
 import { GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../llm';
 
-// https://platform.openai.com/docs/models/gpt-4-and-gpt-4-turbo
 export const OPENAI_SERVICE = 'openai';
 
 export function openAiLLMRegistry(): Record<string, () => LLM> {
@@ -20,7 +19,7 @@ export function openAiLLMRegistry(): Record<string, () => LLM> {
 	};
 }
 
-type Model = 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-vision-preview' | 'gpt-4' | 'gpt-4-32k' | 'gpt-3.5-turbo' | 'gpt-3.5-turbo-16k';
+type Model = 'gpt-4o' | 'gpt-4o-mini';
 
 export function openaiLLmFromModel(model: string): LLM {
 	if (model.startsWith('gpt-4o-mini')) return GPT4oMini();

@@ -1,10 +1,14 @@
+import { promises as fs } from 'fs';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'path';
+import path from 'path';
+import { sleep } from 'openai/core';
 import { getFileSystem } from '#agent/agentContext';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
-import { ExecResult, execCommand, failOnError } from '#utils/exec';
+import { ExecResult, execCmd, execCommand, failOnError, spawnCommand } from '#utils/exec';
 import { LanguageTools } from '../languageTools';
+// https://typescript.tv/errors/
 
 @funcClass(__filename)
 export class TypescriptTools implements LanguageTools {
@@ -34,21 +38,13 @@ export class TypescriptTools implements LanguageTools {
 		const tsConfigExists = await getFileSystem().fileExists('tsconfig.json');
 		if (!tsConfigExists) throw new Error(`tsconfig.json not found in ${getFileSystem().getWorkingDirectory()}`);
 
-		// TODO if .nous/dts exists move to backup location
-		{
-			const { exitCode, stdout, stderr } = await execCommand(`rm -rf ${tempFolder}`);
-			if (exitCode > 1) throw new Error(stderr);
-		}
-
 		const { exitCode, stdout, stderr } = await execCommand(`npx tsc -d --declarationDir "./${tempFolder}" --emitDeclarationOnly`);
-		// TODO if this fails because the code editor made a compile error, then restore the backup. Otherwise delete the backup
-		if (exitCode > 0) throw new Error(`${stdout} ${stderr}`);
-		logger.warn(`${stderr}`);
+		// Always returns 0 with no output?
+		logger.info(`Generating TypeScript project result: ${exitCode} ${stdout} ${stderr}`);
 
 		const dtsFiles = new Map();
 		const allFiles = await getFileSystem().getFileContentsRecursively(tempFolder);
 		allFiles.forEach((value, key) => {
-			logger.debug(key);
 			dtsFiles.set(key.replace('.d.ts', '.ts').replace(tempFolder, 'src'), value);
 		});
 		return getFileSystem().formatFileContentsAsXml(dtsFiles);

@@ -60,6 +60,7 @@ export class Git implements VersionControlSystem {
 		return execResult.stdout;
 	}
 
+	@span()
 	async getBranchName(): Promise<string> {
 		const { exitCode, stdout, stderr } = await execCommand('git rev-parse --abbrev-ref HEAD');
 		if (exitCode > 0) throw new Error(`${stdout}\n${stderr}`);

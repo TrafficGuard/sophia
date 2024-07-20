@@ -10,6 +10,7 @@ import { FunctionResponse } from '#llm/llm';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { envVar } from '#utils/env-var';
+import { errorToString } from '#utils/errors';
 import { appContext } from '../app';
 import { AgentContext, agentContext, agentContextStorage, llms } from './agentContext';
 
@@ -181,8 +182,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 							anyFunctionCallErrors = true;
 							agent.state = 'error';
 							logger.error(e, 'Function error');
-							agent.error = e.message;
-							if (e.stack) agent.error += `\n${e.stack}`;
+							agent.error = errorToString(e);
 							await agentStateService.save(agent);
 							functionResults.push(formatFunctionError(functionCall.function_name, e));
 							// currentPrompt += `\n${llm.formatFunctionError(functionCalls.function_name, e)}`;
@@ -208,8 +208,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 					logger.error(e, 'Control loop error');
 					controlError = true;
 					agent.state = 'error';
-					agent.error = e.message;
-					if (e.stack) agent.error += `\n${e.stack}`;
+					agent.error = errorToString(e);
 				} finally {
 					agent.inputPrompt = currentPrompt;
 					agent.callStack = [];

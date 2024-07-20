@@ -48,6 +48,10 @@ export class CodeEditingAgent {
 		const git = fs.vcs;
 		fs.setWorkingDirectory(projectInfo.baseDir);
 
+		const headCommit = await fs.vcs.getHeadSha();
+		const currentBranch = await fs.vcs.getBranchName();
+		const gitSource = !projectInfo.devBranch || projectInfo.devBranch === currentBranch ? headCommit : projectInfo.devBranch;
+
 		// Find the initial set of files required for editing
 		const filesResponse: SelectFilesResponse = await this.selectFilesToEdit(requirements, projectInfo);
 		const initialSelectedFiles: string[] = [
@@ -139,6 +143,7 @@ export class CodeEditingAgent {
 				} else {
 					// project is compiling, lets implement the requirements
 					codeEditorRequirements += implementationRequirements;
+					codeEditorRequirements += '\nOnly make changes directly related to these requirements.';
 				}
 
 				await new CodeEditor().editFilesToMeetRequirements(codeEditorRequirements, codeEditorFiles);
@@ -187,7 +192,7 @@ export class CodeEditingAgent {
 					if (i === STATIC_ANALYSIS_MAX_ATTEMPTS - 1) {
 						logger.warn(`Unable to fix static analysis errors: ${staticAnalysisErrorOutput}`);
 					} else {
-						staticAnalysisErrorOutput = JSON.stringify(e); // Need to stringify?
+						staticAnalysisErrorOutput = e.message;
 						logger.info(`Static analysis error output: ${staticAnalysisErrorOutput}`);
 						const staticErrorFiles = await this.extractFilenames(`${staticAnalysisErrorOutput}\n\nExtract the filenames from the compile errors.`);
 
@@ -203,7 +208,7 @@ export class CodeEditingAgent {
 
 		// Store in memory for now while we see how the prompt performs
 		const branchName = await getFileSystem().vcs.getBranchName();
-		agentContext().memory[`${branchName}--review`] = await reviewChanges(requirements, projectInfo.devBranch);
+		agentContext().memory[`${branchName}--review`] = await this.reviewChanges(requirements, gitSource);
 
 		// The prompts need some work
 		// await this.testLoop(requirements, projectInfo, initialSelectedFiles);
@@ -284,6 +289,11 @@ export class CodeEditingAgent {
 	@span()
 	async summariseRequirements(requirements: string): Promise<string> {
 		return summariseRequirements(requirements);
+	}
+
+	@span()
+	async reviewChanges(requirements: string, sourceBranchOrCommit: string): Promise<string> {
+		return reviewChanges(requirements, sourceBranchOrCommit);
 	}
 
 	@cacheRetry()

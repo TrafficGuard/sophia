@@ -12,6 +12,11 @@ import { appContext } from '../app';
 
 /**
  * The difficulty of a LLM generative task. Used to select an appropriate model for the cost vs capability.
+ * easy   Haiku/GPT4-mini
+ * medium Sonnet
+ * hard   Opus
+ * xhard  Ensemble (multi-gen with voting/merging of best answer)
+ *
  */
 export type TaskLevel = 'easy' | 'medium' | 'hard' | 'xhard';
 

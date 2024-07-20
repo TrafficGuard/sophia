@@ -6,6 +6,7 @@ import { runXmlAgent } from '#agent/xmlAgentRunner';
 import { FunctionCall, FunctionCallResult } from '#llm/llm';
 import { logger } from '#o11y/logger';
 import { User } from '#user/user';
+import { errorToString } from '#utils/errors';
 import { CDATA_END, CDATA_START } from '#utils/xml-utils';
 import { appContext } from '../app';
 
@@ -213,7 +214,7 @@ export function formatFunctionError(functionName: string, error: any): string {
 	return `<function_results>
 		<function_name>${functionName}</function_name>
         <error>${CDATA_START}
-        ${JSON.stringify(error)}
+        ${errorToString(error, false)}
         ${CDATA_END}</error>
         </function_results>`;
 }

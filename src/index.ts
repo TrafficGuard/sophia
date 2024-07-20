@@ -1,4 +1,5 @@
-import '#fastify/trace-init/trace-init';
+import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
+
 import { initApp } from './app';
 
 process.on('uncaughtException', (err) => {

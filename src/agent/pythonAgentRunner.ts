@@ -10,6 +10,7 @@ import { FunctionParameter, FunctionSchema, getAllFunctionSchemas } from '#funct
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { envVar } from '#utils/env-var';
+import { errorToString } from '#utils/errors';
 import { appContext } from '../app';
 import { AgentContext, agentContext, agentContextStorage, llms } from './agentContext';
 
@@ -67,12 +68,14 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 			functions: agent.functions.getFunctionClassNames(),
 		});
 
+		let functionErrorCount = 0;
+
 		let shouldContinue = true;
 		while (shouldContinue) {
 			shouldContinue = await withActiveSpan('PythonAgent', async (span) => {
 				let completed = false;
 				let requestFeedback = false;
-				let anyFunctionCallErrors = false;
+				const anyFunctionCallErrors = false;
 				let controlError = false;
 				try {
 					if (hilCount && countSinceHil === hilCount) {
@@ -101,7 +104,7 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 						stopSequences,
 					});
 
-					const pythonCode = extractPythonCode(llmGenerateScriptResponse);
+					const llmPythonCode = extractPythonCode(llmGenerateScriptResponse);
 
 					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + filePrompt + userRequestXml + llmGenerateScriptResponse;
 
@@ -121,15 +124,15 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 					for (const schema of schemas) {
 						const [className, method] = schema.name.split('.');
 						jsGlobals[schema.name.replace('.', '_')] = async (...args) => {
-							// agent.invoking.push()
+							// Convert arg array to parameters name/value map
+							const parameters: { [key: string]: any } = {};
+							for (let index = 0; index < args.length; index++) parameters[schema.parameters[index].name] = args[index];
+
 							try {
 								const functionResponse = await functionInstances[className][method](...args);
 								// To minimise the function call history size becoming too large (i.e. expensive)
 								// we'll create a summary for responses which are quite long
 								// const outputSummary = await summariseLongFunctionOutput(functionResponse)
-
-								const parameters: { [key: string]: any } = {};
-								for (let index = 0; index < args.length; index++) parameters[schema.parameters[index].name] = args[index];
 
 								// Don't need to duplicate the content in the function call history
 								// TODO Would be nice to save over-written memory keys for history/debugging
@@ -144,17 +147,11 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 								functionResults.push(formatFunctionResult(schema.name, functionResponse));
 								return functionResponse;
 							} catch (e) {
-								anyFunctionCallErrors = true;
-								agent.state = 'error';
-								logger.error(e, 'Function error');
-								agent.error = e.toString();
-								await agentStateService.save(agent);
 								functionResults.push(formatFunctionError(schema.name, e));
-								// currentPrompt += `\n${llm.formatFunctionError(functionCalls.function_name, e)}`;
 
 								agent.functionCallHistory.push({
 									function_name: schema.name,
-									parameters: args, // TODO map to key/value from param schema
+									parameters,
 									stderr: agent.error,
 									// stderrSummary: outputSummary, TODO
 								});
@@ -176,9 +173,9 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 					});
 
 					const allowedImports = ['json', 're', 'math', 'datetime'];
-					// Add the imports of the allowed packages being used
+					// Add the imports from the allowed packages being used in the script
 					pythonScript = allowedImports
-						.filter((pkg) => pythonScript.includes(`${pkg}.`))
+						.filter((pkg) => llmPythonCode.includes(`${pkg}.`))
 						.map((pkg) => `import ${pkg}\n`)
 						.join();
 
@@ -186,7 +183,7 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 from typing import List, Dict, Tuple, Optional, Union
 
 async def main():
-${pythonCode
+${llmPythonCode
 	.split('\n')
 	.map((line) => `    ${line}`)
 	.join('\n')}
@@ -231,13 +228,7 @@ main()`.trim();
 							if (!anyFunctionCallErrors && !completed && !requestFeedback) agent.state = 'agent';
 						}
 					} catch (e) {
-						// functionErrorCount++;
-						anyFunctionCallErrors = true;
-						agent.state = 'error';
-						logger.error(e, 'Function error');
-						agent.error = e.message;
-						if (e.stack) agent.error += `\n${e.stack}`;
-						await agentStateService.save(agent);
+						functionErrorCount++;
 					}
 					// Function invocations are complete
 					// span.setAttribute('functionCalls', pythonCode.map((functionCall) => functionCall.function_name).join(', '));
@@ -253,8 +244,7 @@ main()`.trim();
 					logger.error(e, 'Control loop error');
 					controlError = true;
 					agent.state = 'error';
-					agent.error = e.message;
-					if (e.stack) agent.error += `\n${e.stack}`;
+					agent.error = errorToString(e);
 				} finally {
 					agent.inputPrompt = currentPrompt;
 					agent.callStack = [];
