@@ -1,5 +1,6 @@
-import { readFileSync } from 'fs';
-import { AgentLLMs } from '#agent/agentContext';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
+import { AgentContext, AgentLLMs } from '#agent/agentContext';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import '#fastify/trace-init/trace-init';
@@ -11,6 +12,7 @@ import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
 import { initFirestoreApplicationContext } from '../app';
+import { getLastRunAgentId, parseCliOptions, saveAgentId } from './cli';
 
 // Used to test the SoftwareDeveloperAgent
 
@@ -24,18 +26,33 @@ async function main() {
 		llms = ClaudeVertexLLMs();
 	}
 
-	const args = process.argv.slice(2);
-	const initialPrompt = args.length > 0 ? args.join(' ') : readFileSync('src/cli/swe-in', 'utf-8');
+	let { initialPrompt, resumeLastRun } = parseCliOptions(process.argv.slice(2));
+	let lastRunAgentId: string | null = null;
+
+	if (resumeLastRun) {
+		lastRunAgentId = getLastRunAgentId('swe');
+		if (!lastRunAgentId) {
+			console.log('No previous run found. Starting a new run.');
+		}
+	}
+
+	if (!initialPrompt.trim() && !lastRunAgentId) {
+		initialPrompt = readFileSync('src/cli/swe-in', 'utf-8');
+	}
 
 	const config: RunAgentConfig = {
 		agentName: 'cli-SWE',
 		llms,
 		functions: [FileSystem, CodeEditingAgent, Perplexity],
-		initialPrompt,
+		initialPrompt: initialPrompt.trim(),
+		resumeAgentId: lastRunAgentId || undefined,
 	};
 
-	await runAgentWorkflow(config, async () => {
+	await runAgentWorkflow(config, async (agent: AgentContext) => {
 		await new SoftwareDeveloperAgent().runSoftwareDeveloperWorkflow(config.initialPrompt);
+		if (agent.agentId) {
+			saveAgentId('swe', agent.agentId);
+		}
 	});
 }
 

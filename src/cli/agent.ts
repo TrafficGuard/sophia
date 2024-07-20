@@ -8,8 +8,10 @@ import { PublicWeb } from '#functions/web/web';
 import { ClaudeLLMs } from '#llm/models/anthropic';
 import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { logger } from '#o11y/logger';
+import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
 import { initFirestoreApplicationContext } from '../app';
+import { CliOptions, getLastRunAgentId, parseCliOptions, saveAgentId } from './cli';
 
 export async function main() {
 	let llms = ClaudeLLMs();
@@ -18,10 +20,22 @@ export async function main() {
 		llms = ClaudeVertexLLMs();
 	}
 
-	const functions = [FileSystem, SoftwareDeveloperAgent, Perplexity, PublicWeb];
+	let functions: Array<any>;
+	functions = [FileSystem, SoftwareDeveloperAgent, Perplexity, PublicWeb];
+	functions = [CodeEditingAgent, Perplexity];
 
-	const args = process.argv.slice(2);
-	const initialPrompt = args.length > 0 ? args.join(' ') : readFileSync('src/cli/agent-in', 'utf-8');
+	const { initialPrompt, resumeLastRun } = parseCliOptions(process.argv.slice(2));
+
+	let lastRunAgentId: string | null = null;
+	if (resumeLastRun) {
+		lastRunAgentId = getLastRunAgentId('agent');
+		if (lastRunAgentId) {
+			console.log(`Resuming last run with agent ID: ${lastRunAgentId}`);
+		} else {
+			console.log('No previous run found. Starting a new run.');
+		}
+	}
+
 	console.log(`Prompt: ${initialPrompt}`);
 
 	const agentId = await startAgent({
@@ -29,8 +43,11 @@ export async function main() {
 		initialPrompt,
 		functions,
 		llms,
+		resumeAgentId: lastRunAgentId || undefined,
 	});
 	logger.info('AgentId ', agentId);
+
+	saveAgentId('agent', agentId);
 }
 
 main().then(

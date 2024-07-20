@@ -1,19 +1,15 @@
 import { readFileSync } from 'fs';
-import { AgentLLMs } from '#agent/agentContext';
+import { AgentContext, AgentLLMs } from '#agent/agentContext';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import '#fastify/trace-init/trace-init';
+import { shutdownTrace } from '#fastify/trace-init/trace-init';
 import { GitLab } from '#functions/scm/gitlab';
-import { FileSystem } from '#functions/storage/filesystem';
 import { ClaudeLLMs } from '#llm/models/anthropic';
 import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { initFirestoreApplicationContext } from '../app';
-
-// Used to test the local repo editing workflow in CodeEditingAgent
-
-// Usage:
-// npm run code
+import { CliOptions, getLastRunAgentId, parseCliOptions, saveAgentId } from './cli';
 
 async function main() {
 	let llms: AgentLLMs = ClaudeLLMs();
@@ -22,20 +18,49 @@ async function main() {
 		llms = ClaudeVertexLLMs();
 	}
 
-	const args = process.argv.slice(2);
-	const initialPrompt = args.length > 0 ? args.join(' ') : readFileSync('src/cli/code-in', 'utf-8');
-	console.log(`Prompt: ${initialPrompt}`);
+	const { initialPrompt, resumeLastRun } = parseCliOptions(process.argv.slice(2));
+
+	let lastRunAgentId: string | null = null;
+
+	if (resumeLastRun) {
+		lastRunAgentId = getLastRunAgentId('code');
+		if (lastRunAgentId) {
+			console.log(`Resuming last run with agent ID: ${lastRunAgentId}`);
+		} else {
+			console.log('No previous run found. Starting a new run.');
+		}
+	}
+
+	let prompt = initialPrompt;
+	if (!prompt.trim()) {
+		prompt = readFileSync('src/cli/code-in', 'utf-8');
+	}
+
+	console.log(`Prompt: ${prompt}`);
 
 	const config: RunAgentConfig = {
 		agentName: 'cli-code',
 		llms,
-		functions: [FileSystem],
-		initialPrompt,
+		functions: [GitLab], //FileSystem,
+		initialPrompt: prompt,
+		humanInLoop: {
+			budget: 2,
+		},
 	};
 
-	await runAgentWorkflow(config, async () => {
+	if (lastRunAgentId) {
+		config.resumeAgentId = lastRunAgentId;
+	}
+
+	const agentId = await runAgentWorkflow(config, async () => {
 		await new CodeEditingAgent().runCodeEditWorkflow(config.initialPrompt);
 	});
+
+	if (agentId) {
+		saveAgentId('code', agentId);
+	}
+
+	await shutdownTrace();
 }
 
 main().then(
