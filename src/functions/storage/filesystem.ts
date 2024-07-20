@@ -14,6 +14,7 @@ import { logger } from '#o11y/logger';
 import { spawnCommand } from '#utils/exec';
 import { CDATA_END, CDATA_START } from '#utils/xml-utils';
 import { needsCDATA } from '#utils/xml-utils';
+import {readFileSync} from "fs";
 const fs = {
 	readFile: promisify(readFile),
 	stat: promisify(stat),
@@ -460,7 +461,7 @@ export class FileSystem {
 	 *     helper.js
 	 */
 	@func()
-	async getFileSystemTree(dirPath: string = this.workingDirectory, prefix = '', ig = ignore()): Promise<string> {
+	async getFileSystemTree(dirPath: string = '.', prefix = '', ig = ignore()): Promise<string> {
 		if (path.basename(dirPath) === '.git') return '';
 
 		let result = '';
@@ -481,11 +482,24 @@ export class FileSystem {
 			return a.isDirectory ? 1 : -1;
 		});
 
+		const gitIgnore = path.join(dirPath, '.gitignore')
+		if (existsSync(gitIgnore)) {
+			readFileSync(gitIgnore).toString().split('\n').map(line => line.trim())
+				.map(line => line.startsWith('/') ? line.substring(1) : line)
+				.map(line => line.endsWith('/') ? line.substring(0, line.length - 2) : line)
+				.filter(line => line.trim() !== '' && !line.startsWith('#')).forEach(pattern => {
+					console.log(pattern)
+					ig.add(pattern)});
+		}
+
 		for (const item of sortedItems) {
 			const fullPath = path.join(dirPath, item.name);
 			const relativeFullPath = path.relative(process.cwd(), fullPath);
 
-			if (ig.ignores(relativeFullPath)) continue;
+			if (ig.ignores(relativeFullPath)) {
+				console.log('ignoring ' + relativeFullPath)
+				continue;
+			}
 
 			if (item.isDirectory) {
 				result += `${prefix}${item.name}/\n`;

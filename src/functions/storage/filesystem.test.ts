@@ -167,7 +167,16 @@ describe('FileSystem', () => {
 		});
 	});
 
-	describe('', () => {
+	/*
+	 * Test with the real filesystem of this project which has nested .gitignores
+	 * The server node.js project is at the root folder
+	 * The frontend angular project is in the folder frontend
+	 *
+	 * Need to test that the .gitignore from the frontend subfolder applies to folder/files under it
+	 *
+	 *
+	 */
+	describe('getFileSystemTree', () => {
 		it('should', async () => {
 			// expect().to.equal();
 		});
