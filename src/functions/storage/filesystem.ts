@@ -461,21 +461,14 @@ export class FileSystem {
 	 *     helper.js
 	 */
 	@func()
-	async getFileSystemTree(dirPath: string = '.', prefix = '', parentIg = ignore()): Promise<string> {
+	async getFileSystemTree(dirPath: string = '.', prefix = ''): Promise<string> {
 		if (path.basename(dirPath) === '.git') return '';
 
 		let result = '';
 		const items = await fs.readdir(dirPath);
 
-		// Create a new ignore instance for this directory
-		const ig = ignore().add(parentIg);
-
 		// Load .gitignore for this directory
-		const gitIgnorePath = path.join(dirPath, '.gitignore');
-		if (await this.fileExists(gitIgnorePath)) {
-			const gitIgnoreContent = await fs.readFile(gitIgnorePath, 'utf-8');
-			ig.add(gitIgnoreContent);
-		}
+		const ig = await this.loadGitignore(dirPath);
 
 		// Gather information about each item
 		const itemsInfo = await Promise.all(
@@ -494,7 +487,7 @@ export class FileSystem {
 
 		for (const item of sortedItems) {
 			const fullPath = path.join(dirPath, item.name);
-			const relativeFullPath = path.relative(this.basePath, fullPath);
+			const relativeFullPath = path.relative(this.getWorkingDirectory(), fullPath);
 
 			if (ig.ignores(relativeFullPath)) {
 				continue;
@@ -502,13 +495,25 @@ export class FileSystem {
 
 			if (item.isDirectory) {
 				result += `${prefix}${item.name}/\n`;
-				result += await this.getFileSystemTree(fullPath, `${prefix}  `, ig);
+				result += await this.getFileSystemTree(fullPath, `${prefix}  `);
 			} else {
 				result += `${prefix}${item.name}\n`;
 			}
 		}
 
 		return result;
+	}
+
+	private async loadGitignore(dirPath: string): Promise<any> {
+		const ig = ignore();
+		const gitignorePath = path.join(dirPath, '.gitignore');
+		try {
+			const gitignoreContent = await fs.readFile(gitignorePath, 'utf-8');
+			ig.add(gitignoreContent);
+		} catch (error) {
+			// No .gitignore file found, continue without ignore patterns
+		}
+		return ig;
 	}
 }
 
