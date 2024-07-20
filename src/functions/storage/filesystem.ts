@@ -430,8 +430,9 @@ export class FileSystem {
 	/**
 	 * Generates a textual representation of a directory tree structure.
 	 *
-	 * This function recursively traverses the given directory, respecting .gitignore rules,
-	 * and produces an indented string representation of the file system hierarchy.
+	 * This function uses listFilesRecursively to get all files and directories,
+	 * respecting .gitignore rules, and produces an indented string representation
+	 * of the file system hierarchy.
 	 *
 	 * @param {string} dirPath - The path of the directory to generate the tree for, defaulting to working directory
 	 * @returns {Promise<string>} A string representation of the directory tree.
@@ -446,7 +447,7 @@ export class FileSystem {
 	 *      └── utils/
 	 *          └── helper.js
 	 *
-	 * The output would be
+	 * The output would be:
 	 * file1.txt
 	 * images/
 	 *   logo.png
@@ -455,42 +456,23 @@ export class FileSystem {
 	 *     helper.js
 	 */
 	@func()
-	async getFileSystemTree(dirPath: string = '.', prefix = '', parentIg?: Ignore): Promise<string> {
-		const fullPath = path.join(this.getWorkingDirectory(), dirPath);
-		if (path.basename(fullPath) === '.git') return '';
+	async getFileSystemTree(dirPath: string = '.'): Promise<string> {
+		const files = await this.listFilesRecursively(dirPath);
+		const tree = new Map<string, string>();
 
-		let result = '';
-		const currentIg = await this.loadGitignore(fullPath);
-		const ig = parentIg ? currentIg.add(parentIg) : currentIg;
-
-		const items = await fs.readdir(fullPath);
-
-		// Sort items: files first, then directories, both alphabetically
-		const sortedItems = items.sort((a, b) => {
-			const aIsDir = existsSync(path.join(fullPath, a)) && lstatSync(path.join(fullPath, a)).isDirectory();
-			const bIsDir = existsSync(path.join(fullPath, b)) && lstatSync(path.join(fullPath, b)).isDirectory();
-			if (aIsDir === bIsDir) return a.localeCompare(b);
-			return aIsDir ? 1 : -1;
+		files.forEach(file => {
+			const parts = file.split(path.sep);
+			let currentPath = '';
+			parts.forEach((part, index) => {
+				currentPath = path.join(currentPath, part);
+				const indent = '  '.repeat(index);
+				if (!tree.has(currentPath)) {
+					tree.set(currentPath, `${indent}${part}${index < parts.length - 1 ? '/' : ''}\n`);
+				}
+			});
 		});
 
-		for (const item of sortedItems) {
-			const itemPath = path.join(fullPath, item);
-			const relativeItemPath = path.relative(this.getWorkingDirectory(), itemPath);
-
-			if (ig.ignores(relativeItemPath)) {
-				continue;
-			}
-
-			const isDir = existsSync(itemPath) && lstatSync(itemPath).isDirectory();
-			if (isDir) {
-				result += `${prefix}${item}/\n`;
-				result += await this.getFileSystemTree(relativeItemPath, `${prefix}  `, ig);
-			} else {
-				result += `${prefix}${item}\n`;
-			}
-		}
-
-		return result;
+		return Array.from(tree.values()).join('');
 	}
 
 }
