@@ -18,7 +18,7 @@ async function main() {
 		llms = ClaudeVertexLLMs();
 	}
 
-	const { initialPrompt, resumeLastRun } = parseCliOptions(process.argv.slice(2));
+	const { initialPrompt, resumeLastRun } = parseCliOptions(process.argv);
 
 	let lastRunAgentId: string | null = null;
 

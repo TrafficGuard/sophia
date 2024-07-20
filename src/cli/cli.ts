@@ -6,7 +6,8 @@ export interface CliOptions {
 	resumeLastRun: boolean;
 }
 
-export function parseCliOptions(args: string[]): CliOptions {
+export function parseCliOptions(argv: string[]): CliOptions {
+	const args = argv.slice(2);
 	let resumeLastRun = false;
 	let initialPrompt = '';
 
