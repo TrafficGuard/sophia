@@ -1,4 +1,4 @@
-import { access, existsSync, lstat, mkdir, readFile, readdir, stat, writeFileSync } from 'node:fs';
+import {access, existsSync, lstat, mkdir, readFile, readdir, stat, writeFileSync, lstatSync} from 'node:fs';
 import { resolve } from 'node:path';
 import path, { join } from 'path';
 import { promisify } from 'util';
@@ -460,8 +460,8 @@ export class FileSystem {
 
 		// Sort items: files first, then directories, both alphabetically
 		const sortedItems = items.sort((a, b) => {
-			const aIsDir = existsSync(path.join(fullPath, a)) && fs.lstatSync(path.join(fullPath, a)).isDirectory();
-			const bIsDir = existsSync(path.join(fullPath, b)) && fs.lstatSync(path.join(fullPath, b)).isDirectory();
+			const aIsDir = existsSync(path.join(fullPath, a)) && lstatSync(path.join(fullPath, a)).isDirectory();
+			const bIsDir = existsSync(path.join(fullPath, b)) && lstatSync(path.join(fullPath, b)).isDirectory();
 			if (aIsDir === bIsDir) return a.localeCompare(b);
 			return aIsDir ? 1 : -1;
 		});
@@ -474,7 +474,7 @@ export class FileSystem {
 				continue;
 			}
 
-			const isDir = existsSync(itemPath) && fs.lstatSync(itemPath).isDirectory();
+			const isDir = existsSync(itemPath) && lstatSync(itemPath).isDirectory();
 			if (isDir) {
 				result += `${prefix}${item}/\n`;
 				result += await this.getFileSystemTree(relativeItemPath, `${prefix}  `);
