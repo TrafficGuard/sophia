@@ -32,24 +32,11 @@ async function main() {
 		xhard: mini,
 	};
 
-	const { initialPrompt, resumeLastRun } = parseProcessArgs(process.argv.slice(2));
-
-	let contextInitialPrompt = initialPrompt;
-	if (resumeLastRun) {
-		const lastRunAgentId = getLastRunAgentId('gen');
-		if (lastRunAgentId) {
-			contextInitialPrompt = `Continue the conversation with agent ID: ${lastRunAgentId}`;
-			console.log(`Resuming conversation with agent ID: ${lastRunAgentId}`);
-		} else {
-			console.log('No previous run found. Starting a new conversation.');
-		}
-	}
-
-	console.log(`Prompt: ${contextInitialPrompt}`);
+	const { initialPrompt } = parseProcessArgs();
 
 	const context: AgentContext = createContext({
-		initialPrompt: contextInitialPrompt,
-		agentName: 'chat',
+		initialPrompt,
+		agentName: 'gen',
 		llms,
 		functions: [],
 	});

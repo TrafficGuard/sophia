@@ -26,11 +26,7 @@ llms = Ollama_LLMs();
 export async function main() {
 	const systemPrompt = readFileSync('src/cli/research-system', 'utf-8');
 
-	const { initialPrompt, resumeLastRun } = parseProcessArgs(process.argv.slice(2));
-
-	console.log(`Prompt: ${initialPrompt}`);
-
-	const lastRunAgentId = resumeLastRun ? getLastRunAgentId('research') : null;
+	const { initialPrompt, resumeAgentId } = parseProcessArgs();
 
 	const agentId = await startAgent({
 		agentName: 'researcher',
@@ -38,7 +34,7 @@ export async function main() {
 		systemPrompt,
 		functions: [Perplexity, PublicWeb],
 		llms,
-		resumeAgentId: lastRunAgentId,
+		resumeAgentId,
 	});
 
 	if (agentId) {

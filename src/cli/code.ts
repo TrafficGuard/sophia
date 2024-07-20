@@ -1,7 +1,8 @@
 import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
 
 import { readFileSync } from 'fs';
-import { AgentLLMs, llms } from '#agent/agentContext';
+import { AgentLLMs, agentContext, llms } from '#agent/agentContext';
+import { Agent } from '#agent/agentFunctions';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { shutdownTrace } from '#fastify/trace-init/trace-init';
@@ -19,23 +20,7 @@ async function main() {
 		agentLlms = ClaudeVertexLLMs();
 	}
 
-	const { initialPrompt, resumeLastRun } = parseProcessArgs(process.argv.slice(2));
-
-	let lastRunAgentId: string | null = null;
-
-	if (resumeLastRun) {
-		lastRunAgentId = getLastRunAgentId('code');
-		if (lastRunAgentId) {
-			console.log(`Resuming last run with agent ID: ${lastRunAgentId}`);
-		} else {
-			console.log('No previous run found. Starting a new run.');
-		}
-	}
-
-	let prompt = initialPrompt;
-	if (!prompt.trim()) {
-		prompt = readFileSync('src/cli/code-in', 'utf-8');
-	}
+	const { initialPrompt, resumeAgentId } = parseProcessArgs();
 
 	console.log(`Prompt: ${prompt}`);
 
@@ -43,18 +28,17 @@ async function main() {
 		agentName: 'cli-code',
 		llms: agentLlms,
 		functions: [GitLab], //FileSystem,
-		initialPrompt: prompt,
+		initialPrompt,
+		resumeAgentId,
 		humanInLoop: {
 			budget: 2,
 		},
 	};
 
-	if (lastRunAgentId) {
-		config.resumeAgentId = lastRunAgentId;
-	}
-
 	const agentId = await runAgentWorkflow(config, async () => {
 		await new CodeEditingAgent().runCodeEditWorkflow(config.initialPrompt);
+		// await (agentContext().functions.getFunctionInstanceMap().Agent as Agent).saveMemory('memKey', 'content');
+		// return llms().easy.generateText('What colour is the sky. Respond in one word.');
 	});
 
 	if (agentId) {

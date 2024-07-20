@@ -17,9 +17,23 @@ export function func() {
 		const methodName = String(context.name);
 		return async function replacementMethod(this: any, ...args: any[]) {
 			const tracer = getTracer();
+			const agent = agentContext();
+
+			// TODO move agent.functionCallHistory.push from xml and python runners to here so agentWorkflows show the function call history
+			// output summarising might have to happen in the agentService.save
+			// // Convert arg array to parameters name/value map
+			// const parameters: { [key: string]: any } = {};
+			// for (let index = 0; index < args.length; index++) parameters[schema.parameters[index].name] = args[index];
+			// agent.functionCallHistory.push({
+			// 	function_name: functionCall.function_name,
+			// 	parameters: functionCall.parameters,
+			// 	stdout: JSON.stringify(functionResponse),
+			// 	stdoutSummary: outputSummary,
+			// });
+
 			if (!tracer) {
 				try {
-					agentContext()?.callStack.push(methodName);
+					agent?.callStack.push(methodName);
 					return await originalMethod.call(this, ...args);
 				} finally {
 					agentContext()?.callStack.pop();

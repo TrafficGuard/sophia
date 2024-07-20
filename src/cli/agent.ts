@@ -10,7 +10,7 @@ import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
 import { initFirestoreApplicationContext } from '../app';
-import { CliOptions, getLastRunAgentId, parseProcessArgs, saveAgentId } from './cli';
+import { parseProcessArgs, saveAgentId } from './cli';
 
 export async function main() {
 	let llms = ClaudeLLMs();
@@ -23,17 +23,7 @@ export async function main() {
 	functions = [FileSystem, SoftwareDeveloperAgent, Perplexity, PublicWeb];
 	functions = [CodeEditingAgent, Perplexity];
 
-	const { initialPrompt, resumeLastRun } = parseProcessArgs(process.argv.slice(2));
-
-	let lastRunAgentId: string | null = null;
-	if (resumeLastRun) {
-		lastRunAgentId = getLastRunAgentId('agent');
-		if (lastRunAgentId) {
-			console.log(`Resuming last run with agent ID: ${lastRunAgentId}`);
-		} else {
-			console.log('No previous run found. Starting a new run.');
-		}
-	}
+	const { initialPrompt, resumeAgentId } = parseProcessArgs();
 
 	console.log(`Prompt: ${initialPrompt}`);
 
@@ -42,7 +32,8 @@ export async function main() {
 		initialPrompt,
 		functions,
 		llms,
-		resumeAgentId: lastRunAgentId || undefined,
+		type: 'python',
+		resumeAgentId,
 	});
 	logger.info('AgentId ', agentId);
 

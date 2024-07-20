@@ -114,7 +114,6 @@ export async function shutdownTrace(): Promise<void> {
 	try {
 		await optelNodeSdk?.shutdown();
 		await exporter?.shutdown();
-		console.log('Successfully flushed all buffered spans.');
 	} catch (error) {
 		console.error('Error shutting down trace:', error.message);
 	}

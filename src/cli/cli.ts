@@ -1,28 +1,41 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import path, { join } from 'path';
+import { logger } from '#o11y/logger';
 
 export interface CliOptions {
+	/** Name of the executed .ts file without the extension */
+	scriptName: string;
 	initialPrompt: string;
-	resumeLastRun: boolean;
+	resumeAgentId: string | undefined;
 }
 
-export function parseProcessArgs(args: string[]): { resumeLastRun: boolean; remainingArgs: string[] } {
-    let resumeLastRun = false;
-    let i = 0;
-    for (; i < args.length; i++) {
-        if (args[i] === '-r') {
-            resumeLastRun = true;
-        } else {
-            break;
-        }
-    }
-    return { resumeLastRun, remainingArgs: args.slice(i) };
+export function parseProcessArgs(): CliOptions {
+	const scriptPath = process.argv[1];
+	let scriptName = scriptPath.split(path.sep).at(-1);
+	scriptName = scriptName.substring(0, scriptName.length - 3);
+	return parseUserCliArgs(scriptName, process.argv.slice(2));
 }
 
-export function parseCliArgs(): CliOptions {
-    const { resumeLastRun, remainingArgs } = parseProcessArgs(process.argv.slice(2));
-    const initialPrompt = remainingArgs.join(' ');
-    return { initialPrompt, resumeLastRun };
+export function parseUserCliArgs(scriptName: string, args: string[]): CliOptions {
+	let resumeLastRun = false;
+	let i = 0;
+	for (; i < args.length; i++) {
+		if (args[i] === '-r') {
+			resumeLastRun = true;
+		} else {
+			break;
+		}
+	}
+	let initialPrompt = args.slice(i).join(' ');
+
+	// If not prompt provided then load from file
+	if (!initialPrompt.trim()) {
+		initialPrompt = readFileSync(`src/cli/${scriptName}-in`, 'utf-8');
+	}
+
+	const resumeAgentId = resumeLastRun ? getLastRunAgentId(scriptName) : undefined;
+
+	return { scriptName, resumeAgentId, initialPrompt };
 }
 
 export function saveAgentId(scriptName: string, agentId: string): void {
@@ -31,10 +44,10 @@ export function saveAgentId(scriptName: string, agentId: string): void {
 	writeFileSync(join(dirPath, `${scriptName}.lastRun`), agentId);
 }
 
-export function getLastRunAgentId(scriptName: string): string | null {
+export function getLastRunAgentId(scriptName: string): string | undefined {
 	const filePath = join(process.cwd(), '.nous', 'cli', `${scriptName}.lastRun`);
 	if (existsSync(filePath)) {
 		return readFileSync(filePath, 'utf-8').trim();
 	}
-	return null;
+	return undefined;
 }

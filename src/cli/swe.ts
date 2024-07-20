@@ -27,26 +27,14 @@ async function main() {
 		llms = ClaudeVertexLLMs();
 	}
 
-	let { initialPrompt, resumeLastRun } = parseProcessArgs(process.argv.slice(2));
-	let lastRunAgentId: string | null = null;
-
-	if (resumeLastRun) {
-		lastRunAgentId = getLastRunAgentId('swe');
-		if (!lastRunAgentId) {
-			console.log('No previous run found. Starting a new run.');
-		}
-	}
-
-	if (!initialPrompt.trim() && !lastRunAgentId) {
-		initialPrompt = readFileSync('src/cli/swe-in', 'utf-8');
-	}
+	const { initialPrompt, resumeAgentId } = parseProcessArgs();
 
 	const config: RunAgentConfig = {
 		agentName: 'cli-SWE',
 		llms,
 		functions: [FileSystem, CodeEditingAgent, Perplexity],
 		initialPrompt: initialPrompt.trim(),
-		resumeAgentId: lastRunAgentId || undefined,
+		resumeAgentId,
 	};
 
 	await runAgentWorkflow(config, async (agent: AgentContext) => {

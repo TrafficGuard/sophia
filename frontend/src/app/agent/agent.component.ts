@@ -423,8 +423,8 @@ export class AgentComponent implements OnInit {
           if (this.agentDetails &&this.agentDetails.state === 'completed') {
             // If the agent has been cancelled after an error then display the error
             // Otherwise display the Agent.completed argument
-            const completed = this.agentDetails.functionCallHistory.slice(-1)[0];
-            this.output = this.agentDetails.error ?? Object.values(completed.parameters);
+            const completed = this.agentDetails.functionCallHistory.length ? this.agentDetails.functionCallHistory.slice(-1)[0] : {};
+            this.output = this.agentDetails.error ?? Object.values(completed.parameters ? Object.values(completed.parameters) : '');
           }
           // Initialize expanded states for stdout and stderr
           this.agentDetails.functionCallHistory.forEach((invoked: any) => {
