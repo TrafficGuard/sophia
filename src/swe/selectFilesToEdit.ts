@@ -69,42 +69,40 @@ The file paths MUST exist in the <project_map /> file_contents path attributes.
 }
 
 export async function removeUnrelatedFiles(requirements: string, fileSelection: SelectFilesResponse): Promise<SelectFilesResponse> {
-	const prompt = `
+	async function analyzeFile(file: SelectedFiles): Promise<{ file: SelectedFiles; isRelated: boolean }> {
+		const prompt = `
 Requirements: ${requirements}
 
-Task: Analyze the following list of files and determine if each file is related to the given requirements. 
+Task: Analyze the following file and determine if it is related to the given requirements. 
 A file is considered related if it's likely to be modified or referenced when implementing the requirements.
 
-For each file, provide a boolean indicating if it's related and a brief explanation.
-
-File list:
-${[...fileSelection.primaryFiles, ...fileSelection.secondaryFiles]
-	.map(file => `- ${file.path}: ${file.reason}`)
-	.join('\n')}
+File: ${file.path}
+Reason for selection: ${file.reason}
 
 Respond with a JSON object in the following format:
 {
-	"fileAnalysis": [
-		{
-			"path": "file/path",
-			"isRelated": true/false,
-			"explanation": "Brief explanation of why the file is related or not"
-		},
-		...
-	]
+	"isRelated": true/false,
+	"explanation": "Brief explanation of why the file is related or not"
 }
 `;
 
-	const jsonResult = await llms().easy.generateJson(prompt, 'You are an expert software developer tasked with identifying relevant files for a coding task.', { temperature: 0.3, id: 'removeUnrelatedFiles' });
+		const jsonResult = await llms().easy.generateJson(prompt, 'You are an expert software developer tasked with identifying relevant files for a coding task.', { temperature: 0.3, id: `removeUnrelatedFiles_${file.path}` });
 
-	const fileAnalysis = (jsonResult as any).fileAnalysis;
+		return {
+			file,
+			isRelated: (jsonResult as any).isRelated
+		};
+	}
+
+	const allFiles = [...fileSelection.primaryFiles, ...fileSelection.secondaryFiles];
+	const analysisResults = await Promise.all(allFiles.map(analyzeFile));
 
 	const filteredPrimaryFiles = fileSelection.primaryFiles.filter(file => 
-		fileAnalysis.find((analysis: any) => analysis.path === file.path && analysis.isRelated)
+		analysisResults.find(result => result.file.path === file.path && result.isRelated)
 	);
 
 	const filteredSecondaryFiles = fileSelection.secondaryFiles.filter(file => 
-		fileAnalysis.find((analysis: any) => analysis.path === file.path && analysis.isRelated)
+		analysisResults.find(result => result.file.path === file.path && result.isRelated)
 	);
 
 	return {
