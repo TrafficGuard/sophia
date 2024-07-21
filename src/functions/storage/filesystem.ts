@@ -26,6 +26,7 @@ const fs = {
 
 import fg from 'fast-glob';
 import { glob } from 'glob-gitignore';
+import { getActiveSpan } from '#o11y/trace';
 const globAsync = promisify(glob);
 
 type FileFilter = (filename: string) => boolean;
@@ -298,9 +299,10 @@ export class FileSystem {
 		// 	}
 		// }
 
-		// const fullPath = path.join(this.basePath, filePath);
 		logger.info(`Reading file ${fullPath}`);
-		return await fs.readFile(fullPath, 'utf8');
+		const contents = (await fs.readFile(filePath)).toString();
+		getActiveSpan()?.setAttribute('size', contents.length);
+		return contents;
 	}
 
 	/**

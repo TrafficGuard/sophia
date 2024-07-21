@@ -12,11 +12,11 @@ export interface FileStore extends GetToolType {
 	/**
 	 * Saves the contents to a file with the given filename and updates metadata.
 	 * @param {string} filename - The name of the file to save.
-	 * @param {string} contents - The contents to save to the file.
+	 * @param {string | Buffer} contents - The contents to save to the file.
 	 * @param {string} description - A description of the file.
-	 * @returns {Promise<void>}
+	 * @returns {Promise<string>} - The path of the file
 	 */
-	saveFile(filename: string, contents: string, description: string): Promise<void>;
+	saveFile(filename: string, contents: string | Buffer, description: string): Promise<string>;
 
 	/**
 	 * Retrieves the contents of a file.

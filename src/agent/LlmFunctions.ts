@@ -49,7 +49,7 @@ export class LlmFunctions {
 		return Object.keys(this.functionInstances);
 	}
 
-	getFunctionType(type: ToolType) {
+	getFunctionType(type: ToolType): any {
 		return Object.values(this.functionInstances).find((obj) => toolType(obj) === type);
 	}
 

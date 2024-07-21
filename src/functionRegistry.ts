@@ -1,4 +1,5 @@
 import { GoogleCloud } from '#functions/cloud/google-cloud';
+import { ImageGen } from '#functions/image';
 import { Jira } from '#functions/jira';
 import { GitHub } from '#functions/scm/github';
 import { GitLab } from '#functions/scm/gitlab';
@@ -25,6 +26,7 @@ export function functionRegistry(): Array<new () => any> {
 		Slack,
 		SoftwareDeveloperAgent,
 		UtilFunctions,
+		ImageGen,
 		// Add your own classes below this line
 	];
 }

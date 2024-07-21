@@ -6,7 +6,7 @@ import { CodeReviewService } from './code-review.service';
 @Component({
   selector: 'app-code-review-edit',
   templateUrl: './code-review-edit.component.html',
-  styleUrls: ['./code-review-edit.component.scss']
+  styleUrls: ['./code-review-edit.component.scss'],
 })
 export class CodeReviewEditComponent implements OnInit {
   editForm: FormGroup | undefined;
@@ -31,12 +31,12 @@ export class CodeReviewEditComponent implements OnInit {
     this.editForm = this.fb.group({
       description: ['', Validators.required],
       file_extensions: this.fb.group({
-        include: [[], Validators.required]
+        include: [[], Validators.required],
       }),
       requires: this.fb.group({
-        text: [[], Validators.required]
+        text: [[], Validators.required],
       }),
-      examples: this.fb.array([])
+      examples: this.fb.array([]),
     });
   }
 
@@ -83,10 +83,12 @@ export class CodeReviewEditComponent implements OnInit {
   }
 
   addExample() {
-    this.examples.push(this.fb.group({
-      code: ['', Validators.required],
-      review_comment: ['', Validators.required]
-    }));
+    this.examples.push(
+      this.fb.group({
+        code: ['', Validators.required],
+        review_comment: ['', Validators.required],
+      })
+    );
   }
 
   removeExample(index: number) {

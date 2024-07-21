@@ -1,0 +1,67 @@
+import axios, { AxiosResponse } from 'axios';
+import { OpenAI as OpenAISDK } from 'openai';
+import { agentContext, getFileSystem, llms } from '#agent/agentContext';
+import { func, funcClass } from '#functionSchema/functionDecorators';
+import { logger } from '#o11y/logger';
+import { currentUser } from '#user/userService/userContext';
+import { envVar } from '#utils/env-var';
+
+import { writeFileSync } from 'fs';
+import path from 'path';
+import { FileStore } from '#functions/storage/filestore';
+
+@funcClass(__filename)
+export class ImageGen {
+	openAISDK: OpenAISDK | null = null;
+
+	private sdk(): OpenAISDK {
+		if (!this.openAISDK) {
+			this.openAISDK = new OpenAISDK({
+				apiKey: currentUser().llmConfig.openaiKey ?? envVar('OPENAI_API_KEY'),
+			});
+		}
+		return this.openAISDK;
+	}
+
+	/**
+	 * Generates an image with the given description
+	 * @param description A detailed description of the image
+	 * @returns the location of the image file
+	 */
+	@func()
+	async generateImage(description: string): Promise<string> {
+		const response = await this.sdk().images.generate({
+			model: 'dall-e-3',
+			prompt: description,
+			n: 1,
+			size: '1792x1024',
+		});
+		const imageUrl = response.data[0].url;
+		logger.debug(`Generated image at ${imageUrl}`);
+
+		// Fetch the image bytes
+		const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+		const contentType = imageResponse.headers['content-type'];
+
+		logger.debug('The image is in the format:', contentType);
+
+		const imageBytes = Buffer.from(imageResponse.data, 'binary');
+
+		let filename = await llms().easy.generateText(
+			`<description>${description}</description>\nGenerate a valid filename that is 5 words at most from the description. Answer only with the filename and do not add a file extension.`,
+		);
+		filename += '.png';
+
+		const fileStore: FileStore = agentContext()?.functions.getFunctionType('filestore');
+		let filePath: string;
+		if (fileStore) {
+			filePath = await fileStore.saveFile(filename, imageBytes, description);
+		} else {
+			writeFileSync(filename, imageBytes);
+			filePath = path.join(process.cwd(), filename);
+		}
+		logger.debug(`Saved image to ${filePath}`);
+
+		return filePath;
+	}
+}

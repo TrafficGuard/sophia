@@ -229,9 +229,9 @@ Your response must be in the following format:
 
 <response>
 <expanded_user_request>
-<!-- Instructions: Expanded task from the user_request taking into account any new information retrieved from function calls. This must maintain the original intent of the user_request. It can only be expanded with additional information. -->
+<!-- Instructions: Expanded task from the user_request taking into account any new information retrieved from function calls, especially the results of Agent.requestFeedback.  This must maintain the original intent of the user_request. It can only be expanded with additional information. -->
 </expanded_user_request>
-<plan_outline>
+<plan>
 <!--
 Instructions:
 1. List the reasoning techniques relevant to the user request and the plan tasks to complete next
@@ -248,7 +248,7 @@ Output your plan as a hierarchical list. For example:
 - Future goal
   - Future sub-plan item
 -->
-</plan_outline>
+</plan>
 
 <next_step_details>
 <!--

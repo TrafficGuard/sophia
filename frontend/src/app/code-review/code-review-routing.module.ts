@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 
-
 import { CodeReviewEditComponent } from './code-review-edit.component';
 import { CodeReviewListComponent } from './code-review-list.component';
 
@@ -10,7 +9,8 @@ const routes: Routes = [
   {
     //path: ':agentId', component: AgentComponent, data: { title: marker('Agent') }
     // TODO add code review routes
-    path: '', component: CodeReviewListComponent
+    path: '',
+    component: CodeReviewListComponent,
   },
 ];
 

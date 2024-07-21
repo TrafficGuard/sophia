@@ -94,7 +94,7 @@ Respond with a JSON object in the following format:
 export async function removeUnrelatedFiles(requirements: string, fileSelection: SelectFilesResponse): Promise<SelectFilesResponse> {
 	const analyzeFile = async (file: SelectedFiles): Promise<{ file: SelectedFiles; isRelated: boolean; explanation: string }> => {
 		const fileSystem = getFileSystem();
-		const fileContents = await fileSystem.readFile(file.path);
+		const fileContents = await fileSystem.readFile(file.path); // TODO access filesystem directly to avoid lots of function calls
 		const prompt = createAnalysisPrompt(requirements, file, fileContents);
 
 		const jsonResult = await llms().easy.generateJson(

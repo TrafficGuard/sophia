@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { CodeReviewConfig } from './code-review.model';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CodeReviewService {
   private apiUrl = '/api/code-review-configs';

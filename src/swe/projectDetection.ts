@@ -1,4 +1,5 @@
-import { join } from 'path';
+import { existsSync, readFileSync } from 'fs';
+import path, { join } from 'path';
 import { getFileSystem, llms } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
 import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
@@ -37,6 +38,35 @@ export interface ProjectInfo extends ProjectScripts {
 	devBranch: string;
 }
 
+export async function getProjectInfo(): Promise<ProjectInfo | null> {
+	const infoPath = path.join(getFileSystem().getWorkingDirectory(), 'projectInfo.json');
+	if (existsSync(infoPath)) {
+		const infos = parseProjectInfo(readFileSync(infoPath).toString());
+		if (infos.length === 1) return infos[0];
+	}
+	return null;
+}
+
+function parseProjectInfo(fileContents: string): ProjectInfo[] | null {
+	try {
+		let projectInfos = JSON.parse(fileContents) as ProjectInfo[];
+		logger.info(projectInfos);
+		if (!Array.isArray(projectInfos)) throw new Error('projectInfo.json should be a JSON array');
+		projectInfos = projectInfos.map((info) => {
+			const path = join(getFileSystem().getWorkingDirectory(), info.baseDir);
+			if (!info.baseDir) {
+				throw new Error(`All entries in ${path} must have the basePath property`);
+			}
+			info.languageTools = getLanguageTools(info.language as LanguageRuntime);
+			return info;
+		});
+		return projectInfos;
+	} catch (e) {
+		logger.warn(e, 'Error loading projectInfo.json');
+		return null;
+	}
+}
+
 /**
  * Determines the language/runtime, base folder and key commands for a project on the filesystem.
  * Loads from the file projectInfo.json if it exists
@@ -46,25 +76,11 @@ export async function detectProjectInfo(): Promise<ProjectInfo[]> {
 	const fileSystem = getFileSystem();
 	if (await fileSystem.fileExists('projectInfo.json')) {
 		const projectInfoJson = await fileSystem.readFile('projectInfo.json');
-		logger.info(`loaded projectInfo.json ${JSON.stringify(projectInfoJson)}`);
+		logger.info(`loaded projectInfo.json ${projectInfoJson}`);
 		logger.info(projectInfoJson);
 		// TODO check projectInfo matches the format we expect
-		try {
-			let projectInfos = JSON.parse(projectInfoJson) as ProjectInfo[];
-			logger.info(projectInfos);
-			if (!Array.isArray(projectInfos)) throw new Error('projectInfo.json should be a JSON array');
-			projectInfos = projectInfos.map((info) => {
-				const path = join(fileSystem.getWorkingDirectory(), info.baseDir);
-				if (!info.baseDir) {
-					throw new Error(`All entries in ${path} must have the basePath property`);
-				}
-				info.languageTools = getLanguageTools(info.language as LanguageRuntime);
-				return info;
-			});
-			return projectInfos;
-		} catch (e) {
-			logger.warn(e, 'Error loading projectInfo.json');
-		}
+		const info = parseProjectInfo(projectInfoJson);
+		if (info !== null) return info;
 	}
 	logger.info('Detecting project info...');
 	const files: string[] = await fileSystem.listFilesRecursively('./');

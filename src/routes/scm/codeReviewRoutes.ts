@@ -1,8 +1,8 @@
 import { Type } from '@sinclair/typebox';
 import { FastifyInstance } from 'fastify';
-import { send, sendSuccess } from '../../fastify/responses';
-import { logger } from '../../o11y/logger';
-import { CodeReviewConfig, FirestoreCodeReviewService } from '../../swe/codeReview/firestoreCodeReviewService';
+import { send, sendSuccess } from '#fastify/responses';
+import { logger } from '#o11y/logger';
+import { CodeReviewConfig, FirestoreCodeReviewService } from '#swe/codeReview/firestoreCodeReviewService';
 
 export async function codeReviewRoutes(fastify: FastifyInstance) {
 	const codeReviewService = new FirestoreCodeReviewService();

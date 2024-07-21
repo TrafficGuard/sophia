@@ -7,7 +7,7 @@ import { CodeReviewConfig } from './code-review.model';
 @Component({
   selector: 'app-code-review-list',
   templateUrl: './code-review-list.component.html',
-  styleUrls: ['./code-review-list.component.scss']
+  styleUrls: ['./code-review-list.component.scss'],
 })
 export class CodeReviewListComponent implements OnInit {
   configs: CodeReviewConfig[] = [];
@@ -37,7 +37,7 @@ export class CodeReviewListComponent implements OnInit {
   openEditDialog(id?: string) {
     const dialogRef = this.dialog.open(CodeReviewEditComponent, {
       width: '600px',
-      data: { id }
+      data: { id },
     });
 
     dialogRef.afterClosed().subscribe((result) => {

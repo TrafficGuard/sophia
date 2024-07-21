@@ -4,7 +4,7 @@
 
   <mat-list *ngIf="!isLoading && !errorMessage">
     <mat-list-item *ngFor="let config of configs">
-      <h3 matLine>{{config.description}}</h3>
+      <h3 matLine>{{ config.description }}</h3>
       <button mat-icon-button (click)="openEditDialog(config.id)">
         <mat-icon>edit</mat-icon>
       </button>
@@ -15,5 +15,5 @@
   </mat-list>
 
   <mat-spinner *ngIf="isLoading"></mat-spinner>
-  <p *ngIf="errorMessage" class="error-message">{{errorMessage}}</p>
+  <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
 </div>

@@ -16,7 +16,10 @@ const routes: Routes = [
     { path: 'profile', loadChildren: () => import('./profile/profile.module').then((m) => m.ProfileModule) },
   ]),
   Shell.childRoutes([
-    { path: 'code-reviews', component: CodeReviewListComponent },
+    {
+      path: 'code-reviews',
+      loadChildren: () => import('./code-review/code-review.module').then((m) => m.CodeReviewModule),
+    },
   ]),
   // Fallback when no prior route is matched
   { path: '**', redirectTo: '', pathMatch: 'full' },

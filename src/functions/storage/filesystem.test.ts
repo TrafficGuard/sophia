@@ -144,13 +144,13 @@ describe('FileSystem', () => {
 		});
 	});
 
-	describe('getFileContents', () => {
+	describe.only('readFile', () => {
 		const fileSystem = new FileSystem();
 		it('should get the file contents for the current directory', async () => {
 			const samplePackageJsonContents = '@opentelemetry/instrumentation-http';
 			let contents: string = await fileSystem.readFile('package.json');
 			expect(contents).to.include(samplePackageJsonContents);
-			contents = await fileSystem.readFile('/package.json');
+			contents = await fileSystem.readFile('package.json');
 			expect(contents).to.include(samplePackageJsonContents);
 			contents = await fileSystem.readFile('./package.json');
 			expect(contents).to.include(samplePackageJsonContents);
@@ -158,11 +158,11 @@ describe('FileSystem', () => {
 		it('should get the file contents in the working directory', async () => {
 			fileSystem.setWorkingDirectory('./src');
 			const sampleIndexTsContents = '#fastify/trace-init';
-			let contents: string = await fileSystem.readFile('index.ts');
+			let contents: string = await fileSystem.readFile('src/index.ts');
 			expect(contents).to.include(sampleIndexTsContents);
-			contents = await fileSystem.readFile('/index.ts');
+			contents = await fileSystem.readFile('src/index.ts');
 			expect(contents).to.include(sampleIndexTsContents);
-			contents = await fileSystem.readFile('./index.ts');
+			contents = await fileSystem.readFile('./src/index.ts');
 			expect(contents).to.include(sampleIndexTsContents);
 		});
 	});

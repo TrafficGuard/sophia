@@ -15,6 +15,7 @@ export class LocalFileStore implements FileStore {
 
 	constructor() {
 		this.basePath = path.join(process.cwd(), '.nous', 'filestore');
+		this.basePath = path.join(process.cwd(), 'public');
 	}
 
 	getToolType(): ToolType {
@@ -24,16 +25,21 @@ export class LocalFileStore implements FileStore {
 	/**
 	 * Saves the contents to a file with the given filename and updates metadata.
 	 * @param {string} filename - The name of the file to save.
-	 * @param {string} contents - The contents to save to the file.
+	 * @param {string | Buffer} contents - The contents to save to the file.
 	 * @param {string} description - A description of the contents which can be used to identify it later.
 	 * @returns {Promise<void>}
 	 */
 	@func()
-	async saveFile(filename: string, contents: string, description: string): Promise<void> {
+	async saveFile(filename: string, contents: string | Buffer, description: string): Promise<string> {
 		const agentId = agentContext().agentId;
 		const fullPath = path.join(this.basePath, agentId, filename);
 		await fs.promises.mkdir(path.dirname(fullPath), { recursive: true });
-		await fs.promises.writeFile(fullPath, contents, 'utf8');
+
+		if (typeof contents === 'string') {
+			await fs.promises.writeFile(fullPath, contents, 'utf8');
+		} else {
+			await fs.promises.writeFile(fullPath, contents);
+		}
 
 		// Update metadata
 		const metadataPath = path.join(this.basePath, agentId, '.metadata.json');
@@ -54,6 +60,7 @@ export class LocalFileStore implements FileStore {
 		};
 
 		await fs.promises.writeFile(metadataPath, JSON.stringify(metadata, null, 2), 'utf8');
+		return fullPath;
 	}
 
 	/**

@@ -23,9 +23,7 @@ export class MockLLM extends BaseLLM {
 	/**
 	 * @param maxInputTokens defaults to 100000
 	 */
-	constructor(
-		maxInputTokens = 100000,
-	) {
+	constructor(maxInputTokens = 100000) {
 		super(
 			'mock',
 			'mock',

@@ -1,6 +1,6 @@
 import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
 
-import { startAgent } from '#agent/agentRunner';
+import { provideFeedback, resumeCompleted, resumeError, resumeHil, startAgent } from '#agent/agentRunner';
 import { FileSystem } from '#functions/storage/filesystem';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
@@ -9,7 +9,7 @@ import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
-import { initFirestoreApplicationContext } from '../app';
+import { appContext, initFirestoreApplicationContext } from '../app';
 import { parseProcessArgs, saveAgentId } from './cli';
 
 export async function main() {
@@ -27,6 +27,19 @@ export async function main() {
 
 	console.log(`Prompt: ${initialPrompt}`);
 
+	if (resumeAgentId) {
+		const agent = await appContext().agentStateService.load(resumeAgentId);
+		switch (agent.state) {
+			case 'completed':
+				return await resumeCompleted(resumeAgentId, agent.executionId, initialPrompt);
+			case 'error':
+				return resumeError(resumeAgentId, agent.executionId, initialPrompt);
+			case 'hil':
+				return await resumeHil(resumeAgentId, agent.executionId, initialPrompt);
+			case 'feedback':
+				return await provideFeedback(resumeAgentId, agent.executionId, initialPrompt);
+		}
+	}
 	const agentId = await startAgent({
 		agentName: 'cli-agent',
 		initialPrompt,
