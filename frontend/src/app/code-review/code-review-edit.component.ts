@@ -9,7 +9,7 @@ import { CodeReviewService } from './code-review.service';
   styleUrls: ['./code-review-edit.component.scss']
 })
 export class CodeReviewEditComponent implements OnInit {
-  editForm: FormGroup;
+  editForm: FormGroup | undefined;
   isLoading = false;
   errorMessage = '';
 
@@ -42,9 +42,9 @@ export class CodeReviewEditComponent implements OnInit {
 
   loadConfigData() {
     this.isLoading = true;
-    this.codeReviewService.getCodeReviewConfig(this.data.id).subscribe(
+    this.codeReviewService.getCodeReviewConfig(this.data.id!).subscribe(
       (config) => {
-        this.editForm.patchValue(config);
+        this.editForm!.patchValue(config);
         this.isLoading = false;
       },
       (error) => {
@@ -55,9 +55,9 @@ export class CodeReviewEditComponent implements OnInit {
   }
 
   onSubmit() {
-    if (this.editForm.valid) {
+    if (this.editForm!.valid) {
       this.isLoading = true;
-      const formData = this.editForm.value;
+      const formData = this.editForm!.value;
       if (this.data.id) {
         this.codeReviewService.updateCodeReviewConfig(this.data.id, formData).subscribe(
           () => this.dialogRef.close(true),
@@ -79,7 +79,7 @@ export class CodeReviewEditComponent implements OnInit {
   }
 
   get examples() {
-    return this.editForm.get('examples') as FormArray;
+    return this.editForm!.get('examples') as FormArray;
   }
 
   addExample() {
