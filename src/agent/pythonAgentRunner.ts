@@ -72,6 +72,8 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 
 		let functionErrorCount = 0;
 
+		let currentFunctionCallIndex;
+
 		let shouldContinue = true;
 		while (shouldContinue) {
 			shouldContinue = await withActiveSpan(PY_AGENT_SPAN, async (span) => {
@@ -99,7 +101,6 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 					const filePrompt = await buildFilePrompt();
 					const oldFunctionCallHistory = buildFunctionCallHistoryPrompt(10000, 'old');
 					const memoryPrompt = buildMemoryPrompt();
-					const filePrompt = await buildFilePrompt();
 
 					const initialPrompt = systemPromptWithFunctions + oldFunctionCallHistory + memoryPrompt + filePrompt + userRequestXml + currentPrompt;
 
@@ -111,7 +112,7 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 					const llmPythonCode = extractPythonCode(llmGenerateScriptResponse);
 
 					agent.state = 'functions';
-					agent.currentFunctionCallIndex = agent.functionCallHistory.length;
+					currentFunctionCallIndex = agent.functionCallHistory.length;
 					await agentStateService.save(agent);
 
 					// The XML formatted results of the function call(s)
