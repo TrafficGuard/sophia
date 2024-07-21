@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule, PreloadAllModules } from '@angular/router';
 import { Shell } from '@app/shell/shell.service';
+import { CodeReviewListComponent } from './code-review/code-review-list.component';
 
 const routes: Routes = [
   Shell.childRoutes([{ path: 'about', loadChildren: () => import('./about/about.module').then((m) => m.AboutModule) }]),
@@ -13,6 +14,9 @@ const routes: Routes = [
   ]),
   Shell.childRoutes([
     { path: 'profile', loadChildren: () => import('./profile/profile.module').then((m) => m.ProfileModule) },
+  ]),
+  Shell.childRoutes([
+    { path: 'code-reviews', component: CodeReviewListComponent },
   ]),
   // Fallback when no prior route is matched
   { path: '**', redirectTo: '', pathMatch: 'full' },
