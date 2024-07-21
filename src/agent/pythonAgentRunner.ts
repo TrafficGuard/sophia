@@ -97,22 +97,21 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 					}
 
 					const filePrompt = await buildFilePrompt();
-					if (!currentPrompt.includes('<function_call_history>')) {
-						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + filePrompt + currentPrompt;
-					}
+					const oldFunctionCallHistory = buildFunctionCallHistoryPrompt(10000, 'old');
+					const memoryPrompt = buildMemoryPrompt();
+					const filePrompt = await buildFilePrompt();
 
-					const llmGenerateScriptResponse: string = await agentLLM.generateText(currentPrompt, systemPromptWithFunctions, {
+					const initialPrompt = systemPromptWithFunctions + oldFunctionCallHistory + memoryPrompt + filePrompt + userRequestXml + currentPrompt;
+
+					const llmGenerateScriptResponse: string = await agentLLM.generateText(initialPrompt, null, {
 						id: 'generatePythonScript',
 						stopSequences,
 					});
 
 					const llmPythonCode = extractPythonCode(llmGenerateScriptResponse);
 
-					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + filePrompt + userRequestXml + llmGenerateScriptResponse;
-
 					agent.state = 'functions';
-					agent.inputPrompt = currentPrompt;
-					agent.invoking = []; // pythonCode
+					agent.currentFunctionCallIndex = agent.functionCallHistory.length;
 					await agentStateService.save(agent);
 
 					// The XML formatted results of the function call(s)
@@ -241,7 +240,8 @@ main()`.trim();
 
 					// This section is duplicated in the provideFeedback function
 					agent.invoking = [];
-					currentPrompt = `${userRequestXml}\n${llmGenerateScriptResponse}\n<python-result>${pythonScriptResult}</python-result>`;
+					const currentFunctionCallHistory = buildFunctionCallHistoryPrompt(10000, 'current');
+					currentPrompt = `${systemPromptWithFunctions}\n${oldFunctionCallHistory}\n${memoryPrompt}\n${filePrompt}\n${userRequestXml}\n${llmGenerateScriptResponse}\n<python-code>${llmPythonCode}</python-code>\n${currentFunctionCallHistory}\n<python-result>${pythonScriptResult}</python-result>`;
 				} catch (e) {
 					span.setStatus({ code: SpanStatusCode.ERROR, message: e.toString() });
 					logger.error(e, 'Control loop error');
