@@ -18,14 +18,11 @@ export function mockLLMs(): AgentLLMs {
 
 export class MockLLM extends BaseLLM {
 	lastPrompt = '';
+	private responses: { response: string; callback?: (prompt: string) => void }[] = [];
 	/**
-	 * @param responses The responses to generateText()
-	 * @param maxInputTokens defaults to 100
+	 * @param maxInputTokens defaults to 100000
 	 */
-	constructor(
-		private responses: string[] = [],
-		maxInputTokens = 100000,
-	) {
+	constructor(maxInputTokens = 100000) {
 		super(
 			'mock',
 			'mock',
@@ -36,16 +33,16 @@ export class MockLLM extends BaseLLM {
 		);
 	}
 
-	setResponse(response: string) {
-		this.responses = [response];
+	setResponse(response: string, callback?: (prompt: string) => void) {
+		this.responses = [{ response, callback }];
 	}
 
-	setResponses(responses: string[]) {
+	setResponses(responses: { response: string; callback?: (prompt: string) => void }[]) {
 		this.responses = responses;
 	}
 
-	addResponse(response: string) {
-		this.responses.push(response);
+	addResponse(response: string, callback?: (prompt: string) => void) {
+		this.responses.push({ response, callback });
 	}
 
 	getLastPrompt(): string {
@@ -55,7 +52,8 @@ export class MockLLM extends BaseLLM {
 
 	// @logTextGeneration
 	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
-		logger.info(`MockLLM ${opts?.id} ${userPrompt}`);
+		logger.info(`MockLLM ${opts?.id ?? '<no id>'} ${userPrompt}`);
+		if (!opts?.id) logger.info(new Error(`No id set for prompt ${userPrompt}`));
 		return withActiveSpan('generateText', async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 			this.lastPrompt = prompt;
@@ -67,14 +65,19 @@ export class MockLLM extends BaseLLM {
 				service: this.service,
 			});
 
-			if (this.responses.length === 0) throw new Error('Need to call setResponses on MockLLM before calling generateText');
+			if (this.responses.length === 0) throw new Error(`Need to call setResponses on MockLLM before calling generateText for prompt ${userPrompt}`);
 
 			const caller: CallerId = { agentId: agentContext().agentId };
 			const llmRequestSave = appContext().llmCallService.saveRequest(userPrompt, systemPrompt);
 			const requestTime = Date.now();
 
-			// remove the first items from this.responses
-			const responseText = this.responses.shift();
+			// remove the first item from this.responses
+			const { response: responseText, callback } = this.responses.shift()!;
+
+			// Call the callback function if it exists
+			if (callback) {
+				callback(prompt);
+			}
 
 			const timeToFirstToken = 1;
 			const finishTime = Date.now();
@@ -104,6 +107,7 @@ export class MockLLM extends BaseLLM {
 
 			addCost(cost);
 
+			logger.info(`MockLLM response ${responseText}`);
 			return responseText;
 		});
 	}

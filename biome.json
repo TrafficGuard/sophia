@@ -20,7 +20,8 @@
 				"noUnreachable": "off"
 			},
 			"style": {
-				"noParameterAssign": "off"
+				"noParameterAssign": "off",
+				"noNonNullAssertion": "off"
 			}
 		}
 	},

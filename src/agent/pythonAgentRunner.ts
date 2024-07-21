@@ -16,6 +16,8 @@ import { AgentContext, agentContext, agentContextStorage, llms } from './agentCo
 
 const stopSequences = ['</response>'];
 
+export const PY_AGENT_SPAN = 'PythonAgent';
+
 let pyodide: PyodideInterface;
 
 export async function runPythonAgent(agent: AgentContext): Promise<string> {
@@ -72,7 +74,7 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 
 		let shouldContinue = true;
 		while (shouldContinue) {
-			shouldContinue = await withActiveSpan('PythonAgent', async (span) => {
+			shouldContinue = await withActiveSpan(PY_AGENT_SPAN, async (span) => {
 				let completed = false;
 				let requestFeedback = false;
 				const anyFunctionCallErrors = false;
@@ -228,6 +230,7 @@ main()`.trim();
 							if (!anyFunctionCallErrors && !completed && !requestFeedback) agent.state = 'agent';
 						}
 					} catch (e) {
+						logger.info(`Caught function error ${e.message}`);
 						functionErrorCount++;
 					}
 					// Function invocations are complete
