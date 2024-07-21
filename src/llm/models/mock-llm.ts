@@ -18,7 +18,7 @@ export function mockLLMs(): AgentLLMs {
 
 export class MockLLM extends BaseLLM {
 	lastPrompt = '';
-	private responses: string[] = []
+	private responses: { response: string; callback?: (prompt: string) => void }[] = [];
 	/**
 	 * @param maxInputTokens defaults to 100000
 	 */
@@ -35,16 +35,16 @@ export class MockLLM extends BaseLLM {
 		);
 	}
 
-	setResponse(response: string) {
-		this.responses = [response];
+	setResponse(response: string, callback?: (prompt: string) => void) {
+		this.responses = [{ response, callback }];
 	}
 
-	setResponses(responses: string[]) {
+	setResponses(responses: { response: string; callback?: (prompt: string) => void }[]) {
 		this.responses = responses;
 	}
 
-	addResponse(response: string) {
-		this.responses.push(response);
+	addResponse(response: string, callback?: (prompt: string) => void) {
+		this.responses.push({ response, callback });
 	}
 
 	getLastPrompt(): string {
@@ -73,8 +73,13 @@ export class MockLLM extends BaseLLM {
 			const llmRequestSave = appContext().llmCallService.saveRequest(userPrompt, systemPrompt);
 			const requestTime = Date.now();
 
-			// remove the first items from this.responses
-			const responseText = this.responses.shift();
+			// remove the first item from this.responses
+			const { response: responseText, callback } = this.responses.shift()!;
+
+			// Call the callback function if it exists
+			if (callback) {
+				callback(prompt);
+			}
 
 			const timeToFirstToken = 1;
 			const finishTime = Date.now();
