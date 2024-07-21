@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { appContext, initInMemoryApplicationContext } from 'src/app';
 import { LlmFunctions } from '#agent/LlmFunctions';
-import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK, REQUEST_FEEDBACK_PARAM_NAME } from '#agent/agentFunctions';
+import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK, AGENT_SAVE_MEMORY, REQUEST_FEEDBACK_PARAM_NAME } from '#agent/agentFunctions';
 import {
 	RunAgentConfig,
 	SUPERVISOR_CANCELLED_FUNCTION_NAME,
@@ -27,14 +27,16 @@ const PY_TEST_FUNC_NOOP = `await ${TEST_FUNC_NOOP.replace('.', '_')}()`;
 const PY_TEST_FUNC_SKY_COLOUR = `await ${TEST_FUNC_SKY_COLOUR.replace('.', '_')}()`;
 const PY_TEST_FUNC_SUM = (num1, num2) => `await ${TEST_FUNC_SUM.replace('.', '_')}(${num1}, ${num2})`;
 const PY_TEST_FUNC_THROW_ERROR = `await ${TEST_FUNC_THROW_ERROR.replace('.', '_')}()`;
+const PY_SET_MEMORY = (key, content) => `await ${AGENT_SAVE_MEMORY.replace('.', '_')}("${key}", "${content}")`;
 
-const PYTHON_CODE_PLAN = (pythonCode: string) => `<plan>Run some code</plan>\n<python-code>${pythonCode}</python-code>`;
-const REQUEST_FEEDBACK_FUNCTION_CALL_PLAN = (feedback) => `<plan>Requesting feedback</plan>\n<python-code>${PY_AGENT_REQUEST_FEEDBACK(feedback)}</python-code>`;
-const COMPLETE_FUNCTION_CALL_PLAN = `<plan>Ready to complete</plan>\n<python-code>${PY_AGENT_COMPLETED('done')}</python-code>`;
-const NOOP_FUNCTION_CALL_PLAN = `<plan>I'm going to call the noop function</plan>\n<python-code>${PY_TEST_FUNC_NOOP}</python-code>`;
-const SKY_COLOUR_FUNCTION_CALL_PLAN = `<plan>Get the sky colour</plan>\n<python-code>${PY_TEST_FUNC_SKY_COLOUR}</python-code>`;
+const PYTHON_CODE_PLAN = (pythonCode: string) => `<response>\n<plan>Run some code</plan>\n<python-code>${pythonCode}</python-code>\n</response>`;
+const REQUEST_FEEDBACK_FUNCTION_CALL_PLAN = (feedback) =>
+	`<response>\n<plan>Requesting feedback</plan>\n<python-code>${PY_AGENT_REQUEST_FEEDBACK(feedback)}</python-code>\n</response>`;
+const COMPLETE_FUNCTION_CALL_PLAN = `<response>\n<plan>Ready to complete</plan>\n<python-code>${PY_AGENT_COMPLETED('done')}</python-code>\n</response>`;
+const NOOP_FUNCTION_CALL_PLAN = `<response>\n<plan>I'm going to call the noop function</plan>\n<python-code>${PY_TEST_FUNC_NOOP}</python-code>\n</response>`;
+const SKY_COLOUR_FUNCTION_CALL_PLAN = `<response>\n<plan>Get the sky colour</plan>\n<python-code>${PY_TEST_FUNC_SKY_COLOUR}</python-code>\n</response>`;
 
-describe.only('pythonAgentRunner', () => {
+describe('pythonAgentRunner', () => {
 	initInMemoryApplicationContext();
 	let mockLLM = new MockLLM();
 	let llms: AgentLLMs = {
@@ -103,12 +105,44 @@ describe.only('pythonAgentRunner', () => {
 	describe('test function calling', () => {
 		it('should be able to call a function with multiple parameters', async () => {
 			functions.addFunctionClass(TestFunctions);
-			mockLLM.addResponse(`<plan>call sum</plan><python-code>${PY_TEST_FUNC_SUM(3, 6)}</python-code>`);
-			mockLLM.addResponse(COMPLETE_FUNCTION_CALL_PLAN);
-			await startAgent(runConfig({ initialPrompt: 'Add 3 and 6', functions: functions }));
+			let initialPrompt: string;
+			let secondPrompt: string;
+			let finalPrompt: string;
+			mockLLM.addResponse(
+				`<response>\n<plan>call sum 3 6</plan>\n<python-code>${PY_SET_MEMORY('memKey', 'contents')}\nreturn ${PY_TEST_FUNC_SUM(
+					3,
+					6,
+				)}</python-code>\n</response>`,
+				(p) => {
+					initialPrompt = p;
+				},
+			);
+			mockLLM.addResponse(`<response>\n<plan>call sum 42 42</plan>\n<python-code>return ${PY_TEST_FUNC_SUM(42, 42)}</python-code>\n</response>`, (p) => {
+				secondPrompt = p;
+			});
+			mockLLM.addResponse(COMPLETE_FUNCTION_CALL_PLAN, (p) => {
+				finalPrompt = p;
+			});
+			await startAgent(runConfig({ initialPrompt: 'Task is to 3 and 6', functions: functions }));
 			const agent = await waitForAgent();
 			// spy on sum
 			expect(agent.state).to.equal('completed');
+
+			// when the second round of the control loop happens the prompt should be
+			// <old-function-call-history>
+			//<memory>
+			// <tool-state>
+			// <
+			await sleep(100);
+			console.log();
+			console.log('Initial ===================================');
+			console.log(initialPrompt);
+			console.log();
+			console.log('Second ===================================');
+			console.log(secondPrompt);
+			console.log();
+			console.log('Final ===================================');
+			console.log(finalPrompt);
 		});
 	});
 
@@ -188,11 +222,11 @@ describe.only('pythonAgentRunner', () => {
 		});
 	});
 
-	describe.only('Function call throws an error', () => {
+	describe('Function call throws an error', () => {
 		it('should continue on if a function throws an error', async () => {
 			functions.addFunctionInstance(new TestFunctions(), 'TestFunctions');
 
-			const response = `<python-code>${PY_TEST_FUNC_THROW_ERROR}</python-code>`;
+			const response = `<response><plan>error</plan><python-code>${PY_TEST_FUNC_THROW_ERROR}</python-code></response>`;
 			mockLLM.setResponse(response);
 
 			let nextPrompt: string;
@@ -203,7 +237,7 @@ describe.only('pythonAgentRunner', () => {
 			const id = await startAgent(runConfig({ functions }));
 			const ctx = await appContext().agentStateService.load(id);
 
-			logger.info(`Next prompt ${nextPrompt}`);
+			console.log(`Next prompt ===============\n${nextPrompt}`);
 
 			expect(ctx.state).to.equal('completed');
 			// expect(ctx.state).to.equal('error');

@@ -90,6 +90,8 @@ export interface FunctionCalls {
 }
 
 export interface FunctionCall {
+	/** Iteration of the agent control loop the function was called TODO implement */
+	iteration?: number;
 	function_name: string; // underscore to match xml element name
 	parameters: { [key: string]: any };
 }

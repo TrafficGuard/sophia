@@ -95,6 +95,8 @@ export interface AgentContext {
 
 	/** The type of autonomous agent function calling.*/
 	type: 'xml' | 'python';
+	/** The number of completed iterations of the agent control loop */
+	iterations: number;
 	/** The function calls the agent is about to call */
 	invoking: FunctionCall[];
 	/** The initial user prompt */
@@ -161,6 +163,7 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		inputPrompt: '',
 		userPrompt: config.initialPrompt,
 		state: 'agent',
+		iterations: 0,
 		functionCallHistory: [],
 		callStack: [],
 		hilBudget: config.humanInLoop?.budget ?? (process.env.HIL_BUDGET ? parseFloat(process.env.HIL_BUDGET) : 2),
@@ -239,6 +242,7 @@ export async function deserializeAgentContext(serialized: Record<string, any>): 
 
 	// backwards compatability
 	if (!context.type) context.type = 'xml';
+	if (!context.iterations) context.iterations = 0;
 
 	return context as AgentContext;
 }

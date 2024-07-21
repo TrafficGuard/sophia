@@ -69,10 +69,15 @@ export async function startAgent(config: RunAgentConfig): Promise<string> {
 		const endIndex = config.initialPrompt.indexOf('</user_request>');
 		agent.inputPrompt = config.initialPrompt;
 		agent.userPrompt = config.initialPrompt.slice(startIndex, endIndex);
-		logger.debug(`Extracted initial prompt:\n${agent.userPrompt}`);
+		logger.info('Extracted <user_request>');
+		logger.info(`agent.userPrompt: ${agent.userPrompt}`);
+		logger.info(`agent.inputPrompt: ${agent.inputPrompt}`);
 	} else {
 		agent.userPrompt = config.initialPrompt;
 		agent.inputPrompt = `<user_request>${config.initialPrompt}</user_request>`;
+		logger.info('Wrapping initialPrompt in <user_request>');
+		logger.info(`agent.userPrompt: ${agent.userPrompt}`);
+		logger.info(`agent.inputPrompt: ${agent.inputPrompt}`);
 	}
 	await appContext().agentStateService.save(agent);
 	logger.info(`Created agent ${agent.agentId}`);

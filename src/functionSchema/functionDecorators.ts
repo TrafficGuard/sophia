@@ -33,10 +33,10 @@ export function func() {
 
 			if (!tracer) {
 				try {
-					agent?.callStack.push(methodName);
+					agent?.callStack?.push(methodName);
 					return await originalMethod.call(this, ...args);
 				} finally {
-					agentContext()?.callStack.pop();
+					agentContext()?.callStack?.pop();
 				}
 			}
 			const className = Object.getPrototypeOf(this).constructor.name;

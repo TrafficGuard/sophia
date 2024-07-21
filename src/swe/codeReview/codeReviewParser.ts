@@ -11,6 +11,9 @@ interface IExample {
 export interface ICodeReview {
 	/** The source XML that was parsed to this object */
 	xml: string;
+
+	// The database data model
+
 	description: string;
 	file_extensions: {
 		include: string[];

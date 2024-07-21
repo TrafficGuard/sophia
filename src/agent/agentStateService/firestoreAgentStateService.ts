@@ -49,14 +49,18 @@ export class FirestoreAgentStateService implements AgentStateService {
 		return deserializeAgentContext({
 			...data,
 			agentId,
-			type: data.type || 'xml', // Ensure type is set, defaulting to 'xml' if not present
 		});
 	}
 
 	@span()
 	async list(): Promise<AgentContext[]> {
 		// TODO limit the fields retrieved for performance, esp while functionCallHistory and memory is on the AgentContext object
-		const querySnapshot = await withSpan('AgentContext-collection', () => this.db.collection('AgentContext').orderBy('lastUpdate', 'desc').get());
+		const keys: Array<keyof AgentContext> = ['agentId', 'name', 'state', 'cost', 'error', 'lastUpdate', 'userPrompt', 'inputPrompt'];
+		const querySnapshot = await this.db
+			.collection('AgentContext')
+			.select(...keys)
+			.orderBy('lastUpdate', 'desc')
+			.get();
 		return this.deserializeQuery(querySnapshot);
 	}
 
@@ -71,12 +75,11 @@ export class FirestoreAgentStateService implements AgentStateService {
 		const contexts: AgentContext[] = [];
 		for (const doc of querySnapshot.docs) {
 			const data = doc.data();
-			contexts.push(
-				await deserializeAgentContext({
-					...data,
-					agentId: doc.id,
-				}),
-			);
+			// TODO need to await for deserialization in multi-user environment
+			contexts.push({
+				...data,
+				agentId: doc.id,
+			} as AgentContext);
 		}
 		return contexts;
 	}

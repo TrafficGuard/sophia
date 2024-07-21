@@ -1,3 +1,4 @@
+import { use } from 'chai';
 import { AgentLLMs, addCost, agentContext } from '#agent/agentContext';
 import { CallerId } from '#llm/llmCallService/llmCallService';
 import { CreateLlmResponse } from '#llm/llmCallService/llmRequestResponse';
@@ -76,7 +77,7 @@ export class MockLLM extends BaseLLM {
 
 			// Call the callback function if it exists
 			if (callback) {
-				callback(prompt);
+				callback(userPrompt);
 			}
 
 			const timeToFirstToken = 1;
