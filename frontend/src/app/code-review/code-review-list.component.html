@@ -1,5 +1,19 @@
 <div>
-  <h2>Code Review List</h2>
-  <button mat-raised-button color="primary" (click)="openEditDialog()">Edit Configuration</button>
-  <p>Code review list component placeholder</p>
+  <h2>Code Review Configurations</h2>
+  <button mat-raised-button color="primary" (click)="openEditDialog()">Create New Configuration</button>
+
+  <mat-list *ngIf="!isLoading && !errorMessage">
+    <mat-list-item *ngFor="let config of configs">
+      <h3 matLine>{{config.description}}</h3>
+      <button mat-icon-button (click)="openEditDialog(config.id)">
+        <mat-icon>edit</mat-icon>
+      </button>
+      <button mat-icon-button (click)="deleteConfig(config.id)">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </mat-list-item>
+  </mat-list>
+
+  <mat-spinner *ngIf="isLoading"></mat-spinner>
+  <p *ngIf="errorMessage" class="error-message">{{errorMessage}}</p>
 </div>
