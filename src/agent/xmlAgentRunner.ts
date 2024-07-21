@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { Span, SpanStatusCode } from '@opentelemetry/api';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
-import { buildFilePrompt, buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
+import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, buildToolStatePrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
 import { formatFunctionError, formatFunctionResult, notificationMessage, summariseLongFunctionOutput } from '#agent/agentRunner';
 import { agentHumanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
 import { getServiceName } from '#fastify/trace-init/trace-init';
@@ -91,10 +91,10 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 						await agentHumanInTheLoop(`Agent cost has increased by USD\$${costSinceHil.toFixed(2)}`);
 						costSinceHil = 0;
 					}
-					const filePrompt = await buildFilePrompt();
+					const filePrompt = await buildToolStatePrompt();
 
 					if (!currentPrompt.includes('<function_call_history>')) {
-						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + filePrompt + currentPrompt;
+						currentPrompt = buildFunctionCallHistoryPrompt('history') + buildMemoryPrompt() + filePrompt + currentPrompt;
 					}
 
 					if (agent.error) {
@@ -116,7 +116,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 							stopSequences,
 						});
 					}
-					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + filePrompt + userRequestXml + functionResponse.textResponse;
+					currentPrompt = buildFunctionCallHistoryPrompt('history') + buildMemoryPrompt() + filePrompt + userRequestXml + functionResponse.textResponse;
 					const functionCalls = functionResponse.functions.functionCalls;
 
 					if (!functionCalls.length) {
@@ -130,7 +130,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 							stopSequences,
 						});
 						// retrying
-						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + filePrompt + userRequestXml + functionCallResponse.textResponse;
+						currentPrompt = buildFunctionCallHistoryPrompt('history') + buildMemoryPrompt() + filePrompt + userRequestXml + functionCallResponse.textResponse;
 						const functionCalls = functionCallResponse.functions.functionCalls;
 						if (!functionCalls.length) {
 							throw new Error('Found no function invocations');

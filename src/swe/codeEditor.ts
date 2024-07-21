@@ -64,7 +64,7 @@ export class CodeEditor {
 
 		writeFileSync(llmHistoryFile, '');
 
-		const cmd = `aider --skip-check-update --yes ${modelArg} --llm-history-file="${llmHistoryFile}" --message-file=${messageFilePath} ${filesToEdit
+		const cmd = `aider --no-check-update --yes ${modelArg} --llm-history-file="${llmHistoryFile}" --message-file=${messageFilePath} ${filesToEdit
 			.map((file) => `"${file}"`)
 			.join(' ')}`;
 

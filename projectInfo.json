@@ -3,9 +3,9 @@
     "baseDir": "./",
     "language": "typescript",
     "initialise": "npm install",
-    "compile": "npm run build",
-    "format": "npm run lint",
-    "staticAnalysis": "npm run lint",
+    "compile": "npm run build && cd frontend && npm run build",
+    "format": "",
+    "staticAnalysis": "npm run lint && cd frontend && npm run build",
     "test": "npm run test",
     "languageTools": "typescript",
     "devBranch": "main"

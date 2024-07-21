@@ -3,7 +3,8 @@ import { GetToolType } from '#functions/toolType';
 export interface FileMetadata {
 	filename: string;
 	description: string;
-	sizeKb: string;
+	/** Size in bytes */
+	size: number;
 	lastUpdated: string;
 }
 

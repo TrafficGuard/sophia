@@ -49,7 +49,7 @@ export class LocalFileStore implements FileStore {
 		metadata[filename] = {
 			filename,
 			description,
-			sizeKb: (stats.size / 1024).toFixed(2),
+			size: stats.size,
 			lastUpdated: stats.mtime.toISOString(),
 		};
 
@@ -97,7 +97,7 @@ export class LocalFileStore implements FileStore {
 				fileMetadata.push({
 					filename: file,
 					description: metadata[file]?.description || '',
-					sizeKb: (stats.size / 1024).toFixed(0), // TODO rename to size and convert to readable format 20k, 1.54m 4.23g
+					size: stats.size,
 					lastUpdated: stats.mtime.toISOString(),
 				});
 			}

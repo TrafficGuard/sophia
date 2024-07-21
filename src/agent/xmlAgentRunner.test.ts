@@ -25,7 +25,7 @@ const COMPLETE_FUNCTION_CALL = `<plan>Ready to complete</plan>\n<function_calls>
 const NOOP_FUNCTION_CALL = `<plan>I'm going to call the noop function</plan>\n<function_calls><function_call><function_name>${TEST_FUNC_NOOP}</function_name><parameters></parameters></function_call></function_calls>`;
 const SKY_COLOUR_FUNCTION_CALL = `<plan>Get the sky colour</plan>\n<function_calls><function_call><function_name>${TEST_FUNC_SKY_COLOUR}</function_name><parameters></parameters></function_call></function_calls>`;
 
-describe('agentRunner', () => {
+describe('xmlAgentRunner', () => {
 	initInMemoryApplicationContext();
 	let mockLLM = new MockLLM();
 	let llms: AgentLLMs = {
@@ -42,6 +42,7 @@ describe('agentRunner', () => {
 			agentName: AGENT_NAME,
 			initialPrompt: 'test prompt',
 			systemPrompt: '<functions></functions>',
+			type: 'xml',
 			llms,
 			functions,
 			user: createUser(),

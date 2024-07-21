@@ -24,6 +24,10 @@ const fs = {
 	lstat: promisify(lstat),
 };
 
+import fg from 'fast-glob';
+import { glob } from 'glob-gitignore';
+const globAsync = promisify(glob);
+
 type FileFilter = (filename: string) => boolean;
 
 /**
@@ -125,13 +129,6 @@ export class FileSystem {
 	}
 
 	/**
-	 * Gets the version control system (e.g. Git) commands for this filesystem if its under version control, else null.
-	 */
-	getVCS(): VersionControlSystem | null {
-		return null;
-	}
-
-	/**
 	 * Returns the file contents of all the files under the provided directory path
 	 * @param dirPath the directory to return all the files contents under
 	 * @returns the contents of the file(s) as a Map keyed by the file path
@@ -177,12 +174,10 @@ export class FileSystem {
 	 * @returns the list of filenames matching the regular expression.
 	 */
 	@func()
-	async searchFilesMatchingName(fileNameRegex: string): Promise<string> {
-		// --count Only show count of line matches for each file
-		// const { stdout, stderr, exitCode } = await execCommand(`rg --count ${regex}`);
-		const results = await spawnCommand(`find . -print | grep -i ${arg(fileNameRegex)}`);
-		if (results.exitCode > 1) throw new Error(results.stderr);
-		return results.stdout;
+	async searchFilesMatchingName(fileNameRegex: string): Promise<string[]> {
+		const regex = new RegExp(fileNameRegex);
+		const files = await this.listFilesRecursively();
+		return files.filter((file) => regex.test(file.substring(file.lastIndexOf(path.sep) + 1)));
 	}
 
 	/**

@@ -1,3 +1,4 @@
+import { use } from 'chai';
 import { AgentLLMs, addCost, agentContext } from '#agent/agentContext';
 import { CallerId } from '#llm/llmCallService/llmCallService';
 import { CreateLlmResponse } from '#llm/llmCallService/llmRequestResponse';
@@ -55,7 +56,9 @@ export class MockLLM extends BaseLLM {
 	// @logTextGeneration
 	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
 		logger.info(`MockLLM ${opts?.id ?? '<no id>'} ${userPrompt}`);
-		if(!opts?.id) logger.info(new Error(`No id set for prompt ${userPrompt}`))
+
+		if (!opts?.id) logger.info(new Error(`No id set for prompt ${userPrompt}`));
+
 		return withActiveSpan('generateText', async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 			this.lastPrompt = prompt;
@@ -78,7 +81,7 @@ export class MockLLM extends BaseLLM {
 
 			// Call the callback function if it exists
 			if (callback) {
-				callback(prompt);
+				callback(userPrompt);
 			}
 
 			const timeToFirstToken = 1;

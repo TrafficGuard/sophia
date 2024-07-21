@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { Span, SpanStatusCode } from '@opentelemetry/api';
 import { PyodideInterface, loadPyodide } from 'pyodide';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
-import { buildFilePrompt, buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
+import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, buildToolStatePrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
 import { formatFunctionError, formatFunctionResult, notificationMessage } from '#agent/agentRunner';
 import { agentHumanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
 import { getServiceName } from '#fastify/trace-init/trace-init';
@@ -15,6 +15,8 @@ import { appContext } from '../app';
 import { AgentContext, agentContext, agentContextStorage, llms } from './agentContext';
 
 const stopSequences = ['</response>'];
+
+export const PY_AGENT_SPAN = 'PythonAgent';
 
 let pyodide: PyodideInterface;
 
@@ -31,13 +33,10 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 
 	const agentLLM = llms().hard;
 
-	const userRequestXml = `<user_request>\n${agent.userPrompt}\n</user_request>\n`;
+	// const userRequestXml = agent.userPrompt;
 	let currentPrompt = agent.inputPrompt;
-
-	const functions = agent.functions;
-
-	const functionsXml = convertJsonToPythonDeclaration(getAllFunctionSchemas(functions.getFunctionInstances()));
-	const systemPromptWithFunctions = updateFunctionSchemas(pythonSystemPrompt, functionsXml);
+	// logger.info(`userRequestXml ${userRequestXml}`)
+	logger.info(`currentPrompt ${currentPrompt}`);
 
 	// Human in the loop settings
 	// How often do we require human input to avoid misguided actions and wasting money
@@ -70,9 +69,15 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 
 		let functionErrorCount = 0;
 
+		let currentFunctionHistorySize = agent.functionCallHistory.length;
+
 		let shouldContinue = true;
 		while (shouldContinue) {
-			shouldContinue = await withActiveSpan('PythonAgent', async (span) => {
+			shouldContinue = await withActiveSpan(PY_AGENT_SPAN, async (span) => {
+				// Might need to reload the agent for dynamic updating of the tools
+				const functionsXml = convertJsonToPythonDeclaration(getAllFunctionSchemas(agent.functions.getFunctionInstances()));
+				const systemPromptWithFunctions = updateFunctionSchemas(pythonSystemPrompt, functionsXml);
+
 				let completed = false;
 				let requestFeedback = false;
 				const anyFunctionCallErrors = false;
@@ -94,23 +99,20 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 						costSinceHil = 0;
 					}
 
-					const filePrompt = await buildFilePrompt();
-					if (!currentPrompt.includes('<function_call_history>')) {
-						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + filePrompt + currentPrompt;
-					}
+					const toolStatePrompt = await buildToolStatePrompt();
+					const oldFunctionCallHistory = buildFunctionCallHistoryPrompt('history', 10000);
 
-					const llmGenerateScriptResponse: string = await agentLLM.generateText(currentPrompt, systemPromptWithFunctions, {
-						id: 'generatePythonScript',
+					const isNewAgent = agent.iterations === 0 && agent.functionCallHistory.length === 0;
+					const initialPrompt = isNewAgent ? oldFunctionCallHistory + buildMemoryPrompt() + toolStatePrompt + currentPrompt : currentPrompt;
+
+					const agentPlanResponse: string = await agentLLM.generateText(initialPrompt, systemPromptWithFunctions, {
+						id: 'dynamicAgentPlan',
 						stopSequences,
 					});
 
-					const llmPythonCode = extractPythonCode(llmGenerateScriptResponse);
-
-					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + filePrompt + userRequestXml + llmGenerateScriptResponse;
+					const llmPythonCode = extractPythonCode(agentPlanResponse);
 
 					agent.state = 'functions';
-					agent.inputPrompt = currentPrompt;
-					agent.invoking = []; // pythonCode
 					await agentStateService.save(agent);
 
 					// The XML formatted results of the function call(s)
@@ -136,7 +138,7 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 
 								// Don't need to duplicate the content in the function call history
 								// TODO Would be nice to save over-written memory keys for history/debugging
-								if (className === 'Agent' && (method === 'saveMemory' || method === 'getMemory')) parameters.content = undefined;
+								if (className === 'Agent' && (method === 'saveMemory' || method === 'getMemory')) parameters.content = '(See <memory> entry)';
 
 								agent.functionCallHistory.push({
 									function_name: schema.name,
@@ -152,7 +154,7 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 								agent.functionCallHistory.push({
 									function_name: schema.name,
 									parameters,
-									stderr: agent.error,
+									stderr: errorToString(e, false),
 									// stderrSummary: outputSummary, TODO
 								});
 								throw e;
@@ -228,6 +230,7 @@ main()`.trim();
 							if (!anyFunctionCallErrors && !completed && !requestFeedback) agent.state = 'agent';
 						}
 					} catch (e) {
+						logger.info(`Caught function error ${e.message}`);
 						functionErrorCount++;
 					}
 					// Function invocations are complete
@@ -238,7 +241,10 @@ main()`.trim();
 
 					// This section is duplicated in the provideFeedback function
 					agent.invoking = [];
-					currentPrompt = `${userRequestXml}\n${llmGenerateScriptResponse}\n<python-result>${pythonScriptResult}</python-result>`;
+					const currentFunctionCallHistory = buildFunctionCallHistoryPrompt('results', 10000, currentFunctionHistorySize);
+
+					currentPrompt = `${oldFunctionCallHistory}${buildMemoryPrompt()}${toolStatePrompt}\n${agentPlanResponse}\n${currentFunctionCallHistory}\n<python-result>${pythonScriptResult}</python-result>`;
+					currentFunctionHistorySize = agent.functionCallHistory.length;
 				} catch (e) {
 					span.setStatus({ code: SpanStatusCode.ERROR, message: e.toString() });
 					logger.error(e, 'Control loop error');
@@ -248,6 +254,7 @@ main()`.trim();
 				} finally {
 					agent.inputPrompt = currentPrompt;
 					agent.callStack = [];
+					agent.iterations++;
 					await agentStateService.save(agent);
 				}
 				// return if the control loop should continue

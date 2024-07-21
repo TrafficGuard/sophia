@@ -1,6 +1,7 @@
 import { llms } from '#agent/agentContext';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 
+export const TEST_FUNC_THROW_ERROR = 'TestFunctions.throwError';
 export const THROW_ERROR_TEXT = 'FunctionErrorText';
 export const TEST_FUNC_SUM = 'TestFunctions.sum';
 
@@ -36,7 +37,7 @@ export class TestFunctions {
 	 */
 	@func()
 	async skyColour(): Promise<string> {
-		const response = await llms().easy.generateText('What colour is the clear daytime sky? Respond with a single word.');
+		const response = await llms().easy.generateText('What colour is the clear daytime sky? Respond with a single word.', null, { id: 'skyColour' });
 		return response.trim().toLowerCase();
 	}
 

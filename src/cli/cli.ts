@@ -30,7 +30,7 @@ export function parseUserCliArgs(scriptName: string, args: string[]): CliOptions
 
 	// If not prompt provided then load from file
 	if (!initialPrompt.trim()) {
-		initialPrompt = readFileSync(`src/cli/${scriptName}-in`, 'utf-8');
+		if (existsSync(`src/cli/${scriptName}-in`)) initialPrompt = readFileSync(`src/cli/${scriptName}-in`, 'utf-8');
 	}
 
 	const resumeAgentId = resumeLastRun ? getLastRunAgentId(scriptName) : undefined;

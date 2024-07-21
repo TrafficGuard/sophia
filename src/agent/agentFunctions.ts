@@ -2,6 +2,8 @@ import { agentContext } from '#agent/agentContext';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 
+export const AGENT_SAVE_MEMORY = 'Agent.saveMemory';
+
 export const AGENT_COMPLETED_NAME = 'Agent.completed';
 
 export const AGENT_REQUEST_FEEDBACK = 'Agent.requestFeedback';
