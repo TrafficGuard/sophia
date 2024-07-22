@@ -29,6 +29,7 @@ export interface OrganicSearchResult {
 }
 
 let browser: Browser;
+let blocker: PuppeteerBlocker;
 
 export const gitHubRepoHomepageRegex = /https:\/\/github.com\/([\w^\\-])*\/([\w^\\-])*\/?$/;
 
@@ -265,7 +266,7 @@ export class PublicWeb {
 	async takeScreenshot(url: string): Promise<Buffer> {
 		logger.info(`Taking screenshot of ${url}`);
 
-		const blocker = await PuppeteerBlocker.fromLists(fetch as any, ['https://secure.fanboy.co.nz/fanboy-cookiemonster.txt']);
+		if (!blocker) blocker = await PuppeteerBlocker.fromLists(fetch as any, ['https://secure.fanboy.co.nz/fanboy-cookiemonster.txt']);
 
 		if (!browser) browser = await puppeteer.launch({ headless: true });
 		const page = await browser.newPage();
