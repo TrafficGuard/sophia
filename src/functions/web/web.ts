@@ -14,7 +14,7 @@ import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 import { PuppeteerBlocker } from '@cliqz/adblocker-puppeteer';
 import fetch from 'cross-fetch';
-import autoconsent from '@duckduckgo/autoconsent/dist/autoconsent.puppet.js';
+import autoconsent from '@duckduckgo/autoconsent';
 
 // For Node.js
 const TurndownService = require('turndown');
