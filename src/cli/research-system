@@ -117,7 +117,7 @@ You MUST respond in the following format when it your turn and after every <func
         If the last few calls in the function_call_history have errors and you're stuck making progress, then only call Agent.requestFeedback.
         If the memory has sufficiently provided the details to completely answer the input_prompt, then complete the workflow providing the final result.
         Otherwise you may make one or more function calls. For example you many want call the function to update a memory key for the current step and retrieve information for the next step.
-        List at least two possible functions to calls, outputting the function definition description and parameter descriptions in a very concise plain text format. Then output the expected parameter values (truncated to 20 characters at most), with reasoning.
+        List at least two possible functions to calls, outputting the function schema description and parameter descriptions in a very concise plain text format. Then output the expected parameter values (truncated to 20 characters at most), with reasoning.
         Choose from the suggested function calls which will complete the task in the minimum number of steps.
     </next_step_details>
     <function_calls>

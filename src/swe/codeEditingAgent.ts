@@ -1,14 +1,16 @@
 import path from 'path';
 import { agentContext, getFileSystem, llms } from '#agent/agentContext';
-import { FileSystem } from '#functions/filesystem';
+import { func, funcClass } from '#functionSchema/functionDecorators';
+import { FileSystem } from '#functions/storage/filesystem';
 import { Perplexity } from '#functions/web/perplexity';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
 import { CompileErrorAnalysis, CompileErrorAnalysisDetails, analyzeCompileErrors } from '#swe/analyzeCompileErrors';
+import { reviewChanges } from '#swe/reviewChanges';
+import { supportingInformation } from '#swe/supportingInformation';
 import { execCommand } from '#utils/exec';
 import { appContext } from '../app';
 import { cacheRetry } from '../cache/cacheRetry';
-import { func, funcClass } from '../functionDefinition/functionDecorators';
 import { CodeEditor } from './codeEditor';
 import { ProjectInfo, detectProjectInfo } from './projectDetection';
 import { basePrompt } from './prompt';
@@ -27,14 +29,17 @@ export function buildPrompt(args: {
 export class CodeEditingAgent {
 	//* @param projectInfo details of the project, lang/runtime etc
 
+	// async addSourceCodeFile(path: string, contents): Promise<void> {}
+
 	// No @param doc for projectInfo as its only for passing programmatically. We don't want the LLM hallucinating it
+
 	/**
 	 * Runs a workflow which edits the code repository to implement the requirements, and committing changes to version control.
 	 * It also compiles, formats, lints, and runs tests where applicable.
-	 * @param requirements The requirements to implement including support documentation and code samples.
+	 * @param requirements The detailed requirements to implement, including supporting documentation and code samples. Do not refer to details in memory etc, you must provide the actual details.
 	 */
 	@func()
-	async runCodeEditWorkflow(requirements: string, projectInfo?: ProjectInfo): Promise<CompileErrorAnalysis | null> {
+	async runCodeEditWorkflow(requirements: string, projectInfo?: ProjectInfo): Promise<void> {
 		if (!projectInfo) {
 			const detected: ProjectInfo[] = await detectProjectInfo();
 			if (detected.length !== 1) throw new Error('projectInfo array must have one item');
@@ -46,6 +51,13 @@ export class CodeEditingAgent {
 		const git = fs.vcs;
 		fs.setWorkingDirectory(projectInfo.baseDir);
 
+		// Run in parallel to the requirements generation
+		const installPromise: Promise<any> = projectInfo.initialise ? execCommand(projectInfo.initialise) : Promise.resolve();
+
+		const headCommit = await fs.vcs.getHeadSha();
+		const currentBranch = await fs.vcs.getBranchName();
+		const gitSource = !projectInfo.devBranch || projectInfo.devBranch === currentBranch ? headCommit : projectInfo.devBranch;
+
 		// Find the initial set of files required for editing
 		const filesResponse: SelectFilesResponse = await this.selectFilesToEdit(requirements, projectInfo);
 		const initialSelectedFiles: string[] = [
@@ -55,22 +67,63 @@ export class CodeEditingAgent {
 		logger.info(initialSelectedFiles, 'Initial selected files');
 
 		// Perform a first pass on the files to generate an implementation specification
-		const implementationDetailsPrompt = `${await fs.getMultipleFileContentsAsXml(initialSelectedFiles)}
+		const implementationDetailsPrompt = `${await fs.readFilesAsXml(initialSelectedFiles)}
 		<requirements>${requirements}</requirements>
-		You are a senior software engineer. Your task is to review the provided user requirements against the code provided and produce an implementation design specification to give to a junior developer to implement the changes in the provided files.
+		You are a senior software engineer. Your task is to review the provided user requirements against the code provided and produce an implementation design specification to give to a developer to implement the changes in the provided files.
 		Do not provide any details of verification commands etc as the CI/CD build will run integration tests. Only detail the changes required in the files for the pull request.
 		Check if any of the requirements have already been correctly implemented in the code as to not duplicate work.
 		Look at the existing style of the code when producing the requirements.
 		`;
 		const implementationRequirements = await llms().hard.generateText(implementationDetailsPrompt, null, { id: 'implementationSpecification' });
 
-		// Edit/compile loop ----------------------------------------
+		await installPromise;
 
+		// Edit/compile loop ----------------------------------------
+		let compileErrorAnalysis: CompileErrorAnalysis | null = await this.editCompileLoop(projectInfo, initialSelectedFiles, implementationRequirements);
+		this.failOnCompileError(compileErrorAnalysis);
+
+		// Store in memory for now while we see how the prompt performs
+		const branchName = await getFileSystem().vcs.getBranchName();
+
+		const reviewItems: string[] = await this.reviewChanges(requirements, gitSource);
+		if (reviewItems.length) {
+			logger.info(reviewItems);
+			agentContext().memory[`${branchName}--review`] = JSON.stringify(reviewItems);
+
+			let reviewRequirements = `${implementationRequirements}\n\n# Code Review Results:\n\nThe initial completed implementation changes have been reviewed. Only the following code review items remain to finalize the requirements:`;
+			for (const reviewItem of reviewItems) {
+				reviewRequirements += `\n- ${reviewItem}`;
+			}
+			compileErrorAnalysis = await this.editCompileLoop(projectInfo, initialSelectedFiles, reviewRequirements);
+			this.failOnCompileError(compileErrorAnalysis);
+		}
+
+		// The prompts need some work
+		// await this.testLoop(requirements, projectInfo, initialSelectedFiles);
+	}
+
+	private failOnCompileError(compileErrorAnalysis: CompileErrorAnalysis) {
+		if (compileErrorAnalysis) {
+			let message = `Failed to compile the project. ${compileErrorAnalysis.compileIssuesSummary}\n${compileErrorAnalysis.compilerOutput}`;
+			if (compileErrorAnalysis.fatalError) message += `\nFatal Error: ${compileErrorAnalysis.fatalError}\n`;
+			throw new Error(message);
+		}
+	}
+
+	private async editCompileLoop(
+		projectInfo: ProjectInfo,
+		initialSelectedFiles: string[],
+		implementationRequirements: string,
+	): Promise<CompileErrorAnalysisDetails | null> {
 		let compileErrorAnalysis: CompileErrorAnalysisDetails | null = null;
 		let compileErrorSearchResults: string[] = [];
+		let compileErrorSummaries: string[] = [];
 		/* The git commit sha of the last commit which compiled successfully. We store this so when there are one or more commits
 		   which don't compile, we can provide the diff since the last good commit to help identify causes of compile issues. */
 		let compiledCommitSha: string | null = agentContext().memory.compiledCommitSha;
+
+		const fs: FileSystem = getFileSystem();
+		const git = fs.vcs;
 
 		const MAX_ATTEMPTS = 5;
 		for (let i = 0; i < MAX_ATTEMPTS; i++) {
@@ -87,12 +140,18 @@ export class CodeEditingAgent {
 				}
 
 				const codeEditorFiles: string[] = [...initialSelectedFiles];
-				let codeEditorRequirements = implementationRequirements;
+				// Start with the installed packages list and project conventions
+				let codeEditorRequirements = await supportingInformation(projectInfo);
 
-				// If the previous edit caused compile errors then we will create a requirements specifically for fixing any compile errors first before making more functionality changes
+				// If the project doesn't compile or previous edit caused compile errors then we will create a requirements specifically for fixing any compile errors first before making more functionality changes
 				if (compileErrorAnalysis) {
 					const installPackages = compileErrorAnalysis.installPackages ?? [];
-					for (const packageName of installPackages) await projectInfo.languageTools?.installPackage(packageName);
+					if (installPackages.length) {
+						if (!projectInfo.languageTools) throw new Error('Fatal Error: No language tools available to install packages.');
+						for (const packageName of installPackages) await projectInfo.languageTools?.installPackage(packageName);
+						// Seemed to be missing packages after adding packages
+						if (projectInfo.initialise) await execCommand(projectInfo.initialise);
+					}
 
 					let compileFixRequirements = '';
 					if (compileErrorAnalysis.researchQuery) {
@@ -104,15 +163,38 @@ export class CodeEditingAgent {
 						}
 					}
 
+					if (compileErrorSummaries.length) {
+						compileFixRequirements += '<compile-error-history>\n';
+						for (const summary of compileErrorSummaries) compileFixRequirements += '<compile-error-summary>${summary}</compile-error-summary>\n';
+						compileFixRequirements += '</compile-error-history>\n';
+					}
 					compileFixRequirements += compileErrorSearchResults.map((result) => `<research>${result}</research>\n`).join();
-					compileFixRequirements += `<diff>${await git.getDiff(compiledCommitSha)}</diff>\n`;
-					compileFixRequirements += `<compile-errors>${compileErrorAnalysis.compilerOutput}</compile-errors>\n`;
-					compileFixRequirements += 'When the git diff was applied, building the app results in the provided compile errors.\n';
-					if (installPackages.length) compileFixRequirements += `The following packages have now been installed: ${installPackages.join(', ')}.\n`;
-					compileFixRequirements += 'Please pay attention to detail and fix all of the the compile errors}';
+					compileFixRequirements += `<compilerr-errors>${compileErrorAnalysis.compilerOutput}</compilerr-errors>\n\n`;
+					if (compiledCommitSha) {
+						compileFixRequirements += `<diff>${await git.getDiff(compiledCommitSha)}</diff>\n`;
+						compileFixRequirements +=
+							'The above diff has introduced compile errors. With the analysis of the compiler errors, first focus on analysing the diff for any obvious syntax and type errors and then analyse the files you are allowed to edit.\n';
+					} else {
+						compileFixRequirements +=
+							'The project is not currently compiling. Analyse the compiler errors to identify the fixes required in the source code.\n';
+					}
+					if (compileErrorSummaries.length > 1) {
+						compileFixRequirements +=
+							'Your previous attempts have not fixed the compiler errors. A summary of the errors after previous attempts to fix have been provided.\n' +
+							'If you are getting the same errors then try a different approach or provide a researchQuery to find the correct API usage.\n';
+					}
+
+					if (installPackages.length)
+						compileFixRequirements += `The following packages have now been installed: ${installPackages.join(
+							', ',
+						)} which will fix any errors relating to these packages not being found.\n`;
 					codeEditorRequirements = compileFixRequirements;
 
 					codeEditorFiles.push(...(compileErrorAnalysis.additionalFiles ?? []));
+				} else {
+					// project is compiling, lets implement the requirements
+					codeEditorRequirements += implementationRequirements;
+					codeEditorRequirements += '\nOnly make changes directly related to these requirements.';
 				}
 
 				await new CodeEditor().editFilesToMeetRequirements(codeEditorRequirements, codeEditorFiles);
@@ -123,6 +205,7 @@ export class CodeEditingAgent {
 
 				// Check the changes compile
 				await this.compile(projectInfo);
+
 				// Update the compiled commit state
 				compiledCommitSha = await git.getHeadSha();
 				const agent = agentContext();
@@ -130,6 +213,7 @@ export class CodeEditingAgent {
 				await appContext().agentStateService.save(agent);
 				compileErrorAnalysis = null;
 				compileErrorSearchResults = [];
+				compileErrorSummaries = [];
 
 				break;
 			} catch (e) {
@@ -138,28 +222,28 @@ export class CodeEditingAgent {
 				const compileErrorOutput = e.message;
 				logger.error(`Compile Error Output: ${compileErrorOutput}`);
 				// TODO handle code editor error separately - what failure modes does it have (invalid args, git error etc)?
-				compileErrorAnalysis = await analyzeCompileErrors(compileErrorOutput, initialSelectedFiles);
+				compileErrorAnalysis = await analyzeCompileErrors(compileErrorOutput, initialSelectedFiles, compileErrorSummaries);
+				compileErrorSummaries.push(compileErrorAnalysis.compileIssuesSummary);
+				if (compileErrorAnalysis.fatalError) return compileErrorAnalysis;
 			}
 		}
 
-		if (compileErrorAnalysis) return compileErrorAnalysis;
-
-		if (projectInfo.staticAnalysis) {
+		if (!compileErrorAnalysis && projectInfo.staticAnalysis) {
 			const STATIC_ANALYSIS_MAX_ATTEMPTS = 2;
 			for (let i = 0; i < STATIC_ANALYSIS_MAX_ATTEMPTS; i++) {
 				// Run it twice so the first time can apply any auto-fixes, then the second time has only the non-auto fixable issues
 				try {
 					await this.runStaticAnalysis(projectInfo);
-					await fs.vcs.addAllTrackedAndCommit('Fix static analysis errors');
+					await fs.vcs.mergeChangesIntoLatestCommit(initialSelectedFiles);
 					break;
 				} catch (e) {
 					let staticAnalysisErrorOutput = e.message;
-					// Commit any successful auto-fixes
-					await fs.vcs.addAllTrackedAndCommit('Fix static analysis errors');
+					// Merge any successful auto-fixes to the latest commit
+					await fs.vcs.mergeChangesIntoLatestCommit(initialSelectedFiles);
 					if (i === STATIC_ANALYSIS_MAX_ATTEMPTS - 1) {
 						logger.warn(`Unable to fix static analysis errors: ${staticAnalysisErrorOutput}`);
 					} else {
-						staticAnalysisErrorOutput = JSON.stringify(e); // Need to stringify?
+						staticAnalysisErrorOutput = e.message;
 						logger.info(`Static analysis error output: ${staticAnalysisErrorOutput}`);
 						const staticErrorFiles = await this.extractFilenames(`${staticAnalysisErrorOutput}\n\nExtract the filenames from the compile errors.`);
 
@@ -172,8 +256,7 @@ export class CodeEditingAgent {
 				}
 			}
 		}
-
-		await this.testLoop(requirements, projectInfo, initialSelectedFiles);
+		return compileErrorAnalysis;
 	}
 
 	async compile(projectInfo: ProjectInfo): Promise<void> {
@@ -208,7 +291,7 @@ export class CodeEditingAgent {
 	async runStaticAnalysis(projectInfo: ProjectInfo): Promise<void> {
 		if (!projectInfo.staticAnalysis) return;
 		const { exitCode, stdout, stderr } = await execCommand(projectInfo.staticAnalysis);
-		const result = `<static_analysis_output><command>${projectInfo.compile}</command><stdout></stdout>${stdout}<stderr>${stderr}</stderr></static_analysis_output>`;
+		const result = `<static_analysis_output><command>${projectInfo.compile}</command><stdout>${stdout}</stdout><stderr>${stderr}</stderr></static_analysis_output>`;
 		if (exitCode > 0) {
 			throw new Error(result);
 		}
@@ -217,16 +300,18 @@ export class CodeEditingAgent {
 	async runTests(projectInfo: ProjectInfo): Promise<void> {
 		if (!projectInfo.test) return;
 		const { exitCode, stdout, stderr } = await execCommand(projectInfo.test);
-		const result = `<test_output><command>${projectInfo.test}</command><stdout></stdout>${stdout}<stderr>${stderr}</stderr></test_output>`;
+		const result = `<test_output><command>${projectInfo.test}</command><stdout>${stdout}</stdout><stderr>${stderr}</stderr></test_output>`;
 		if (exitCode > 0) {
 			throw new Error(result);
 		}
 	}
 
+	//
 	async testLoop(requirements: string, projectInfo: ProjectInfo, initialSelectedFiles: string[]): Promise<CompileErrorAnalysis | null> {
 		if (!projectInfo.test) return null;
 		let testErrorOutput = null;
 		let errorAnalysis: CompileErrorAnalysis = null;
+		const compileErrorHistory = [];
 		const MAX_ATTEMPTS = 2;
 		for (let i = 0; i < MAX_ATTEMPTS; i++) {
 			try {
@@ -240,7 +325,7 @@ export class CodeEditingAgent {
 			} catch (e) {
 				testErrorOutput = e.message;
 				logger.info(`Test error output: ${testErrorOutput}`);
-				errorAnalysis = await analyzeCompileErrors(testErrorOutput, initialSelectedFiles);
+				errorAnalysis = await analyzeCompileErrors(testErrorOutput, initialSelectedFiles, compileErrorHistory);
 			}
 		}
 		return errorAnalysis;
@@ -252,6 +337,11 @@ export class CodeEditingAgent {
 		return summariseRequirements(requirements);
 	}
 
+	@span()
+	async reviewChanges(requirements: string, sourceBranchOrCommit: string): Promise<string[]> {
+		return reviewChanges(requirements, sourceBranchOrCommit);
+	}
+
 	@cacheRetry()
 	async extractFilenames(summary: string): Promise<string[]> {
 		const filenames = await getFileSystem().listFilesRecursively();
@@ -261,7 +351,7 @@ export class CodeEditingAgent {
 			action:
 				'You will respond ONLY in JSON. From the requirements quietly consider which the files may be required to complete the task. You MUST output your answer ONLY as JSON in the format of this example:\n<example>\n{\n files: ["file1", "file2", "file3"]\n}\n</example>',
 		});
-		const response: any = await llms().hard.generateJson(prompt, null, { id: 'extractFilenames' });
+		const response: any = await llms().medium.generateJson(prompt, null, { id: 'extractFilenames' });
 		return response.files;
 	}
 }

@@ -13,8 +13,8 @@ export abstract class BaseLLM implements LLM {
 		protected readonly service: string,
 		protected readonly model: string,
 		private maxInputTokens: number,
-		private inputCostPerChar: number,
-		private outputCostPerChar: number,
+		public readonly calculateInputCost: (input: string) => number,
+		public readonly calculateOutputCost: (output: string) => number,
 	) {}
 
 	async generateFunctionResponse(prompt: string, systemPrompt?: string, opts?: GenerateFunctionOptions): Promise<FunctionResponse> {
@@ -41,14 +41,6 @@ export abstract class BaseLLM implements LLM {
 		return this.maxInputTokens;
 	}
 
-	getInputCostPerToken(): number {
-		return this.inputCostPerChar;
-	}
-
-	getOutputCostPerToken(): number {
-		return this.outputCostPerChar;
-	}
-
 	isRetryableError(e: any): boolean {
 		return false;
 	}
@@ -67,26 +59,5 @@ export abstract class BaseLLM implements LLM {
 
 	getDisplayName(): string {
 		return this.displayName;
-	}
-
-	formatFunctionResult(functionName: string, result: any): string {
-		return `<function_results>
-        <result>
-        <function_name>${functionName}</function_name>
-        <stdout>${CDATA_START}
-        ${JSON.stringify(result)}
-        ${CDATA_END}</stdout>
-        </result>
-        </function_results>
-        `;
-	}
-
-	formatFunctionError(functionName: string, error: any): string {
-		return `<function_results>
-		<function_name>${functionName}</function_name>
-        <error>${CDATA_START}
-        ${JSON.stringify(error)}
-        ${CDATA_END}</error>
-        </function_results>`;
 	}
 }

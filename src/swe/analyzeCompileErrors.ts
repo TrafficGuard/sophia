@@ -15,9 +15,26 @@ export interface CompileErrorAnalysisDetails extends CompileErrorAnalysis {
 	diff?: string;
 }
 
-export async function analyzeCompileErrors(compilerOutput: string, initialFileSelection: string[]): Promise<CompileErrorAnalysis> {
-	const fileContents = `<file_contents>\n${await getFileSystem().getMultipleFileContentsAsXml(initialFileSelection)}\n</file_contents>`;
-	const fileList = `<project_filenames>\n${(await getFileSystem().listFilesRecursively()).join('\n')}\n</project_filenames>`;
+/**
+ *
+ * @param compilerOutput
+ * @param initialFileSelection
+ * @param compileErrorSummaries the previous compile error summaries
+ */
+export async function analyzeCompileErrors(
+	compilerOutput: string,
+	initialFileSelection: string[],
+	compileErrorSummaries: string[],
+): Promise<CompileErrorAnalysis> {
+	const fileContents = `<file_contents>\n${await getFileSystem().readFilesAsXml(initialFileSelection)}\n</file_contents>`;
+	// const fileList = `<project_filenames>\n${(await getFileSystem().listFilesRecursively()).join('\n')}\n</project_filenames>`;
+	// TODO need to add ts-imports info to resolve imports to file paths
+	let compileErrorHistory = '';
+	if (compileErrorSummaries.length) {
+		compileErrorHistory += '<compile-error-history>\n';
+		for (const summary of compileErrorSummaries) compileErrorHistory += '<compile-error-summary>${summary}</compile-error-summary>\n';
+		compileErrorHistory += '</compile-error-history>';
+	}
 	const compileOutputXml = `<compiler_output>\n${compilerOutput}\n</compiler_output>`;
 
 	const instructions =
@@ -44,7 +61,8 @@ export async function analyzeCompileErrors(compilerOutput: string, initialFileSe
 </json>
 </response_example>`;
 
-	const prompt = `${fileList}\n${fileContents}\n${compileOutputXml}\n${instructions}`;
+	// ${fileList}\n
+	const prompt = `${fileContents}\n${compileErrorHistory}\n${compileOutputXml}\n${instructions}`;
 	const analysis: CompileErrorAnalysis = await llms().hard.generateJson(prompt, null, {
 		id: 'analyzeCompileErrors',
 	});

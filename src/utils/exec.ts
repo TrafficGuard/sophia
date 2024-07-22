@@ -98,6 +98,8 @@ export interface ExecCmdOptions {
 	envVars?: Record<string, string>;
 }
 
+// TODO stream the output and watch for cmdsubst> which would indicate a malformed command
+
 export async function execCommand(command: string, opts?: ExecCmdOptions): Promise<ExecResult> {
 	return withSpan('execCommand', async (span) => {
 		const shell = os.platform() === 'darwin' ? '/bin/zsh' : '/bin/bash';

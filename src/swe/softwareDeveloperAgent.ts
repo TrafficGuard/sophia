@@ -1,4 +1,5 @@
 import { getFileSystem } from '#agent/agentContext';
+import { func, funcClass } from '#functionSchema/functionDecorators';
 import { GitLabProject } from '#functions/scm/gitlab';
 import { getSourceControlManagementTool } from '#functions/scm/sourceControlManagement';
 import { logger } from '#o11y/logger';
@@ -9,7 +10,6 @@ import { selectProject } from '#swe/selectProject';
 import { summariseRequirements } from '#swe/summariseRequirements';
 import { ExecResult, execCommand, failOnError } from '#utils/exec';
 import { cacheRetry } from '../cache/cacheRetry';
-import { func, funcClass } from '../functionDefinition/functionDecorators';
 import { CodeEditingAgent } from './codeEditingAgent';
 import { ProjectInfo, detectProjectInfo } from './projectDetection';
 import { basePrompt } from './prompt';
@@ -30,17 +30,18 @@ export function buildPrompt(args: {
 export class SoftwareDeveloperAgent {
 	/**
 	 * Runs the software developer agent to complete the user request/requirements. This will find the appropriate Git project/repository, clone it, make the changes, compile and test if applicable, commit and create a pull/merge request to review.
-	 * @param requirements the requirements to implement. Provide ALL the details that might be required by this agent to complete the requirements task.
+	 * @param requirements the requirements to implement. Provide ALL the details that might be required by this agent to complete the requirements task. Do not refer to details in memory etc, you must provide the actual details.
 	 */
 	@func()
 	async runSoftwareDeveloperWorkflow(requirements: string): Promise<void> {
+		const fileSystem = getFileSystem();
 		const requirementsSummary = await this.summariseRequirements(requirements);
 
 		const gitProject = await this.selectProject(requirementsSummary);
 		const targetBranch = gitProject.default_branch;
 
 		const repoPath = await getSourceControlManagementTool().cloneProject(gitProject.path_with_namespace);
-		getFileSystem().setWorkingDirectory(repoPath);
+		fileSystem.setWorkingDirectory(repoPath);
 
 		const projectInfo = await this.detectSingleProjectInfo();
 
@@ -52,11 +53,16 @@ export class SoftwareDeveloperAgent {
 		// Should check we're on the develop/default branch first, and pull, when creating a branch
 		// If we're resuming an agent which has progressed past here then it will switch to the branch it created before
 		const branchName = await this.createBranchName(requirements);
-		await getFileSystem().vcs.switchToBranch(branchName);
+		await fileSystem.vcs.switchToBranch(branchName);
 
-		await new CodeEditingAgent().runCodeEditWorkflow(requirementsSummary, projectInfo);
+		try {
+			await new CodeEditingAgent().runCodeEditWorkflow(requirementsSummary, projectInfo);
+		} catch (e) {
+			logger.warn(e.message);
+			// catch so we can push the changes made so far for review
+		}
 
-		const { title, description } = await generatePullRequestTitleDescription(requirements);
+		const { title, description } = await generatePullRequestTitleDescription(requirements, projectInfo.devBranch);
 
 		await getSourceControlManagementTool().createMergeRequest(title, description, branchName, targetBranch);
 	}

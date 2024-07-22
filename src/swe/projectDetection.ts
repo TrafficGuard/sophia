@@ -1,4 +1,5 @@
-import { join } from 'path';
+import { existsSync, readFileSync } from 'fs';
+import path, { join } from 'path';
 import { getFileSystem, llms } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
 import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
@@ -11,12 +12,14 @@ interface ProjectDetections {
 	projects: ProjectDetection[];
 }
 
-type LanguageRuntime = 'nodejs' | 'php' | 'python' | 'terraform' | 'pulumi' | 'angular';
+type LanguageRuntime = 'nodejs' | 'typescript' | 'php' | 'python' | 'terraform' | 'pulumi' | 'angular';
 
 interface ProjectDetection {
 	baseDir: string;
 	language: LanguageRuntime;
 	files: string[];
+	/** The base development branch to make new branches from */
+	devBranch: string;
 }
 
 interface ProjectScripts {
@@ -31,6 +34,37 @@ export interface ProjectInfo extends ProjectScripts {
 	baseDir: string;
 	language: LanguageRuntime | '';
 	languageTools: LanguageTools | null;
+	/** The base development branch to make new branches from */
+	devBranch: string;
+}
+
+export async function getProjectInfo(): Promise<ProjectInfo | null> {
+	const infoPath = path.join(getFileSystem().getWorkingDirectory(), 'projectInfo.json');
+	if (existsSync(infoPath)) {
+		const infos = parseProjectInfo(readFileSync(infoPath).toString());
+		if (infos.length === 1) return infos[0];
+	}
+	return null;
+}
+
+function parseProjectInfo(fileContents: string): ProjectInfo[] | null {
+	try {
+		let projectInfos = JSON.parse(fileContents) as ProjectInfo[];
+		logger.info(projectInfos);
+		if (!Array.isArray(projectInfos)) throw new Error('projectInfo.json should be a JSON array');
+		projectInfos = projectInfos.map((info) => {
+			const path = join(getFileSystem().getWorkingDirectory(), info.baseDir);
+			if (!info.baseDir) {
+				throw new Error(`All entries in ${path} must have the basePath property`);
+			}
+			info.languageTools = getLanguageTools(info.language as LanguageRuntime);
+			return info;
+		});
+		return projectInfos;
+	} catch (e) {
+		logger.warn(e, 'Error loading projectInfo.json');
+		return null;
+	}
 }
 
 /**
@@ -41,26 +75,12 @@ export async function detectProjectInfo(): Promise<ProjectInfo[]> {
 	logger.info('detectProjectInfo');
 	const fileSystem = getFileSystem();
 	if (await fileSystem.fileExists('projectInfo.json')) {
-		const projectInfoJson = await fileSystem.getFileContents('projectInfo.json');
-		logger.info(`loaded projectInfo.json ${JSON.stringify(projectInfoJson)}`);
+		const projectInfoJson = await fileSystem.readFile('projectInfo.json');
+		logger.info(`loaded projectInfo.json ${projectInfoJson}`);
 		logger.info(projectInfoJson);
 		// TODO check projectInfo matches the format we expect
-		try {
-			let projectInfos = JSON.parse(projectInfoJson) as ProjectInfo[];
-			logger.info(projectInfos);
-			if (!Array.isArray(projectInfos)) throw new Error('projectInfo.json should be a JSON array');
-			projectInfos = projectInfos.map((info) => {
-				const path = join(fileSystem.getWorkingDirectory(), info.baseDir);
-				if (!info.baseDir) {
-					throw new Error(`All entries in ${path} must have the basePath property`);
-				}
-				info.languageTools = getLanguageTools(info.language as LanguageRuntime);
-				return info;
-			});
-			return projectInfos;
-		} catch (e) {
-			logger.warn(e, 'Error loading projectInfo.json');
-		}
+		const info = parseProjectInfo(projectInfoJson);
+		if (info !== null) return info;
 	}
 	logger.info('Detecting project info...');
 	const files: string[] = await fileSystem.listFilesRecursively('./');
@@ -73,7 +93,7 @@ You task it to detect key information (language/runtime and build/test commands)
 
 For the "files" return value you will select the file names of only a few key files (documentation, project configuration, and optionally a select few entrypoint files) that will be later read and analysed to determine the commands. Do not include lock files for 3rd party code such as package-lock.json
 
-You must respond only in JSON format matching the ProjectDetection interface in following TypeScript definitions:
+You must respond only in JSON format matching the ProjectDetection interface in following TypeScript types:
 
 interface ProjectDetections {
   /** The folder which contains all the project configuration files (eg. package.json for node.js, pom.xml for Java). Often the root folder ("./") but not always */
@@ -133,7 +153,7 @@ Then the output would be:
 
 	const projectDetection = projectDetections.projects[0];
 	const projectDetectionFiles = projectDetection.files.filter((filename) => !filename.includes('package-lock.json') && !filename.includes('yarn.lock'));
-	const projectDetectionFileContents = await fileSystem.getMultipleFileContentsAsXml(projectDetectionFiles);
+	const projectDetectionFileContents = await fileSystem.readFilesAsXml(projectDetectionFiles);
 
 	const projectScripts: ProjectScripts = await llms().medium.generateJson(
 		`${projectDetectionFileContents}.\n 
@@ -171,6 +191,7 @@ function getLanguageTools(type: LanguageRuntime | ''): LanguageTools | null {
 	if (!type) return null;
 	switch (type) {
 		case 'nodejs':
+		case 'typescript':
 		case 'pulumi':
 			return new TypescriptTools();
 		case 'python':

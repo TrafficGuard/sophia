@@ -19,7 +19,14 @@ export class MultiLLM extends BaseLLM {
 		private llms: LLM[],
 		private callsPerLLM = 1,
 	) {
-		super('multi', 'multi', 'multi', Math.min(...llms.map((llm) => llm.getMaxInputTokens())), 0, 0);
+		super(
+			'multi',
+			'multi',
+			'multi',
+			Math.min(...llms.map((llm) => llm.getMaxInputTokens())),
+			() => 0,
+			() => 0,
+		);
 		this.maxTokens = Math.min(...llms.map((llm) => llm.getMaxInputTokens()));
 	}
 

@@ -13,10 +13,13 @@ import { agentContextStorage } from '#agent/agentContext';
 import { setTracer } from '#o11y/trace';
 
 let initialized = false;
+let optelNodeSdk: opentelemetry.NodeSDK;
+let exporter: TraceExporter;
 
 export function getServiceName(): string | undefined {
 	return process.env.TRACE_SERVICE_NAME ?? process.env.K_SERVICE;
 }
+
 /**
  * This needs to be required/imported as early as possible in the startup sequence
  * before the modules it instruments are loaded.
@@ -53,12 +56,11 @@ function initTrace(): void {
 		// Initialize the exporter. When your application is running on Google Cloud,
 		// you don't need to provide auth credentials or a project id.
 		const exporterOpts = process.env.NODE_ENV === 'development' ? { projectId: process.env.PROJECT } : {};
-		const exporter = new TraceExporter(exporterOpts);
+		exporter = new TraceExporter(exporterOpts);
 
 		// const provider = new NodeTracerProvider();
 		// provider.register();
-
-		const sdk = new opentelemetry.NodeSDK({
+		optelNodeSdk = new opentelemetry.NodeSDK({
 			resource: new Resource({
 				[SemanticResourceAttributes.SERVICE_NAME]: traceServiceName,
 			}),
@@ -94,17 +96,26 @@ function initTrace(): void {
 		// this enables the API to record telemetry
 		// If we still have issues with modules loading before being instrumentation is ready then we
 		// would need to start the server in the then() callback like in https://lightstep.com/blog/opentelemetry-nodejs
-		sdk.start();
+		optelNodeSdk.start();
 
 		// gracefully shut down the SDK on process exit
 		process.on('SIGTERM', () => {
-			sdk.shutdown().catch((error: unknown) => console.warn('Error terminating tracing %o', error));
+			optelNodeSdk.shutdown().catch((error: unknown) => console.warn('Error terminating tracing %o', error));
 		});
 
 		const tracer = trace.getTracer(traceServiceName);
 		setTracer(tracer, agentContextStorage);
 	} else {
 		setTracer(null, agentContextStorage);
+	}
+}
+
+export async function shutdownTrace(): Promise<void> {
+	try {
+		await optelNodeSdk?.shutdown();
+		await exporter?.shutdown();
+	} catch (error) {
+		console.error('Error shutting down trace:', error.message);
 	}
 }
 

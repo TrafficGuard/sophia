@@ -1,19 +1,22 @@
+import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
+
 import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext, AgentLLMs, agentContextStorage, createContext, getFileSystem, llms } from '#agent/agentContext';
-import '#fastify/trace-init/trace-init';
-import { FileSystem } from '#functions/filesystem';
 import { Jira } from '#functions/jira';
 import { GitLab } from '#functions/scm/gitlab';
 import { Slack } from '#functions/slack';
+import { FileSystem } from '#functions/storage/filesystem';
 import { Claude3_Opus, ClaudeLLMs } from '#llm/models/anthropic';
 import { Claude3_5_Sonnet_Vertex, Claude3_Haiku_Vertex, Claude3_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
-import { GPT4, GPT4o } from '#llm/models/openai';
+import { GPT4o } from '#llm/models/openai';
 import { Gemini_1_5_Pro } from '#llm/models/vertexai';
 import { MultiLLM } from '#llm/multi-llm';
 import { ICodeReview, loadCodeReviews } from '#swe/codeReview/codeReviewParser';
 import { appContext } from '../app';
 
+import { writeFileSync } from 'fs';
 import { RunAgentConfig } from '#agent/agentRunner';
+import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
 import { envVarHumanInLoopSettings } from './cliHumanInLoop';
 
 // For running random bits of code
@@ -28,7 +31,7 @@ const utilLLMs: AgentLLMs = {
 	easy: sonnet,
 	medium: sonnet,
 	hard: sonnet,
-	xhard: new MultiLLM([sonnet, GPT4(), Gemini_1_5_Pro()], 3),
+	xhard: new MultiLLM([sonnet, GPT4o(), Gemini_1_5_Pro()], 3),
 };
 
 async function main() {

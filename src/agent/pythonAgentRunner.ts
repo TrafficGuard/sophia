@@ -1,28 +1,31 @@
 import { readFileSync } from 'fs';
 import { Span, SpanStatusCode } from '@opentelemetry/api';
-import { loadPyodide } from 'pyodide';
+import { PyodideInterface, loadPyodide } from 'pyodide';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
-import { buildFileSystemPrompt, buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateFunctionDefinitions } from '#agent/agentPromptUtils';
+import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, buildToolStatePrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
+import { formatFunctionError, formatFunctionResult, notificationMessage } from '#agent/agentRunner';
+import { agentHumanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
 import { getServiceName } from '#fastify/trace-init/trace-init';
-import { Slack } from '#functions/slack';
+import { FunctionParameter, FunctionSchema, getAllFunctionSchemas } from '#functionSchema/functions';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { envVar } from '#utils/env-var';
+import { errorToString } from '#utils/errors';
 import { appContext } from '../app';
-import { FunctionDefinition, FunctionParameter, getAllFunctionDefinitions } from '../functionDefinition/functions';
-import { AgentContext, agentContext, agentContextStorage, createContext, llms } from './agentContext';
-
-import { RunAgentConfig, notificationMessage, waitForInput } from '#agent/agentRunner';
-
-// ===========================================================
-//   !! PYTHON/PYODIDE AGENT IS EXPERIMENTAL !!
-// ===========================================================
+import { AgentContext, agentContext, agentContextStorage, llms } from './agentContext';
 
 const stopSequences = ['</response>'];
 
-const pythonSystemPrompt = readFileSync('src/agent/python-agent-system-prompt').toString();
+export const PY_AGENT_SPAN = 'PythonAgent';
+
+let pyodide: PyodideInterface;
 
 export async function runPythonAgent(agent: AgentContext): Promise<string> {
+	if (!pyodide) pyodide = await loadPyodide();
+
+	// Hot reload (TODO only when not deployed)
+	const pythonSystemPrompt = readFileSync('src/agent/python-agent-system-prompt').toString();
+
 	const agentStateService = appContext().agentStateService;
 	agent.state = 'agent';
 
@@ -30,13 +33,10 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 
 	const agentLLM = llms().hard;
 
-	const userRequestXml = `<user_request>${agent.userPrompt}</user_request>\n`;
+	// const userRequestXml = agent.userPrompt;
 	let currentPrompt = agent.inputPrompt;
-
-	const functions = agent.functions;
-
-	const functionsXml = convertJsonToPythonDeclaration(getAllFunctionDefinitions(functions.getFunctionInstances()));
-	const systemPromptWithFunctions = updateFunctionDefinitions(pythonSystemPrompt, functionsXml);
+	// logger.info(`userRequestXml ${userRequestXml}`)
+	logger.info(`currentPrompt ${currentPrompt}`);
 
 	// Human in the loop settings
 	// How often do we require human input to avoid misguided actions and wasting money
@@ -67,16 +67,24 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 			functions: agent.functions.getFunctionClassNames(),
 		});
 
+		let functionErrorCount = 0;
+
+		let currentFunctionHistorySize = agent.functionCallHistory.length;
+
 		let shouldContinue = true;
 		while (shouldContinue) {
-			shouldContinue = await withActiveSpan('PythonAgent', async (span) => {
+			shouldContinue = await withActiveSpan(PY_AGENT_SPAN, async (span) => {
+				// Might need to reload the agent for dynamic updating of the tools
+				const functionsXml = convertJsonToPythonDeclaration(getAllFunctionSchemas(agent.functions.getFunctionInstances()));
+				const systemPromptWithFunctions = updateFunctionSchemas(pythonSystemPrompt, functionsXml);
+
 				let completed = false;
 				let requestFeedback = false;
-				let anyFunctionCallErrors = false;
+				const anyFunctionCallErrors = false;
 				let controlError = false;
 				try {
 					if (hilCount && countSinceHil === hilCount) {
-						await waitForInput();
+						await agentHumanInTheLoop(`Agent control loop has performed ${hilCount} iterations`);
 						countSinceHil = 0;
 					}
 					countSinceHil++;
@@ -87,147 +95,166 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 					costSinceHil += newCosts;
 					logger.debug(`Spent $${costSinceHil.toFixed(2)} since last input. Total cost $${agentContextStorage.getStore().cost.toFixed(2)}`);
 					if (hilBudget && costSinceHil > hilBudget) {
-						// format costSinceHil to 2 decimal places
-						await waitForInput();
+						await agentHumanInTheLoop(`Agent cost has increased by USD\$${costSinceHil.toFixed(2)}`);
 						costSinceHil = 0;
 					}
 
-					if (!currentPrompt.includes('<function_call_history>')) {
-						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + buildFileSystemPrompt() + currentPrompt;
-					}
+					const toolStatePrompt = await buildToolStatePrompt();
+					const oldFunctionCallHistory = buildFunctionCallHistoryPrompt('history', 10000);
 
-					const llmResponse: string = await agentLLM.generateText(currentPrompt, systemPromptWithFunctions, {
-						id: 'generateFunctionCalls',
+					const isNewAgent = agent.iterations === 0 && agent.functionCallHistory.length === 0;
+					const initialPrompt = isNewAgent ? oldFunctionCallHistory + buildMemoryPrompt() + toolStatePrompt + currentPrompt : currentPrompt;
+
+					const agentPlanResponse: string = await agentLLM.generateText(initialPrompt, systemPromptWithFunctions, {
+						id: 'dynamicAgentPlan',
 						stopSequences,
 					});
 
-					const pythonCode = extractPythonCode(llmResponse);
-
-					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + buildFileSystemPrompt() + userRequestXml + llmResponse;
+					const llmPythonCode = extractPythonCode(agentPlanResponse);
 
 					agent.state = 'functions';
-					agent.inputPrompt = currentPrompt;
-					agent.invoking = []; // pythonCode
 					await agentStateService.save(agent);
 
-					const functionResults = [];
+					// The XML formatted results of the function call(s)
+					const functionResults: string[] = [];
 					let pythonScriptResult: any;
-					let pyodideError: Error | undefined;
-					let pythonScript: string | undefined;
-					const pyodide = await loadPyodide();
+					let pythonScript = '';
 
 					const functionInstances = agent.functions.getFunctionInstanceMap();
-					const defs = getAllFunctionDefinitions(Object.values(functionInstances));
+					const schemas: FunctionSchema[] = getAllFunctionSchemas(Object.values(functionInstances));
 					const jsGlobals = {};
-					for (const def of defs) {
-						const [className, method] = def.name.split('.');
-						jsGlobals[def.name.replace('.', '_')] = async (...args) => {
-							// agent.invoking.push()
+					for (const schema of schemas) {
+						const [className, method] = schema.name.split('.');
+						jsGlobals[schema.name.replace('.', '_')] = async (...args) => {
+							// Convert arg array to parameters name/value map
+							const parameters: { [key: string]: any } = {};
+							for (let index = 0; index < args.length; index++) parameters[schema.parameters[index].name] = args[index];
+
 							try {
 								const functionResponse = await functionInstances[className][method](...args);
 								// To minimise the function call history size becoming too large (i.e. expensive)
 								// we'll create a summary for responses which are quite long
 								// const outputSummary = await summariseLongFunctionOutput(functionResponse)
 
-								agent.functionCallHistory.push({
-									function_name: def.name,
-									parameters: args, // TODO map to key/value from param definitions
-									stdout: JSON.stringify(functionResponse),
-									// stdoutSummary: outputSummary,
-								});
-								functionResults.push(agentLLM.formatFunctionResult(def.name, functionResponse));
-							} catch (e) {
-								anyFunctionCallErrors = true;
-								agent.state = 'error';
-								logger.error(e, 'Function error');
-								agent.error = e.toString();
-								await agentStateService.save(agent);
-								functionResults.push(agentLLM.formatFunctionError(def.name, e));
-								// currentPrompt += `\n${llm.formatFunctionError(functionCalls.function_name, e)}`;
+								// Don't need to duplicate the content in the function call history
+								// TODO Would be nice to save over-written memory keys for history/debugging
+								if (className === 'Agent' && (method === 'saveMemory' || method === 'getMemory')) parameters.content = '(See <memory> entry)';
 
 								agent.functionCallHistory.push({
-									function_name: def.name,
-									parameters: args, // TODO map to key/value from param definitions
-									stderr: agent.error,
+									function_name: schema.name,
+									parameters,
+									stdout: JSON.stringify(functionResponse),
+									// stdoutSummary: outputSummary, TODO
+								});
+								functionResults.push(formatFunctionResult(schema.name, functionResponse));
+								return functionResponse;
+							} catch (e) {
+								functionResults.push(formatFunctionError(schema.name, e));
+
+								agent.functionCallHistory.push({
+									function_name: schema.name,
+									parameters,
+									stderr: errorToString(e, false),
+									// stderrSummary: outputSummary, TODO
 								});
 								throw e;
 							}
 						};
 					}
 					const globals = pyodide.toPy(jsGlobals);
-					// Could optimise the imports by checking what the llm generated code uses
-					// The available imports is defined in the system prompt
-					try {
-						pythonScript = `
-import json
-import re
-import math
-import datetime
+
+					pyodide.setStdout({
+						batched: (output) => {
+							logger.info(`Script stdout: ${JSON.stringify(output)}`);
+						},
+					});
+					pyodide.setStderr({
+						batched: (output) => {
+							logger.info(`Script stderr: ${JSON.stringify(output)}`);
+						},
+					});
+
+					const allowedImports = ['json', 're', 'math', 'datetime'];
+					// Add the imports from the allowed packages being used in the script
+					pythonScript = allowedImports
+						.filter((pkg) => llmPythonCode.includes(`${pkg}.`))
+						.map((pkg) => `import ${pkg}\n`)
+						.join();
+
+					pythonScript += `
 from typing import List, Dict, Tuple, Optional, Union
 
 async def main():
-${pythonCode}
+${llmPythonCode
+	.split('\n')
+	.map((line) => `    ${line}`)
+	.join('\n')}
 
 main()`.trim();
-						logger.info(pythonScript);
-						console.log('Original');
-						console.log(pythonScript);
-						pythonScript = await llms().medium.generateText(
-							`${pythonScript}\n\nPlease format this Python script correctly with 4 spaces for an indent. Output only the re-formatted script. Do not chat, do not output markdown ticks, etc. Only the code`,
-							null,
-							{ id: 'Reformat Python script' },
-						);
-						console.log('Formatted');
-						console.log(pythonScript);
-						const result = await pyodide.runPythonAsync(pythonScript, { globals });
-						pythonScriptResult = result?.toJs ? result.toJs() : result;
-						logger.info(pythonScriptResult, 'pyodide result');
+
+					try {
+						try {
+							// Initial execution attempt
+							const result = await pyodide.runPythonAsync(pythonScript, { globals });
+							pythonScriptResult = result?.toJs ? result.toJs() : result;
+							logger.info(pythonScriptResult, 'Script result');
+							if (result?.destroy) result.destroy();
+						} catch (e) {
+							// Attempt to fix Syntax/indentation errors and retry
+							// Otherwise let execution errors re-throw.
+							if (e.type !== 'IndentationError' && e.type !== 'SyntaxError') throw e;
+
+							// Fix the compile issues in the script
+							const prompt = `${functionsXml}\n<python>\n${pythonScript}</python>\n<error>${e.message}</error>\nPlease adjust/reformat the Python script to fix the issue. Output only the updated code. Do no chat, do not output markdown ticks. Only the updated code.`;
+							pythonScript = await llms().hard.generateText(prompt, null, { id: 'Fix python script error' });
+
+							// Re-try execution of fixed syntax/indentation error
+							const result = await pyodide.runPythonAsync(pythonScript, { globals });
+							pythonScriptResult = result?.toJs ? result.toJs() : result;
+							if (result?.destroy) result.destroy();
+							logger.info(pythonScriptResult, 'Script result');
+						}
+
+						const lastFunctionCall = agent.functionCallHistory[agent.functionCallHistory.length - 1];
+
+						// Should force completed/requestFeedback to exit the script - throw a particular Error class
+						if (lastFunctionCall.function_name === AGENT_COMPLETED_NAME) {
+							logger.info('Task completed');
+							agent.state = 'completed';
+							completed = true;
+						} else if (lastFunctionCall.function_name === AGENT_REQUEST_FEEDBACK) {
+							logger.info('Feedback requested');
+							agent.state = 'feedback';
+							requestFeedback = true;
+						} else {
+							if (!anyFunctionCallErrors && !completed && !requestFeedback) agent.state = 'agent';
+						}
 					} catch (e) {
-						pyodideError = e;
-						logger.error(`Pyodide error ${e.message}`);
-						logger.error(e);
-
-						const prompt = `${functionsXml}\n<python>\n${pythonScript}</python>\n<error>${e.message}</error>\nPlease adjust/reformat the Python script to fix the issue. Output only the updated code. Do no chat, do not output markdown ticks. Only the updated code.`;
-						pythonScript = await llms().hard.generateText(prompt, null, { id: 'Fix python script error' });
-						console.log('Fixed? script');
-						console.log(pythonScript);
-						const result = await pyodide.runPythonAsync(pythonScript, { globals });
-						pythonScriptResult = result?.toJs ? result.toJs() : result;
-						logger.info(pythonScriptResult, 'pyodide result');
+						logger.info(`Caught function error ${e.message}`);
+						functionErrorCount++;
 					}
-
-					const lastFunctionCall = agent.functionCallHistory[agent.functionCallHistory.length - 1];
-
-					// Should check if completed or requestFeedback then there's no more function calls
-					if (pyodideError) {
-					} else if (lastFunctionCall.function_name === AGENT_COMPLETED_NAME) {
-						logger.info('Task completed');
-						agent.state = 'completed';
-						completed = true;
-					} else if (lastFunctionCall.function_name === AGENT_REQUEST_FEEDBACK) {
-						logger.info('Feedback requested');
-						agent.state = 'feedback';
-						requestFeedback = true;
-					} else {
-						if (!anyFunctionCallErrors && !completed && !requestFeedback) agent.state = 'agent';
-					}
-
 					// Function invocations are complete
 					// span.setAttribute('functionCalls', pythonCode.map((functionCall) => functionCall.function_name).join(', '));
 
+					// The agent should store important values in memory
+					// functionResults
+
 					// This section is duplicated in the provideFeedback function
 					agent.invoking = [];
-					currentPrompt = `${userRequestXml}\n${llmResponse}\n<python-result>${pythonScriptResult}</python-result>`;
-					agent.inputPrompt = currentPrompt;
-					await agentStateService.save(agent);
+					const currentFunctionCallHistory = buildFunctionCallHistoryPrompt('results', 10000, currentFunctionHistorySize);
+
+					currentPrompt = `${oldFunctionCallHistory}${buildMemoryPrompt()}${toolStatePrompt}\n${agentPlanResponse}\n${currentFunctionCallHistory}\n<python-result>${pythonScriptResult}</python-result>`;
+					currentFunctionHistorySize = agent.functionCallHistory.length;
 				} catch (e) {
 					span.setStatus({ code: SpanStatusCode.ERROR, message: e.toString() });
 					logger.error(e, 'Control loop error');
 					controlError = true;
 					agent.state = 'error';
-					agent.error = e.message;
-					if (e.stack) agent.error += `\n${e.stack}`;
+					agent.error = errorToString(e);
+				} finally {
 					agent.inputPrompt = currentPrompt;
+					agent.callStack = [];
+					agent.iterations++;
 					await agentStateService.save(agent);
 				}
 				// return if the control loop should continue
@@ -241,25 +268,21 @@ main()`.trim();
 		message += `\n${uiUrl}/agent/${agent.agentId}`;
 		logger.info(message);
 
-		const slackConfig = agent.user.functionConfig[Slack.name];
-		// TODO check for env vars
-		if (slackConfig?.webhookUrl || slackConfig?.token) {
-			try {
-				await new Slack().sendMessage(message);
-			} catch (e) {
-				logger.error(e, 'Failed to send supervisor notification message');
-			}
+		try {
+			await notifySupervisor(agent, message);
+		} catch (e) {
+			logger.warn(e`Failed to send supervisor notification message ${message}`);
 		}
 	});
 	return agent.agentId; //{ agentId: agent.agentId, execution };
 }
 
 /**
- * Converts the JSON function definitions to Python function declarations with docString
- * @param jsonDefinitions The JSON object containing function definitions
+ * Converts the JSON function schemas to Python function declarations with docString
+ * @param jsonDefinitions The JSON object containing function schemas
  * @returns A string containing the functions
  */
-function convertJsonToPythonDeclaration(jsonDefinitions: FunctionDefinition[]): string {
+function convertJsonToPythonDeclaration(jsonDefinitions: FunctionSchema[]): string {
 	let functions = '<functions>';
 
 	for (const def of jsonDefinitions) {

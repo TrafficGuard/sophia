@@ -20,7 +20,13 @@ export function togetherLLMRegistry(): Record<string, () => LLM> {
 }
 
 export function togetherLlama3_70B(): LLM {
-	return new TogetherLLM('Llama3 70b (Together)', 'meta-llama/Llama-3-70b-chat-hf', 8000, 0.9 / 1_000_000, 0.9 / 1_000_000);
+	return new TogetherLLM(
+		'Llama3 70b (Together)',
+		'meta-llama/Llama-3-70b-chat-hf',
+		8000,
+		(input: string) => (input.length * 0.9) / 1_000_000,
+		(output: string) => (output.length * 0.9) / 1_000_000,
+	);
 }
 /**
  * Together AI models
@@ -38,7 +44,13 @@ export class TogetherLLM extends BaseLLM {
 		return this._client;
 	}
 
-	constructor(displayName: string, model: string, maxTokens: number, inputCostPerToken: number, outputCostPerToken: number) {
+	constructor(
+		displayName: string,
+		model: string,
+		maxTokens: number,
+		inputCostPerToken: (input: string) => number,
+		outputCostPerToken: (output: string) => number,
+	) {
 		super(displayName, TOGETHER_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
 	}
 
@@ -52,6 +64,7 @@ export class TogetherLLM extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
+				service: this.service,
 			});
 
 			const caller: CallerId = { agentId: agentContext().agentId };
@@ -93,8 +106,8 @@ export class TogetherLLM extends BaseLLM {
 				};
 				await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
 
-				const inputCost = this.getInputCostPerToken() * prompt.length;
-				const outputCost = this.getOutputCostPerToken() * responseText.length;
+				const inputCost = this.calculateInputCost(prompt);
+				const outputCost = this.calculateOutputCost(responseText);
 				const cost = inputCost + outputCost;
 
 				span.setAttributes({

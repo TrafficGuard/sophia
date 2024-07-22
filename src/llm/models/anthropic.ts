@@ -28,15 +28,30 @@ export function anthropicLLMRegistry(): Record<string, () => LLM> {
 // https://docs.anthropic.com/en/docs/glossary#tokens
 // For Claude, a token approximately represents 3.5 English characters
 export function Claude3_Opus() {
-	return new Anthropic('Claude 3 Opus', 'claude-3-opus-20240229', 15 / (1_000_000 * 3.5), 75 / (1_000_000 * 3.5));
+	return new Anthropic(
+		'Claude 3 Opus',
+		'claude-3-opus-20240229',
+		(input: string) => (input.length * 15) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 75) / (1_000_000 * 3.5),
+	);
 }
 
 export function Claude3_5_Sonnet() {
-	return new Anthropic('Claude 3.5 Sonnet', 'claude-3-5-sonnet-20240620', 3 / (1_000_000 * 3.5), 15 / (1_000_000 * 3.5));
+	return new Anthropic(
+		'Claude 3.5 Sonnet',
+		'claude-3-5-sonnet-20240620',
+		(input: string) => (input.length * 3) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 15) / (1_000_000 * 3.5),
+	);
 }
 
 export function Claude3_Haiku() {
-	return new Anthropic('Claude 3 Haiku', 'claude-3-haiku-20240307', 0.25 / (1_000_000 * 3.5), 1.25 / (1_000_000 * 3.5));
+	return new Anthropic(
+		'Claude 3 Haiku',
+		'claude-3-haiku-20240307',
+		(input: string) => (input.length * 0.25) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 1.25) / (1_000_000 * 3.5),
+	);
 }
 
 export function anthropicLLmFromModel(model: string): LLM | null {
@@ -58,8 +73,8 @@ export function ClaudeLLMs(): AgentLLMs {
 
 export class Anthropic extends BaseLLM {
 	anthropic: AnthropicSdk | undefined;
-	constructor(displayName: string, model: string, inputCostPerChar = 0, outputCostPerChar = 0) {
-		super(displayName, ANTHROPIC_SERVICE, model, 200_000, inputCostPerChar, outputCostPerChar);
+	constructor(displayName: string, model: string, calculateInputCost: (input: string) => number, calculateOutputCost: (output: string) => number) {
+		super(displayName, ANTHROPIC_SERVICE, model, 200_000, calculateInputCost, calculateOutputCost);
 	}
 
 	private sdk(): AnthropicSdk {
@@ -79,6 +94,7 @@ export class Anthropic extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
+				service: this.service,
 			});
 
 			const caller: CallerId = { agentId: agentContext().agentId };
@@ -125,8 +141,8 @@ export class Anthropic extends BaseLLM {
 			const outputTokens = message.usage.output_tokens;
 			const stopReason = message.stop_reason;
 
-			const inputCost = this.getInputCostPerToken() * inputTokens;
-			const outputCost = this.getOutputCostPerToken() * outputTokens;
+			const inputCost = this.calculateInputCost(prompt);
+			const outputCost = this.calculateOutputCost(responseText);
 			const cost = inputCost + outputCost;
 
 			span.setAttributes({

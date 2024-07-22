@@ -2,12 +2,12 @@ import { existsSync } from 'fs';
 import path, { join } from 'path';
 import { request } from '@octokit/request';
 import { agentContext, getFileSystem } from '#agent/agentContext';
+import { func, funcClass } from '#functionSchema/functionDecorators';
 import { SourceControlManagement } from '#functions/scm/sourceControlManagement';
 import { logger } from '#o11y/logger';
 import { functionConfig } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
 import { checkExecResult, execCmd, execCommand, failOnError } from '#utils/exec';
-import { func, funcClass } from '../../functionDefinition/functionDecorators';
 import { GitProject } from './gitProject';
 
 type RequestType = typeof request;
@@ -65,8 +65,10 @@ export class GitHub implements SourceControlManagement {
 	}
 
 	/**
-	 * Clones a GitHub project to the local filesystem
+	 * Clones a GitHub project to the local filesystem at a system controlled location.
+	 * To use this project the function FileSystem.setWorkingDirectory must be called after with the returned value.
 	 * @param projectPathWithOrg The repo to clone, in the format organisation/project
+	 * @returns the file system path where the repository is located
 	 */
 	@func()
 	async cloneProject(projectPathWithOrg: string): Promise<string> {

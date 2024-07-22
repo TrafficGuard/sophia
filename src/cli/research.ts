@@ -1,7 +1,9 @@
-import { readFileSync } from 'fs';
+import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
+
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
 import { AgentLLMs } from '#agent/agentContext';
 import { startAgent } from '#agent/agentRunner';
-import '#fastify/trace-init/trace-init';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
 import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
@@ -9,6 +11,7 @@ import { fireworksLlama3_70B } from '#llm/models/fireworks';
 import { GroqLLM, grokLLMs, groqMixtral8x7b } from '#llm/models/groq';
 import { Ollama_LLMs } from '#llm/models/ollama';
 import { togetherLlama3_70B } from '#llm/models/together';
+import { CliOptions, getLastRunAgentId, parseProcessArgs, saveAgentId } from './cli';
 
 // Usage:
 // npm run research
@@ -23,17 +26,20 @@ llms = Ollama_LLMs();
 export async function main() {
 	const systemPrompt = readFileSync('src/cli/research-system', 'utf-8');
 
-	const args = process.argv.slice(2);
-	const initialPrompt = args.length > 0 ? args.join(' ') : readFileSync('src/cli/research-in', 'utf-8');
-	console.log(`Prompt: ${initialPrompt}`);
+	const { initialPrompt, resumeAgentId } = parseProcessArgs();
 
-	await startAgent({
+	const agentId = await startAgent({
 		agentName: 'researcher',
 		initialPrompt,
 		systemPrompt,
 		functions: [Perplexity, PublicWeb],
 		llms,
+		resumeAgentId,
 	});
+
+	if (agentId) {
+		saveAgentId('research', agentId);
+	}
 }
 
 main()

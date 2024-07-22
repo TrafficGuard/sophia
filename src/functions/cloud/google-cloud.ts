@@ -1,6 +1,7 @@
 import { agentContext } from '#agent/agentContext';
-import { checkExecResult, execCommand } from '#utils/exec';
-import { func, funcClass } from '../functionDefinition/functionDecorators';
+import { waitForConsoleInput } from '#agent/humanInTheLoop';
+import { func, funcClass } from '#functionSchema/functionDecorators';
+import { execCommand, failOnError } from '#utils/exec';
 
 @funcClass(__filename)
 export class GoogleCloud {
@@ -27,6 +28,7 @@ export class GoogleCloud {
 	 */
 	@func()
 	async executeGcloudCommandQuery(gcloudQueryCommand: string): Promise<string> {
+		await waitForConsoleInput(`Agent "${agentContext().name}" is requesting to run the command ${gcloudQueryCommand}`);
 		if (!gcloudQueryCommand.includes('--project='))
 			throw new Error('When calling executeGcloudCommandQuery the gcloudQueryCommand parameter must include the --project=<projectId> argument');
 		const result = await execCommand(gcloudQueryCommand);
@@ -41,12 +43,13 @@ export class GoogleCloud {
 	 */
 	@func()
 	async executeGcloudCommandModification(gcloudModifyCommand: string): Promise<string> {
+		await waitForConsoleInput(`Agent "${agentContext().name}" is requesting to run the command ${gcloudModifyCommand}`);
 		if (!gcloudModifyCommand.includes('--project='))
 			throw new Error('When calling executeGcloudCommandQuery the gcloudQueryCommand parameter must include the --project=<projectId> argument');
-		throw new Error('Need to implement Supervisor check');
-		// const result = await execCommand(gcloudModifyCommand);
-		// if (result.exitCode > 0) throw new Error(`Error running ${gcloudModifyCommand}. ${result.stdout}${result.stderr}`);
-		// return result.stdout;
+
+		const result = await execCommand(gcloudModifyCommand);
+		failOnError('Error running gcloudModifyCommand', result);
+		return result.stdout;
 	}
 
 	/**

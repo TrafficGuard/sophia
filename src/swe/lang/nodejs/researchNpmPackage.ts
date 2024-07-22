@@ -1,8 +1,8 @@
 import { agentContext, getFileSystem } from '#agent/agentContext';
+import { func, funcClass } from '#functionSchema/functionDecorators';
 import { PublicWeb } from '#functions/web/web';
 import { logger } from '#o11y/logger';
 import { cacheRetry } from '../../../cache/cacheRetry';
-import { func, funcClass } from '../../../functionDefinition/functionDecorators';
 
 export interface NpmPackageInfo {
 	docUrl: string;
@@ -84,6 +84,6 @@ export class NpmPackages {
 		}
 		const files = await fileSystem.listFilesRecursively(`node_modules/${npmPackageName}`);
 		const dtsFiles = files.filter((filename) => filename.endsWith('.d.ts'));
-		return fileSystem.getMultipleFileContentsAsXml(dtsFiles);
+		return fileSystem.readFilesAsXml(dtsFiles);
 	}
 }

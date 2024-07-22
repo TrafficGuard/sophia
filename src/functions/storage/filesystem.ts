@@ -1,31 +1,40 @@
-import { access, existsSync, readFile, readdir, stat, writeFileSync } from 'node:fs';
+import { readFileSync } from 'fs';
+import { access, existsSync, lstat, lstatSync, mkdir, readFile, readdir, stat, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import path, { join } from 'path';
 import { promisify } from 'util';
-import ignore from 'ignore';
+import ignore, { Ignore } from 'ignore';
 import Pino from 'pino';
 import { agentContext } from '#agent/agentContext';
+import { func, funcClass } from '#functionSchema/functionDecorators';
+import { parseArrayParameterValue } from '#functionSchema/functionUtils';
 import { Git } from '#functions/scm/git';
 import { VersionControlSystem } from '#functions/scm/versionControlSystem';
 import { UtilFunctions } from '#functions/util';
 import { logger } from '#o11y/logger';
-import { execCmd, execCommand, spawnCommand } from '#utils/exec';
+import { spawnCommand } from '#utils/exec';
 import { CDATA_END, CDATA_START } from '#utils/xml-utils';
 import { needsCDATA } from '#utils/xml-utils';
-import { func, funcClass } from '../functionDefinition/functionDecorators';
-import { parseArrayParameterValue } from '../functionDefinition/functionUtils';
 const fs = {
 	readFile: promisify(readFile),
 	stat: promisify(stat),
 	readdir: promisify(readdir),
 	access: promisify(access),
+	mkdir: promisify(mkdir),
+	lstat: promisify(lstat),
 };
+
+import fg from 'fast-glob';
+import { glob } from 'glob-gitignore';
+import { getActiveSpan } from '#o11y/trace';
+const globAsync = promisify(glob);
 
 type FileFilter = (filename: string) => boolean;
 
 /**
- * Provides functions for LLMs to access the file system. As these functions are automatically included in the
- * OpenTelemetry tracing, it's recommended that most file system access should use the functions here for observability.
+ * Provides functions for LLMs to access the file system. Tools should generally use the functions as
+ * - They are automatically included in OpenTelemetry tracing
+ * - They use the working directory, so Nous can perform its actions outside the process running directory.
  *
  * The FileSystem is constructed with the basePath property which is like a virtual root.
  * Then the workingDirectory property is relative to the basePath.
@@ -37,10 +46,17 @@ type FileFilter = (filename: string) => boolean;
 @funcClass(__filename)
 export class FileSystem {
 	/** The path relative to the basePath */
-	private workingDirectory = './';
+	private _workingDirectory = './';
 	vcs: VersionControlSystem | null = null;
 	log: Pino.Logger;
 
+	get workingDirectory(): string {
+		return this._workingDirectory;
+	}
+
+	set workingDirectory(newName: string) {
+		this._workingDirectory = newName;
+	}
 	/**
 	 * @param basePath The root folder allowed to be accessed by this file system instance. This should only be accessed by system level
 	 * functions. Generally getWorkingDirectory() should be used
@@ -99,6 +115,7 @@ export class FileSystem {
 	 */
 	@func()
 	setWorkingDirectory(dir: string): void {
+		if (!dir) throw new Error('workingDirectory must be provided');
 		this.log.info(`setWorkingDirectory ${dir}`);
 		if (`/${dir}`.startsWith(this.basePath)) dir = `/${dir}`;
 		let newWorkingDirectory = dir.startsWith(this.basePath) ? dir.replace(this.basePath, '') : dir;
@@ -113,20 +130,13 @@ export class FileSystem {
 	}
 
 	/**
-	 * Gets the version control system (e.g. Git) commands for this filesystem if its under version control, else null.
-	 */
-	getVCS(): VersionControlSystem | null {
-		return null;
-	}
-
-	/**
 	 * Returns the file contents of all the files under the provided directory path
 	 * @param dirPath the directory to return all the files contents under
 	 * @returns the contents of the file(s) as a Map keyed by the file path
 	 */
 	async getFileContentsRecursively(dirPath: string): Promise<Map<string, string>> {
 		const filenames = await this.listFilesRecursively(dirPath);
-		return await this.getMultipleFileContents(filenames);
+		return await this.readFiles(filenames);
 	}
 
 	/**
@@ -138,7 +148,7 @@ export class FileSystem {
 	@func()
 	async getFileContentsRecursivelyAsXml(dirPath: string, storeToMemory: boolean): Promise<string> {
 		const filenames = await this.listFilesRecursively(dirPath);
-		const contents = await this.getMultipleFileContentsAsXml(filenames);
+		const contents = await this.readFilesAsXml(filenames);
 		if (storeToMemory) agentContext().memory[`file-contents-${join(this.getWorkingDirectory(), dirPath)}`] = contents;
 		return contents;
 	}
@@ -152,7 +162,7 @@ export class FileSystem {
 	async searchFilesMatchingContents(contentsRegex: string): Promise<string> {
 		// --count Only show count of line matches for each file
 		// const { stdout, stderr, exitCode } = await execCommand(`rg --count ${regex}`);
-		const results = await spawnCommand(`rg --count '${contentsRegex}'`);
+		const results = await spawnCommand(`rg --count ${arg(contentsRegex)}`);
 		if (results.exitCode > 0) throw new Error(results.stderr);
 		return results.stdout;
 		// if (exitCode > 0) throw new Error(`${stdout}\n${stderr}`);
@@ -165,22 +175,20 @@ export class FileSystem {
 	 * @returns the list of filenames matching the regular expression.
 	 */
 	@func()
-	async searchFilesMatchingName(fileNameRegex: string): Promise<string> {
-		// --count Only show count of line matches for each file
-		// const { stdout, stderr, exitCode } = await execCommand(`rg --count ${regex}`);
-		const results = await spawnCommand(`find . -print | grep -i '${fileNameRegex}'`);
-		if (results.exitCode > 0) throw new Error(results.stderr);
-		return results.stdout;
+	async searchFilesMatchingName(fileNameRegex: string): Promise<string[]> {
+		const regex = new RegExp(fileNameRegex);
+		const files = await this.listFilesRecursively();
+		return files.filter((file) => regex.test(file.substring(file.lastIndexOf(path.sep) + 1)));
 	}
 
 	/**
-	 * Lists the file and folder names in a single directory (the current directory.
+	 * Lists the file and folder names in a single directory.
 	 * Folder names will end with a /
-	 * @param dirPath the folder to list the files in
+	 * @param dirPath the folder to list the files in. Defaults to the working directory
 	 * @returns the list of file and folder names
 	 */
 	@func()
-	async listFilesInDirectory(dirPath: string): Promise<string[]> {
+	async listFilesInDirectory(dirPath = '.'): Promise<string[]> {
 		const rootPath = path.join(this.basePath, dirPath);
 		const filter: FileFilter = (name) => true;
 		const ig = ignore();
@@ -205,10 +213,10 @@ export class FileSystem {
 			const relativePath = path.relative(this.getWorkingDirectory(), path.join(this.getWorkingDirectory(), dirPath, direntName));
 
 			if (!ig.ignores(relativePath)) {
-				files.push(path.join(dirPath, dirent.name));
+				files.push(dirent.name);
 			}
 		}
-		return files.map((file) => file.replace(`${this.getWorkingDirectory()}/`, ''));
+		return files; //files.map((file) => file.substring(file.lastIndexOf(path.sep, file.length - 1)));
 	}
 
 	/**
@@ -218,6 +226,8 @@ export class FileSystem {
 	 */
 	@func()
 	async listFilesRecursively(dirPath = './'): Promise<string[]> {
+		// const dirPath = './'
+		if (dirPath !== './') throw new Error('listFilesRecursively needs to be fixed to work with the dirPath not being the workingDirectory');
 		this.log.debug(`basePath: ${this.basePath}`);
 		this.log.debug(`cwd: ${this.workingDirectory}`);
 		this.log.debug(`cwd(): ${this.getWorkingDirectory()}`);
@@ -267,28 +277,42 @@ export class FileSystem {
 	}
 
 	/**
-	 * Gets the contents of a local file on the file system.
+	 * Gets the contents of a local file on the file system. If the user has only provided a filename you may need to find the full path using the searchFilesMatchingName function.
 	 * @param filePath The file path to read the contents of (e.g. src/index.ts)
 	 * @returns the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
 	 */
 	@func()
-	async getFileContents(filePath: string): Promise<string> {
+	async readFile(filePath: string): Promise<string> {
+		// TODO if the file doesn't exist search recursively for the filename, and if there is one result then return that
 		logger.info(`getFileContents: ${filePath}`);
 		// A filePath starts with / is it relative to FileSystem.basePath, otherwise its relative to FileSystem.workingDirectory
 		const fullPath = filePath.startsWith('/') ? resolve(this.getWorkingDirectory(), filePath.slice(1)) : resolve(this.getWorkingDirectory(), filePath);
-		// const fullPath = path.join(this.basePath, filePath);
+
+		// if (!existsSync(fullPath)) {
+		// 	try {
+		// 		const matches = await this.searchFilesMatchingName(filePath);
+		// 		if (existsSync(matches)) {
+		// 			fullPath = matches;
+		// 		}
+		// 	} catch (e) {
+		// 		console.log(e);
+		// 	}
+		// }
+
 		logger.info(`Reading file ${fullPath}`);
-		return fs.readFile(fullPath, 'utf8');
+		const contents = (await fs.readFile(filePath)).toString();
+		getActiveSpan()?.setAttribute('size', contents.length);
+		return contents;
 	}
 
 	/**
-	 * Gets the contents of a local file on the file system.
+	 * Gets the contents of a local file on the file system and returns it in XML tags
 	 * @param filePath The file path to read the contents of (e.g. src/index.ts)
-	 * @returns the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
+	 * @returns the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents>
 	 */
 	@func()
-	async getFileContentsAsXML(filePath: string): Promise<string> {
-		return `<file_content file_path="${filePath}">\n${await this.getFileContents(filePath)}\n</file_contents>\n`;
+	async readFileAsXML(filePath: string): Promise<string> {
+		return `<file_content file_path="${filePath}">\n${await this.readFile(filePath)}\n</file_contents>\n`;
 	}
 
 	/**
@@ -296,7 +320,7 @@ export class FileSystem {
 	 * @param filePaths {Array<string>} The files paths to read the contents
 	 * @returns {Promise<Map<string, string>>} the contents of the files in a Map object keyed by the file path
 	 */
-	async getMultipleFileContents(filePaths: string[]): Promise<Map<string, string>> {
+	async readFiles(filePaths: string[]): Promise<Map<string, string>> {
 		const mapResult = new Map<string, string>();
 		for (const relativeFilePath of filePaths) {
 			const filePath = path.join(this.getWorkingDirectory(), relativeFilePath);
@@ -316,11 +340,11 @@ export class FileSystem {
 	 * @returns {Promise<string>} the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
 	 */
 	@func()
-	async getMultipleFileContentsAsXml(filePaths: string | string[]): Promise<string> {
+	async readFilesAsXml(filePaths: string | string[]): Promise<string> {
 		if (!Array.isArray(filePaths)) {
 			filePaths = parseArrayParameterValue(filePaths);
 		}
-		const fileContents: Map<string, string> = await this.getMultipleFileContents(filePaths);
+		const fileContents: Map<string, string> = await this.readFiles(filePaths);
 		return this.formatFileContentsAsXml(fileContents);
 	}
 
@@ -343,16 +367,21 @@ export class FileSystem {
 	 */
 	@func()
 	async fileExists(filePath: string): Promise<boolean> {
+		logger.info(`fileExists: ${filePath}`);
 		// Check if we've been given an absolute path
-		if (filePath.startsWith('/')) {
+		if (filePath.startsWith(this.basePath)) {
 			try {
+				logger.info(`fileExists: ${filePath}`);
 				await fs.access(filePath);
 				return true;
 			} catch {}
 		}
+		// logger.info(`basePath ${this.basePath}`);
+		// logger.info(`this.workingDirectory ${this.workingDirectory}`);
+		// logger.info(`getWorkingDirectory() ${this.getWorkingDirectory()}`);
 		const path = filePath.startsWith('/') ? resolve(this.basePath, filePath.slice(1)) : resolve(this.basePath, this.workingDirectory, filePath);
 		try {
-			logger.info(`fileExists: ${path}`);
+			// logger.info(`fileExists: ${path}`);
 			await fs.access(path);
 			return true;
 		} catch {
@@ -362,30 +391,93 @@ export class FileSystem {
 
 	/**
 	 * Writes to a file. If the file exists it will overwrite the contents.
-	 * @param filePath The file path
+	 * @param filePath The file path (either full filesystem path or relative to current working directory)
 	 * @param contents The contents to write to the file
 	 */
-	@func()
+	// @func()
 	async writeFile(filePath: string, contents: string): Promise<void> {
-		const path = join(this.getWorkingDirectory(), filePath);
-		logger.info(`Writing file: ${path}`);
-		// TODO check filePath is not relative above basePath
-		// TODO writeFile: ensure directory exists
-		// await fs.mkdir(dir, { recursive: true });
-		writeFileSync(path, contents);
+		const fileSystemPath = filePath.startsWith(this.basePath) ? filePath : join(this.getWorkingDirectory(), filePath);
+		logger.info(`Writing file "${filePath}" to ${fileSystemPath}`);
+		writeFileSync(fileSystemPath, contents);
 	}
 
 	/**
-	 * Makes changes to the contents of a single file (using a LLM)
-	 * @param filePath the file to edit
-	 * @param descriptionOfChanges a natual language description of the changes to make to the file contents
+	 * Reads a file, then transforms the contents using a LLM to perform the described changes, then writes back to the file.
+	 * @param filePath {string} The file to update
+	 * @param descriptionOfChanges {string} A natual language description of the changes to make to the file contents
 	 */
 	@func()
-	async updateFileContentsAsRequired(filePath: string, descriptionOfChanges: string): Promise<void> {
-		const contents = await this.getFileContents(filePath);
+	async editFileContents(filePath: string, descriptionOfChanges: string): Promise<void> {
+		const contents = await this.readFile(filePath);
 		const updatedContent = await new UtilFunctions().processText(contents, descriptionOfChanges);
 		await this.writeFile(filePath, updatedContent);
 	}
 
-	// https://github.com/BurntSushi/ripgrep
+	private async loadGitignore(dirPath: string): Promise<Ignore> {
+		const ig = ignore();
+		const gitIgnorePath = path.join(dirPath, '.gitignore');
+		if (existsSync(gitIgnorePath)) {
+			let lines = await fs.readFile(gitIgnorePath, 'utf8').then((data) => data.split('\n'));
+			lines = lines.map((line) => line.trim()).filter((line) => line.length && !line.startsWith('#'));
+			ig.add(lines);
+		}
+		ig.add('.git');
+		return ig;
+	}
+
+	/**
+	 * Generates a textual representation of a directory tree structure.
+	 *
+	 * This function uses listFilesRecursively to get all files and directories,
+	 * respecting .gitignore rules, and produces an indented string representation
+	 * of the file system hierarchy.
+	 *
+	 * @param {string} dirPath - The path of the directory to generate the tree for, defaulting to working directory
+	 * @returns {Promise<string>} A string representation of the directory tree.
+	 *
+	 * @example
+	 * Assuming the following directory structure:
+	 * ./
+	 *  ├── file1.txt
+	 *  ├── images/
+	 *  │   ├── logo.png
+	 *  └── src/
+	 *      └── utils/
+	 *          └── helper.js
+	 *
+	 * The output would be:
+	 * file1.txt
+	 * images/
+	 *   logo.png
+	 * src/
+	 *   utils/
+	 *     helper.js
+	 */
+	@func()
+	async getFileSystemTree(dirPath = './'): Promise<string> {
+		const files = await this.listFilesRecursively(dirPath);
+		const tree = new Map<string, string>();
+
+		files.forEach((file) => {
+			const parts = file.split(path.sep);
+			let currentPath = '';
+			parts.forEach((part, index) => {
+				currentPath = path.join(currentPath, part);
+				const indent = '  '.repeat(index);
+				if (!tree.has(currentPath)) {
+					tree.set(currentPath, `${indent}${part}${index < parts.length - 1 ? '/' : ''}\n`);
+				}
+			});
+		});
+
+		return Array.from(tree.values()).join('');
+	}
+}
+
+/**
+ * Sanitise arguments by single quoting and escaping single quotes in the value
+ * @param arg command line argument value
+ */
+function arg(arg: string): string {
+	return `'${arg.replace("'", "\\'")}'`;
 }

@@ -1,5 +1,5 @@
+import { funcClass } from '#functionSchema/functionDecorators';
 import { execCommand } from '#utils/exec';
-import { funcClass } from '../../../functionDefinition/functionDecorators';
 import { LanguageTools } from '../languageTools';
 
 @funcClass(__filename)
@@ -11,4 +11,8 @@ export class PythonTools implements LanguageTools {
 	}
 
 	async installPackage(packageName: string): Promise<void> {}
+
+	getInstalledPackages(): Promise<string> {
+		return Promise.resolve('');
+	}
 }

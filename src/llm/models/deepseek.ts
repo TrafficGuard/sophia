@@ -21,11 +21,23 @@ export function deepseekLLMRegistry(): Record<string, () => LLM> {
 }
 
 export function deepseekCoder(): LLM {
-	return new DeepseekLLM('DeepSeek Coder', 'deepseek-coder', 32000, 0.14 / (1_000_000 * 3.5), 0.28 / (1_000_000 * 3.5));
+	return new DeepseekLLM(
+		'DeepSeek Coder',
+		'deepseek-coder',
+		32000,
+		(input: string) => (input.length * 0.14) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 0.28) / (1_000_000 * 3.5),
+	);
 }
 
 export function deepseekChat(): LLM {
-	return new DeepseekLLM('DeepSeek Chat', 'deepseek-chat', 32000, 0.14 / (1_000_000 * 3.5), 0.28 / (1_000_000 * 3.5));
+	return new DeepseekLLM(
+		'DeepSeek Chat',
+		'deepseek-chat',
+		32000,
+		(input: string) => (input.length * 0.14) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 0.28) / (1_000_000 * 3.5),
+	);
 }
 
 /**
@@ -47,7 +59,13 @@ export class DeepseekLLM extends BaseLLM {
 		return this._client;
 	}
 
-	constructor(displayName: string, model: string, maxTokens: number, inputCostPerToken: number, outputCostPerToken: number) {
+	constructor(
+		displayName: string,
+		model: string,
+		maxTokens: number,
+		inputCostPerToken: (input: string) => number,
+		outputCostPerToken: (output: string) => number,
+	) {
 		super(displayName, DEEPSEEK_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
 	}
 
@@ -61,6 +79,7 @@ export class DeepseekLLM extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
+				service: this.service,
 			});
 
 			const caller: CallerId = { agentId: agentContext().agentId };
@@ -101,8 +120,8 @@ export class DeepseekLLM extends BaseLLM {
 				};
 				await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
 
-				const inputCost = this.getInputCostPerToken() * prompt.length;
-				const outputCost = this.getOutputCostPerToken() * responseText.length;
+				const inputCost = this.calculateInputCost(prompt);
+				const outputCost = this.calculateOutputCost(responseText);
 				const cost = inputCost + outputCost;
 
 				span.setAttributes({

@@ -1,15 +1,13 @@
-import { readFileSync } from 'fs';
-import readline from 'readline';
 import { LlmFunctions } from '#agent/LlmFunctions';
-import { AgentContext, AgentLLMs, agentContextStorage, createContext, llms } from '#agent/agentContext';
+import { AgentContext, AgentLLMs, createContext, llms } from '#agent/agentContext';
 import { AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
 import { runPythonAgent } from '#agent/pythonAgentRunner';
 import { runXmlAgent } from '#agent/xmlAgentRunner';
 import { FunctionCall, FunctionCallResult } from '#llm/llm';
 import { logger } from '#o11y/logger';
-import { startSpan } from '#o11y/trace';
 import { User } from '#user/user';
-import { sleep } from '#utils/async-utils';
+import { errorToString } from '#utils/errors';
+import { CDATA_END, CDATA_START } from '#utils/xml-utils';
 import { appContext } from '../app';
 
 export const SUPERVISOR_RESUMED_FUNCTION_NAME = 'Supervisor.Resumed';
@@ -53,13 +51,14 @@ interface AgentExecution {
 }
 
 async function runAgent(agent: AgentContext): Promise<string> {
-	if (agent.type === 'xml') {
-		return runXmlAgent(agent);
+	switch (agent.type) {
+		case 'xml':
+			return runXmlAgent(agent);
+		case 'python':
+			return runPythonAgent(agent);
+		default:
+			throw new Error(`Invalid agent type ${agent.type}`);
 	}
-	if (agent.type === 'python') {
-		return runPythonAgent(agent);
-	}
-	throw new Error(`Invalid agent type ${agent.type}`);
 }
 
 export async function startAgent(config: RunAgentConfig): Promise<string> {
@@ -70,10 +69,15 @@ export async function startAgent(config: RunAgentConfig): Promise<string> {
 		const endIndex = config.initialPrompt.indexOf('</user_request>');
 		agent.inputPrompt = config.initialPrompt;
 		agent.userPrompt = config.initialPrompt.slice(startIndex, endIndex);
-		logger.debug(`Extracted initial prompt:\n${agent.userPrompt}`);
+		logger.info('Extracted <user_request>');
+		logger.info(`agent.userPrompt: ${agent.userPrompt}`);
+		logger.info(`agent.inputPrompt: ${agent.inputPrompt}`);
 	} else {
 		agent.userPrompt = config.initialPrompt;
 		agent.inputPrompt = `<user_request>${config.initialPrompt}</user_request>`;
+		logger.info('Wrapping initialPrompt in <user_request>');
+		logger.info(`agent.userPrompt: ${agent.userPrompt}`);
+		logger.info(`agent.inputPrompt: ${agent.inputPrompt}`);
 	}
 	await appContext().agentStateService.save(agent);
 	logger.info(`Created agent ${agent.agentId}`);
@@ -190,32 +194,32 @@ function getLastFunctionCallArg(agent: AgentContext) {
 }
 
 /**
- * Adding a human in the loop, so it doesn't consume all of your budget
+ * Formats the output of a successful function call
+ * @param functionName
+ * @param result
  */
+export function formatFunctionResult(functionName: string, result: any): string {
+	return `<function_results>
+        <result>
+        <function_name>${functionName}</function_name>
+        <stdout>${CDATA_START}
+        ${JSON.stringify(result)}
+        ${CDATA_END}</stdout>
+        </result>
+        </function_results>
+        `;
+}
 
-export async function waitForInput() {
-	const span = startSpan('humanInLoop');
-
-	await appContext().agentStateService.updateState(agentContextStorage.getStore(), 'hil');
-
-	// Beep beep!
-	process.stdout.write('\u0007');
-	await sleep(100);
-	process.stdout.write('\u0007');
-
-	const rl = readline.createInterface({
-		input: process.stdin,
-		output: process.stdout,
-	});
-
-	const question = (prompt) =>
-		new Promise((resolve) => {
-			rl.question(prompt, resolve);
-		});
-
-	await (async () => {
-		await question('Press enter to continue...');
-		rl.close();
-	})();
-	span.end();
+/**
+ * Formats the output of a failed function call
+ * @param functionName
+ * @param error
+ */
+export function formatFunctionError(functionName: string, error: any): string {
+	return `<function_results>
+		<function_name>${functionName}</function_name>
+        <error>${CDATA_START}
+        ${errorToString(error, false)}
+        ${CDATA_END}</error>
+        </function_results>`;
 }

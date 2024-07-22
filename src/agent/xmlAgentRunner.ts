@@ -1,25 +1,27 @@
 import { readFileSync } from 'fs';
 import { Span, SpanStatusCode } from '@opentelemetry/api';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
-import { buildFileSystemPrompt, buildFunctionCallHistoryPrompt, buildMemoryPrompt, updateFunctionDefinitions } from '#agent/agentPromptUtils';
-import { notificationMessage, summariseLongFunctionOutput, waitForInput } from '#agent/agentRunner';
+import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, buildToolStatePrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
+import { formatFunctionError, formatFunctionResult, notificationMessage, summariseLongFunctionOutput } from '#agent/agentRunner';
+import { agentHumanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
 import { getServiceName } from '#fastify/trace-init/trace-init';
-import { Slack } from '#functions/slack';
+import { FunctionSchema, getAllFunctionSchemas } from '#functionSchema/functions';
 import { FunctionResponse } from '#llm/llm';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { envVar } from '#utils/env-var';
+import { errorToString } from '#utils/errors';
 import { appContext } from '../app';
-import { FunctionDefinition, getAllFunctionDefinitions } from '../functionDefinition/functions';
 import { AgentContext, agentContext, agentContextStorage, llms } from './agentContext';
 
 export const XML_AGENT_SPAN = 'XmlAgent';
 
 const stopSequences = ['</response>'];
 
-const xmlSystemPrompt = readFileSync('src/agent/xml-agent-system-prompt').toString();
-
 export async function runXmlAgent(agent: AgentContext): Promise<string> {
+	// Hot reload (TODO only when not deployed)
+	const xmlSystemPrompt = readFileSync('src/agent/xml-agent-system-prompt').toString();
+
 	const agentStateService = appContext().agentStateService;
 	agent.state = 'agent';
 
@@ -27,13 +29,13 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 
 	const agentLLM = llms().hard;
 
-	const userRequestXml = `<user_request>${agent.userPrompt}</user_request>\n`;
+	const userRequestXml = `<user_request>\n${agent.userPrompt}\n</user_request>\n`;
 	let currentPrompt = agent.inputPrompt;
 
 	const agentFunctions = agent.functions;
 
-	const functionsXml = convertJsonToXml(getAllFunctionDefinitions(agentFunctions.getFunctionInstances()));
-	const systemPromptWithFunctions = updateFunctionDefinitions(xmlSystemPrompt, functionsXml);
+	const functionsXml = convertJsonToXml(getAllFunctionSchemas(agentFunctions.getFunctionInstances()));
+	const systemPromptWithFunctions = updateFunctionSchemas(xmlSystemPrompt, functionsXml);
 
 	// Human in the loop settings
 	// How often do we require human input to avoid misguided actions and wasting money
@@ -75,7 +77,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 				let controlError = false;
 				try {
 					if (hilCount && countSinceHil === hilCount) {
-						await waitForInput();
+						await agentHumanInTheLoop(`Agent control loop has performed ${hilCount} iterations`);
 						countSinceHil = 0;
 					}
 					countSinceHil++;
@@ -86,13 +88,13 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 					costSinceHil += newCosts;
 					logger.debug(`Spent $${costSinceHil.toFixed(2)} since last input. Total cost $${agentContextStorage.getStore().cost.toFixed(2)}`);
 					if (hilBudget && costSinceHil > hilBudget) {
-						// format costSinceHil to 2 decimal places
-						await waitForInput();
+						await agentHumanInTheLoop(`Agent cost has increased by USD\$${costSinceHil.toFixed(2)}`);
 						costSinceHil = 0;
 					}
+					const filePrompt = await buildToolStatePrompt();
 
 					if (!currentPrompt.includes('<function_call_history>')) {
-						currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + buildFileSystemPrompt() + currentPrompt;
+						currentPrompt = buildFunctionCallHistoryPrompt('history') + buildMemoryPrompt() + filePrompt + currentPrompt;
 					}
 
 					if (agent.error) {
@@ -114,7 +116,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 							stopSequences,
 						});
 					}
-					currentPrompt = buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + buildFileSystemPrompt() + userRequestXml + functionResponse.textResponse;
+					currentPrompt = buildFunctionCallHistoryPrompt('history') + buildMemoryPrompt() + filePrompt + userRequestXml + functionResponse.textResponse;
 					const functionCalls = functionResponse.functions.functionCalls;
 
 					if (!functionCalls.length) {
@@ -128,8 +130,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 							stopSequences,
 						});
 						// retrying
-						currentPrompt =
-							buildFunctionCallHistoryPrompt() + buildMemoryPrompt() + buildFileSystemPrompt() + userRequestXml + functionCallResponse.textResponse;
+						currentPrompt = buildFunctionCallHistoryPrompt('history') + buildMemoryPrompt() + filePrompt + userRequestXml + functionCallResponse.textResponse;
 						const functionCalls = functionCallResponse.functions.functionCalls;
 						if (!functionCalls.length) {
 							throw new Error('Found no function invocations');
@@ -141,15 +142,16 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 					agent.invoking.push(...functionCalls);
 					await agentStateService.save(agent);
 
-					const functionResults = [];
+					// The XML formatted results of the function call(s)
+					const functionResults: string[] = [];
 
 					for (const functionCall of functionCalls) {
 						try {
 							const functionResponse: any = await agentFunctions.callFunction(functionCall);
-							const functionResult = agentLLM.formatFunctionResult(functionCall.function_name, functionResponse);
+							const functionResult = formatFunctionResult(functionCall.function_name, functionResponse);
 							// if (functionResult.startsWith('<response>')) functionResult = functionResult.slice(10); // do we need this here? seem more for the agent control loop response
 							// The trailing </response> will be removed as it's a stop word for the LLMs
-							functionResults.push(agentLLM.formatFunctionResult(functionCall.function_name, functionResponse));
+							functionResults.push(formatFunctionResult(functionCall.function_name, functionResponse));
 							const functionResponseString = JSON.stringify(functionResponse ?? '');
 
 							// To minimise the function call history size becoming too large (i.e. expensive & slow) we'll create a summary for responses which are quite long
@@ -180,9 +182,9 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 							anyFunctionCallErrors = true;
 							agent.state = 'error';
 							logger.error(e, 'Function error');
-							agent.error = e.toString();
+							agent.error = errorToString(e);
 							await agentStateService.save(agent);
-							functionResults.push(agentLLM.formatFunctionError(functionCall.function_name, e));
+							functionResults.push(formatFunctionError(functionCall.function_name, e));
 							// currentPrompt += `\n${llm.formatFunctionError(functionCalls.function_name, e)}`;
 
 							agent.functionCallHistory.push({
@@ -198,18 +200,18 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 
 					// This section is duplicated in the provideFeedback function
 					agent.invoking = [];
+					// TODO allow a configurable number of errors before human-in-the-loop required
 					if (!anyFunctionCallErrors && !completed && !requestFeedback) agent.state = 'agent';
 					currentPrompt = `${userRequestXml}\n${functionResponse.textResponse}\n${functionResults.join('\n')}`;
-					agent.inputPrompt = currentPrompt;
-					await agentStateService.save(agent);
 				} catch (e) {
 					span.setStatus({ code: SpanStatusCode.ERROR, message: e.toString() });
 					logger.error(e, 'Control loop error');
 					controlError = true;
 					agent.state = 'error';
-					agent.error = e.message;
-					if (e.stack) agent.error += `\n${e.stack}`;
+					agent.error = errorToString(e);
+				} finally {
 					agent.inputPrompt = currentPrompt;
+					agent.callStack = [];
 					await agentStateService.save(agent);
 				}
 				// return if the control loop should continue
@@ -222,28 +224,21 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 		let message = notificationMessage(agent);
 		message += `\n${uiUrl}/agent/${agent.agentId}`;
 		logger.info(message);
-
-		const slackConfig = agent.user.functionConfig[Slack.name];
-		// TODO check for env vars
-		if (slackConfig?.webhookUrl || slackConfig?.token) {
-			try {
-				await new Slack().sendMessage(message);
-			} catch (e) {
-				logger.error(e, 'Failed to send supervisor notification message');
-			}
+		try {
+			await notifySupervisor(agent, message);
+		} catch (e) {
+			logger.warn(e`Failed to send supervisor notification message ${message}`);
 		}
 	});
 	return agent.agentId; //{ agentId: agent.agentId, execution };
 }
 
-class HumanInLoopReturn extends Error {}
-
 /**
- * Converts the JSON function definitions to the XML format described in the xml-agent-system-prompt
- * @param jsonDefinitions The JSON object containing function definitions
- * @returns A string containing the XML representation of the function definitions
+ * Converts the JSON function schemas to the XML format described in the xml-agent-system-prompt
+ * @param jsonDefinitions The JSON object containing function schemas
+ * @returns A string containing the XML representation of the function schemas
  */
-function convertJsonToXml(jsonDefinitions: FunctionDefinition[]): string {
+function convertJsonToXml(jsonDefinitions: FunctionSchema[]): string {
 	let xmlOutput = '<functions>\n';
 
 	for (const funcDef of jsonDefinitions) {

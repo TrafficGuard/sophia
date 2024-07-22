@@ -2,7 +2,7 @@
  * Version control system
  */
 export interface VersionControlSystem {
-	getBranchDiff(): Promise<string>;
+	getBranchDiff(sourceBranch: string): Promise<string>;
 
 	/**
 	 * Gets the diff between the head commit and the provided commit, otherwise the previous commit
@@ -19,6 +19,7 @@ export interface VersionControlSystem {
 
 	switchToBranch(branchName: string): Promise<void>;
 
+	/** Gets the current branch name */
 	getBranchName(): Promise<string>;
 
 	/** @return the SHA value for the HEAD commit */
@@ -31,10 +32,10 @@ export interface VersionControlSystem {
 	addAllTrackedAndCommit(commitMessage: string): Promise<void>;
 
 	/**
-	 * Merges the (un)staged changes into the latest commit.
+	 * Merges the changes in specific files into the latest commit.
 	 * This is useful for merging lint fixes and compiles fixes into the current commit, so that commit should build.
 	 */
-	mergeAllChangesIntoLatestCommit(): Promise<void>;
+	mergeChangesIntoLatestCommit(files: string[]): Promise<void>;
 
 	commit(commitMessage: string): Promise<void>;
 

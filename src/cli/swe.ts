@@ -1,14 +1,19 @@
-import { readFileSync } from 'fs';
-import { AgentLLMs } from '#agent/agentContext';
+import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
+
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
+import { AgentContext, AgentLLMs } from '#agent/agentContext';
+import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
-import { RunAgentConfig } from '#agent/xmlAgentRunner';
-import '#fastify/trace-init/trace-init';
-import { FileSystem } from '#functions/filesystem';
 import { GitLab } from '#functions/scm/gitlab';
+import { FileSystem } from '#functions/storage/filesystem';
+import { Perplexity } from '#functions/web/perplexity';
 import { ClaudeLLMs } from '#llm/models/anthropic';
 import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
+import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
 import { initFirestoreApplicationContext } from '../app';
+import { getLastRunAgentId, parseProcessArgs, saveAgentId } from './cli';
 
 // Used to test the SoftwareDeveloperAgent
 
@@ -22,18 +27,21 @@ async function main() {
 		llms = ClaudeVertexLLMs();
 	}
 
-	const args = process.argv.slice(2);
-	const initialPrompt = args.length > 0 ? args.join(' ') : readFileSync('src/cli/swe-in', 'utf-8');
+	const { initialPrompt, resumeAgentId } = parseProcessArgs();
 
 	const config: RunAgentConfig = {
 		agentName: 'cli-SWE',
 		llms,
-		functions: [FileSystem, GitLab],
-		initialPrompt,
+		functions: [FileSystem, CodeEditingAgent, Perplexity],
+		initialPrompt: initialPrompt.trim(),
+		resumeAgentId,
 	};
 
-	await runAgentWorkflow(config, async () => {
+	await runAgentWorkflow(config, async (agent: AgentContext) => {
 		await new SoftwareDeveloperAgent().runSoftwareDeveloperWorkflow(config.initialPrompt);
+		if (agent.agentId) {
+			saveAgentId('swe', agent.agentId);
+		}
 	});
 }
 

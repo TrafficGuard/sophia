@@ -1,0 +1,65 @@
+<!--
+<h2 mat-dialog-title>{{ data.id ? 'Edit' : 'Create' }} Code Review Configuration</h2>
+<mat-dialog-content>
+  <form [formGroup]="editForm" (ngSubmit)="onSubmit()">
+    <mat-form-field appearance="fill">
+      <mat-label>Description</mat-label>
+      <input matInput formControlName="description" required>
+    </mat-form-field>
+
+    <div formGroupName="file_extensions">
+      <mat-form-field appearance="fill">
+        <mat-label>Include File Extensions</mat-label>
+        <mat-chip-list #chipList>
+          <mat-chip *ngFor="let ext of editForm.get('file_extensions.include').value" [removable]="true" (removed)="removeExtension(ext)">
+            {{ext}}
+            <mat-icon matChipRemove>cancel</mat-icon>
+          </mat-chip>
+          <input placeholder="New extension..."
+                 [matChipInputFor]="chipList"
+                 (matChipInputTokenEnd)="addExtension($event)">
+        </mat-chip-list>
+      </mat-form-field>
+    </div>
+
+    <div formGroupName="requires">
+      <mat-form-field appearance="fill">
+        <mat-label>Required Text</mat-label>
+        <mat-chip-list #requiredChipList>
+          <mat-chip *ngFor="let text of editForm.get('requires.text').value" [removable]="true" (removed)="removeRequiredText(text)">
+            {{text}}
+            <mat-icon matChipRemove>cancel</mat-icon>
+          </mat-chip>
+          <input placeholder="New required text..."
+                 [matChipInputFor]="requiredChipList"
+                 (matChipInputTokenEnd)="addRequiredText($event)">
+        </mat-chip-list>
+      </mat-form-field>
+    </div>
+
+    <div formArrayName="examples">
+      <h3>Examples</h3>
+      <button mat-raised-button color="primary" type="button" (click)="addExample()">Add Example</button>
+      <div *ngFor="let example of examples.controls; let i = index" [formGroupName]="i">
+        <mat-form-field appearance="fill">
+          <mat-label>Code</mat-label>
+          <textarea matInput formControlName="code" required></textarea>
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Review Comment</mat-label>
+          <textarea matInput formControlName="review_comment" required></textarea>
+        </mat-form-field>
+        <button mat-icon-button color="warn" type="button" (click)="removeExample(i)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="editForm.invalid || isLoading">
+    {{ data.id ? 'Update' : 'Create' }}
+  </button>
+</mat-dialog-actions>
+-->

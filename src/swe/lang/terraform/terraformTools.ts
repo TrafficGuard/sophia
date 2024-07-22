@@ -1,5 +1,5 @@
 import { getFileSystem } from '#agent/agentContext';
-import { funcClass } from '../../../functionDefinition/functionDecorators';
+import { funcClass } from '#functionSchema/functionDecorators';
 import { LanguageTools } from '../languageTools';
 
 @funcClass(__filename)
@@ -11,5 +11,9 @@ export class TerraformTools implements LanguageTools {
 
 	installPackage(packageName: string): Promise<void> {
 		throw new Error('New Terraform modules are added by editing the source code');
+	}
+
+	getInstalledPackages(): Promise<string> {
+		return Promise.resolve('');
 	}
 }

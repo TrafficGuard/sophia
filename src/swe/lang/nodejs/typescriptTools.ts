@@ -1,10 +1,14 @@
+import { promises as fs } from 'fs';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'path';
+import path from 'path';
+import { sleep } from 'openai/core';
 import { getFileSystem } from '#agent/agentContext';
+import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
-import { ExecResult, execCommand, failOnError } from '#utils/exec';
-import { func, funcClass } from '../../../functionDefinition/functionDecorators';
+import { ExecResult, execCmd, execCommand, failOnError, spawnCommand } from '#utils/exec';
 import { LanguageTools } from '../languageTools';
+// https://typescript.tv/errors/
 
 @funcClass(__filename)
 export class TypescriptTools implements LanguageTools {
@@ -34,26 +38,23 @@ export class TypescriptTools implements LanguageTools {
 		const tsConfigExists = await getFileSystem().fileExists('tsconfig.json');
 		if (!tsConfigExists) throw new Error(`tsconfig.json not found in ${getFileSystem().getWorkingDirectory()}`);
 
-		// TODO if .nous/dts exists move to backup location
-		{
-			const { exitCode, stdout, stderr } = await execCommand(`rm -rf ${tempFolder}`);
-			if (exitCode > 1) throw new Error(stderr);
-		}
-
 		const { exitCode, stdout, stderr } = await execCommand(`npx tsc -d --declarationDir "./${tempFolder}" --emitDeclarationOnly`);
-		// TODO if this fails because the code editor made a compile error, then restore the backup. Otherwise delete the backup
-		if (exitCode > 0) throw new Error(`${stdout} ${stderr}`);
-		logger.warn(`${stderr}`);
+		// Always returns 0 with no output?
+		logger.info(`Generating TypeScript project result: ${exitCode} ${stdout} ${stderr}`);
 
 		const dtsFiles = new Map();
 		const allFiles = await getFileSystem().getFileContentsRecursively(tempFolder);
 		allFiles.forEach((value, key) => {
-			logger.debug(key);
 			dtsFiles.set(key.replace('.d.ts', '.ts').replace(tempFolder, 'src'), value);
 		});
 		return getFileSystem().formatFileContentsAsXml(dtsFiles);
 	}
 
+	/**
+	 * Installs a package using the appropriate package manager (yarn, pnpm, or npm)
+	 * @param packageName The name of the package to install
+	 * @returns A Promise that resolves when the package is installed
+	 */
 	@func()
 	async installPackage(packageName: string): Promise<void> {
 		// TODO check Snyk etc for any major vulnerability
@@ -68,5 +69,41 @@ export class TypescriptTools implements LanguageTools {
 		}
 
 		if (result.exitCode > 0) throw new Error(`${result.stdout}\n${result.stderr}`);
+	}
+
+	async getInstalledPackages(): Promise<string> {
+		try {
+			const fileContent = await getFileSystem().readFile('package.json');
+			const packageJson = JSON.parse(fileContent);
+
+			let info = '<installed_packages>\n';
+
+			// Include dependencies and peerDependencies
+			const productionDependencies = {
+				...packageJson.dependencies,
+				...packageJson.peerDependencies,
+			};
+
+			info += '<production>\n';
+			for (const [pkg, version] of Object.entries(productionDependencies)) {
+				info += `${pkg}: ${version}\n`;
+			}
+			info += '</production>\n';
+
+			// Include devDependencies if they exist
+			if (packageJson.devDependencies) {
+				info += '<development>\n';
+				for (const [pkg, version] of Object.entries(packageJson.devDependencies)) {
+					info += `${pkg}: ${version}\n`;
+				}
+				info += '</development>\n';
+			}
+
+			info += '</installed_packages>';
+
+			return info;
+		} catch (error) {
+			throw new Error(`Error reading package.json: ${error.message}`);
+		}
 	}
 }

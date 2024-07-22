@@ -1,40 +1,51 @@
+import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
+
 import { readFileSync } from 'fs';
-import { AgentLLMs } from '#agent/agentContext';
+import { AgentLLMs, agentContext, llms } from '#agent/agentContext';
+import { Agent } from '#agent/agentFunctions';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
-import '#fastify/trace-init/trace-init';
-import { FileSystem } from '#functions/filesystem';
+import { shutdownTrace } from '#fastify/trace-init/trace-init';
+import { GitLab } from '#functions/scm/gitlab';
 import { ClaudeLLMs } from '#llm/models/anthropic';
 import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { initFirestoreApplicationContext } from '../app';
-
-// Used to test the local repo editing workflow in CodeEditingAgent
-
-// Usage:
-// npm run code
+import { CliOptions, getLastRunAgentId, parseProcessArgs, saveAgentId } from './cli';
 
 async function main() {
-	let llms: AgentLLMs = ClaudeLLMs();
+	let agentLlms: AgentLLMs = ClaudeLLMs();
 	if (process.env.GCLOUD_PROJECT) {
 		await initFirestoreApplicationContext();
-		llms = ClaudeVertexLLMs();
+		agentLlms = ClaudeVertexLLMs();
 	}
 
-	const args = process.argv.slice(2);
-	const initialPrompt = args.length > 0 ? args.join(' ') : readFileSync('src/cli/code-in', 'utf-8');
+	const { initialPrompt, resumeAgentId } = parseProcessArgs();
+
 	console.log(`Prompt: ${initialPrompt}`);
 
 	const config: RunAgentConfig = {
 		agentName: 'cli-code',
-		llms,
-		functions: [FileSystem],
+		llms: agentLlms,
+		functions: [GitLab], //FileSystem,
 		initialPrompt,
+		resumeAgentId,
+		humanInLoop: {
+			budget: 2,
+		},
 	};
 
-	await runAgentWorkflow(config, async () => {
+	const agentId = await runAgentWorkflow(config, async () => {
 		await new CodeEditingAgent().runCodeEditWorkflow(config.initialPrompt);
+		// await (agentContext().functions.getFunctionInstanceMap().Agent as Agent).saveMemory('memKey', 'content');
+		// return llms().easy.generateText('What colour is the sky. Respond in one word.');
 	});
+
+	if (agentId) {
+		saveAgentId('code', agentId);
+	}
+
+	await shutdownTrace();
 }
 
 main().then(

@@ -1,4 +1,6 @@
+import { createByModelName } from '@microsoft/tiktokenizer';
 import { agentContext, getFileSystem, llms } from '#agent/agentContext';
+import { FileSystem } from '#functions/storage/filesystem';
 import { logger } from '#o11y/logger';
 import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
 import { ProjectInfo } from './projectDetection';
@@ -15,9 +17,14 @@ export interface SelectedFiles {
 
 export async function selectFilesToEdit(requirements: string, projectInfo: ProjectInfo): Promise<SelectFilesResponse> {
 	const tools = projectInfo.languageTools;
-	let repositoryMap = '';
-	if (tools) repositoryMap = await tools.generateProjectMap();
-	else repositoryMap = (await getFileSystem().listFilesRecursively()).join('\n');
+	const repositoryMap = await getFileSystem().getFileSystemTree();
+	if (tools) {
+		// await tools.generateProjectMap();
+	}
+
+	const tokenizer = await createByModelName('gpt-4o');
+	const fileSystemTreeTokens = tokenizer.encode(repositoryMap).length;
+	logger.info(`FileSystem tree tokens: ${fileSystemTreeTokens}`);
 
 	const prompt = `
 <project_map>
@@ -52,17 +59,125 @@ The file paths MUST exist in the <project_map /> file_contents path attributes.
 </example>
 </task>
 `;
-	const response = (await llms().medium.generateJson(prompt, null, { id: 'selectFilesToEdit' })) as SelectFilesResponse;
-	const primaryFiles = response.primaryFiles.map((entry) => entry.path);
-	const secondaryFiles = response.secondaryFiles.map((entry) => entry.path);
-	// TODO should validate the files exists, if not re-run with additional prompting
+	let selectedFiles = (await llms().medium.generateJson(prompt, null, { id: 'selectFilesToEdit' })) as SelectFilesResponse;
 
-	const files = [...primaryFiles, ...secondaryFiles];
-	for (const file of files) {
-		if (!(await getFileSystem().fileExists(file))) {
-			logger.error(`File ${file} does not exist`);
+	selectedFiles = removeLockFiles(selectedFiles);
+
+	selectedFiles = await removeNonExistingFiles(selectedFiles);
+
+	selectedFiles = await removeUnrelatedFiles(requirements, selectedFiles);
+
+	return selectedFiles;
+}
+
+function createAnalysisPrompt(requirements: string, file: SelectedFiles, fileContents: string): string {
+	return `
+Requirements: ${requirements}
+
+Task: Analyze the following file and determine if it is related to the given requirements. 
+A file is considered related if it's likely to be modified or referenced when implementing the requirements.
+
+File: ${file.path}
+Reason for selection: ${file.reason}
+
+File contents:
+${fileContents}
+
+Respond with a JSON object in the following format:
+<json>
+{
+	"isRelated": true/false,
+	"explanation": "Brief explanation of why the file is related or not"
+}
+</json>
+`;
+}
+
+export async function removeUnrelatedFiles(requirements: string, fileSelection: SelectFilesResponse): Promise<SelectFilesResponse> {
+	const analyzeFile = async (file: SelectedFiles): Promise<{ file: SelectedFiles; isRelated: boolean; explanation: string }> => {
+		const fileSystem = getFileSystem();
+		const fileContents = await fileSystem.readFile(file.path); // TODO access filesystem directly to avoid lots of function calls
+		const prompt = createAnalysisPrompt(requirements, file, fileContents);
+
+		const jsonResult = await llms().easy.generateJson(
+			prompt,
+			'You are an expert software developer tasked with identifying relevant files for a coding task.',
+			{ temperature: 0.5, id: 'removeUnrelatedFiles' },
+		);
+
+		return {
+			file,
+			isRelated: (jsonResult as any).isRelated,
+			explanation: (jsonResult as any).explanation,
+		};
+	};
+
+	const allFiles = [...fileSelection.primaryFiles, ...fileSelection.secondaryFiles];
+	const analysisResults = await Promise.all(allFiles.map(analyzeFile));
+
+	const filteredPrimaryFiles = fileSelection.primaryFiles.filter((file) => {
+		const result = analysisResults.find((result) => result.file.path === file.path);
+		if (result && !result.isRelated) {
+			logger.info(`Removed unrelated primary file: ${file.path}. Reason: ${result.explanation}`);
 		}
-	}
+		return result?.isRelated;
+	});
 
-	return response;
+	const filteredSecondaryFiles = fileSelection.secondaryFiles.filter((file) => {
+		const result = analysisResults.find((result) => result.file.path === file.path);
+		if (result && !result.isRelated) {
+			logger.info(`Removed unrelated secondary file: ${file.path}. Reason: ${result.explanation}`);
+		}
+		return result?.isRelated;
+	});
+
+	return {
+		primaryFiles: filteredPrimaryFiles,
+		secondaryFiles: filteredSecondaryFiles,
+	};
+}
+
+/**
+ * Remove large files
+ * @param fileSelection
+ */
+function removeLockFiles(fileSelection: SelectFilesResponse): SelectFilesResponse {
+	fileSelection.primaryFiles = fileSelection.primaryFiles.filter((file) => !file.path.endsWith('package-lock.json'));
+	fileSelection.secondaryFiles = fileSelection.secondaryFiles.filter((file) => !file.path.endsWith('package-lock.json'));
+	return fileSelection;
+}
+
+export async function removeNonExistingFiles(fileSelection: SelectFilesResponse): Promise<SelectFilesResponse> {
+	const fileSystem = getFileSystem();
+	const primaryFiles = fileSelection.primaryFiles;
+	const secondaryFiles = fileSelection.secondaryFiles;
+
+	// Creating an array of promises for primary file existence checks
+	const primaryFileExistencePromises = primaryFiles.map(async (file) => {
+		const exists = await fileSystem.fileExists(file.path);
+		if (exists) {
+			return file;
+		}
+		logger.info(`Selected file for editing "${file.path}" does not exists.`);
+		return null;
+	});
+
+	// Creating an array of promises for secondary file existence checks
+	const secondaryFileExistencePromises = secondaryFiles.map(async (file) => {
+		const exists = await fileSystem.fileExists(file.path);
+		if (exists) {
+			return file;
+		}
+		logger.info(`Selected file for editing "${file.path}" does not exists.`);
+		return null;
+	});
+
+	// Wait for all promises to resolve
+	const existingPrimaryFiles = (await Promise.all(primaryFileExistencePromises)).filter((file) => file !== null);
+	const existingSecondaryFiles = (await Promise.all(secondaryFileExistencePromises)).filter((file) => file !== null);
+
+	return {
+		primaryFiles: existingPrimaryFiles as SelectedFiles[],
+		secondaryFiles: existingSecondaryFiles as SelectedFiles[],
+	};
 }

@@ -19,19 +19,64 @@ export function groqLLMRegistry(): Record<string, () => LLM> {
 		'groq:mixtral-8x7b-32768': groqMixtral8x7b,
 		'groq:gemma-7b-it': groqGemma7bIt,
 		'groq:llama3-70b-8192': groqLlama3_70B,
+		'groq:gemma2-9b-it': groqGemma2_9b,
+		'groq:llama3-8b-8192': groqLlama3_8b,
 	};
 }
 
+export function groqGemma2_9b(): LLM {
+	return new GroqLLM(
+		'Gemma2 9b-it (Groq)',
+		GROQ_SERVICE,
+		'gemma2-9b-it',
+		8_192,
+		(input: string) => (input.length * 0.2) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 0.2) / (1_000_000 * 3.5),
+	);
+}
+
+export function groqLlama3_8b(): LLM {
+	return new GroqLLM(
+		'LLaMA3 8b (Groq)',
+		GROQ_SERVICE,
+		'llama3-8b-8192',
+		8_192,
+		(input: string) => (input.length * 0.05) / (1_000_000 * 4),
+		(output: string) => (output.length * 0.08) / (1_000_000 * 4),
+	);
+}
+
 export function groqMixtral8x7b(): LLM {
-	return new GroqLLM('Mixtral 8x7b (Groq)', GROQ_SERVICE, 'mixtral-8x7b-32768', 32_768, 0.27 / (1_000_000 * 3.5), 0.27 / (1_000_000 * 3.5));
+	return new GroqLLM(
+		'Mixtral 8x7b (Groq)',
+		GROQ_SERVICE,
+		'mixtral-8x7b-32768',
+		32_768,
+		(input: string) => (input.length * 0.27) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 0.27) / (1_000_000 * 3.5),
+	);
 }
 
 export function groqGemma7bIt(): LLM {
-	return new GroqLLM('Gemma 7b-it (Groq)', GROQ_SERVICE, 'gemma-7b-it', 8_192, 0.1 / (1_000_000 * 3.5), 0.1 / (1_000_000 * 3.5));
+	return new GroqLLM(
+		'Gemma 7b-it (Groq)',
+		GROQ_SERVICE,
+		'gemma-7b-it',
+		8_192,
+		(input: string) => (input.length * 0.1) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 0.1) / (1_000_000 * 3.5),
+	);
 }
 
 export function groqLlama3_70B(): LLM {
-	return new GroqLLM('Llama3 70b (Groq)', GROQ_SERVICE, 'llama3-70b-8192', 8_192, (0.59 / 1_000_000) * 4, (0.79 / 1_000_000) * 4);
+	return new GroqLLM(
+		'Llama3 70b (Groq)',
+		GROQ_SERVICE,
+		'llama3-70b-8192',
+		8_192,
+		(input: string) => (input.length * 0.59) / (1_000_000 * 4),
+		(output: string) => (output.length * 0.79) / (1_000_000 * 4),
+	);
 }
 
 export function grokLLMs(): AgentLLMs {
@@ -68,6 +113,7 @@ export class GroqLLM extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
+				service: this.service,
 			});
 			span.setAttribute('userPrompt', userPrompt);
 			span.setAttribute('inputChars', prompt.length);
@@ -102,8 +148,8 @@ export class GroqLLM extends BaseLLM {
 				};
 				await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
 
-				const inputCost = this.getInputCostPerToken() * prompt.length;
-				const outputCost = this.getOutputCostPerToken() * (completion.choices[0]?.message?.content || '').length;
+				const inputCost = this.calculateInputCost(prompt);
+				const outputCost = this.calculateOutputCost(responseText);
 				const cost = inputCost + outputCost;
 
 				span.setAttributes({

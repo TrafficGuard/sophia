@@ -20,7 +20,7 @@ export class RunAgentComponent implements OnInit {
     this.runAgentForm = new FormGroup({
       name: new FormControl('', Validators.required),
       userPrompt: new FormControl('', Validators.required),
-      type: new FormControl('xml', Validators.required),
+      type: new FormControl('python', Validators.required), // TODO make a constant
       llmEasy: new FormControl('', Validators.required),
       llmMedium: new FormControl('', Validators.required),
       llmHard: new FormControl('', Validators.required),

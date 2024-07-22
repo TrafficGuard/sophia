@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import { AsyncLocalStorage } from 'async_hooks';
 import { LlmFunctions } from '#agent/LlmFunctions';
 import { RunAgentConfig } from '#agent/agentRunner';
-import { FileSystem } from '#functions/filesystem';
+import { FileSystem } from '#functions/storage/filesystem';
 import { FunctionCall, FunctionCallResult, LLM } from '#llm/llm';
 import { deserializeLLMs } from '#llm/llmFactory';
 import { logger } from '#o11y/logger';
@@ -12,6 +12,11 @@ import { appContext } from '../app';
 
 /**
  * The difficulty of a LLM generative task. Used to select an appropriate model for the cost vs capability.
+ * easy   Haiku/GPT4-mini
+ * medium Sonnet
+ * hard   Opus
+ * xhard  Ensemble (multi-gen with voting/merging of best answer)
+ *
  */
 export type TaskLevel = 'easy' | 'medium' | 'hard' | 'xhard';
 
@@ -21,14 +26,33 @@ export type TaskLevel = 'easy' | 'medium' | 'hard' | 'xhard';
 export type AgentLLMs = Record<TaskLevel, LLM>;
 
 /**
- * agent - waiting for the agent control loop to plan
- * functions - waiting for the function call(s) to complete
+ * agent - waiting for the agent LLM call(s) to generate control loop update
+ * functions - waiting for the planned function call(s) to complete
  * error - the agent control loop has errored
- * hil - the agent is waiting human confirmation to continue
- * feedback - the agent is waiting human feedback for a decision
- * completed - the agent has finished
+ * hil - deprecated for humanInLoop_agent and humanInLoop_tool
+ * hitl_threshold - If the agent has reached budget or iteration thresholds. At this point the agent is not executing any LLM/function calls.
+ * hitl_tool - When a function has request HITL in the function calling part of the control loop
+ * hitl_feedback - the agent has requested human feedback for a decision. At this point the agent is not executing any LLM/function calls.
+ * hil - deprecated version of hitl_feedback
+ * feedback - deprecated version of hitl_feedback
+ * child_agents - waiting for child agents to complete
+ * completed - the agent has called the completed function.
+ * shutdown - if the agent has been instructed by the system to pause (e.g. for server shutdown)
+ * timeout - for chat agents when there hasn't been a user input for a configured amount of time
  */
-export type AgentRunningState = 'agent' | 'functions' | 'error' | 'hil' | 'feedback' | 'completed';
+export type AgentRunningState =
+	| 'agent'
+	| 'functions'
+	| 'error'
+	| 'hil'
+	| 'hitl_threshold'
+	| 'hitl_tool'
+	| 'feedback'
+	| 'hitl_feedback'
+	| 'completed'
+	| 'shutdown'
+	| 'child_agents'
+	| 'timeout';
 
 /**
  * The state of an agent.
@@ -71,6 +95,8 @@ export interface AgentContext {
 
 	/** The type of autonomous agent function calling.*/
 	type: 'xml' | 'python';
+	/** The number of completed iterations of the agent control loop */
+	iterations: number;
 	/** The function calls the agent is about to call */
 	invoking: FunctionCall[];
 	/** The initial user prompt */
@@ -120,6 +146,13 @@ export function getFileSystem(): FileSystem {
 
 export function createContext(config: RunAgentConfig): AgentContext {
 	const fileSystem = new FileSystem(config.fileSystemPath);
+	// TODO create a test for this that the context.filesystem is the same reference as the context.functions["FileSystem"]}
+	// Make sure we have the same FileSystem object on the context and in the functions
+	const functions: LlmFunctions = Array.isArray(config.functions) ? new LlmFunctions(...config.functions) : config.functions;
+	if (functions.getFunctionClassNames().includes(FileSystem.name)) {
+		functions.removeFunctionClass(FileSystem.name);
+		functions.addFunctionInstance(fileSystem, FileSystem.name);
+	}
 	return {
 		agentId: config.resumeAgentId || randomUUID(),
 		executionId: randomUUID(),
@@ -130,6 +163,7 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		inputPrompt: '',
 		userPrompt: config.initialPrompt,
 		state: 'agent',
+		iterations: 0,
 		functionCallHistory: [],
 		callStack: [],
 		hilBudget: config.humanInLoop?.budget ?? (process.env.HIL_BUDGET ? parseFloat(process.env.HIL_BUDGET) : 2),
@@ -137,8 +171,8 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		budgetRemaining: 0,
 		cost: 0,
 		llms: config.llms,
-		fileSystem: new FileSystem(config.fileSystemPath),
-		functions: Array.isArray(config.functions) ? new LlmFunctions(...config.functions) : config.functions, // TODO Should replace FileSystem with the context filesystem
+		fileSystem,
+		functions: Array.isArray(config.functions) ? new LlmFunctions(...config.functions) : config.functions,
 		memory: {},
 		invoking: [],
 		lastUpdate: Date.now(),
@@ -208,6 +242,7 @@ export async function deserializeAgentContext(serialized: Record<string, any>): 
 
 	// backwards compatability
 	if (!context.type) context.type = 'xml';
+	if (!context.iterations) context.iterations = 0;
 
 	return context as AgentContext;
 }

@@ -12,6 +12,8 @@
     "strictNullChecks": false,
     "useUnknownInCatchVariables": false,
     "strict": true,
+    "declaration": false,
+    "isolatedDeclarations": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "moduleResolution": "node16",
@@ -19,6 +21,7 @@
     "paths": {
       "#agent/*": ["./src/agent/*"],
       "#fastify/*": ["./src/fastify/*"],
+      "#functionSchema/*": ["./src/functionSchema/*"],
       "#functions/*": ["./src/functions/*"],
       "#llm/*": ["./src/llm/*"],
       "#model/*": ["./src/model/*"],
@@ -29,5 +32,5 @@
       "#utils/*": ["./src/utils/*"]
     }
   },
-  "exclude": ["frontend"]
+  "exclude": ["frontend"],
 }

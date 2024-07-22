@@ -29,7 +29,13 @@ export class FireworksLLM extends BaseLLM {
 		return this._client;
 	}
 
-	constructor(displayName: string, model: string, maxTokens: number, inputCostPerToken: number, outputCostPerToken: number) {
+	constructor(
+		displayName: string,
+		model: string,
+		maxTokens: number,
+		inputCostPerToken: (input: string) => number,
+		outputCostPerToken: (output: string) => number,
+	) {
 		super(displayName, FIREWORKS_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
 	}
 
@@ -43,6 +49,7 @@ export class FireworksLLM extends BaseLLM {
 				userPrompt,
 				inputChars: prompt.length,
 				model: this.model,
+				service: this.service,
 			});
 
 			const caller: CallerId = { agentId: agentContext().agentId };
@@ -85,8 +92,8 @@ export class FireworksLLM extends BaseLLM {
 				};
 				await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
 
-				const inputCost = this.getInputCostPerToken() * prompt.length;
-				const outputCost = this.getOutputCostPerToken() * responseText.length;
+				const inputCost = this.calculateInputCost(prompt);
+				const outputCost = this.calculateOutputCost(responseText);
 				const cost = inputCost + outputCost;
 
 				span.setAttributes({
@@ -117,7 +124,13 @@ export function fireworksLLMRegistry(): Record<string, () => LLM> {
 	};
 }
 export function fireworksLlama3_70B(): LLM {
-	return new FireworksLLM('LLama3 70b-i (Fireworks)', 'accounts/fireworks/models/llama-v3-70b-instruct', 8000, 0.9 / 1_000_000, 0.9 / 1_000_000);
+	return new FireworksLLM(
+		'LLama3 70b-i (Fireworks)',
+		'accounts/fireworks/models/llama-v3-70b-instruct',
+		8000,
+		(input: string) => (input.length * 0.9) / 1_000_000,
+		(output: string) => (output.length * 0.9) / 1_000_000,
+	);
 }
 
 export function fireworksLLmFromModel(model: string): LLM | null {

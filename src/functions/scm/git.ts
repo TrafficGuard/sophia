@@ -1,9 +1,9 @@
 import util from 'util';
+import { funcClass } from '#functionSchema/functionDecorators';
+import { FileSystem } from '#functions/storage/filesystem';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
 import { execCmd, execCommand, failOnError } from '#utils/exec';
-import { funcClass } from '../../functionDefinition/functionDecorators';
-import { FileSystem } from '../filesystem';
 import { VersionControlSystem } from './versionControlSystem';
 const exec = util.promisify(require('child_process').exec);
 
@@ -39,8 +39,11 @@ export class Git implements VersionControlSystem {
 	 * Get the files added. If no commit argument if provided then it is for the head commit,
 	 */
 	async getAddedFiles(commitSha?: string): Promise<string[]> {
+		if (commitSha !== undefined && commitSha !== null) {
+			commitSha = commitSha.trim();
+		}
 		const { stdout } = await execCommand(`git diff --name-status ${commitSha ?? 'HEAD^'}..HEAD`);
-		logger.debug(`getFilesAddedInHeadCommit:\n${stdout}`);
+		logger.debug(`getAddedFiles:\n${stdout}`);
 		// Output is in the format
 		// A       etc/newFile
 		// A       src/cache/newFile.test.ts
@@ -57,9 +60,10 @@ export class Git implements VersionControlSystem {
 	async getHeadSha(): Promise<string> {
 		const execResult = await execCommand('git rev-parse HEAD');
 		failOnError('Unable to get current commit sha', execResult);
-		return execResult.stdout;
+		return execResult.stdout.trim();
 	}
 
+	@span()
 	async getBranchName(): Promise<string> {
 		const { exitCode, stdout, stderr } = await execCommand('git rev-parse --abbrev-ref HEAD');
 		if (exitCode > 0) throw new Error(`${stdout}\n${stderr}`);
@@ -126,9 +130,9 @@ export class Git implements VersionControlSystem {
 	}
 
 	@span()
-	async mergeAllChangesIntoLatestCommit(): Promise<void> {
-		const result = await execCommand('git add . && git commit --amend --no-edit');
-		failOnError('Failed to amend current commit with all outstanding changes', result);
+	async mergeChangesIntoLatestCommit(files: string[]): Promise<void> {
+		const result = await execCommand(`git add ${files.map((file) => `"${file}"`).join(' ')} && git commit --amend --no-edit`);
+		failOnError(`Failed to amend current commit with outstanding changes to ${files.join(' ')}`, result);
 	}
 
 	// @func()

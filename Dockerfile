@@ -27,8 +27,8 @@ COPY . .
 USER $user
 
 RUN mkdir .nous
-# Generate the function definitions
-RUN npm run functions
+# Generate the function schemas
+RUN npm run functionsSchemas
 
 ENV NODE_ENV production
 ENV PORT 8080

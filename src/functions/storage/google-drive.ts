@@ -2,22 +2,19 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { OAuth2Client } from 'google-auth-library';
 import { drive_v3, google } from 'googleapis';
+import { func, funcClass } from '#functionSchema/functionDecorators';
 
 /**
  * AI generated. Not tested at all.
  */
+@funcClass(__filename)
 export class GoogleDrive {
 	private readonly driveClient: drive_v3.Drive;
 
-	constructor(credentials: Record<string, string>) {
-		const oauth2Client = new google.auth.OAuth2(credentials.client_id, credentials.client_secret, credentials.redirect_uris[0]);
-		oauth2Client.setCredentials({
-			access_token: credentials.access_token,
-			refresh_token: credentials.refresh_token,
-		});
-		this.driveClient = google.drive({ version: 'v3', auth: oauth2Client });
-	}
-
+	/**
+	 * Lists the files
+	 */
+	@func()
 	public async list(): Promise<drive_v3.Schema$File[]> {
 		const res = await this.driveClient.files.list({
 			pageSize: 10,
@@ -26,7 +23,13 @@ export class GoogleDrive {
 		return res.data.files || [];
 	}
 
-	public async createTextFile(filePath: string, contents: string): Promise<string> {
+	/**
+	 * Creates a text file
+	 * @param filePath e.g. dir/filename
+	 * @param fileContents
+	 */
+	@func()
+	public async createTextFile(filePath: string, fileContents: string): Promise<string> {
 		const res = await this.driveClient.files.create({
 			requestBody: {
 				name: path.basename(filePath),
@@ -34,7 +37,7 @@ export class GoogleDrive {
 			},
 			media: {
 				mimeType: 'text/plain',
-				body: fs.createReadStream(contents),
+				body: fs.createReadStream(fileContents),
 			},
 		});
 		return res.data.id;
@@ -67,4 +70,20 @@ export class GoogleDrive {
 		});
 		return res.data.id;
 	}
+
+	/**
+	 * Checks if a folder exists
+	 * @param folderName
+	 */
+	@func()
+	public async folderExists(folderName: string): Promise<boolean> {
+		return true;
+	}
+
+	/**
+	 * Create a new folder. Fails if the folder already exists
+	 * @param folderName
+	 */
+	@func()
+	public async createFolder(folderName: string): Promise<void> {}
 }
