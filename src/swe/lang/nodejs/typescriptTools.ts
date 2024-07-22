@@ -51,6 +51,11 @@ export class TypescriptTools implements LanguageTools {
 	}
 
 	@func()
+	/**
+	 * Installs a package using the appropriate package manager (yarn, pnpm, or npm)
+	 * @param packageName The name of the package to install
+	 * @returns A Promise that resolves when the package is installed
+	 */
 	async installPackage(packageName: string): Promise<void> {
 		// TODO check Snyk etc for any major vulnerability
 		let result: ExecResult;
