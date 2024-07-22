@@ -80,39 +80,40 @@ export class PublicWeb {
 	 * @returns the web page contents in Markdown format
 	 */
 	@func()
-	@cacheRetry({ scope: 'global' })
+	// @cacheRetry({ scope: 'global' })
 	async getWebPage(url: string): Promise<string> {
 		logger.info(`PublicWeb.getWebPage ${url}`);
 		const wgetBasePath = path.join(getFileSystem().basePath, '.cache', 'wget');
 		// Remove https:// or http://
 		const urlPath = url.slice(url.indexOf('/') + 2);
 
-		const wgetCachedPath = path.join(wgetBasePath, urlPath);
-		// If we haven't downloaded it, then download the page
-		if (!fileExistsSync(wgetCachedPath)) {
-			if (urlPath.startsWith('www.youtube.com')) {
-				// TODO get YouTube transcript
-				return '';
-			}
-
-			// const { stdout, stderr, exitCode } = await execCommand(`wget -q -p ${url}`, wgetBasePath);
-			// if (exitCode > 0) await sleep(1000);
-			// {
-			// 	const { stdout, stderr, exitCode } = await execCommand(`wget -p ${url}`, wgetBasePath);
-			// 	if (exitCode > 0) throw new Error(`${stdout} ${stderr}`);
-			// }
-		}
+		// const wgetCachedPath = path.join(wgetBasePath, urlPath);
+		// // If we haven't downloaded it, then download the page
+		// if (!fileExistsSync(wgetCachedPath)) {
+		// 	if (urlPath.startsWith('www.youtube.com')) {
+		// 		// TODO get YouTube transcript
+		// 		return '';
+		// 	}
+		//
+		// 	// const { stdout, stderr, exitCode } = await execCommand(`wget -q -p ${url}`, wgetBasePath);
+		// 	// if (exitCode > 0) await sleep(1000);
+		// 	// {
+		// 	// 	const { stdout, stderr, exitCode } = await execCommand(`wget -p ${url}`, wgetBasePath);
+		// 	// 	if (exitCode > 0) throw new Error(`${stdout} ${stderr}`);
+		// 	// }
+		// }
 		// const htmlContents: string = readFileSync(wgetCachedPath).toString();
 
-		const isGitHubHomepage: boolean = gitHubRepoHomepageRegex.test(url);
+		const isGitHubHomepage: boolean = false; //gitHubRepoHomepageRegex.test(url);
 
+		// https://screenshotone.com/blog/how-to-hide-cookie-banners-when-taking-a-screenshot-with-puppeteer/
 		if (!browser) browser = await puppeteer.launch({ headless: true });
 		const page = await browser.newPage();
 		const httpResponse = await page.goto(url);
 		await sleep(1000);
 		const htmlContents = await page.content();
 		await browser.close(); // can this handle concurrent requests?
-
+		console.log(htmlContents.length);
 		let readableHtml: string;
 		if (isGitHubHomepage) {
 			readableHtml = htmlContents.slice(htmlContents.indexOf('<article '));
@@ -120,8 +121,11 @@ export class PublicWeb {
 		} else {
 			readableHtml = this.readableVersionFromHtml(htmlContents, url);
 		}
-		const markdown = this.htmlToMarkdown(readableHtml, url);
+		console.log(readableHtml.length);
+		console.log('==================');
 
+		const markdown = this.htmlToMarkdown(readableHtml, url);
+		console.log(markdown.length);
 		logger.debug(`MARKDOWN =======================================\n${markdown}\n================================================`);
 		// const newSizePercent = Number((markdown.length / htmlContents.length) * 100).toFixed(1);
 		// console.log(`Readable and markdown conversion compressed to ${newSizePercent}%${url ? ` for ${url}` : ''}`);
