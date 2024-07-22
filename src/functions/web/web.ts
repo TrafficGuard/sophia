@@ -12,6 +12,9 @@ const puppeteer = require('puppeteer');
 import { Browser } from 'puppeteer';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
+import { PuppeteerBlocker } from '@cliqz/adblocker-puppeteer';
+import fetch from 'cross-fetch';
+import autoconsent from '@duckduckgo/autoconsent/dist/autoconsent.puppet.js';
 
 // For Node.js
 const TurndownService = require('turndown');
@@ -30,7 +33,7 @@ let browser: Browser;
 export const gitHubRepoHomepageRegex = /https:\/\/github.com\/([\w^\\-])*\/([\w^\\-])*\/?$/;
 
 /**
- * Functions for reading web pages on the public internet
+ * Functions for reading web pages on the public internet and taking screenshots
  */
 @funcClass(__filename)
 export class PublicWeb {
@@ -250,6 +253,47 @@ export class PublicWeb {
 	async askKagi(question: string): Promise<string> {
 		// TODO
 		return '';
+	}
+
+	/**
+	 * Takes a screenshot of a web page while hiding cookie banners
+	 * @param url The URL of the web page to screenshot
+	 * @returns A Promise that resolves to a Buffer containing the screenshot image data
+	 */
+	@func()
+	@cacheRetry({ scope: 'global' })
+	async takeScreenshot(url: string): Promise<Buffer> {
+		logger.info(`Taking screenshot of ${url}`);
+
+		const blocker = await PuppeteerBlocker.fromLists(fetch, [
+			'https://secure.fanboy.co.nz/fanboy-cookiemonster.txt'
+		]);
+
+		if (!browser) browser = await puppeteer.launch({ headless: true });
+		const page = await browser.newPage();
+
+		try {
+			await blocker.enableBlockingInPage(page);
+			await page.setViewport({ width: 1280, height: 1024 });
+
+			page.once('load', async () => {
+				const tab = autoconsent.attachToPage(page, url, [], 10);
+				await tab.doOptIn();
+			});
+
+			await page.goto(url, { waitUntil: ['load', 'domcontentloaded'] });
+
+			// Wait for a short time to allow any dynamic content to load
+			await sleep(2000);
+
+			const screenshot = await page.screenshot({ type: 'png' });
+			return screenshot as Buffer;
+		} catch (error) {
+			logger.error(`Error taking screenshot of ${url}: ${error.message}`);
+			throw error;
+		} finally {
+			await page.close();
+		}
 	}
 }
 
