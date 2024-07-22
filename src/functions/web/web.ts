@@ -1,7 +1,6 @@
 import path from 'path';
-import type { PuppeteerBlocker } from '@cliqz/adblocker-puppeteer';
+import { PuppeteerBlocker } from '@cliqz/adblocker-puppeteer';
 import { Readability } from '@mozilla/readability';
-import type { RequestInfo, RequestInit, Response } from 'cross-fetch';
 import { JSDOM } from 'jsdom';
 import { agentContextStorage, getFileSystem, llms } from '#agent/agentContext';
 import { execCommand } from '#utils/exec';
@@ -10,8 +9,7 @@ const { getJson } = require('serpapi');
 import { readFileSync } from 'fs';
 import { fileExistsAsync, fileExistsSync } from 'tsconfig-paths/lib/filesystem';
 import { sleep } from '#utils/async-utils';
-const puppeteer = require('puppeteer');
-import { PuppeteerBlocker } from '@cliqz/adblocker-puppeteer';
+import puppeteer from 'puppeteer';
 import * as autoconsent from '@duckduckgo/autoconsent';
 import fetch from 'cross-fetch';
 import { Browser } from 'puppeteer';
@@ -267,7 +265,7 @@ export class PublicWeb {
 	async takeScreenshot(url: string): Promise<Buffer> {
 		logger.info(`Taking screenshot of ${url}`);
 
-		const blocker = await PuppeteerBlocker.fromLists(fetch, ['https://secure.fanboy.co.nz/fanboy-cookiemonster.txt']);
+		const blocker = await PuppeteerBlocker.fromLists(fetch as any, ['https://secure.fanboy.co.nz/fanboy-cookiemonster.txt']);
 
 		if (!browser) browser = await puppeteer.launch({ headless: true });
 		const page = await browser.newPage();
