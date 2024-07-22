@@ -144,7 +144,7 @@ describe('FileSystem', () => {
 		});
 	});
 
-	describe.only('readFile', () => {
+	describe('readFile', () => {
 		const fileSystem = new FileSystem();
 		it('should get the file contents for the current directory', async () => {
 			const samplePackageJsonContents = '@opentelemetry/instrumentation-http';

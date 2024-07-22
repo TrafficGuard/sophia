@@ -51,6 +51,9 @@ export class CodeEditingAgent {
 		const git = fs.vcs;
 		fs.setWorkingDirectory(projectInfo.baseDir);
 
+		// Run in parallel to the requirements generation
+		const installPromise: Promise<any> = projectInfo.initialise ? execCommand(projectInfo.initialise) : Promise.resolve();
+
 		const headCommit = await fs.vcs.getHeadSha();
 		const currentBranch = await fs.vcs.getBranchName();
 		const gitSource = !projectInfo.devBranch || projectInfo.devBranch === currentBranch ? headCommit : projectInfo.devBranch;
@@ -72,6 +75,8 @@ export class CodeEditingAgent {
 		Look at the existing style of the code when producing the requirements.
 		`;
 		const implementationRequirements = await llms().hard.generateText(implementationDetailsPrompt, null, { id: 'implementationSpecification' });
+
+		await installPromise;
 
 		// Edit/compile loop ----------------------------------------
 		let compileErrorAnalysis: CompileErrorAnalysis | null = await this.editCompileLoop(projectInfo, initialSelectedFiles, implementationRequirements);

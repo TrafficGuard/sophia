@@ -11,11 +11,11 @@ import { ToolType } from '#functions/toolType';
  */
 @funcClass(__filename)
 export class LocalFileStore implements FileStore {
-	private basePath: string;
+	basePath: string;
 
 	constructor() {
 		this.basePath = path.join(process.cwd(), '.nous', 'filestore');
-		this.basePath = path.join(process.cwd(), 'public');
+		// this.basePath = path.join(process.cwd(), 'public');
 	}
 
 	getToolType(): ToolType {

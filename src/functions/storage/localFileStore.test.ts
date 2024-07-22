@@ -11,14 +11,18 @@ function setupMockAgentContext(agentId: string) {
 
 describe('LocalFileStore', () => {
 	const testAgentId = 'test-agent-id';
-	const basePath = path.join(process.cwd(), '.nous', 'filestore', testAgentId);
+	const localFileStore = new LocalFileStore();
 
 	function withContext(func: () => Promise<any>): Promise<any> {
 		return agentContextStorage.run({ agentId: testAgentId } as any, () => func());
 	}
 
+	beforeEach(async () => {
+		await fs.promises.rm(localFileStore.basePath, { recursive: true, force: true });
+	});
+
 	afterEach(async () => {
-		await fs.promises.rm(basePath, { recursive: true, force: true });
+		await fs.promises.rm(localFileStore.basePath, { recursive: true, force: true });
 	});
 
 	it('should save a file successfully with metadata', async () =>
@@ -30,11 +34,11 @@ describe('LocalFileStore', () => {
 
 			await localFileStore.saveFile(filename, contents, description);
 
-			const fullPath = path.join(basePath, filename);
+			const fullPath = path.join(localFileStore.basePath, filename);
 			const savedContents = await fs.promises.readFile(fullPath, 'utf8');
 			expect(savedContents).to.equal(contents);
 
-			const metadataPath = path.join(basePath, '.metadata.json');
+			const metadataPath = path.join(localFileStore.basePath, '.metadata.json');
 			const metadataContents = await fs.promises.readFile(metadataPath, 'utf8');
 			const metadata = JSON.parse(metadataContents);
 			expect(metadata[filename]).to.exist;

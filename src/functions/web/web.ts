@@ -7,14 +7,14 @@ import { execCommand } from '#utils/exec';
 import { cacheRetry } from '../../cache/cacheRetry';
 const { getJson } = require('serpapi');
 import { readFileSync } from 'fs';
-import { fileExistsAsync, fileExistsSync } from 'tsconfig-paths/lib/filesystem';
-import { sleep } from '#utils/async-utils';
-import puppeteer from 'puppeteer';
 import * as autoconsent from '@duckduckgo/autoconsent';
 import fetch from 'cross-fetch';
+import puppeteer from 'puppeteer';
 import { Browser } from 'puppeteer';
+import { fileExistsAsync, fileExistsSync } from 'tsconfig-paths/lib/filesystem';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
+import { sleep } from '#utils/async-utils';
 
 // For Node.js
 const TurndownService = require('turndown');
@@ -257,7 +257,7 @@ export class PublicWeb {
 
 	/**
 	 * Takes a screenshot of a web page while hiding cookie banners
-	 * @param url The URL of the web page to screenshot
+	 * @param url The URL of the web page to screenshot. Must be a complete URL with https://
 	 * @returns A Promise that resolves to a Buffer containing the screenshot image data
 	 */
 	@func()

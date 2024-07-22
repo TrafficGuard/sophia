@@ -49,7 +49,9 @@ export function func() {
 				funcDef = funcDefinitions[methodName];
 			}
 			if (!funcDef)
-				throw new Error(`No function schema found for ${functionName}. Does the method have JSDoc?. Valid functions are ${Object.keys(funcDefinitions)}`);
+				throw new Error(
+					`Function Error: No function schema found for ${functionName}. Does the method have JSDoc?. Valid functions are ${Object.keys(funcDefinitions)}`,
+				);
 			const attributeExtractors = {};
 			if (funcDef.parameters === undefined) throw new Error(`No parameters defined for ${functionName}`);
 			for (const param of funcDef.parameters) {

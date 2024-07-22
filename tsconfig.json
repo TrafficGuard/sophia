@@ -30,8 +30,7 @@
       "#swe/*": ["./src/swe/*"],
       "#user/*": ["./src/user/*"],
       "#utils/*": ["./src/utils/*"]
-    },
-    "types": ["mocha"]
+    }
   },
   "exclude": ["frontend"],
   "include": ["src/**/*", "src/test/setup.ts"]
