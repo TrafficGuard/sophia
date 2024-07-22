@@ -39,8 +39,11 @@ export class Git implements VersionControlSystem {
 	 * Get the files added. If no commit argument if provided then it is for the head commit,
 	 */
 	async getAddedFiles(commitSha?: string): Promise<string[]> {
+		if (commitSha !== undefined && commitSha !== null) {
+			commitSha = commitSha.trim();
+		}
 		const { stdout } = await execCommand(`git diff --name-status ${commitSha ?? 'HEAD^'}..HEAD`);
-		logger.debug(`getFilesAddedInHeadCommit:\n${stdout}`);
+		logger.debug(`getAddedFiles:\n${stdout}`);
 		// Output is in the format
 		// A       etc/newFile
 		// A       src/cache/newFile.test.ts
@@ -57,7 +60,7 @@ export class Git implements VersionControlSystem {
 	async getHeadSha(): Promise<string> {
 		const execResult = await execCommand('git rev-parse HEAD');
 		failOnError('Unable to get current commit sha', execResult);
-		return execResult.stdout;
+		return execResult.stdout.trim();
 	}
 
 	@span()

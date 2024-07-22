@@ -1,5 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
-import { OpenAI as OpenAISDK } from 'openai';
+import ImageGenerateParams, { OpenAI, OpenAI as OpenAISDK } from 'openai';
 import { agentContext, getFileSystem, llms } from '#agent/agentContext';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
@@ -9,6 +9,8 @@ import { envVar } from '#utils/env-var';
 import { writeFileSync } from 'fs';
 import path from 'path';
 import { FileStore } from '#functions/storage/filestore';
+
+type ImageSize = '1792x1024' | '256x256' | '512x512' | '1024x1024' | '1024x1792';
 
 @funcClass(__filename)
 export class ImageGen {
@@ -26,15 +28,16 @@ export class ImageGen {
 	/**
 	 * Generates an image with the given description
 	 * @param description A detailed description of the image
+	 * @param size {"1792x1024" | "256x256" | "512x512" | "1024x1024" | "1024x1792"} the generated image size. Defaults to 256x256
 	 * @returns the location of the image file
 	 */
 	@func()
-	async generateImage(description: string): Promise<string> {
+	async generateImage(description: string, size: ImageSize = '256x256'): Promise<string> {
 		const response = await this.sdk().images.generate({
 			model: 'dall-e-3',
 			prompt: description,
 			n: 1,
-			size: '1792x1024',
+			size,
 		});
 		const imageUrl = response.data[0].url;
 		logger.debug(`Generated image at ${imageUrl}`);
