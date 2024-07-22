@@ -33,5 +33,4 @@
     }
   },
   "exclude": ["frontend"],
-  "include": ["src/**/*", "src/test/setup.ts"]
 }
