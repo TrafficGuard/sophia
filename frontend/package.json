@@ -44,7 +44,8 @@
     "material-design-icons-iconfont": "^6.1.0",
     "rxjs": "^7.5.0",
     "tslib": "^2.3.0",
-    "zone.js": "~0.11.4"
+    "zone.js": "~0.11.4",
+    "@duckduckgo/autoconsent": "^10.11.0"
   },
   "devDependencies": {
     "@angular-builders/jest": "^14.0.1",
