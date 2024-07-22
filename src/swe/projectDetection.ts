@@ -12,7 +12,7 @@ interface ProjectDetections {
 	projects: ProjectDetection[];
 }
 
-type LanguageRuntime = 'nodejs' | 'php' | 'python' | 'terraform' | 'pulumi' | 'angular';
+type LanguageRuntime = 'nodejs' | 'typescript' | 'php' | 'python' | 'terraform' | 'pulumi' | 'angular';
 
 interface ProjectDetection {
 	baseDir: string;
@@ -191,6 +191,7 @@ function getLanguageTools(type: LanguageRuntime | ''): LanguageTools | null {
 	if (!type) return null;
 	switch (type) {
 		case 'nodejs':
+		case 'typescript':
 		case 'pulumi':
 			return new TypescriptTools();
 		case 'python':

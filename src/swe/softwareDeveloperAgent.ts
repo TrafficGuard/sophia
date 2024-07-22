@@ -55,7 +55,12 @@ export class SoftwareDeveloperAgent {
 		const branchName = await this.createBranchName(requirements);
 		await fileSystem.vcs.switchToBranch(branchName);
 
-		await new CodeEditingAgent().runCodeEditWorkflow(requirementsSummary, projectInfo);
+		try {
+			await new CodeEditingAgent().runCodeEditWorkflow(requirementsSummary, projectInfo);
+		} catch (e) {
+			logger.warn(e.message);
+			// catch so we can push the changes made so far for review
+		}
 
 		const { title, description } = await generatePullRequestTitleDescription(requirements, projectInfo.devBranch);
 

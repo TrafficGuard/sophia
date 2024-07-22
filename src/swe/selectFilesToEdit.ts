@@ -84,10 +84,12 @@ File contents:
 ${fileContents}
 
 Respond with a JSON object in the following format:
+<json>
 {
 	"isRelated": true/false,
 	"explanation": "Brief explanation of why the file is related or not"
 }
+</json>
 `;
 }
 

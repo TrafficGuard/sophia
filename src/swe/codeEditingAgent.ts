@@ -39,7 +39,7 @@ export class CodeEditingAgent {
 	 * @param requirements The detailed requirements to implement, including supporting documentation and code samples. Do not refer to details in memory etc, you must provide the actual details.
 	 */
 	@func()
-	async runCodeEditWorkflow(requirements: string, projectInfo?: ProjectInfo): Promise<CompileErrorAnalysis | null> {
+	async runCodeEditWorkflow(requirements: string, projectInfo?: ProjectInfo): Promise<void> {
 		if (!projectInfo) {
 			const detected: ProjectInfo[] = await detectProjectInfo();
 			if (detected.length !== 1) throw new Error('projectInfo array must have one item');
@@ -74,13 +74,51 @@ export class CodeEditingAgent {
 		const implementationRequirements = await llms().hard.generateText(implementationDetailsPrompt, null, { id: 'implementationSpecification' });
 
 		// Edit/compile loop ----------------------------------------
+		let compileErrorAnalysis: CompileErrorAnalysis | null = await this.editCompileLoop(projectInfo, initialSelectedFiles, implementationRequirements);
+		this.failOnCompileError(compileErrorAnalysis);
 
+		// Store in memory for now while we see how the prompt performs
+		const branchName = await getFileSystem().vcs.getBranchName();
+
+		const reviewItems: string[] = await this.reviewChanges(requirements, gitSource);
+		if (reviewItems.length) {
+			logger.info(reviewItems);
+			agentContext().memory[`${branchName}--review`] = JSON.stringify(reviewItems);
+
+			let reviewRequirements = `${implementationRequirements}\n\n# Code Review Results:\n\nThe initial completed implementation changes have been reviewed. Only the following code review items remain to finalize the requirements:`;
+			for (const reviewItem of reviewItems) {
+				reviewRequirements += `\n- ${reviewItem}`;
+			}
+			compileErrorAnalysis = await this.editCompileLoop(projectInfo, initialSelectedFiles, reviewRequirements);
+			this.failOnCompileError(compileErrorAnalysis);
+		}
+
+		// The prompts need some work
+		// await this.testLoop(requirements, projectInfo, initialSelectedFiles);
+	}
+
+	private failOnCompileError(compileErrorAnalysis: CompileErrorAnalysis) {
+		if (compileErrorAnalysis) {
+			let message = `Failed to compile the project. ${compileErrorAnalysis.compileIssuesSummary}\n${compileErrorAnalysis.compilerOutput}`;
+			if (compileErrorAnalysis.fatalError) message += `\nFatal Error: ${compileErrorAnalysis.fatalError}\n`;
+			throw new Error(message);
+		}
+	}
+
+	private async editCompileLoop(
+		projectInfo: ProjectInfo,
+		initialSelectedFiles: string[],
+		implementationRequirements: string,
+	): Promise<CompileErrorAnalysisDetails | null> {
 		let compileErrorAnalysis: CompileErrorAnalysisDetails | null = null;
 		let compileErrorSearchResults: string[] = [];
 		let compileErrorSummaries: string[] = [];
 		/* The git commit sha of the last commit which compiled successfully. We store this so when there are one or more commits
 		   which don't compile, we can provide the diff since the last good commit to help identify causes of compile issues. */
 		let compiledCommitSha: string | null = agentContext().memory.compiledCommitSha;
+
+		const fs: FileSystem = getFileSystem();
+		const git = fs.vcs;
 
 		const MAX_ATTEMPTS = 5;
 		for (let i = 0; i < MAX_ATTEMPTS; i++) {
@@ -103,6 +141,7 @@ export class CodeEditingAgent {
 				// If the project doesn't compile or previous edit caused compile errors then we will create a requirements specifically for fixing any compile errors first before making more functionality changes
 				if (compileErrorAnalysis) {
 					const installPackages = compileErrorAnalysis.installPackages ?? [];
+					if (installPackages.length && !projectInfo.languageTools) throw new Error('Fatal Error: No language tools available to install packages.');
 					for (const packageName of installPackages) await projectInfo.languageTools?.installPackage(packageName);
 
 					let compileFixRequirements = '';
@@ -176,12 +215,11 @@ export class CodeEditingAgent {
 				// TODO handle code editor error separately - what failure modes does it have (invalid args, git error etc)?
 				compileErrorAnalysis = await analyzeCompileErrors(compileErrorOutput, initialSelectedFiles, compileErrorSummaries);
 				compileErrorSummaries.push(compileErrorAnalysis.compileIssuesSummary);
+				if (compileErrorAnalysis.fatalError) return compileErrorAnalysis;
 			}
 		}
 
-		if (compileErrorAnalysis) return compileErrorAnalysis;
-
-		if (projectInfo.staticAnalysis) {
+		if (!compileErrorAnalysis && projectInfo.staticAnalysis) {
 			const STATIC_ANALYSIS_MAX_ATTEMPTS = 2;
 			for (let i = 0; i < STATIC_ANALYSIS_MAX_ATTEMPTS; i++) {
 				// Run it twice so the first time can apply any auto-fixes, then the second time has only the non-auto fixable issues
@@ -209,13 +247,7 @@ export class CodeEditingAgent {
 				}
 			}
 		}
-
-		// Store in memory for now while we see how the prompt performs
-		const branchName = await getFileSystem().vcs.getBranchName();
-		agentContext().memory[`${branchName}--review`] = await this.reviewChanges(requirements, gitSource);
-
-		// The prompts need some work
-		// await this.testLoop(requirements, projectInfo, initialSelectedFiles);
+		return compileErrorAnalysis;
 	}
 
 	async compile(projectInfo: ProjectInfo): Promise<void> {
@@ -297,7 +329,7 @@ export class CodeEditingAgent {
 	}
 
 	@span()
-	async reviewChanges(requirements: string, sourceBranchOrCommit: string): Promise<string> {
+	async reviewChanges(requirements: string, sourceBranchOrCommit: string): Promise<string[]> {
 		return reviewChanges(requirements, sourceBranchOrCommit);
 	}
 
