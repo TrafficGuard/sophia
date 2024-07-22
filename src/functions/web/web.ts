@@ -1,6 +1,8 @@
 import path from 'path';
 import { Readability } from '@mozilla/readability';
 import { JSDOM } from 'jsdom';
+import type { PuppeteerBlocker } from '@cliqz/adblocker-puppeteer';
+import type { RequestInfo, RequestInit, Response } from 'cross-fetch';
 import { agentContextStorage, getFileSystem, llms } from '#agent/agentContext';
 import { execCommand } from '#utils/exec';
 import { cacheRetry } from '../../cache/cacheRetry';
@@ -14,7 +16,7 @@ import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 import { PuppeteerBlocker } from '@cliqz/adblocker-puppeteer';
 import fetch from 'cross-fetch';
-import autoconsent from '@duckduckgo/autoconsent';
+import * as autoconsent from '@duckduckgo/autoconsent';
 
 // For Node.js
 const TurndownService = require('turndown');
