@@ -5,8 +5,10 @@ import { GitHub } from '#functions/scm/github';
 import { GitLab } from '#functions/scm/gitlab';
 import { Slack } from '#functions/slack';
 import { FileSystem } from '#functions/storage/filesystem';
+import { LocalFileStore } from '#functions/storage/localFileStore';
 import { UtilFunctions } from '#functions/util';
 import { Perplexity } from '#functions/web/perplexity';
+import { PublicWeb } from '#functions/web/web';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
 
@@ -18,6 +20,7 @@ export function functionRegistry(): Array<new () => any> {
 	return [
 		CodeEditingAgent,
 		FileSystem,
+		LocalFileStore,
 		GitLab,
 		// GitHub, // Error: More than one function classes found implementing SourceControlManagement
 		GoogleCloud,
@@ -27,6 +30,7 @@ export function functionRegistry(): Array<new () => any> {
 		SoftwareDeveloperAgent,
 		UtilFunctions,
 		ImageGen,
+		PublicWeb,
 		// Add your own classes below this line
 	];
 }

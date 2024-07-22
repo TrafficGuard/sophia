@@ -259,10 +259,9 @@ export class PublicWeb {
 	/**
 	 * Takes a screenshot of a web page while hiding cookie banners
 	 * @param url The URL of the web page to screenshot. Must be a complete URL with https://
-	 * @returns A Promise that resolves to a Buffer containing the screenshot image data
+	 * @returns {Buffer} A Buffer containing the screenshot image data in .png format
 	 */
 	@func()
-	@cacheRetry({ scope: 'global' })
 	async takeScreenshot(url: string): Promise<Buffer> {
 		logger.info(`Taking screenshot of ${url}`);
 

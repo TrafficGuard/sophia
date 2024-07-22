@@ -146,8 +146,12 @@ export class CodeEditingAgent {
 				// If the project doesn't compile or previous edit caused compile errors then we will create a requirements specifically for fixing any compile errors first before making more functionality changes
 				if (compileErrorAnalysis) {
 					const installPackages = compileErrorAnalysis.installPackages ?? [];
-					if (installPackages.length && !projectInfo.languageTools) throw new Error('Fatal Error: No language tools available to install packages.');
-					for (const packageName of installPackages) await projectInfo.languageTools?.installPackage(packageName);
+					if (installPackages.length) {
+						if (!projectInfo.languageTools) throw new Error('Fatal Error: No language tools available to install packages.');
+						for (const packageName of installPackages) await projectInfo.languageTools?.installPackage(packageName);
+						// Seemed to be missing packages after adding packages
+						if (projectInfo.initialise) await execCommand(projectInfo.initialise);
+					}
 
 					let compileFixRequirements = '';
 					if (compileErrorAnalysis.researchQuery) {
