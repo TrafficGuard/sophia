@@ -17,7 +17,7 @@ import { ICodeReview, loadCodeReviews } from '#swe/codeReview/codeReviewParser';
 import { functionConfig } from '#user/userService/userContext';
 import { allSettledAndFulFilled } from '#utils/async-utils';
 import { envVar } from '#utils/env-var';
-import { checkExecResult, execCmd, execCommand } from '#utils/exec';
+import { checkExecResult, execCmd, execCommand, failOnError } from '#utils/exec';
 import { cacheRetry } from '../../cache/cacheRetry';
 import { UtilFunctions } from '../util';
 import { GitProject } from './gitProject';
@@ -152,7 +152,13 @@ export class GitLab implements SourceControlManagement {
 		return resultProjects;
 	}
 
+	async getProject(projectId: string | number): Promise<GitProject> {
+		const project = await this.api().Projects.show(projectId);
+		return this.convertGitLabToGitProject(project);
+	}
+
 	private convertGitLabToGitProject(project: ProjectSchema): GitProject {
+		if (!project.default_branch) logger.warn(`Defaulting ${project.name} default branch to main`);
 		return {
 			id: project.id,
 			name: project.name,
@@ -167,14 +173,12 @@ export class GitLab implements SourceControlManagement {
 	 * Clones a project from GitLab to the file system.
 	 * To use this project the function FileSystem.setWorkingDirectory must be called after with the returned value
 	 * @param projectPathWithNamespace the full project path in GitLab
-	 * @returns the file system path where the repository is located
+	 * @returns the file system path where the repository is located. You will need to call FileSystem_setWorkingDirectory() with this result to work with the project.
 	 */
 	@func()
 	async cloneProject(projectPathWithNamespace: string): Promise<string> {
 		if (!projectPathWithNamespace) throw new Error('Parameter "projectPathWithNamespace" must be truthy');
 		const path = join(getFileSystem().basePath, '.nous', 'gitlab', projectPathWithNamespace);
-
-		// TODO it cloned a project to the main branch when the default is master?
 
 		// If the project already exists pull updates
 		if (existsSync(path) && existsSync(join(path, '.git'))) {
@@ -187,9 +191,17 @@ export class GitLab implements SourceControlManagement {
 			logger.info(`Cloning project: ${projectPathWithNamespace} to ${path}`);
 			const command = `git clone https://oauth2:${this.config().token}@${this.config().host}/${projectPathWithNamespace}.git ${path}`;
 			const result = await execCmd(command);
+
+			if (result.stderr.includes('remote HEAD refers to nonexistent ref')) {
+				const gitProject = await this.getProject(projectPathWithNamespace);
+				const switchResult = await execCommand(`git switch ${gitProject.defaultBranch}`, { workingDirectory: path });
+				if (switchResult.exitCode === 0) logger.info(`Switched to branch ${gitProject.defaultBranch}`);
+				failOnError(`Unable to switch to default branch ${gitProject.defaultBranch} for ${projectPathWithNamespace}`, switchResult);
+			}
+
 			checkExecResult(result, `Failed to clone ${projectPathWithNamespace}`);
 		}
-		agentContext().memory[`fileSystemDirectory_GitLab_${projectPathWithNamespace.replace('/', '_')}`] = path;
+		agentContext().memory[`GitLab_Project_FileSystem_directory_${projectPathWithNamespace.replace('/', '_')}`] = path;
 		return path;
 	}
 
