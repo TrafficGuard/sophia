@@ -1,5 +1,6 @@
 import path from 'path';
 import { agentContext, getFileSystem, llms } from '#agent/agentContext';
+import { waitForConsoleInput } from '#agent/humanInTheLoop';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { FileSystem } from '#functions/storage/filesystem';
 import { Perplexity } from '#functions/web/perplexity';
@@ -8,7 +9,7 @@ import { span } from '#o11y/trace';
 import { CompileErrorAnalysis, CompileErrorAnalysisDetails, analyzeCompileErrors } from '#swe/analyzeCompileErrors';
 import { reviewChanges } from '#swe/reviewChanges';
 import { supportingInformation } from '#swe/supportingInformation';
-import { execCommand } from '#utils/exec';
+import { execCommand, runShellCommand } from '#utils/exec';
 import { appContext } from '../app';
 import { cacheRetry } from '../cache/cacheRetry';
 import { CodeEditor } from './codeEditor';
@@ -52,11 +53,15 @@ export class CodeEditingAgent {
 		fs.setWorkingDirectory(projectInfo.baseDir);
 
 		// Run in parallel to the requirements generation
-		const installPromise: Promise<any> = projectInfo.initialise ? execCommand(projectInfo.initialise) : Promise.resolve();
+		// NODE_ENV development needed to install devDependencies for Node.js projects.
+		const installPromise: Promise<any> = projectInfo.initialise
+			? runShellCommand(projectInfo.initialise, { envVars: { NODE_ENV: 'development' } })
+			: Promise.resolve();
 
 		const headCommit = await fs.vcs.getHeadSha();
 		const currentBranch = await fs.vcs.getBranchName();
-		const gitSource = !projectInfo.devBranch || projectInfo.devBranch === currentBranch ? headCommit : projectInfo.devBranch;
+		const gitBase = !projectInfo.devBranch || projectInfo.devBranch === currentBranch ? headCommit : projectInfo.devBranch;
+		logger.info(`git base ${gitBase}`);
 
 		// Find the initial set of files required for editing
 		const filesResponse: SelectFilesResponse = await this.selectFilesToEdit(requirements, projectInfo);
@@ -64,7 +69,7 @@ export class CodeEditingAgent {
 			...filesResponse.primaryFiles.map((selected) => selected.path),
 			...filesResponse.secondaryFiles.map((selected) => selected.path),
 		];
-		logger.info(initialSelectedFiles, 'Initial selected files');
+		logger.info(initialSelectedFiles, `Initial selected files (${initialSelectedFiles.length})`);
 
 		// Perform a first pass on the files to generate an implementation specification
 		const implementationDetailsPrompt = `${await fs.readFilesAsXml(initialSelectedFiles)}
@@ -85,9 +90,9 @@ export class CodeEditingAgent {
 		// Store in memory for now while we see how the prompt performs
 		const branchName = await getFileSystem().vcs.getBranchName();
 
-		const reviewItems: string[] = await this.reviewChanges(requirements, gitSource);
+		const reviewItems: string[] = await this.reviewChanges(requirements, gitBase);
 		if (reviewItems.length) {
-			logger.info(reviewItems);
+			logger.info(reviewItems, 'Code review results');
 			agentContext().memory[`${branchName}--review`] = JSON.stringify(reviewItems);
 
 			let reviewRequirements = `${implementationRequirements}\n\n# Code Review Results:\n\nThe initial completed implementation changes have been reviewed. Only the following code review items remain to finalize the requirements:`;
@@ -149,8 +154,6 @@ export class CodeEditingAgent {
 					if (installPackages.length) {
 						if (!projectInfo.languageTools) throw new Error('Fatal Error: No language tools available to install packages.');
 						for (const packageName of installPackages) await projectInfo.languageTools?.installPackage(packageName);
-						// Seemed to be missing packages after adding packages
-						if (projectInfo.initialise) await execCommand(projectInfo.initialise);
 					}
 
 					let compileFixRequirements = '';
@@ -234,12 +237,19 @@ export class CodeEditingAgent {
 				// Run it twice so the first time can apply any auto-fixes, then the second time has only the non-auto fixable issues
 				try {
 					await this.runStaticAnalysis(projectInfo);
-					await fs.vcs.mergeChangesIntoLatestCommit(initialSelectedFiles);
+					try {
+						// Merge into the last commit if possible
+						await fs.vcs.mergeChangesIntoLatestCommit(initialSelectedFiles);
+					} catch (e) {}
+
 					break;
 				} catch (e) {
 					let staticAnalysisErrorOutput = e.message;
-					// Merge any successful auto-fixes to the latest commit
-					await fs.vcs.mergeChangesIntoLatestCommit(initialSelectedFiles);
+
+					try {
+						// Merge any successful auto-fixes to the latest commit if possible
+						await fs.vcs.mergeChangesIntoLatestCommit(initialSelectedFiles);
+					} catch (e) {}
 					if (i === STATIC_ANALYSIS_MAX_ATTEMPTS - 1) {
 						logger.warn(`Unable to fix static analysis errors: ${staticAnalysisErrorOutput}`);
 					} else {
@@ -260,12 +270,8 @@ export class CodeEditingAgent {
 	}
 
 	async compile(projectInfo: ProjectInfo): Promise<void> {
-		// Execute the command `npm run lint` with the working directory as projectPath using the standard node library and return the exit code, standard output and error output.
-		// if (stat(projectRoots + '/' + projectPath).isDirectory()) {
-		// 	console.log('Directory')
-		// }
-		logger.debug(getFileSystem().getWorkingDirectory(), projectInfo.compile);
 		const { exitCode, stdout, stderr } = await execCommand(projectInfo.compile);
+
 		const result = `<compile_output>
 	<command>${projectInfo.compile}</command>
 	<stdout>
@@ -275,7 +281,6 @@ export class CodeEditingAgent {
 	${stderr}
 	</stderr>
 </compile_output>`;
-		// console.log('exit code', exitCode);
 		if (exitCode > 0) {
 			logger.info(stdout);
 			logger.error(stderr);

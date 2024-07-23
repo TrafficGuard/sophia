@@ -2,8 +2,11 @@ import axios, { AxiosInstance } from 'axios';
 import { logger } from '#o11y/logger';
 import { cacheRetry } from '../cache/cacheRetry';
 
+import { writeFileSync } from 'fs';
+import { writeFile } from 'node:fs';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { functionConfig } from '#user/userService/userContext';
+import { envVar } from '#utils/env-var';
 
 export interface JiraConfig {
 	baseUrl: string;
@@ -18,9 +21,9 @@ export class Jira {
 	private axios(): AxiosInstance {
 		if (!this.instance) {
 			const config: JiraConfig = functionConfig(Jira) as JiraConfig;
-			const baseUrl = config.baseUrl;
-			const email = config.email;
-			const apiToken = config.token;
+			const baseUrl = config.baseUrl || envVar('JIRA_BASE_URL');
+			const email = config.email || envVar('JIRA_EMAIL');
+			const apiToken = config.token || envVar('JIRA_API_TOKEN');
 
 			this.instance = axios.create({
 				baseURL: baseUrl,
@@ -42,6 +45,30 @@ export class Jira {
 	async getJiraDescription(issueId: string): Promise<string> {
 		try {
 			const response = await this.axios().get(`issue/${issueId}`);
+			const fields = response.data.fields;
+
+			// const summaru =
+			// console.log(response.data)
+			console.log(response.data.fields.summary);
+			console.log('comments ============');
+			console.log(response.data.fields.comment.comments);
+			console.log('attachments ============');
+			console.log(response.data.fields.attachment);
+			// /rest/api/3/attachment/content/{id}
+
+			// for (const attachment of response.data.fields.attachment) {
+			// 	// content.id;
+			// 	// content.content;
+			// 	// content.mimeType
+			// 	try {
+			// 		const attachmentResponse = await this.axios().get(attachment.content, { responseType: 'arraybuffer' });
+			// 		const buffer = Buffer.from(attachmentResponse.data, 'binary');
+			// 		writeFileSync('image.png', buffer);
+			// 	} catch (e) {
+			// 		logger.info(`Error getting attachment: ${e}`);
+			// 	}
+			// }
+
 			return response.data.fields.description;
 		} catch (error) {
 			logger.error(error, `Error fetching Jira ${issueId} description:`);

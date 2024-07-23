@@ -69,7 +69,7 @@
 // 		logger.info(projectInfo, `Detected project info ${Object.keys(projectInfo).join(', ')}`);
 //
 // 		if (projectInfo.initialise) {
-// 			const result: ExecResult = await execCommand(projectInfo.initialise);
+// 			const result: ExecResult = await runShellCommand(projectInfo.initialise, { envVars: { NODE_ENV: 'development' } });
 // 			if (result.exitCode > 0) throw new Error(`${result.stdout} ${result.stderr}`);
 // 		}
 //

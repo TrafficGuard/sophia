@@ -204,12 +204,10 @@ function spawnAsync(command: string, options: SpawnOptionsWithoutStdio): Promise
 	});
 }
 
-export async function run(cmd: string, opts?: ExecCmdOptions): Promise<ExecResult> {
+export async function runShellCommand(cmd: string, opts?: ExecCmdOptions): Promise<ExecResult> {
 	const shell: string = process.platform === 'win32' ? 'cmd.exe' : os.platform() === 'darwin' ? '/bin/zsh' : '/bin/bash';
 	const env: Record<string, string> = opts?.envVars ? { ...process.env, ...opts.envVars } : { ...process.env };
 	const cwd: string = opts?.workingDirectory ?? getFileSystem().getWorkingDirectory();
-
-	console.log(process.env);
 
 	const child = spawn(shell, [], { stdio: ['pipe', 'pipe', 'pipe'], cwd, env });
 
@@ -232,7 +230,7 @@ export async function run(cmd: string, opts?: ExecCmdOptions): Promise<ExecResul
 
 			const onStdoutData = (data) => {
 				commandOutput += data.toString();
-				console.log(data.toString());
+
 				if (commandOutput.includes(commandDoneMarker)) {
 					const parts = commandOutput.split(commandDoneMarker);
 					stdout = parts[0];
@@ -248,7 +246,6 @@ export async function run(cmd: string, opts?: ExecCmdOptions): Promise<ExecResul
 			};
 
 			const onStderrData = (data) => {
-				console.error(data.toString());
 				stderr += data.toString();
 			};
 
@@ -270,14 +267,14 @@ export async function run(cmd: string, opts?: ExecCmdOptions): Promise<ExecResul
 		if (shell === '/bin/zsh') {
 			const zshrc = path.join(process.env.HOME, '.zshrc');
 			if (existsSync(zshrc)) {
-				console.log('sending source');
 				const result = await sendCommand(`source ${zshrc}`);
-				console.log(result);
+				if (result.exitCode) logger.error(`source ${zshrc} returned ${result.exitCode}.`);
 			}
 		} else if (shell === '/bin/bash') {
 			const bashrc = path.join(process.env.HOME, '.bashrc');
 			if (existsSync(bashrc)) {
-				await sendCommand(`source ${bashrc}`);
+				const result = await sendCommand(`source ${bashrc}`);
+				if (result.exitCode) logger.error(`source ${bashrc} returned ${result.exitCode}.`);
 			}
 		}
 

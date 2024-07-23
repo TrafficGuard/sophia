@@ -97,8 +97,10 @@ export interface AgentContext {
 	type: 'xml' | 'python';
 	/** The number of completed iterations of the agent control loop */
 	iterations: number;
-	/** The function calls the agent is about to call */
+	/** The function calls the agent is about to call (xml only) */
 	invoking: FunctionCall[];
+	/** Additional notes that tool functions can add to the response to the agent */
+	notes: string[];
 	/** The initial user prompt */
 	userPrompt: string;
 	/** The prompt the agent execution started/resumed with */
@@ -135,6 +137,14 @@ export function addCost(cost: number) {
 }
 
 /**
+ * Adds a note for the agent, which will be included in the prompt for the agent after the tool results
+ * @param note
+ */
+export function addNote(note: string): void {
+	agentContext()?.notes.push(note);
+}
+
+/**
  * @return the filesystem on the current agent context
  */
 export function getFileSystem(): FileSystem {
@@ -166,6 +176,7 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		iterations: 0,
 		functionCallHistory: [],
 		callStack: [],
+		notes: [],
 		hilBudget: config.humanInLoop?.budget ?? (process.env.HIL_BUDGET ? parseFloat(process.env.HIL_BUDGET) : 2),
 		hilCount: config.humanInLoop?.count ?? (process.env.HIL_COUNT ? parseFloat(process.env.HIL_COUNT) : 5),
 		budgetRemaining: 0,

@@ -60,7 +60,7 @@ export function func() {
 
 			return await withActiveSpan(methodName, async (span: Span) => {
 				setFunctionSpanAttributes(span, methodName, attributeExtractors, args);
-				span.setAttribute('call', agentContext()?.callStack.join(' > '));
+				span.setAttribute('call', agentContext()?.callStack?.join(' > ') ?? '');
 
 				const result = originalMethod.call(this, ...args);
 				if (typeof result?.then === 'function') await result;

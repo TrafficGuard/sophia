@@ -7,6 +7,14 @@ import { functionConfig } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
 import { cacheRetry } from '../../cache/cacheRetry';
 
+interface PerplexityResponse extends OpenAI.Chat.Completions.ChatCompletion {
+	usage?: {
+		prompt_tokens: number;
+		completion_tokens: number;
+		total_tokens: number;
+	};
+}
+
 const log = logger.child({ class: 'Perplexity' });
 
 export interface PerplexityConfig {
@@ -24,13 +32,14 @@ export class Perplexity {
 	@cacheRetry()
 	@func()
 	async research(researchQuery: string, saveToMemory: boolean): Promise<string> {
+		let response: PerplexityResponse | undefined;
 		try {
 			const perplexity = new OpenAI({
 				apiKey: functionConfig(Perplexity).key ?? envVar('PERPLEXITY_KEY'),
 				baseURL: 'https://api.perplexity.ai',
 			});
 
-			const response = await perplexity.chat.completions.create({
+			response = await perplexity.chat.completions.create({
 				model: 'llama-3-sonar-large-32k-online',
 				max_tokens: 4096,
 				messages: [{ role: 'user', content: researchQuery }],
@@ -38,13 +47,26 @@ export class Perplexity {
 			});
 			const content = response.choices[0].message?.content;
 
-			// https://docs.perplexity.ai/docs/pricing
-			// $1/MIL output + $5/1000
-			const tokens = content.length / 4; // llama 3
-			const costPerToken = 1 / 1_000_000;
-			const onlineCost = 5 / 1000;
-			const cost = tokens * costPerToken + onlineCost;
-			addCost(cost);
+			if (!content) {
+				throw new Error('Perplexity API returned empty content');
+			}
+
+			// Cost calculation based on Perplexity API pricing (as of the last update)
+			// Source: https://docs.perplexity.ai/docs/pricing
+			if (response.usage) {
+				const promptTokens = response.usage.prompt_tokens;
+				const completionTokens = response.usage.completion_tokens;
+				const totalTokens = response.usage.total_tokens;
+
+				const costPerPromptToken = 0.000001; // $1 per million tokens
+				const costPerCompletionToken = 0.000001; // $1 per million tokens
+				const onlineCost = 0.005; // $5 per 1000 requests
+
+				const cost = Number((promptTokens * costPerPromptToken + completionTokens * costPerCompletionToken + onlineCost).toFixed(6));
+				addCost(cost);
+			} else {
+				log.warn('Usage information not available in Perplexity response');
+			}
 
 			if (saveToMemory) {
 				const summary = await llms().easy.generateText(
@@ -58,7 +80,7 @@ export class Perplexity {
 			}
 			return content;
 		} catch (e) {
-			log.error(e, `Perplexity error. Query: ${researchQuery}`);
+			log.error(e, `Perplexity error. Query: ${researchQuery}. Usage: ${JSON.stringify(response?.usage)}`);
 			throw e;
 		}
 	}

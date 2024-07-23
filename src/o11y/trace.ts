@@ -68,10 +68,10 @@ export async function withActiveSpan<T>(spanName: string, func: (span: Span) => 
 	if (!spanName) console.error(new Error(), 'spanName not provided');
 	const functionWithCallStack = async (span: Span): Promise<T> => {
 		try {
-			agentContextStorage?.getStore()?.callStack.push(spanName);
+			agentContextStorage?.getStore()?.callStack?.push(spanName);
 			return await func(span);
 		} finally {
-			agentContextStorage?.getStore()?.callStack.pop();
+			agentContextStorage?.getStore()?.callStack?.pop();
 		}
 	};
 
@@ -112,7 +112,7 @@ export function span(attributeExtractors: SpanAttributeExtractors = {}) {
 		const functionName = String(context.name);
 		return async function replacementMethod(this: any, ...args: any[]) {
 			try {
-				agentContextStorage?.getStore()?.callStack.push(functionName);
+				agentContextStorage?.getStore()?.callStack?.push(functionName);
 				if (!tracer) {
 					return await originalMethod.call(this, ...args);
 				}
@@ -121,7 +121,7 @@ export function span(attributeExtractors: SpanAttributeExtractors = {}) {
 					return await originalMethod.call(this, ...args);
 				});
 			} finally {
-				agentContextStorage?.getStore()?.callStack.pop();
+				agentContextStorage?.getStore()?.callStack?.pop();
 			}
 		};
 	};

@@ -8,7 +8,7 @@ import { createBranchName } from '#swe/createBranchName';
 import { generatePullRequestTitleDescription } from '#swe/pullRequestTitleDescription';
 import { selectProject } from '#swe/selectProject';
 import { summariseRequirements } from '#swe/summariseRequirements';
-import { ExecResult, execCommand, failOnError } from '#utils/exec';
+import { ExecResult, execCommand, failOnError, runShellCommand } from '#utils/exec';
 import { cacheRetry } from '../cache/cacheRetry';
 import { CodeEditingAgent } from './codeEditingAgent';
 import { ProjectInfo, detectProjectInfo } from './projectDetection';
@@ -46,7 +46,7 @@ export class SoftwareDeveloperAgent {
 		const projectInfo = await this.detectSingleProjectInfo();
 
 		if (projectInfo.initialise) {
-			const result: ExecResult = await execCommand(projectInfo.initialise);
+			const result: ExecResult = await runShellCommand(projectInfo.initialise, { envVars: { NODE_ENV: 'development' } });
 			failOnError('Error initialising the repository project', result);
 		}
 

@@ -3,7 +3,7 @@ import { join } from 'path';
 import { getFileSystem } from '#agent/agentContext';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
-import { ExecResult, execCommand, failOnError, run } from '#utils/exec';
+import { ExecResult, execCommand, failOnError, runShellCommand } from '#utils/exec';
 import { LanguageTools } from '../languageTools';
 
 // https://typescript.tv/errors/
@@ -19,7 +19,7 @@ export class TypescriptTools implements LanguageTools {
 	async runNpmScript(script: string): Promise<string> {
 		const packageJson = JSON.parse(readFileSync('package.json').toString());
 		if (!packageJson.scripts[script]) throw new Error(`Npm script ${script} doesn't exist in package.json`);
-		const result = await run(`npm run ${script}`);
+		const result = await runShellCommand(`npm run ${script}`);
 		failOnError(`Error running npm run ${script}`, result);
 		return `${result.stdout}${result.stderr ? `\n${result.stderr}` : ''}`;
 	}
@@ -59,11 +59,11 @@ export class TypescriptTools implements LanguageTools {
 		let result: ExecResult;
 		// NODE_ENV=development is required other if it's set to production the devDependencies won't be installed
 		if (existsSync(join(getFileSystem().getWorkingDirectory(), 'yarn.lock'))) {
-			result = await run(`yarn add ${packageName}`, { envVars: { NODE_ENV: 'development' } });
+			result = await runShellCommand(`yarn add ${packageName}`, { envVars: { NODE_ENV: 'development' } });
 		} else if (existsSync(join(getFileSystem().getWorkingDirectory(), 'pnpm-lock.yaml'))) {
-			result = await run(`pnpm install ${packageName}`, { envVars: { NODE_ENV: 'development' } });
+			result = await runShellCommand(`pnpm install ${packageName}`, { envVars: { NODE_ENV: 'development' } });
 		} else {
-			result = await run(`nvm use && npm install ${packageName}`, { envVars: { NODE_ENV: 'development' } });
+			result = await runShellCommand(`nvm use && npm install ${packageName}`, { envVars: { NODE_ENV: 'development' } });
 		}
 
 		if (result.exitCode > 0) throw new Error(`${result.stdout}\n${result.stderr}`);

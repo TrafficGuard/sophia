@@ -30,7 +30,8 @@
       "#swe/*": ["./src/swe/*"],
       "#user/*": ["./src/user/*"],
       "#utils/*": ["./src/utils/*"]
-    }
+    },
+    "types": ["node", "mocha"]
   },
-  "exclude": ["frontend"],
+  "exclude": ["frontend"]
 }
