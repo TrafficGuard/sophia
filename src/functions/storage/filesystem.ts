@@ -161,12 +161,10 @@ export class FileSystem {
 	@func()
 	async searchFilesMatchingContents(contentsRegex: string): Promise<string> {
 		// --count Only show count of line matches for each file
-		// const { stdout, stderr, exitCode } = await execCommand(`rg --count ${regex}`);
+		// rg likes this spawnCommand. Doesn't work it others execs
 		const results = await spawnCommand(`rg --count ${arg(contentsRegex)}`);
 		if (results.exitCode > 0) throw new Error(results.stderr);
 		return results.stdout;
-		// if (exitCode > 0) throw new Error(`${stdout}\n${stderr}`);
-		// return stdout;
 	}
 
 	/**

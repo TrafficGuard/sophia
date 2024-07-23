@@ -1,13 +1,11 @@
-import { promises as fs } from 'fs';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'path';
-import path from 'path';
-import { sleep } from 'openai/core';
 import { getFileSystem } from '#agent/agentContext';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
-import { ExecResult, execCmd, execCommand, failOnError, spawnCommand } from '#utils/exec';
+import { ExecResult, execCommand, failOnError, run } from '#utils/exec';
 import { LanguageTools } from '../languageTools';
+
 // https://typescript.tv/errors/
 
 @funcClass(__filename)
@@ -21,7 +19,7 @@ export class TypescriptTools implements LanguageTools {
 	async runNpmScript(script: string): Promise<string> {
 		const packageJson = JSON.parse(readFileSync('package.json').toString());
 		if (!packageJson.scripts[script]) throw new Error(`Npm script ${script} doesn't exist in package.json`);
-		const result = await execCommand(`npm run ${script}`);
+		const result = await run(`npm run ${script}`);
 		failOnError(`Error running npm run ${script}`, result);
 		return `${result.stdout}${result.stderr ? `\n${result.stderr}` : ''}`;
 	}
@@ -29,6 +27,7 @@ export class TypescriptTools implements LanguageTools {
 	/**
 	 * Generates an outline of a TypeScript repository by running the tsc command with the emitDeclarationOnly flag
 	 * and returning the contents of all the type definition files.
+	 * @returns a comprehensive outline of the project
 	 */
 	@func()
 	async generateProjectMap(): Promise<string> {
@@ -53,19 +52,18 @@ export class TypescriptTools implements LanguageTools {
 	/**
 	 * Installs a package using the appropriate package manager (yarn, pnpm, or npm)
 	 * @param packageName The name of the package to install
-	 * @returns A Promise that resolves when the package is installed
 	 */
 	@func()
 	async installPackage(packageName: string): Promise<void> {
 		// TODO check Snyk etc for any major vulnerability
 		let result: ExecResult;
-
+		// NODE_ENV=development is required other if it's set to production the devDependencies won't be installed
 		if (existsSync(join(getFileSystem().getWorkingDirectory(), 'yarn.lock'))) {
-			result = await execCommand(`yarn add ${packageName}`);
+			result = await run(`yarn add ${packageName}`, { envVars: { NODE_ENV: 'development' } });
 		} else if (existsSync(join(getFileSystem().getWorkingDirectory(), 'pnpm-lock.yaml'))) {
-			result = await execCommand(`pnpm install ${packageName}`);
+			result = await run(`pnpm install ${packageName}`, { envVars: { NODE_ENV: 'development' } });
 		} else {
-			result = await execCommand(`npm install ${packageName}`);
+			result = await run(`nvm use && npm install ${packageName}`, { envVars: { NODE_ENV: 'development' } });
 		}
 
 		if (result.exitCode > 0) throw new Error(`${result.stdout}\n${result.stderr}`);

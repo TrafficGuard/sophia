@@ -1,6 +1,8 @@
 import { ExecException, SpawnOptionsWithoutStdio, exec, spawn } from 'child_process';
+import { existsSync } from 'fs';
 import { ExecOptions } from 'node:child_process';
 import os from 'os';
+import path from 'path';
 import { promisify } from 'util';
 import { SpanStatusCode } from '@opentelemetry/api';
 import { getFileSystem } from '#agent/agentContext';
@@ -35,40 +37,32 @@ export interface ExecResults {
  * @returns
  */
 export async function execCmd(command: string, cwd = ''): Promise<ExecResults> {
-	return withSpan('execCommand', async (span) => {
+	return withSpan('execCmd', async (span) => {
 		const home = process.env.HOME;
 		logger.info(`execCmd ${home ? command.replace(home, '~') : command} ${cwd}`);
-		// return {
-		//     stdout: '', stderr: '', error: null
-		// }
 		// Need the right shell so git commands work (by having the SSH keys)
 		const shell = os.platform() === 'darwin' ? '/bin/zsh' : '/bin/bash';
-		console.log(shell);
-		for (let i = 1; i <= 3; i++) {
-			const result = await new Promise<ExecResults>((resolve, reject) => {
-				exec(command, { cwd, shell }, (error, stdout, stderr) => {
-					resolve({
-						cmd: command,
-						stdout,
-						stderr,
-						error,
-						cwd,
-					});
+		const result = await new Promise<ExecResults>((resolve, reject) => {
+			exec(command, { cwd, shell }, (error, stdout, stderr) => {
+				resolve({
+					cmd: command,
+					stdout,
+					stderr,
+					error,
+					cwd,
 				});
 			});
-			if (!result.error || i === 3) {
-				span.setAttributes({
-					cwd,
-					command,
-					stdout: result.stdout,
-					stderr: result.stderr,
-					exitCode: result.error ? 1 : 0,
-				});
-				span.setStatus({ code: result.error ? SpanStatusCode.ERROR : SpanStatusCode.OK });
-				return result;
-			}
-			logger.info(`Retrying ${command}`);
-			await new Promise((resolve) => setTimeout(resolve, 1000 * i));
+		});
+		if (!result.error) {
+			span.setAttributes({
+				cwd,
+				command,
+				stdout: result.stdout,
+				stderr: result.stderr,
+				exitCode: result.error ? 1 : 0,
+			});
+			span.setStatus({ code: result.error ? SpanStatusCode.ERROR : SpanStatusCode.OK });
+			return result;
 		}
 	});
 }
@@ -138,8 +132,9 @@ export async function execCommand(command: string, opts?: ExecCmdOptions): Promi
 
 export async function spawnCommand(command: string, workingDirectory?: string): Promise<ExecResult> {
 	return withSpan('spawnCommand', async (span) => {
+		const shell = os.platform() === 'darwin' ? '/bin/zsh' : '/bin/bash';
 		const cwd = workingDirectory ?? getFileSystem().getWorkingDirectory();
-		const options: SpawnOptionsWithoutStdio = { cwd };
+		const options: SpawnOptionsWithoutStdio = { cwd, shell };
 		try {
 			logger.info(`${options.cwd} % ${command}`);
 			const { stdout, stderr, code } = await spawnAsync(command, options);
@@ -171,8 +166,9 @@ export async function spawnCommand(command: string, workingDirectory?: string): 
 
 function spawnAsync(command: string, options: SpawnOptionsWithoutStdio): Promise<{ stdout: string; stderr: string; code: number }> {
 	return withSpan('spawnCommand', async (span) => {
+		const shell = os.platform() === 'darwin' ? '/bin/zsh' : '/bin/bash';
 		return new Promise((resolve, reject) => {
-			const process = spawn(command, [], { ...options, shell: true, stdio: ['ignore', 'pipe', 'pipe'] });
+			const process = spawn(command, [], { ...options, shell, stdio: ['ignore', 'pipe', 'pipe'] });
 			let stdout = '';
 			let stderr = '';
 
@@ -206,4 +202,93 @@ function spawnAsync(command: string, options: SpawnOptionsWithoutStdio): Promise
 			});
 		});
 	});
+}
+
+export async function run(cmd: string, opts?: ExecCmdOptions): Promise<ExecResult> {
+	const shell: string = process.platform === 'win32' ? 'cmd.exe' : os.platform() === 'darwin' ? '/bin/zsh' : '/bin/bash';
+	const env: Record<string, string> = opts?.envVars ? { ...process.env, ...opts.envVars } : { ...process.env };
+	const cwd: string = opts?.workingDirectory ?? getFileSystem().getWorkingDirectory();
+
+	console.log(process.env);
+
+	const child = spawn(shell, [], { stdio: ['pipe', 'pipe', 'pipe'], cwd, env });
+
+	function closeShell(): Promise<{ code: number; signal: NodeJS.Signals }> {
+		return new Promise((resolve, reject) => {
+			child.on('exit', (code: number, signal: NodeJS.Signals) => {
+				resolve({ code, signal });
+			});
+
+			child.stdin.end();
+		});
+	}
+	// Function to send a command and capture stdout and stderr
+	function sendCommand(command: string): Promise<ExecResult> {
+		return new Promise((resolve, reject) => {
+			let stdout = '';
+			let stderr = '';
+			let commandOutput = '';
+			const commandDoneMarker = `COMMAND_DONE_EXIT${Math.random().toString(36).substring(2, 15)}`;
+
+			const onStdoutData = (data) => {
+				commandOutput += data.toString();
+				console.log(data.toString());
+				if (commandOutput.includes(commandDoneMarker)) {
+					const parts = commandOutput.split(commandDoneMarker);
+					stdout = parts[0];
+					const exitCodeMatch = parts[1].match(/EXIT_CODE:(\d+)/);
+					const exitCode = exitCodeMatch ? parseInt(exitCodeMatch[1], 10) : null;
+
+					// Clean up listeners
+					child.stdout.off('data', onStdoutData);
+					child.stderr.off('data', onStderrData);
+					if (stdout.endsWith('\n')) stdout = stdout.substring(0, stdout.length - 1);
+					resolve({ stdout, stderr, exitCode });
+				}
+			};
+
+			const onStderrData = (data) => {
+				console.error(data.toString());
+				stderr += data.toString();
+			};
+
+			child.stdout.on('data', onStdoutData);
+			child.stderr.on('data', onStderrData);
+
+			// Write the command to the shell's stdin, followed by an echo of the exit code
+			child.stdin.write(`${command}\n`);
+			if (process.platform === 'win32') {
+				child.stdin.write(`echo ${commandDoneMarker} EXIT_CODE:%ERRORLEVEL%\n`);
+			} else {
+				child.stdin.write(`echo ${commandDoneMarker} EXIT_CODE:$?\n`);
+			}
+		});
+	}
+
+	let result: ExecResult;
+	try {
+		if (shell === '/bin/zsh') {
+			const zshrc = path.join(process.env.HOME, '.zshrc');
+			if (existsSync(zshrc)) {
+				console.log('sending source');
+				const result = await sendCommand(`source ${zshrc}`);
+				console.log(result);
+			}
+		} else if (shell === '/bin/bash') {
+			const bashrc = path.join(process.env.HOME, '.bashrc');
+			if (existsSync(bashrc)) {
+				await sendCommand(`source ${bashrc}`);
+			}
+		}
+
+		result = await sendCommand(cmd);
+	} finally {
+		try {
+			await closeShell();
+		} catch (ex) {
+			logger.warn(ex, `Error closing shell for command ${cmd}`);
+		}
+	}
+
+	return result;
 }
