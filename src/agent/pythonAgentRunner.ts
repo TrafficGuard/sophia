@@ -197,6 +197,7 @@ main()`.trim();
 							// Initial execution attempt
 							const result = await pyodide.runPythonAsync(pythonScript, { globals });
 							pythonScriptResult = result?.toJs ? result.toJs() : result;
+							pythonScriptResult = pythonScriptResult?.toString ? pythonScriptResult.toString() : pythonScriptResult;
 							logger.info(pythonScriptResult, 'Script result');
 							if (result?.destroy) result.destroy();
 						} catch (e) {
@@ -211,6 +212,8 @@ main()`.trim();
 							// Re-try execution of fixed syntax/indentation error
 							const result = await pyodide.runPythonAsync(pythonScript, { globals });
 							pythonScriptResult = result?.toJs ? result.toJs() : result;
+							pythonScriptResult = pythonScriptResult?.toString ? pythonScriptResult.toString() : pythonScriptResult;
+
 							if (result?.destroy) result.destroy();
 							logger.info(pythonScriptResult, 'Script result');
 						}
@@ -243,7 +246,7 @@ main()`.trim();
 					agent.invoking = [];
 					const currentFunctionCallHistory = buildFunctionCallHistoryPrompt('results', 10000, currentFunctionHistorySize);
 
-					currentPrompt = `${oldFunctionCallHistory}${buildMemoryPrompt()}${toolStatePrompt}\n${agentPlanResponse}\n${currentFunctionCallHistory}\n<python-result>${pythonScriptResult}</python-result>`;
+					currentPrompt = `${oldFunctionCallHistory}${buildMemoryPrompt()}${toolStatePrompt}\n${agentPlanResponse}\n${currentFunctionCallHistory}\n<python-result>${pythonScriptResult}</python-result>\nReview the results of the scripts and make any observations about the output/errors, then proceed with the response.`;
 					currentFunctionHistorySize = agent.functionCallHistory.length;
 				} catch (e) {
 					span.setStatus({ code: SpanStatusCode.ERROR, message: e.toString() });
