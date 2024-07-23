@@ -61,7 +61,7 @@ export class CodeEditor {
 		await promisify(fs.mkdir)('.nous/aider/llm-history', { recursive: true });
 		const llmHistoryFile = `.nous/aider/llm-history/${agentContext().agentId}-${Date.now()}`;
 
-		const cmd = `aider --skip-check-update --yes ${modelArg} --llm-history-file="${llmHistoryFile}" --message-file=${messageFilePath} ${filesToEdit
+		const cmd = `aider --no-check-update --yes ${modelArg} --llm-history-file="${llmHistoryFile}" --message-file=${messageFilePath} ${filesToEdit
 			.map((file) => `"${file}"`)
 			.join(' ')}`;
 
