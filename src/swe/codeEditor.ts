@@ -1,3 +1,4 @@
+import { writeFileSync } from 'fs';
 import fs from 'node:fs';
 import { promisify } from 'util';
 import { addCost, agentContext, getFileSystem } from '#agent/agentContext';
@@ -60,6 +61,15 @@ export class CodeEditor {
 
 		await promisify(fs.mkdir)('.nous/aider/llm-history', { recursive: true });
 		const llmHistoryFile = `.nous/aider/llm-history/${agentContext().agentId}-${Date.now()}`;
+
+		try {
+			writeFileSync(llmHistoryFile, '');
+		} catch (e) {
+			logger.error(e, 'Fatal Error reading/writing Aider llmH-history-file');
+			const error = new Error(`Fatal Error reading/writing Aider llmH-history-file. Error: ${e.message}`);
+			if (e.stack) error.stack = e.stack;
+			throw error;
+		}
 
 		const cmd = `aider --no-check-update --yes ${modelArg} --llm-history-file="${llmHistoryFile}" --message-file=${messageFilePath} ${filesToEdit
 			.map((file) => `"${file}"`)

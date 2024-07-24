@@ -53,7 +53,7 @@
     "@google-cloud/firestore": "^7.7.0",
     "@google-cloud/opentelemetry-cloud-trace-exporter": "^2.1.0",
     "@google-cloud/storage": "^7.9.0",
-    "@google-cloud/vertexai": "^1.1.0",
+    "@google-cloud/vertexai": "^1.4.0",
     "@grpc/grpc-js": "^1.8.0",
     "@microsoft/tiktokenizer": "^1.0.8",
     "@mozilla/readability": "^0.5.0",

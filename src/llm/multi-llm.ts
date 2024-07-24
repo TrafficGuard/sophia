@@ -6,6 +6,9 @@ import { LLM } from './llm';
 /*
 https://news.ycombinator.com/item?id=39955725
 https://arxiv.org/html/2402.05120v1
+https://arxiv.org/pdf/2305.14325
+
+Gemini (2...) could be great for this with the context caching reducing the cost of the base input tokens by 75% for subsequent rounds
 */
 
 /**

@@ -192,7 +192,7 @@ export class GitLab implements SourceControlManagement {
 			const command = `git clone https://oauth2:${this.config().token}@${this.config().host}/${projectPathWithNamespace}.git ${path}`;
 			const result = await execCmd(command);
 
-			if (result.stderr.includes('remote HEAD refers to nonexistent ref')) {
+			if (result.stderr?.includes('remote HEAD refers to nonexistent ref')) {
 				const gitProject = await this.getProject(projectPathWithNamespace);
 				const switchResult = await execCommand(`git switch ${gitProject.defaultBranch}`, { workingDirectory: path });
 				if (switchResult.exitCode === 0) logger.info(`Switched to branch ${gitProject.defaultBranch}`);
