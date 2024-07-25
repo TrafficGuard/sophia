@@ -154,16 +154,20 @@ export function getFileSystem(): FileSystem {
 	return filesystem;
 }
 
-export function createContext(config: RunAgentConfig): AgentContext {
-	const fileSystem = new FileSystem(config.fileSystemPath);
+function setFileSystemFunction(agent: AgentContext) {
 	// TODO create a test for this that the context.filesystem is the same reference as the context.functions["FileSystem"]}
 	// Make sure we have the same FileSystem object on the context and in the functions
-	const functions: LlmFunctions = Array.isArray(config.functions) ? new LlmFunctions(...config.functions) : config.functions;
+	const functions: LlmFunctions = Array.isArray(agent.functions) ? new LlmFunctions(...agent.functions) : agent.functions;
 	if (functions.getFunctionClassNames().includes(FileSystem.name)) {
 		functions.removeFunctionClass(FileSystem.name);
-		functions.addFunctionInstance(fileSystem, FileSystem.name);
+		functions.addFunctionInstance(agent.fileSystem, FileSystem.name);
 	}
-	return {
+}
+
+export function createContext(config: RunAgentConfig): AgentContext {
+	const fileSystem = new FileSystem(config.fileSystemPath);
+
+	const context: AgentContext = {
 		agentId: config.resumeAgentId || randomUUID(),
 		executionId: randomUUID(),
 		traceId: '',
@@ -188,6 +192,8 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		invoking: [],
 		lastUpdate: Date.now(),
 	};
+	setFileSystemFunction(context);
+	return context;
 }
 
 export function serializeContext(context: AgentContext): Record<string, any> {
@@ -244,6 +250,8 @@ export async function deserializeAgentContext(serialized: Record<string, any>): 
 
 	context.fileSystem = new FileSystem().fromJSON(serialized.fileSystem);
 	context.functions = new LlmFunctions().fromJSON(serialized.functions ?? serialized.toolbox); // toolbox for backward compat
+	setFileSystemFunction(context as AgentContext); // TODO add a test for this
+
 	context.memory = serialized.memory;
 	context.llms = deserializeLLMs(serialized.llms);
 
@@ -254,6 +262,9 @@ export async function deserializeAgentContext(serialized: Record<string, any>): 
 	// backwards compatability
 	if (!context.type) context.type = 'xml';
 	if (!context.iterations) context.iterations = 0;
+
+	// Need to default empty parameters. Seems to get lost in Firestore
+	for (const call of context.functionCallHistory) call.parameters ??= {};
 
 	return context as AgentContext;
 }

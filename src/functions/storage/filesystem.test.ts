@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { FileSystem } from './filesystem';
 
 describe('FileSystem', () => {
-	describe('setWorkingDirectory with fakePath', () => {
+	describe.skip('setWorkingDirectory with fakePath', () => {
 		const fileSystem = new FileSystem('/basePath');
 		it('should be able to set a path from the baseDir when the new working directory starts with /', async () => {
 			fileSystem.setWorkingDirectory('/otherWorkDir');

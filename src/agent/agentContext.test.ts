@@ -18,7 +18,6 @@ describe('agentContext', () => {
 				xhard: GPT4o(),
 			};
 			const functions = new LlmFunctions();
-			functions.addFunctionClass(FileSystem);
 
 			const config: RunAgentConfig = {
 				agentName: 'SWE',
@@ -30,6 +29,7 @@ describe('agentContext', () => {
 			const agentContext: AgentContext = createContext(config);
 			agentContext.fileSystem.setWorkingDirectory('./workingDir');
 			agentContext.functions.addFunctionClass(UtilFunctions);
+			agentContext.functions.addFunctionClass(FileSystem); // add this last so deep equals is happy as it gets re-added
 			agentContext.memory.memory_key = 'memory_value';
 			agentContext.functionCallHistory.push({
 				function_name: 'func',

@@ -33,7 +33,7 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 
 	const agentLLM = llms().hard;
 
-	// const userRequestXml = agent.userPrompt;
+	const userRequestXml = `<user_request>\n${agent.userPrompt}\n</user_request>`;
 	let currentPrompt = agent.inputPrompt;
 	// logger.info(`userRequestXml ${userRequestXml}`)
 	logger.info(`currentPrompt ${currentPrompt}`);
@@ -100,10 +100,21 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 					}
 
 					const toolStatePrompt = await buildToolStatePrompt();
-					const oldFunctionCallHistory = buildFunctionCallHistoryPrompt('history', 10000);
+
+					// If the last function was requestFeedback then we'll remove it from function history add it as function results
+					let historyToIndex = agent.functionCallHistory.length ? agent.functionCallHistory.length - 1 : 0;
+					let requestFeedbackCallResult = '';
+					if (agent.functionCallHistory.length && agent.functionCallHistory.at(-1).function_name === AGENT_REQUEST_FEEDBACK) {
+						historyToIndex--;
+						requestFeedbackCallResult = buildFunctionCallHistoryPrompt('results', 10000, historyToIndex + 1, historyToIndex + 2);
+					}
+					const oldFunctionCallHistory = buildFunctionCallHistoryPrompt('history', 10000, 0, historyToIndex);
 
 					const isNewAgent = agent.iterations === 0 && agent.functionCallHistory.length === 0;
-					const initialPrompt = isNewAgent ? oldFunctionCallHistory + buildMemoryPrompt() + toolStatePrompt + currentPrompt : currentPrompt;
+					// For the initial prompt we create the empty memory, functional calls and default tool state content. Subsequent iterations already have it
+					const initialPrompt = isNewAgent
+						? oldFunctionCallHistory + buildMemoryPrompt() + toolStatePrompt + currentPrompt
+						: currentPrompt + requestFeedbackCallResult;
 
 					const agentPlanResponse: string = await agentLLM.generateText(initialPrompt, systemPromptWithFunctions, {
 						id: 'dynamicAgentPlan',
@@ -190,7 +201,7 @@ ${llmPythonCode
 	.map((line) => `    ${line}`)
 	.join('\n')}
 
-main()`.trim();
+str(await main())`.trim();
 
 					try {
 						try {
@@ -246,7 +257,7 @@ main()`.trim();
 					agent.invoking = [];
 					const currentFunctionCallHistory = buildFunctionCallHistoryPrompt('results', 10000, currentFunctionHistorySize);
 
-					currentPrompt = `${oldFunctionCallHistory}${buildMemoryPrompt()}${toolStatePrompt}\n${agentPlanResponse}\n${currentFunctionCallHistory}\n<python-result>${pythonScriptResult}</python-result>\nReview the results of the scripts and make any observations about the output/errors, then proceed with the response.`;
+					currentPrompt = `${oldFunctionCallHistory}${buildMemoryPrompt()}${toolStatePrompt}\n${userRequestXml}\n${agentPlanResponse}\n${currentFunctionCallHistory}\n<python-result>${pythonScriptResult}</python-result>\nReview the results of the scripts and make any observations about the output/errors, then proceed with the response.`;
 					currentFunctionHistorySize = agent.functionCallHistory.length;
 				} catch (e) {
 					span.setStatus({ code: SpanStatusCode.ERROR, message: e.toString() });

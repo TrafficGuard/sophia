@@ -46,7 +46,7 @@ type FileFilter = (filename: string) => boolean;
 @funcClass(__filename)
 export class FileSystem {
 	/** The path relative to the basePath */
-	private _workingDirectory = './';
+	private _workingDirectory = '';
 	vcs: VersionControlSystem | null = null;
 	log: Pino.Logger;
 
@@ -80,6 +80,7 @@ export class FileSystem {
 				logger.error(`Invalid NOUS_FS env var. ${fsEnvVar} does not exist`);
 			}
 		}
+		this._workingDirectory = this.basePath;
 
 		this.log = logger.child({ FileSystem: this.basePath });
 		// We will want to re-visit this, the .git folder can be in a parent directory
@@ -115,18 +116,23 @@ export class FileSystem {
 	 */
 	@func()
 	setWorkingDirectory(dir: string): void {
-		if (!dir) throw new Error('workingDirectory must be provided');
-		this.log.info(`setWorkingDirectory ${dir}`);
-		if (`/${dir}`.startsWith(this.basePath)) dir = `/${dir}`;
-		let newWorkingDirectory = dir.startsWith(this.basePath) ? dir.replace(this.basePath, '') : dir;
-		newWorkingDirectory = dir.startsWith('/') ? newWorkingDirectory : path.join(this.workingDirectory, newWorkingDirectory);
-		// Get the relative path from baseUrl to new working path
-		const newFullWorkingDir = join(this.basePath, newWorkingDirectory);
-		let relativePath = path.relative(this.basePath, newFullWorkingDir);
-		// If the relative path starts with '..', new path is higher than basePath, so set it as the current dir
-		if (relativePath.startsWith('..')) relativePath = './';
-		this.log.debug(`  this.workingDirectory: ${relativePath}`);
-		this.workingDirectory = relativePath;
+		if (!dir) throw new Error('dir must be provided');
+
+		if (dir.startsWith('/') && existsSync(dir)) this.workingDirectory = dir;
+		else this.workingDirectory = join(this.workingDirectory, dir);
+
+		this.log.info(`workingDirectory is now ${this.workingDirectory}`);
+
+		// if (`/${dir}`.startsWith(this.basePath)) dir = `/${dir}`;
+		// let newWorkingDirectory = dir.startsWith(this.basePath) ? dir.replace(this.basePath, '') : dir;
+		// newWorkingDirectory = dir.startsWith('/') ? newWorkingDirectory : path.join(this.workingDirectory, newWorkingDirectory);
+		// // Get the relative path from baseUrl to new working path
+		// const newFullWorkingDir = join(this.basePath, newWorkingDirectory);
+		// let relativePath = path.relative(this.basePath, newFullWorkingDir);
+		// // If the relative path starts with '..', new path is higher than basePath, so set it as the current dir
+		// if (relativePath.startsWith('..')) relativePath = './';
+		// this.log.debug(`  this.workingDirectory: ${relativePath}`);
+		// this.workingDirectory = relativePath;
 	}
 
 	/**
@@ -281,24 +287,25 @@ export class FileSystem {
 	 */
 	@func()
 	async readFile(filePath: string): Promise<string> {
-		// TODO if the file doesn't exist search recursively for the filename, and if there is one result then return that
-		logger.info(`getFileContents: ${filePath}`);
-		// A filePath starts with / is it relative to FileSystem.basePath, otherwise its relative to FileSystem.workingDirectory
-		const fullPath = filePath.startsWith('/') ? resolve(this.getWorkingDirectory(), filePath.slice(1)) : resolve(this.getWorkingDirectory(), filePath);
+		logger.info(`readFile ${filePath}`);
+		let contents: string;
+		const relativeFullPath = path.join(this.getWorkingDirectory(), filePath);
+		if (existsSync(filePath)) {
+			contents = (await fs.readFile(filePath)).toString();
+		} else if (existsSync(relativeFullPath)) {
+			contents = (await fs.readFile(relativeFullPath)).toString();
+		} else {
+			throw new Error(`File ${filePath} does not exist`);
+			// try {
+			// 	const matches = await this.searchFilesMatchingName(filePath);
+			//  if (matches.length === 1) {
+			// 		fullPath = matches[0];
+			// 	}
+			// } catch (e) {
+			// 	console.log(e);
+			// }
+		}
 
-		// if (!existsSync(fullPath)) {
-		// 	try {
-		// 		const matches = await this.searchFilesMatchingName(filePath);
-		// 		if (existsSync(matches)) {
-		// 			fullPath = matches;
-		// 		}
-		// 	} catch (e) {
-		// 		console.log(e);
-		// 	}
-		// }
-
-		logger.info(`Reading file ${fullPath}`);
-		const contents = (await fs.readFile(filePath)).toString();
 		getActiveSpan()?.setAttribute('size', contents.length);
 		return contents;
 	}

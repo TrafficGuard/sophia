@@ -8,7 +8,7 @@ import { GitProject } from './gitProject';
 export interface SourceControlManagement {
 	getProjects(): Promise<GitProject[]>;
 
-	cloneProject(projectPathWithNamespace: string): Promise<string>;
+	cloneProject(projectPathWithNamespace: string, branchOrCommit?: string): Promise<string>;
 
 	createMergeRequest(title: string, description: string, sourceBranch: string, targetBranch: string): Promise<string>;
 

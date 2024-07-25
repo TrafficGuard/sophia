@@ -54,7 +54,7 @@ export class Git implements VersionControlSystem {
 	}
 
 	async init(): Promise<void> {
-		const originUrl = await execCmd('git config --get remote.origin.url', this.fileSystem.getWorkingDirectory());
+		const originUrl = await execCommand('git config --get remote.origin.url');
 	}
 
 	async getHeadSha(): Promise<string> {

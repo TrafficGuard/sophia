@@ -71,13 +71,13 @@ export class GitHub implements SourceControlManagement {
 	 * @returns the file system path where the repository is located
 	 */
 	@func()
-	async cloneProject(projectPathWithOrg: string): Promise<string> {
+	async cloneProject(projectPathWithOrg: string, branchOrCommit: string): Promise<string> {
 		const paths = projectPathWithOrg.split('/');
 		if (paths.length !== 2) throw new Error(`${projectPathWithOrg} must be in the format organisation/project`);
 		const org = paths[0];
 		const project = paths[1];
 
-		const path = join(getFileSystem().basePath, '.nous', 'github', org, project);
+		const path = join(process.cwd(), '.nous', 'github', org, project);
 
 		// TODO it cloned a project to the main branch when the default is master?
 		// If the project already exists pull updates
@@ -85,15 +85,19 @@ export class GitHub implements SourceControlManagement {
 			logger.info(`${org}/${project} exists at ${path}. Pulling updates`);
 			// If we're resuming an agent which has already created the branch but not pushed
 			// then it won't exist remotely, so this will return a non-zero code
-			const result = await execCmd(`git -C ${path} pull`);
+			if (branchOrCommit) {
+				// TODO
+			}
+
+			const result = await execCommand(`git -C ${path} pull`, { workingDirectory: path });
 			// checkExecResult(result, `Failed to pull ${path}`);
 		} else {
 			logger.info(`Cloning project: ${org}/${project} to ${path}`);
 			const command = `git clone https://oauth2:${this.config().token}@github.com/${projectPathWithOrg}.git ${path}`;
-			const result = await execCmd(command);
-			checkExecResult(result, `Failed to clone ${projectPathWithOrg}`);
+			const result = await execCommand(command, { workingDirectory: path });
+			failOnError(`Failed to clone ${projectPathWithOrg}`, result);
 		}
-		agentContext().memory[`fileSystemDirectory_GitHub_${org}_${project}`] = path;
+		agentContext().memory[`GitHub_project_${org}_${project}_FileSystem_directory`] = path;
 		return path;
 	}
 
@@ -101,7 +105,7 @@ export class GitHub implements SourceControlManagement {
 	async createMergeRequest(title: string, description: string, sourceBranch: string, targetBranch: string): Promise<string> {
 		// TODO git push
 
-		const originUrl = (await execCmd('git config --get remote.origin.url')).stdout;
+		const originUrl = (await execCommand('git config --get remote.origin.url')).stdout;
 		const [owner, repo] = extractOwnerProject(originUrl);
 
 		const response = await this.request()('POST /repos/{owner}/{repo}/pulls', {
@@ -212,6 +216,7 @@ function convertGitHubToGitProject(repo: GitHubRepository): GitProject {
 	return {
 		id: repo.id,
 		name: repo.name,
+		namespace: repo.full_name,
 		description: repo.description,
 		defaultBranch: repo.default_branch,
 		visibility: repo.private ? 'private' : 'public',

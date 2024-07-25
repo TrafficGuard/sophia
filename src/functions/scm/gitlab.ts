@@ -118,14 +118,15 @@ export class GitLab implements SourceControlManagement {
 	/**
 	 * @returns the details of all the projects available (name, description, git URL etc)
 	 */
-	@cacheRetry({ scope: 'global' })
+	// @cacheRetry({ scope: 'global' })
 	async getProjects(): Promise<GitProject[]> {
 		const resultProjects: GitProject[] = [];
 		for (const group of this.config().topLevelGroups) {
 			const projects = await this.api().Groups.allProjects(group, {
 				orderBy: 'name',
-				perPage: 100,
+				perPage: 500,
 			});
+			if (projects.length === 500) throw new Error('Need to page results for GitLab.getProjects. Exceeded 500 size');
 			// console.log(`${group} ==========`);
 			projects.sort((a, b) => a.path.localeCompare(b.path));
 			projects.map((project) => this.convertGitLabToGitProject(project)).forEach((project) => resultProjects.push(project));
@@ -162,10 +163,12 @@ export class GitLab implements SourceControlManagement {
 		return {
 			id: project.id,
 			name: project.name,
+			namespace: project.namespace.full_path,
 			description: project.description,
-			defaultBranch: project.default_branch || 'main', // Provide a default value
+			defaultBranch: project.default_branch,
 			visibility: project.visibility,
 			archived: project.archived || false,
+			extra: { ciConfigPath: project.ci_config_path },
 		};
 	}
 
@@ -185,12 +188,12 @@ export class GitLab implements SourceControlManagement {
 			logger.info(`${projectPathWithNamespace} exists at ${path}. Pulling updates`);
 			// If we're resuming an agent which has already created the branch but not pushed
 			// then it won't exist remotely, so this will return a non-zero code
-			const result = await execCmd(`git -C ${path} pull`);
+			const result = await execCommand(`git -C ${path} pull`);
 			// checkExecResult(result, `Failed to pull ${path}`);
 		} else {
 			logger.info(`Cloning project: ${projectPathWithNamespace} to ${path}`);
 			const command = `git clone https://oauth2:${this.config().token}@${this.config().host}/${projectPathWithNamespace}.git ${path}`;
-			const result = await execCmd(command);
+			const result = await execCommand(command);
 
 			if (result.stderr?.includes('remote HEAD refers to nonexistent ref')) {
 				const gitProject = await this.getProject(projectPathWithNamespace);
@@ -199,9 +202,9 @@ export class GitLab implements SourceControlManagement {
 				failOnError(`Unable to switch to default branch ${gitProject.defaultBranch} for ${projectPathWithNamespace}`, switchResult);
 			}
 
-			checkExecResult(result, `Failed to clone ${projectPathWithNamespace}`);
+			failOnError(`Failed to clone ${projectPathWithNamespace}`, result);
 		}
-		agentContext().memory[`GitLab_Project_FileSystem_directory_${projectPathWithNamespace.replace('/', '_')}`] = path;
+		agentContext().memory[`GitLab_project_${projectPathWithNamespace.replace('/', '_')}_FileSystem_directory_`] = path;
 		return path;
 	}
 

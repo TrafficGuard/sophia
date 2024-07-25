@@ -2,6 +2,7 @@ import { agentContext, getFileSystem } from '#agent/agentContext';
 import { FileMetadata, FileStore } from '#functions/storage/filestore';
 import { FileSystem } from '#functions/storage/filesystem';
 import { FunctionCallResult } from '#llm/llm';
+import { logger } from '#o11y/logger';
 
 /**
  * @return An XML representation of the agent's memory
@@ -72,12 +73,17 @@ export function buildFunctionCallHistoryPrompt(type: 'history' | 'results', maxL
 	for (let i = functionCalls.length - 1; i >= 0; i--) {
 		const call = functionCalls[i];
 		let params = '';
-		for (let [name, value] of Object.entries(call.parameters)) {
-			if (Array.isArray(value)) value = JSON.stringify(value, null, ' ');
-			// if (typeof value === 'string' && value.length > 150) value = `${value.slice(0, 150)}...`;
-			// if (typeof value === 'string') value = value.replace('"', '\\"');
-			params += `\n  "${name}": "${value}",`;
+		if (call.parameters) {
+			for (let [name, value] of Object.entries(call.parameters)) {
+				if (Array.isArray(value)) value = JSON.stringify(value, null, ' ');
+				// if (typeof value === 'string' && value.length > 150) value = `${value.slice(0, 150)}...`;
+				// if (typeof value === 'string') value = value.replace('"', '\\"');
+				params += `\n  "${name}": "${value}",`;
+			}
+		} else {
+			logger.info(`No parameters on call ${JSON.stringify(call)}`);
 		}
+
 		// Strip trailing comma
 		if (params.length) params.substring(0, params.length - 2);
 
