@@ -465,14 +465,18 @@ export class FileSystem {
 
 		files.forEach((file) => {
 			const parts = file.split(path.sep);
-			let currentPath = '';
-			parts.forEach((part, index) => {
-				currentPath = path.join(currentPath, part);
-				const indent = '  '.repeat(index);
-				if (!tree.has(currentPath)) {
-					tree.set(currentPath, `${indent}${part}${index < parts.length - 1 ? '/' : ''}\n`);
-				}
-			});
+			const isFile = !file.endsWith('/');
+			const dirPath = isFile ? parts.slice(0, -1).join(path.sep) : file;
+			const fileName = isFile ? parts[parts.length - 1] : '';
+
+			if (!tree.has(dirPath)) {
+				tree.set(dirPath, `${dirPath}${dirPath ? '/' : ''}\n`);
+			}
+
+			if (isFile) {
+				const existingContent = tree.get(dirPath) || '';
+				tree.set(dirPath, existingContent + `  ${fileName}\n`);
+			}
 		});
 
 		return Array.from(tree.values()).join('');
