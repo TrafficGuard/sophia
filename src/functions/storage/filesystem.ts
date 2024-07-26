@@ -479,6 +479,25 @@ export class FileSystem {
 	}
 }
 
+/*
+Update getFileSystemTree so that the output displays the full folder path followed by the files.
+<output-before>
+file1.txt
+images/
+  logo.png
+src/
+  utils/
+    helpers/
+      helper.js
+</output-before>
+<output-after>
+file1.txt
+images/
+  logo.png
+src/utils/helpers/
+  helper.js
+</output-after>
+*/
 /**
  * Sanitise arguments by single quoting and escaping single quotes in the value
  * @param arg command line argument value
