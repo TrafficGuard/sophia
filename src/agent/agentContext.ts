@@ -154,7 +154,7 @@ export function getFileSystem(): FileSystem {
 	return filesystem;
 }
 
-function setFileSystemFunction(agent: AgentContext) {
+function resetFileSystemFunction(agent: AgentContext) {
 	// TODO create a test for this that the context.filesystem is the same reference as the context.functions["FileSystem"]}
 	// Make sure we have the same FileSystem object on the context and in the functions
 	const functions: LlmFunctions = Array.isArray(agent.functions) ? new LlmFunctions(...agent.functions) : agent.functions;
@@ -192,7 +192,7 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		invoking: [],
 		lastUpdate: Date.now(),
 	};
-	setFileSystemFunction(context);
+	resetFileSystemFunction(context);
 	return context;
 }
 
@@ -250,7 +250,7 @@ export async function deserializeAgentContext(serialized: Record<string, any>): 
 
 	context.fileSystem = new FileSystem().fromJSON(serialized.fileSystem);
 	context.functions = new LlmFunctions().fromJSON(serialized.functions ?? serialized.toolbox); // toolbox for backward compat
-	setFileSystemFunction(context as AgentContext); // TODO add a test for this
+	resetFileSystemFunction(context as AgentContext); // TODO add a test for this
 
 	context.memory = serialized.memory;
 	context.llms = deserializeLLMs(serialized.llms);

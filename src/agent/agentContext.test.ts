@@ -29,7 +29,7 @@ describe('agentContext', () => {
 			const agentContext: AgentContext = createContext(config);
 			agentContext.fileSystem.setWorkingDirectory('./workingDir');
 			agentContext.functions.addFunctionClass(UtilFunctions);
-			agentContext.functions.addFunctionClass(FileSystem); // add this last so deep equals is happy as it gets re-added
+			agentContext.functions.addFunctionClass(FileSystem); // add this last so deep equals is happy as it gets re-added by the resetFileSystemFunction function
 			agentContext.memory.memory_key = 'memory_value';
 			agentContext.functionCallHistory.push({
 				function_name: 'func',

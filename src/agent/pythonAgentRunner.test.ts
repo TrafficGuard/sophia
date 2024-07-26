@@ -169,16 +169,25 @@ describe('pythonAgentRunner', () => {
 
 	describe('Agent.requestFeedback usage', () => {
 		it('should be able to request feedback', async () => {
-			const feedbackNote = 'the feedback';
+			const feedbackNote = 'the feedback XYZ';
 			mockLLM.addResponse(REQUEST_FEEDBACK_FUNCTION_CALL_PLAN(feedbackNote));
 			await startAgent(runConfig({ functions }));
-			const agent = await waitForAgent();
+			let agent = await waitForAgent();
 			expect(agent.functionCallHistory.length).to.equal(1);
 			expect(agent.state).to.equal('feedback');
 
-			mockLLM.addResponse(COMPLETE_FUNCTION_CALL_PLAN);
+			let postFeedbackPrompt: string;
+			mockLLM.addResponse(COMPLETE_FUNCTION_CALL_PLAN, (prompt) => {
+				postFeedbackPrompt = prompt;
+			});
 			await provideFeedback(agent.agentId, agent.executionId, feedbackNote);
+			agent = await waitForAgent();
 
+			// Make sure the agent can see the feedback note
+			// TODO check that the note is after the <python-code> block
+			// in the function call results.
+			// Should have all the calls from that iterations in the results not the history
+			expect(postFeedbackPrompt).to.include(feedbackNote);
 			expect(agent.state).to.equal('completed');
 			expect(agent.functionCallHistory[0].stdout).to.equal(feedbackNote);
 		});

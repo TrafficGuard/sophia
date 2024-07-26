@@ -53,13 +53,6 @@ describe('FileSystem', () => {
 			const exists = await fileSystem.fileExists('angular.json');
 			expect(exists).to.equal(true);
 		});
-
-		it('should set the real working directory with an absolute relative path', async () => {
-			const fileSystem = new FileSystem();
-			fileSystem.setWorkingDirectory(join(process.cwd(), 'frontend'));
-			const exists = await fileSystem.fileExists('angular.json');
-			expect(exists).to.equal(true);
-		});
 	});
 
 	describe('fileExists', () => {
@@ -71,6 +64,15 @@ describe('FileSystem', () => {
 		});
 		it('should return false if a file doesnt exist', async () => {
 			expect(await fileSystem.fileExists('./apivheoirvaifvjaoiergalenrbna')).to.be.false;
+		});
+
+		it('should return the correct result when the working directory has been set', async () => {
+			const fileSystem = new FileSystem();
+			fileSystem.setWorkingDirectory('frontend');
+			let exists = await fileSystem.fileExists('angular.json');
+			expect(exists).to.equal(true);
+			exists = await fileSystem.fileExists('src/main.ts');
+			expect(exists).to.equal(true);
 		});
 	});
 
@@ -188,6 +190,7 @@ describe('FileSystem', () => {
 			// Check that some expected files/directories are included
 			expect(tree).to.include('package.json');
 			expect(tree).to.include('src/');
+			expect(tree).to.include('frontend/src/');
 		});
 	});
 });
