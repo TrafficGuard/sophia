@@ -1,11 +1,11 @@
-import { AgentContext, AgentRunningState } from '#agent/agentContext';
+import { AgentContext, AgentRunningState, serializeContext, deserializeAgentContext } from '#agent/agentContext';
 import { AgentStateService } from '#agent/agentStateService/agentStateService';
 
 /**
  * In-memory implementation of AgentStateService for tests
  */
 export class InMemoryAgentStateService implements AgentStateService {
-	stateMap: Map<string, AgentContext> = new Map();
+	stateMap: Map<string, Record<string, any>> = new Map();
 
 	clear(): void {
 		this.stateMap.clear();
@@ -13,7 +13,8 @@ export class InMemoryAgentStateService implements AgentStateService {
 
 	async save(state: AgentContext): Promise<void> {
 		state.lastUpdate = Date.now();
-		this.stateMap.set(state.agentId, state);
+		const serialized = serializeContext(state);
+		this.stateMap.set(state.agentId, serialized);
 	}
 
 	async updateState(ctx: AgentContext, state: AgentRunningState): Promise<void> {
@@ -23,16 +24,18 @@ export class InMemoryAgentStateService implements AgentStateService {
 
 	async load(executionId: string): Promise<AgentContext> {
 		if (!this.stateMap.has(executionId)) throw new Error('Agent state not found');
-		return this.stateMap.get(executionId);
+		const serialized = this.stateMap.get(executionId);
+		return await deserializeAgentContext(serialized);
 	}
 
-	list(): Promise<AgentContext[]> {
-		const running = Array.of(...this.stateMap.values());
-		return Promise.resolve(running);
+	async list(): Promise<AgentContext[]> {
+		const serializedList = Array.from(this.stateMap.values());
+		return Promise.all(serializedList.map(deserializeAgentContext));
 	}
 
 	async listRunning(): Promise<AgentContext[]> {
-		return (await this.list()).filter((agent) => agent.state !== 'completed');
+		const allAgents = await this.list();
+		return allAgents.filter((agent) => agent.state !== 'completed');
 	}
 
 	async delete(ids: string[]): Promise<void> {
