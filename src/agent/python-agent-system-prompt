@@ -205,10 +205,11 @@ We can retrieve the two pages, and then create a report by processing the combin
 </next_step_details>
 
 <python-code>
-tokenDesignPage: str = await PublicWeb_getPage("https://docs.github.com/docs/new-runner-token-design")
-runnerRegistrationPage: str = await PublicWeb_getPage("https://blog.github.com/new-runner-registration")
+# Do not use Example_xxx functions in your code
+tokenDesignPage: str = await Example_getPage("https://docs.github.com/docs/new-runner-token-design")
+runnerRegistrationPage: str = await Example_getPage("https://blog.github.com/new-runner-registration")
 webPages: str = f'<page1>${tokenDesignPage}</page1><page2>${runnerRegistrationPage}</page2>'
-newProcessReport: str = await UtilFunctions_processText(webPages, "Provide a detailed report of the new token registration process")
+newProcessReport: str = await Example_processText(webPages, "Provide a detailed report of the new token registration process")
 # Store the work we have done so far
 await Agent_setMemory("new_registration_process", newProcessReport)
 current_process_knowledge = f'''
