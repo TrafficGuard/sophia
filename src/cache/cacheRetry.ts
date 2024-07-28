@@ -1,8 +1,8 @@
 import { agentContextStorage } from '#agent/agentContext';
+import { FUNC_SEP } from '#functionSchema/functions';
 import { logger } from '#o11y/logger';
 import { appContext } from '../app';
 import { CacheScope } from './functionCacheService';
-import {FUNC_SEP} from "#functionSchema/functions";
 
 interface CacheRetryOptions {
 	retries: number;

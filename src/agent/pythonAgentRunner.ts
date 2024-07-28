@@ -6,7 +6,7 @@ import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, buildToolStatePrompt
 import { formatFunctionError, formatFunctionResult, notificationMessage } from '#agent/agentRunner';
 import { agentHumanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
 import { getServiceName } from '#fastify/trace-init/trace-init';
-import {FUNC_SEP, FunctionParameter, FunctionSchema, getAllFunctionSchemas} from '#functionSchema/functions';
+import { FUNC_SEP, FunctionParameter, FunctionSchema, getAllFunctionSchemas } from '#functionSchema/functions';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { envVar } from '#utils/env-var';

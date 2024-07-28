@@ -1,5 +1,5 @@
 import { Agent } from '#agent/agentFunctions';
-import {FUNC_SEP, FunctionSchema, getFunctionSchemas} from '#functionSchema/functions';
+import { FUNC_SEP, FunctionSchema, getFunctionSchemas } from '#functionSchema/functions';
 import { FunctionCall } from '#llm/llm';
 import { logger } from '#o11y/logger';
 

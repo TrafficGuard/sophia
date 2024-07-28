@@ -3,7 +3,7 @@ import { agentContext } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
 import { getTracer, setFunctionSpanAttributes, withActiveSpan } from '#o11y/trace';
 import { functionSchemaParser } from './functionSchemaParser';
-import {FUNC_SEP, FunctionSchema, getFunctionSchemas, setFunctionSchemas} from './functions';
+import { FUNC_SEP, FunctionSchema, getFunctionSchemas, setFunctionSchemas } from './functions';
 
 export const FUNC_DECORATOR_NAME = 'func';
 
