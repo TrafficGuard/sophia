@@ -1,12 +1,12 @@
 import { llms } from '#agent/agentContext';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 
-export const TEST_FUNC_THROW_ERROR = 'TestFunctions.throwError';
+export const TEST_FUNC_THROW_ERROR = 'TestFunctions_throwError';
 export const THROW_ERROR_TEXT = 'FunctionErrorText';
-export const TEST_FUNC_SUM = 'TestFunctions.sum';
+export const TEST_FUNC_SUM = 'TestFunctions_sum';
 
-export const TEST_FUNC_NOOP = 'TestFunctions.noop';
-export const TEST_FUNC_SKY_COLOUR = 'TestFunctions.skyColour';
+export const TEST_FUNC_NOOP = 'TestFunctions_noop';
+export const TEST_FUNC_SKY_COLOUR = 'TestFunctions_skyColour';
 
 /**
  * Mainly used for testing

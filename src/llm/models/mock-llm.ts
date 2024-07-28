@@ -29,8 +29,8 @@ export class MockLLM extends BaseLLM {
 			'mock',
 			'mock',
 			maxInputTokens,
-			(input: string) => (input.length * 1) / 1_000_000,
-			(output: string) => (output.length * 1) / 1_000_000,
+			(input: string) => 0,
+			(output: string) => 0,
 		);
 	}
 
@@ -68,7 +68,7 @@ export class MockLLM extends BaseLLM {
 				service: this.service,
 			});
 
-			if (this.responses.length === 0) throw new Error(`Need to call setResponses on MockLLM before calling generateText for prompt ${userPrompt}`);
+			if (this.responses.length === 0) throw new Error(`Need to call setResponses on MockLLM before calling generateText for prompt id:${opts?.id ?? '<no id>'} prompt:${userPrompt}`);
 
 			const caller: CallerId = { agentId: agentContext().agentId };
 			const llmRequestSave = appContext().llmCallService.saveRequest(userPrompt, systemPrompt);

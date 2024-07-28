@@ -46,9 +46,9 @@ describe('functionDefinitionParser', () => {
 
 	describe('parseDefinitions', () => {
 		it('should parse simple method correctly', () => {
-			expect(functionSchemas['TestClass.simpleMethod']).to.deep.equal({
+			expect(functionSchemas['TestClass_simpleMethod']).to.deep.equal({
 				class: 'TestClass',
-				name: 'TestClass.simpleMethod',
+				name: 'TestClass_simpleMethod',
 				description: 'Simple method without parameters',
 				parameters: [],
 			});
@@ -57,7 +57,7 @@ describe('functionDefinitionParser', () => {
 		it('should parse method with parameters correctly', () => {
 			expect(functionSchemas['TestClass.methodWithParams']).to.deep.equal({
 				class: 'TestClass',
-				name: 'TestClass.methodWithParams',
+				name: 'TestClass_methodWithParams',
 				description: 'Method with parameters',
 				parameters: [
 					{ index: 0, name: 'arg1', type: 'string', description: 'First argument' },
@@ -67,9 +67,9 @@ describe('functionDefinitionParser', () => {
 		});
 
 		it('should parse method with optional parameter correctly', () => {
-			expect(functionSchemas['TestClass.methodWithOptionalParam']).to.deep.equal({
+			expect(functionSchemas['TestClass_methodWithOptionalParam']).to.deep.equal({
 				class: 'TestClass',
-				name: 'TestClass.methodWithOptionalParam',
+				name: 'TestClass_methodWithOptionalParam',
 				description: 'Method with optional parameter',
 				parameters: [
 					{ index: 0, name: 'arg1', type: 'string', description: 'First argument' },
@@ -79,9 +79,9 @@ describe('functionDefinitionParser', () => {
 		});
 
 		it('should parse method with return type correctly', () => {
-			expect(functionSchemas['TestClass.methodWithReturnType']).to.deep.equal({
+			expect(functionSchemas['TestClass_methodWithReturnType']).to.deep.equal({
 				class: 'TestClass',
-				name: 'TestClass.methodWithReturnType',
+				name: 'TestClass_methodWithReturnType',
 				description: 'Method with return type',
 				parameters: [],
 				returns: 'A string value',

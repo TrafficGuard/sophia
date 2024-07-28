@@ -11,6 +11,7 @@ import { togetherLLMRegistry } from '#llm/models/together';
 import { vertexLLMRegistry } from '#llm/models/vertexai';
 import { MultiLLM } from '#llm/multi-llm';
 import { logger } from '#o11y/logger';
+import {MockLLM} from "#llm/models/mock-llm";
 
 export const LLM_FACTORY: Record<string, () => LLM> = {
 	...anthropicVertexLLMRegistry(),
@@ -22,6 +23,7 @@ export const LLM_FACTORY: Record<string, () => LLM> = {
 	...vertexLLMRegistry(),
 	...deepseekLLMRegistry(),
 	...ollamaLLMRegistry(),
+	... {'mock:mock': () => new MockLLM()}
 };
 
 export const LLM_TYPES: Array<{ id: string; name: string }> = Object.values(LLM_FACTORY)

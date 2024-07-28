@@ -61,7 +61,7 @@ ${JSON.stringify(files)}
  */
 export function buildFunctionCallHistoryPrompt(type: 'history' | 'results', maxLength = 20000, fromIndex = 0, toIndex = 0): string {
 	const fullHistory = agentContext().functionCallHistory;
-	if (fullHistory.length === 0) return '<function_call_history>\n</function_call_history>\n';
+	if (fullHistory.length === 0) return `<function_call_${type}>\n</function_call_${type}>\n`;
 
 	const functionCalls = fullHistory.slice(fromIndex, toIndex === 0 ? fullHistory.length : toIndex);
 	let result = '';

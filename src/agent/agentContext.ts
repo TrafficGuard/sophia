@@ -133,7 +133,6 @@ export function addCost(cost: number) {
 	logger.debug(`Adding cost $${cost}`);
 	store.cost += cost;
 	store.budgetRemaining -= cost;
-	if (store.budgetRemaining < 0) store.budgetRemaining = 0;
 }
 
 /**
@@ -166,7 +165,7 @@ function resetFileSystemFunction(agent: AgentContext) {
 
 export function createContext(config: RunAgentConfig): AgentContext {
 	const fileSystem = new FileSystem(config.fileSystemPath);
-
+	const hilBudget = config.humanInLoop?.budget ?? (process.env.HIL_BUDGET ? parseFloat(process.env.HIL_BUDGET) : 2)
 	const context: AgentContext = {
 		agentId: config.resumeAgentId || randomUUID(),
 		executionId: randomUUID(),
@@ -181,9 +180,9 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		functionCallHistory: [],
 		callStack: [],
 		notes: [],
-		hilBudget: config.humanInLoop?.budget ?? (process.env.HIL_BUDGET ? parseFloat(process.env.HIL_BUDGET) : 2),
+		hilBudget,
 		hilCount: config.humanInLoop?.count ?? (process.env.HIL_COUNT ? parseFloat(process.env.HIL_COUNT) : 5),
-		budgetRemaining: 0,
+		budgetRemaining: hilBudget,
 		cost: 0,
 		llms: config.llms,
 		fileSystem,

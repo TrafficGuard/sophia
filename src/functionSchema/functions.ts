@@ -3,6 +3,9 @@
 // If the FunctionSchema/FunctionParameter interfaces change then the loading of cached schemas in the
 // parser will need to check for the old schema and discard
 
+/** Character which separates the class name and the method name in the function name */
+export const FUNC_SEP = '_'
+
 /**
  * Specification of a class method which can be called by agents
  */

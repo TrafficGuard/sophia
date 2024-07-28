@@ -3,7 +3,7 @@ import { agentContext } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
 import { getTracer, setFunctionSpanAttributes, withActiveSpan } from '#o11y/trace';
 import { functionSchemaParser } from './functionSchemaParser';
-import { FunctionSchema, getFunctionSchemas, setFunctionSchemas } from './functions';
+import {FUNC_SEP, FunctionSchema, getFunctionSchemas, setFunctionSchemas} from './functions';
 
 export const FUNC_DECORATOR_NAME = 'func';
 
@@ -40,7 +40,7 @@ export function func() {
 				}
 			}
 			const className = Object.getPrototypeOf(this).constructor.name;
-			const functionName = `${className}.${methodName}`;
+			const functionName = `${className}${FUNC_SEP}${methodName}`;
 			// NOTE - modification, build attributeExtractors from all the arguments
 			const funcDefinitions = getFunctionSchemas(this);
 			let funcDef: FunctionSchema = funcDefinitions[functionName];

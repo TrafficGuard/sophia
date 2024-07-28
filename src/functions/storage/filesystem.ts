@@ -193,7 +193,7 @@ export class FileSystem {
 	 */
 	@func()
 	async listFilesInDirectory(dirPath = '.'): Promise<string[]> {
-		const rootPath = path.join(this.basePath, dirPath);
+		// const rootPath = path.join(this.basePath, dirPath);
 		const filter: FileFilter = (name) => true;
 		const ig = ignore();
 		// TODO should go up the directories to the base path looking for .gitignore files
@@ -290,6 +290,7 @@ export class FileSystem {
 		logger.info(`readFile ${filePath}`);
 		let contents: string;
 		const relativeFullPath = path.join(this.getWorkingDirectory(), filePath);
+		logger.info(`Checking ${filePath} and ${relativeFullPath}`);
 		if (existsSync(filePath)) {
 			contents = (await fs.readFile(filePath)).toString();
 		} else if (existsSync(relativeFullPath)) {
@@ -395,14 +396,15 @@ export class FileSystem {
 	}
 
 	/**
-	 * Writes to a file. If the file exists it will overwrite the contents.
+	 * Writes to a file. If the file exists it will overwrite the contents. This will create any parent directories required,
 	 * @param filePath The file path (either full filesystem path or relative to current working directory)
 	 * @param contents The contents to write to the file
 	 */
-	// @func()
+	@func()
 	async writeFile(filePath: string, contents: string): Promise<void> {
 		const fileSystemPath = filePath.startsWith(this.basePath) ? filePath : join(this.getWorkingDirectory(), filePath);
 		logger.info(`Writing file "${filePath}" to ${fileSystemPath}`);
+		await promisify(fs.mkdir)(fileSystemPath, { recursive: true });
 		writeFileSync(fileSystemPath, contents);
 	}
 

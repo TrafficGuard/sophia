@@ -1,12 +1,12 @@
 import { readFileSync } from 'fs';
 import { Span, SpanStatusCode } from '@opentelemetry/api';
 import { PyodideInterface, loadPyodide } from 'pyodide';
-import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
+import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK, AGENT_SAVE_MEMORY_CONTENT_PARAM_NAME } from '#agent/agentFunctions';
 import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, buildToolStatePrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
 import { formatFunctionError, formatFunctionResult, notificationMessage } from '#agent/agentRunner';
 import { agentHumanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
 import { getServiceName } from '#fastify/trace-init/trace-init';
-import { FunctionParameter, FunctionSchema, getAllFunctionSchemas } from '#functionSchema/functions';
+import {FUNC_SEP, FunctionParameter, FunctionSchema, getAllFunctionSchemas} from '#functionSchema/functions';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { envVar } from '#utils/env-var';
@@ -50,8 +50,6 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 	}
 
 	let countSinceHil = 0;
-	let costSinceHil = 0;
-	let previousCost = 0;
 
 	await agentStateService.save(agent);
 
@@ -89,14 +87,12 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 					}
 					countSinceHil++;
 
-					const newCosts = agentContext().cost - previousCost;
-					if (newCosts) logger.debug(`New costs $${newCosts.toFixed(2)}`);
-					previousCost = agentContext().cost;
-					costSinceHil += newCosts;
-					logger.debug(`Spent $${costSinceHil.toFixed(2)} since last input. Total cost $${agentContextStorage.getStore().cost.toFixed(2)}`);
-					if (hilBudget && costSinceHil > hilBudget) {
-						await agentHumanInTheLoop(`Agent cost has increased by USD\$${costSinceHil.toFixed(2)}`);
-						costSinceHil = 0;
+					logger.debug(`Budget remaining $${agent.budgetRemaining.toFixed(2)}. Total cost $${agentContextStorage.getStore().cost.toFixed(2)}`);
+					if (hilBudget && agent.budgetRemaining <= 0) {
+						// HITL happens once budget is exceeded, which may be more than the allocated budget
+						const increase = agent.hilBudget - agent.budgetRemaining;
+						await agentHumanInTheLoop(`Agent cost has increased by USD\$${increase.toFixed(2)}. Increase budget by $${agent.hilBudget}`);
+						agent.budgetRemaining = agent.hilBudget;
 					}
 
 					const toolStatePrompt = await buildToolStatePrompt();
@@ -135,8 +131,8 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 					const schemas: FunctionSchema[] = getAllFunctionSchemas(Object.values(functionInstances));
 					const jsGlobals = {};
 					for (const schema of schemas) {
-						const [className, method] = schema.name.split('.');
-						jsGlobals[schema.name.replace('.', '_')] = async (...args) => {
+						const [className, method] = schema.name.split(FUNC_SEP);
+						jsGlobals[schema.name] = async (...args) => {
 							// Convert arg array to parameters name/value map
 							const parameters: { [key: string]: any } = {};
 							for (let index = 0; index < args.length; index++) parameters[schema.parameters[index].name] = args[index];
@@ -149,12 +145,14 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 
 								// Don't need to duplicate the content in the function call history
 								// TODO Would be nice to save over-written memory keys for history/debugging
-								if (className === 'Agent' && (method === 'saveMemory' || method === 'getMemory')) parameters.content = '(See <memory> entry)';
+								let stdout = JSON.stringify(functionResponse);
+								if (className === 'Agent' && method === 'saveMemory') parameters[AGENT_SAVE_MEMORY_CONTENT_PARAM_NAME] = '(See <memory> entry)';
+								if (className === 'Agent' && method === 'getMemory') stdout = '(See <memory> entry)';
 
 								agent.functionCallHistory.push({
 									function_name: schema.name,
 									parameters,
-									stdout: JSON.stringify(functionResponse),
+									stdout,
 									// stdoutSummary: outputSummary, TODO
 								});
 								functionResults.push(formatFunctionResult(schema.name, functionResponse));
@@ -301,7 +299,7 @@ function convertJsonToPythonDeclaration(jsonDefinitions: FunctionSchema[]): stri
 
 	for (const def of jsonDefinitions) {
 		functions += `
-fun ${def.name.replace('.', '_')}(${def.parameters.map((p) => `${p.name}: ${p.optional ? `Optional[${type(p)}]` : type(p)}`).join(', ')})
+fun ${def.name}(${def.parameters.map((p) => `${p.name}: ${p.optional ? `Optional[${type(p)}]` : type(p)}`).join(', ')})
     """
     ${def.description}
 

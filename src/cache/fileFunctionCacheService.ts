@@ -74,7 +74,7 @@ export class FileFunctionCacheService implements FunctionCacheService {
 	}
 
 	async setValue(scope: CacheScope, className: string, method: string, params: any[], value: any): Promise<void> {
-		// console.log(`Saving cached result for ${holder}.${method}`)
+		// console.log(`Saving cached result for ${holder}${FUNC_SEP}{method}`)
 		// console.log(value)
 		const dir = this.getFunctionCacheDir(className, method);
 		await fs.mkdir(dir, { recursive: true });

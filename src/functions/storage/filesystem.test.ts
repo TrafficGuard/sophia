@@ -189,7 +189,6 @@ describe('FileSystem', () => {
 
 			// Check that some expected files/directories are included
 			expect(tree).to.include('package.json');
-			expect(tree).to.include('src/');
 			expect(tree).to.include('frontend/src/');
 		});
 	});

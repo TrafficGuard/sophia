@@ -1,9 +1,10 @@
 import { Agent } from '#agent/agentFunctions';
-import { FunctionSchema, getFunctionSchemas } from '#functionSchema/functions';
+import {FUNC_SEP, FunctionSchema, getFunctionSchemas} from '#functionSchema/functions';
 import { FunctionCall } from '#llm/llm';
 import { logger } from '#o11y/logger';
 
 import { functionFactory } from '#functionSchema/functionDecorators';
+import { FileSystem } from '#functions/storage/filesystem';
 import { GetToolType, ToolType, toolType } from '#functions/toolType';
 
 /**
@@ -70,11 +71,11 @@ export class LlmFunctions {
 	}
 
 	async callFunction(functionCall: FunctionCall): Promise<any> {
-		const [functionClass, functionName] = functionCall.function_name.split('.');
+		const [functionClass, functionName] = functionCall.function_name.split(FUNC_SEP);
 		const functionClassInstance = this.functionInstances[functionClass];
 		if (!functionClassInstance) throw new Error(`Function class ${functionClass} does not exist`);
 		const func = functionClassInstance[functionName];
-		if (!func) throw new Error(`Function ${functionClass}.${functionName} does not exist`);
+		if (!func) throw new Error(`Function ${functionClass}${FUNC_SEP}${functionName} does not exist`);
 		if (typeof func !== 'function') throw new Error(`Function error: ${functionClass}.${functionName} is not a function. Is a ${typeof func}`);
 
 		const args = Object.values(functionCall.parameters);
@@ -88,11 +89,11 @@ export class LlmFunctions {
 			let functionDefinition = functionSchemas[functionName];
 			if (!functionDefinition) {
 				// Seems bit of a hack, why coming through in both formats? Also doing this in functionDecorators.ts
-				functionDefinition = functionSchemas[`${functionClass}.${functionName}`];
+				functionDefinition = functionSchemas[`${functionClass}${FUNC_SEP}${functionName}`];
 			}
 			if (!functionDefinition) throw new Error(`No function schema found for ${functionName}.  Valid functions are ${Object.keys(functionSchemas)}`);
 			if (!functionDefinition.parameters) {
-				logger.error(`${functionClass}.${functionName} schema doesnt have any parameters`);
+				logger.error(`${functionClass}${FUNC_SEP}${functionName} schema doesnt have any parameters`);
 				logger.info(functionDefinition);
 			}
 			const args: any[] = new Array(functionDefinition.parameters.length);

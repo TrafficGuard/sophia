@@ -1,8 +1,9 @@
-import { AgentContext, AgentRunningState, serializeContext, deserializeAgentContext } from '#agent/agentContext';
+import { AgentContext, AgentRunningState, deserializeAgentContext, serializeContext } from '#agent/agentContext';
 import { AgentStateService } from '#agent/agentStateService/agentStateService';
 
 /**
- * In-memory implementation of AgentStateService for tests
+ * In-memory implementation of AgentStateService for tests. Serializes/deserializes
+ * to behave the same as the FireStore implementation
  */
 export class InMemoryAgentStateService implements AgentStateService {
 	stateMap: Map<string, Record<string, any>> = new Map();

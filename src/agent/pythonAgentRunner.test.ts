@@ -20,14 +20,14 @@ import { User } from '#user/user';
 import { sleep } from '#utils/async-utils';
 import { AgentContext, AgentLLMs, agentContextStorage } from './agentContext';
 
-const PY_AGENT_COMPLETED = (note: string) => `await ${AGENT_COMPLETED_NAME.replace('.', '_')}("${note}")`;
-const PY_AGENT_REQUEST_FEEDBACK = (feedback: string) => `await ${AGENT_REQUEST_FEEDBACK.replace('.', '_')}("${feedback}")`;
+const PY_AGENT_COMPLETED = (note: string) => `await ${AGENT_COMPLETED_NAME}("${note}")`;
+const PY_AGENT_REQUEST_FEEDBACK = (feedback: string) => `await ${AGENT_REQUEST_FEEDBACK}("${feedback}")`;
 
-const PY_TEST_FUNC_NOOP = `await ${TEST_FUNC_NOOP.replace('.', '_')}()`;
-const PY_TEST_FUNC_SKY_COLOUR = `await ${TEST_FUNC_SKY_COLOUR.replace('.', '_')}()`;
-const PY_TEST_FUNC_SUM = (num1, num2) => `await ${TEST_FUNC_SUM.replace('.', '_')}(${num1}, ${num2})`;
-const PY_TEST_FUNC_THROW_ERROR = `await ${TEST_FUNC_THROW_ERROR.replace('.', '_')}()`;
-const PY_SET_MEMORY = (key, content) => `await ${AGENT_SAVE_MEMORY.replace('.', '_')}("${key}", "${content}")`;
+const PY_TEST_FUNC_NOOP = `await ${TEST_FUNC_NOOP}()`;
+const PY_TEST_FUNC_SKY_COLOUR = `await ${TEST_FUNC_SKY_COLOUR}()`;
+const PY_TEST_FUNC_SUM = (num1, num2) => `await ${TEST_FUNC_SUM}(${num1}, ${num2})`;
+const PY_TEST_FUNC_THROW_ERROR = `await ${TEST_FUNC_THROW_ERROR}()`;
+const PY_SET_MEMORY = (key, content) => `await ${AGENT_SAVE_MEMORY}("${key}", "${content}")`;
 
 const PYTHON_CODE_PLAN = (pythonCode: string) => `<response>\n<plan>Run some code</plan>\n<python-code>${pythonCode}</python-code>\n</response>`;
 const REQUEST_FEEDBACK_FUNCTION_CALL_PLAN = (feedback) =>
@@ -37,7 +37,7 @@ const NOOP_FUNCTION_CALL_PLAN = `<response>\n<plan>I'm going to call the noop fu
 const SKY_COLOUR_FUNCTION_CALL_PLAN = `<response>\n<plan>Get the sky colour</plan>\n<python-code>${PY_TEST_FUNC_SKY_COLOUR}</python-code>\n</response>`;
 
 describe('pythonAgentRunner', () => {
-	initInMemoryApplicationContext();
+	const ctx = initInMemoryApplicationContext();
 	let mockLLM = new MockLLM();
 	let llms: AgentLLMs = {
 		easy: mockLLM,
@@ -56,22 +56,22 @@ describe('pythonAgentRunner', () => {
 			type: 'python',
 			llms,
 			functions,
-			user: createUser(),
+			user: ctx.userService.getSingleUser()
 		};
 		return runConfig ? { ...defaults, ...runConfig } : defaults;
 	}
-	function createUser(user?: Partial<User>): User {
-		const defaults: User = {
-			email: '',
-			enabled: true,
-			hilBudget: 0,
-			hilCount: 0,
-			id: '',
-			llmConfig: {},
-			functionConfig: {},
-		};
-		return user ? { ...defaults, ...user } : defaults;
-	}
+	// function createUser(user?: Partial<User>): User {
+	// 	const defaults: User = {
+	// 		email: '',
+	// 		enabled: true,
+	// 		hilBudget: 0,
+	// 		hilCount: 0,
+	// 		id: '',
+	// 		llmConfig: {},
+	// 		functionConfig: {},
+	// 	};
+	// 	return user ? { ...defaults, ...user } : defaults;
+	// }
 
 	async function waitForAgent(): Promise<AgentContext> {
 		while ((await appContext().agentStateService.list()).filter((agent) => agent.state === 'agent' || agent.state === 'functions').length > 0) {
@@ -291,7 +291,7 @@ describe('pythonAgentRunner', () => {
 		});
 	});
 
-	describe('LLM calls', () => {
+	describe.only('LLM calls', () => {
 		it('should have the call stack', async () => {
 			functions.addFunctionClass(TestFunctions);
 			mockLLM.addResponse(SKY_COLOUR_FUNCTION_CALL_PLAN);
@@ -299,6 +299,7 @@ describe('pythonAgentRunner', () => {
 			mockLLM.addResponse(COMPLETE_FUNCTION_CALL_PLAN);
 			await startAgent(runConfig({ functions }));
 			const agent = await waitForAgent();
+			logger.info('agent error:' + agent.error)
 			expect(agent.state).to.equal('completed');
 
 			const calls = await appContext().llmCallService.getLlmCallsForAgent(agent.agentId);

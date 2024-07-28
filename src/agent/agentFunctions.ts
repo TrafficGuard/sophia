@@ -2,13 +2,15 @@ import { agentContext } from '#agent/agentContext';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 
-export const AGENT_SAVE_MEMORY = 'Agent.saveMemory';
+export const AGENT_SAVE_MEMORY = 'Agent_saveMemory';
 
-export const AGENT_COMPLETED_NAME = 'Agent.completed';
+export const AGENT_COMPLETED_NAME = 'Agent_completed';
 
-export const AGENT_REQUEST_FEEDBACK = 'Agent.requestFeedback';
+export const AGENT_REQUEST_FEEDBACK = 'Agent_requestFeedback';
 
 export const REQUEST_FEEDBACK_PARAM_NAME = 'request';
+
+export const AGENT_SAVE_MEMORY_CONTENT_PARAM_NAME = 'content';
 
 /**
  * Functions for the agent to manage its memory and execution
@@ -17,6 +19,7 @@ export const REQUEST_FEEDBACK_PARAM_NAME = 'request';
 export class Agent {
 	/**
 	 * Request feedback/interaction from a supervisor when a decision or approval needs to be made, or additional details are required, before proceeding with the plan.
+	 * Minimise calls to requestFeedback by attempting/verifying possible options first.
 	 * @param request {string} Notes on what additional information/decision is required. Be specific on what you have been doing up to this point, and provide relevant information to help with the decision/feedback.
 	 */
 	@func()

@@ -2,6 +2,7 @@ import { agentContextStorage } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
 import { appContext } from '../app';
 import { CacheScope } from './functionCacheService';
+import {FUNC_SEP} from "#functionSchema/functions";
 
 interface CacheRetryOptions {
 	retries: number;
@@ -45,13 +46,13 @@ export function cacheRetry(options: Partial<CacheRetryOptions> = DEFAULTS) {
 				const cachedValue = await cacheService.getValue(cacheRetryOptions.scope, this.constructor.name, methodName, args);
 
 				if (cachedValue !== undefined) {
-					logger.debug(`Cached return for ${this.constructor.name}.${methodName}`);
+					logger.debug(`Cached return for ${this.constructor.name}${FUNC_SEP}${methodName}`);
 					return cachedValue;
 				}
 			}
 
 			for (let attempt = 1; attempt <= cacheRetryOptions.retries; attempt++) {
-				logger.debug(`${this.constructor.name}.${methodName} retry ${attempt - 1}`);
+				logger.debug(`${this.constructor.name}${FUNC_SEP}${methodName} retry ${attempt - 1}`);
 				try {
 					let result = originalMethod.apply(this, args);
 					if (typeof result?.then === 'function') result = await result;

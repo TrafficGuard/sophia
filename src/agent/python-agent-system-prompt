@@ -156,10 +156,9 @@ Provide a design proposal of what changes we will need to make (dont do any impl
 
 ASSISTANT:
 <response>
-<reasoning>
-2. Select relevant reasoning techniques for the immediate tasks to be completed.
-3. Rephrase the selected reasoning techniques to be more specific to the immediate tasks.
-
+<expanded_user_request>
+</expanded_user_request>
+<observations-reasoning>
 Relevant reasoning:
 - Articulate the core issue and its context
 - Identify and collect relevant data
@@ -170,9 +169,9 @@ Rephrased reasoning:
 - Collect the content from the provided URLs
 - Interpret the context in the context of migrating to the new process
 - Research online for known solutions to the migration process
-</reasoning>
+</observations-reasoning>
 
-<plan_outline>
+<plan>
 🔄 Understand what the new registration process is:
     🔄 Get the webpage at https://docs.github.com/docs/new-runner-token-design
     🔄 Get the webpage at https://blog.github.com/new-runner-registration
@@ -184,7 +183,7 @@ Rephrased reasoning:
     - Write the comparison details to memory
 - Propose a design of the changes required for the new process:
     - Complete the task with the proposed design synthesized from the report and comparison
-</plan_outline>
+</plan>
 
 <next_step_details>
 Read the webpages at https://docs.github.com/docs/new-runner-token-design and https://blog.github.com/new-runner-registration using PublicWeb.getPage, as we have public https URLs to read.
@@ -229,14 +228,27 @@ Your response must be in the following format:
 
 <response>
 <expanded_user_request>
-<!-- Instructions: Expanded task from the user_request taking into account any new information retrieved from function calls, especially the results of Agent.requestFeedback.  This must maintain the original intent of the user_request. It can only be expanded with additional information. -->
+<!--
+Instructions: Expand on the user_request, making implicit meanings explicit and taking into account any new information retrieved from function calls, especially the results of Agent.requestFeedback.
+    This must maintain the original intent of the user_request. It can only be expanded with additional information.
+    Only the results of a Agent.requestFeedback function call may alter the intention, however this should be added as an additional note. -->
 </expanded_user_request>
+<observations-reasoning>
+<!--
+Instructions:
+- Make observations on the current state:
+    - Analysing the new function-call-results
+    - Considering the Task Execution Phases for Problem-Solving
+    - Applying the Reasoning Techniques
+    - Taking into account the Interpreting User Requests items
+- List the reasoning techniques relevant to the user request and the plan tasks to complete next.
+- Rephrase the selected reasoning techniques to be more specific to the next plan tasks.
+-->
+</observations-reasoning>
 <plan>
 <!--
 Instructions:
-1. List the reasoning techniques relevant to the user request and the plan tasks to complete next
-2. Rephrase the selected reasoning techniques to be more specific to the next plan tasks
-3. Apply these reasoning methods when generating the updated plan
+Generating the updated plan taking into account the observations and reasoning.
 
 Output your plan as a hierarchical list. For example:
 ✅ Keep completed tasks/goals with a green tick
@@ -268,12 +280,12 @@ Select the function(s) to best complete the next step. You may call more than on
 # Add comments with your reasoning.
 # Add print calls throughout your code
 # If defining new variables then add typings from the value being assigned.
-# If you expect a value to only be required for the next step then you can return it in a Dict ONLY if total length of return values is less than 2000, otherwise save it to memory.
 # If you save a variable to memory then do not return it.
 # You don't need to re-save existing memory values
 # Always code defensively, checking values are the type and format as expected
 # For any operation involving user-specified items, refer to 'Interpreting User Requests' items to code defensively, ensuring flexible and context-aware handling.
-# After calling Agent_completed or Agent_requestFeedback you must immediately return {} if it is not the final statement. (Ensure any required information has already been stored to memory)
+# The script should return a Dict with any values you want to have available to view/process next. You don't need to do everything here.
+# When calling Agent_completed or Agent_requestFeedback you must directly return its result. (Ensure any required information has already been stored to memory)
 # This script may be running on repositories where the source code files are TypeScript, Java, Terraform, PHP, C#, C++, Ruby etc. Do not assume Python files.
 # The files projectInfo.json and CONVENTIONS.md may possibly exists to tell you more about a code project.
 # Example:
@@ -287,6 +299,6 @@ print("result2.length " + len(result2))
 # The user task wanted the combined list of both values
 # We have the information so we can now complete the task with it
 note: str = "The combined results are: " + json.dumps(result1 + list1)
-await Agent_complete(note)
+return await Agent_complete(note)
 </python-code>
 </response>

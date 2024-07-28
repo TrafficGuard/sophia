@@ -40,15 +40,15 @@ const CACHED_BASE_PATH = '.nous/functions/';
  * </code>
  * Then the parsed result would be:
  * {
- * 	 "FuncClass.simpleMethod": {
- *      "name": "FuncClass.simpleMethod",
+ * 	 "FuncClass_simpleMethod": {
+ *      "name": "FuncClass_simpleMethod",
  *      "class": "FuncClass",
  *      "description": "Description of simple method",
  *      "returns": "",
  *      "params": []
  *    },
- * 	  "FuncClass.complexMethod": {
- *      "name": "FuncClass.complexMethod",
+ * 	  "FuncClass_complexMethod": {
+ *      "name": "FuncClass_complexMethod",
  *      "class": "FuncClass",
  *      "description": "Description of complexMethod",
  *      "returns": "Date - the current date",
@@ -154,7 +154,7 @@ export function functionSchemaParser(sourceFilePath: string): Record<string, Fun
 
 			const funcDef: FunctionSchema = {
 				class: className,
-				name: `${className}.${methodName}`,
+				name: `${className}_${methodName}`,
 				description: methodDescription,
 				parameters: params,
 			};

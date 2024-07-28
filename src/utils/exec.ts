@@ -19,7 +19,7 @@ export function checkExecResult(result: ExecResults, message: string) {
 	if (result.error) {
 		logger.info(result.stdout);
 		logger.error(result.stderr);
-		throw new Error(`Error executing command: ${result.cmd} in ${result.cwd ?? '.'}\n${message}: ${result.error.message}`);
+		throw new Error(`Error executing command: ${result.cmd} in ${result.cwd ?? './'}\n${message}: ${result.error.message}`);
 	}
 }
 

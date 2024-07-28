@@ -76,7 +76,7 @@ Assistant:
     <implementation description="Provide a design for the updated registration process, and how it differs from the current process, and add it to the plan state"></implementation>
 </plan_outline>
 <next_step_details>
-    Read the webpages at https://docs.github.com/docs/new-runner-token-design and https://blog.github.com/new-runner-registration using PublicWeb.getPage, as we have a https URLs to read.
+    Read the webpages at https://docs.github.com/docs/new-runner-token-design and https://blog.github.com/new-runner-registration using PublicWeb_getPage, as we have a https URLs to read.
     Suggested function:
     PublicWeb.getPage. Description: Get the contents of a web page on the public open internet at the provided URL. NOTE: Do NOT use this for URLs websites which would require authentication.
     Params:
@@ -84,13 +84,13 @@ Assistant:
 </next_step_details>
 <function_calls>
 <function_call>
-  <function_name>PublicWeb.getWebPage</function_name>
+  <function_name>PublicWeb_getWebPage</function_name>
   <parameters>
     <url>https://docs.github.com/docs/new-runner-token-design</url>
   </parameters>
 </function_call>
 <function_call>
-  <function_name>PublicWeb.getWebPage</function_name>
+  <function_name>PublicWeb_getWebPage</function_name>
   <parameters>
     <url>https://blog.github.com/new-runner-registration</url>
   </parameters>
@@ -118,17 +118,17 @@ Your response must be in the following format:
         Provide a concise details of the most probable next steps of the plan (i.e. function call) to take with reasoning.
         Then applying logic reasoning, taking into account all of the provided context, explain which are the most appropriate choice(s).
         List the possible functions from the <functions> section which are relevant to complete the next step, along with the parameter descriptions.
-        Select the function(s) to best complete the next step. You may call more than one function. Call the Agent.requestFeedback if more details/decisions are required, or Agent.completed if the request is complete.
+        Select the function(s) to best complete the next step. You may call more than one function. Call the Agent.requestFeedback if more details/decisions are required, or Agent_completed if the request is complete.
     </next_step_details>
     <function_calls>
       <function_call>
-        <function_name>FunctionClass1.functionName1</function_name>
+        <function_name>FunctionClass1_functionName1</function_name>
         <parameters>
           <key>value</url>
         </parameters>
       </function_call>
       <function_call>
-        <function_name>FunctionClass2.functionName2</function_name>
+        <function_name>FunctionClass2_functionName2</function_name>
         <parameters>
           <key2>value2</url>
         </parameters>
