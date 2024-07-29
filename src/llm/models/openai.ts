@@ -1,7 +1,6 @@
 import { OpenAI as OpenAISDK } from 'openai';
 import { addCost, agentContext, getFileSystem } from '#agent/agentContext';
-import { CallerId } from '#llm/llmCallService/llmCallService';
-import { CreateLlmResponse } from '#llm/llmCallService/llmCall';
+import { LlmCall } from '#llm/llmCallService/llmCall';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
@@ -90,7 +89,13 @@ export class OpenAI extends BaseLLM {
 			});
 
 			const caller: CallerId = { agentId: agentContext().agentId };
-			const llmRequestSave = appContext().llmCallService.saveRequest(userPrompt, systemPrompt);
+			const llmCallSave: Promise<LlmCall> = appContext().llmCallService.saveRequest({
+				userPrompt,
+				systemPrompt,
+				llmId: this.getId(),
+				caller,
+				callStack: agentContext().callStack.join(' > '),
+			});
 			const requestTime = Date.now();
 
 			const messages = [];
@@ -119,21 +124,22 @@ export class OpenAI extends BaseLLM {
 			}
 			const finishTime = Date.now();
 
-			const llmRequest = await llmRequestSave;
-			const llmResponse: CreateLlmResponse = {
-				llmId: this.getId(),
-				llmCallId: llmRequest.id,
-				responseText: responseText,
-				requestTime,
-				timeToFirstToken: timeToFirstToken,
-				totalTime: finishTime - requestTime,
-				callStack: agentContext().callStack.join(' > '),
-			};
-			await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
+			const llmCall: LlmCall = await llmCallSave;
+
+			llmCall.responseText = responseText;
+			llmCall.timeToFirstToken = timeToFirstToken;
+			llmCall.totalTime = finishTime - requestTime;
 
 			const inputCost = this.calculateInputCost(prompt);
 			const outputCost = this.calculateOutputCost(responseText);
-			const cost = inputCost + outputCost;
+			llmCall.cost = inputCost + outputCost;
+
+			try {
+				await appContext().llmCallService.saveResponse(llmCall);
+			} catch (e) {
+				// queue to save
+				logger.error(e);
+			}
 			span.setAttributes({
 				inputChars: prompt.length,
 				outputChars: responseText.length,
