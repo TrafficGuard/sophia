@@ -2,7 +2,7 @@ import Groq from 'groq-sdk';
 import { AgentLLMs, agentContext } from '#agent/agentContext';
 import { addCost } from '#agent/agentContext';
 import { CallerId } from '#llm/llmCallService/llmCallService';
-import { CreateLlmResponse } from '#llm/llmCallService/llmCall';
+import { LlmCall } from '#llm/llmCallService/llmCall';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
@@ -119,7 +119,14 @@ export class GroqLLM extends BaseLLM {
 			span.setAttribute('inputChars', prompt.length);
 
 			const caller: CallerId = { agentId: agentContext().agentId };
-			const llmRequestSave = appContext().llmCallService.saveRequest(userPrompt, systemPrompt);
+			const caller: CallerId = { agentId: agentContext().agentId };
+			const llmCallSave: Promise<LlmCall> = appContext().llmCallService.saveRequest({
+				userPrompt,
+				systemPrompt,
+				llmId: this.getId(),
+				caller,
+				callStack: agentContext().callStack.join(' > '),
+			});
 			const requestTime = Date.now();
 
 			try {
@@ -136,21 +143,23 @@ export class GroqLLM extends BaseLLM {
 
 				const timeToFirstToken = Date.now() - requestTime;
 				const finishTime = Date.now();
-				const llmRequest = await llmRequestSave;
-				const llmResponse: CreateLlmResponse = {
-					llmId: this.getId(),
-					llmCallId: llmRequest.id,
-					responseText: responseText,
-					requestTime,
-					timeToFirstToken: timeToFirstToken,
-					totalTime: finishTime - requestTime,
-					callStack: agentContext().callStack.join(' > '),
-				};
-				await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
+				const llmCall: LlmCall = await llmCallSave;
 
 				const inputCost = this.calculateInputCost(prompt);
 				const outputCost = this.calculateOutputCost(responseText);
 				const cost = inputCost + outputCost;
+
+				llmCall.responseText = responseText;
+				llmCall.timeToFirstToken = timeToFirstToken;
+				llmCall.totalTime = finishTime - requestTime;
+				llmCall.cost = cost;
+
+				try {
+					await appContext().llmCallService.saveResponse(llmCall);
+				} catch (e) {
+					// queue to save
+					console.error(e);
+				}
 
 				span.setAttributes({
 					response: responseText,
