@@ -58,7 +58,12 @@ describe('FirestoreLlmCallService', () => {
 
 			const retrievedCall = await service.getCall(savedRequest.id);
 			expect(retrievedCall).to.not.be.null;
-			expect(retrievedCall).to.deep.include(request);
+			expect(retrievedCall.userPrompt).to.equal(request.userPrompt);
+			expect(retrievedCall.systemPrompt).to.equal(request.systemPrompt);
+			expect(retrievedCall.description).to.equal(request.description);
+			expect(retrievedCall.llmId).to.equal(request.llmId);
+			expect(retrievedCall.caller).to.deep.equal(request.caller);
+			expect(retrievedCall.callStack).to.equal(request.callStack);
 		});
 	});
 
@@ -86,7 +91,18 @@ describe('FirestoreLlmCallService', () => {
 			await service.saveResponse(response);
 
 			const retrievedCall = await service.getCall(savedRequest.id);
-			expect(retrievedCall).to.deep.equal(response);
+			expect(retrievedCall).to.not.be.null;
+			expect(retrievedCall.id).to.equal(response.id);
+			expect(retrievedCall.userPrompt).to.equal(response.userPrompt);
+			expect(retrievedCall.systemPrompt).to.equal(response.systemPrompt);
+			expect(retrievedCall.description).to.equal(response.description);
+			expect(retrievedCall.llmId).to.equal(response.llmId);
+			expect(retrievedCall.caller).to.deep.equal(response.caller);
+			expect(retrievedCall.callStack).to.equal(response.callStack);
+			expect(retrievedCall.responseText).to.equal(response.responseText);
+			expect(retrievedCall.cost).to.equal(response.cost);
+			expect(retrievedCall.timeToFirstToken).to.equal(response.timeToFirstToken);
+			expect(retrievedCall.totalTime).to.equal(response.totalTime);
 		});
 	});
 
@@ -125,9 +141,21 @@ describe('FirestoreLlmCallService', () => {
 
 			const calls = await service.getLlmCallsForAgent(agentId);
 			expect(calls).to.have.lengthOf(2);
-			expect(calls[0].agentId).to.equal(agentId);
-			expect(calls[1].agentId).to.equal(agentId);
-			// expect(calls).to.be.sortedBy('requestTime', { descending: true });
+			calls.forEach(call => {
+				expect(call.caller.agentId).to.equal(agentId);
+				expect(call).to.have.property('id');
+				expect(call).to.have.property('userPrompt');
+				expect(call).to.have.property('systemPrompt');
+				expect(call).to.have.property('description');
+				expect(call).to.have.property('llmId');
+				expect(call).to.have.property('callStack');
+				expect(call).to.have.property('responseText');
+				expect(call).to.have.property('cost');
+				expect(call).to.have.property('timeToFirstToken');
+				expect(call).to.have.property('totalTime');
+				expect(call).to.have.property('requestTime');
+			});
+			expect(calls[0].requestTime).to.be.greaterThan(calls[1].requestTime);
 		});
 	});
 });
