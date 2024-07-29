@@ -165,7 +165,7 @@ function resetFileSystemFunction(agent: AgentContext) {
 
 export function createContext(config: RunAgentConfig): AgentContext {
 	const fileSystem = new FileSystem(config.fileSystemPath);
-	const hilBudget = config.humanInLoop?.budget ?? (process.env.HIL_BUDGET ? parseFloat(process.env.HIL_BUDGET) : 2)
+	const hilBudget = config.humanInLoop?.budget ?? (process.env.HIL_BUDGET ? parseFloat(process.env.HIL_BUDGET) : 2);
 	const context: AgentContext = {
 		agentId: config.resumeAgentId || randomUUID(),
 		executionId: randomUUID(),

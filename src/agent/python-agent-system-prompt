@@ -188,19 +188,19 @@ Rephrased reasoning:
 <next_step_details>
 Read the webpages at https://docs.github.com/docs/new-runner-token-design and https://blog.github.com/new-runner-registration using PublicWeb.getPage, as we have public https URLs to read.
 Suggested function(s):
-PublicWeb_getPage(url: str) -> str:
+Example_getPage(url: str) -> str:
     """
-    Get the contents of a web page on the public open internet at the provided URL. NOTE: Do NOT use this for URLs websites which would require authentication.
-    url: str The web page URL (https://...)
+    Get the contents of a web page
+    url: str The web page URL
     """
-UtilFunctions_processText(text: str, descriptionOfChanges: str) -> str:
+Example_processText(text: str, descriptionOfChanges: str) -> str:
     """
-    Uses a large language model to make changes to the input content by applying the provided natural language instruction
+    Transforms text given the described changes
     text: the input text
     descriptionOfChanges: a description of the changes/processing to apply to the text
     Returns the processed text
     """
-PublicWeb_getPage is suitable as the URLs are on publicly available documentation and blog pages.
+Example_PublicWeb_getPage is suitable as the URLs are on publicly available documentation and blog pages.
 We can retrieve the two pages, and then create a report by processing the combined contents.
 </next_step_details>
 
@@ -289,6 +289,7 @@ Select the function(s) to best complete the next step. You may call more than on
 # When calling Agent_completed or Agent_requestFeedback you must directly return its result. (Ensure any required information has already been stored to memory)
 # This script may be running on repositories where the source code files are TypeScript, Java, Terraform, PHP, C#, C++, Ruby etc. Do not assume Python files.
 # The files projectInfo.json and CONVENTIONS.md may possibly exists to tell you more about a code project.
+# All maths and counting must be done in Python code
 # Example:
 # Get the two lists asked for in the next step details
 list1str: str = await Agent_getMemory("list1-json")

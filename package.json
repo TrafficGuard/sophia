@@ -11,7 +11,7 @@
     "_inspect": "node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register  --inspect=0.0.0.0:9229 src/cli/XXX  ",
     "gen": "     node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register  src/cli/gen.ts",
     "agent": "   node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register src/cli/agent.ts",
-    "bench": "   node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register src/cli/bench.ts",
+    "gaia": "   node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register src/cli/gaia.ts",
     "pyagent": " node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register src/cli/pyAgent.ts",
     "py": "      node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register src/cli/py.ts",
     "code": "    node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register src/cli/code.ts",

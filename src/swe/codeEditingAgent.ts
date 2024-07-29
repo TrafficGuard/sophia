@@ -35,7 +35,7 @@ export class CodeEditingAgent {
 	// No @param doc for projectInfo as its only for passing programmatically. We don't want the LLM hallucinating it
 
 	/**
-	 * Runs a workflow which edits the code repository to implement the requirements, and committing changes to version control.
+	 * Runs a workflow which finds, edits and creates the required files to implement the requirements, and committing changes to version control.
 	 * It also compiles, formats, lints, and runs tests where applicable.
 	 * @param requirements The detailed requirements to implement, including supporting documentation and code samples. Do not refer to details in memory etc, you must provide the actual details.
 	 */

@@ -12,6 +12,8 @@ export const REQUEST_FEEDBACK_PARAM_NAME = 'request';
 
 export const AGENT_SAVE_MEMORY_CONTENT_PARAM_NAME = 'content';
 
+export const AGENT_COMPLETED_PARAM_NAME = 'note';
+
 /**
  * Functions for the agent to manage its memory and execution
  */

@@ -56,7 +56,7 @@ describe('pythonAgentRunner', () => {
 			type: 'python',
 			llms,
 			functions,
-			user: ctx.userService.getSingleUser()
+			user: ctx.userService.getSingleUser(),
 		};
 		return runConfig ? { ...defaults, ...runConfig } : defaults;
 	}
@@ -299,7 +299,7 @@ describe('pythonAgentRunner', () => {
 			mockLLM.addResponse(COMPLETE_FUNCTION_CALL_PLAN);
 			await startAgent(runConfig({ functions }));
 			const agent = await waitForAgent();
-			logger.info('agent error:' + agent.error)
+			logger.info(`agent error:${agent.error}`);
 			expect(agent.state).to.equal('completed');
 
 			const calls = await appContext().llmCallService.getLlmCallsForAgent(agent.agentId);
