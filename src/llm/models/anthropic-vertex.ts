@@ -6,7 +6,7 @@ import { MaxTokensError } from '../errors';
 import { GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../llm';
 import Message = Anthropic.Message;
 import { CallerId } from '#llm/llmCallService/llmCallService';
-import { CreateLlmResponse } from '#llm/llmCallService/llmCall';
+import { LlmCall } from '#llm/llmCallService/llmCall';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
@@ -116,7 +116,14 @@ class AnthropicVertexLLM extends BaseLLM {
 			if (opts?.id) span.setAttribute('id', opts.id);
 
 			const caller: CallerId = { agentId: agentContext().agentId };
-			const llmRequestSave = appContext().llmCallService.saveRequest(userPrompt, systemPrompt);
+			const caller: CallerId = { agentId: agentContext().agentId };
+			const llmCallSave: Promise<LlmCall> = appContext().llmCallService.saveRequest({
+				userPrompt,
+				systemPrompt,
+				llmId: this.getId(),
+				caller,
+				callStack: agentContext().callStack.join(' > '),
+			});
 			const requestTime = Date.now();
 
 			let message: Message;
@@ -159,17 +166,23 @@ class AnthropicVertexLLM extends BaseLLM {
 			const finishTime = Date.now();
 			const timeToFirstToken = finishTime - requestTime;
 
-			const llmRequest = await llmRequestSave;
-			const llmResponse: CreateLlmResponse = {
-				llmId: this.getId(),
-				llmCallId: llmRequest.id,
-				responseText: responseText,
-				requestTime,
-				timeToFirstToken: timeToFirstToken,
-				totalTime: finishTime - requestTime,
-				callStack: agentContext().callStack.join(' > '),
-			};
-			await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
+			const llmCall: LlmCall = await llmCallSave;
+
+			const inputCost = this.calculateInputCost(combinedPrompt);
+			const outputCost = this.calculateOutputCost(responseText);
+			const cost = inputCost + outputCost;
+
+			llmCall.responseText = responseText;
+			llmCall.timeToFirstToken = timeToFirstToken;
+			llmCall.totalTime = finishTime - requestTime;
+			llmCall.cost = cost;
+
+			try {
+				await appContext().llmCallService.saveResponse(llmCall);
+			} catch (e) {
+				// queue to save
+				logger.error(e);
+			}
 
 			const inputTokens = message.usage.input_tokens;
 			const outputTokens = message.usage.output_tokens;
