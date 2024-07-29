@@ -1,24 +1,31 @@
 import { randomUUID } from 'crypto';
 import { CallerId, LlmCallService } from '#llm/llmCallService/llmCallService';
-import {LlmRequest, LlmCall, CreateLlmRequest} from '#llm/llmCallService/llmCall';
+import { LlmRequest, LlmCall, CreateLlmRequest } from '#llm/llmCallService/llmCall';
 
 export class InMemoryLlmCallService implements LlmCallService {
 	llmCallStore = new Map<string, LlmCall>();
 
-	getCall(llmCallId: string): Promise<LlmCall | null> {
-		return Promise.resolve(undefined);
+	async getCall(llmCallId: string): Promise<LlmCall | null> {
+		return this.llmCallStore.get(llmCallId) || null;
 	}
 
-	getLlmCallsForAgent(agentId: string): Promise<LlmCall[]> {
-		return Promise.resolve([]);
+	async getLlmCallsForAgent(agentId: string): Promise<LlmCall[]> {
+		return Array.from(this.llmCallStore.values()).filter(call => call.agentId === agentId);
 	}
 
-	saveRequest(request: CreateLlmRequest): Promise<LlmCall> {
-		return Promise.resolve(undefined);
+	async saveRequest(request: CreateLlmRequest): Promise<LlmCall> {
+		const id = randomUUID();
+		const requestTime = Date.now();
+		const llmCall: LlmCall = {
+			id,
+			...request,
+			requestTime
+		};
+		this.llmCallStore.set(id, llmCall);
+		return llmCall;
 	}
 
-	saveResponse(llmCall: LlmCall): Promise<string> {
-		return Promise.resolve("");
+	async saveResponse(llmCall: LlmCall): Promise<void> {
+		this.llmCallStore.set(llmCall.id, llmCall);
 	}
-
 }
