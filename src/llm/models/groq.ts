@@ -2,7 +2,7 @@ import Groq from 'groq-sdk';
 import { AgentLLMs, agentContext } from '#agent/agentContext';
 import { addCost } from '#agent/agentContext';
 import { CallerId } from '#llm/llmCallService/llmCallService';
-import { CreateLlmResponse } from '#llm/llmCallService/llmRequestResponse';
+import { CreateLlmResponse } from '#llm/llmCallService/llmCall';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
@@ -139,7 +139,7 @@ export class GroqLLM extends BaseLLM {
 				const llmRequest = await llmRequestSave;
 				const llmResponse: CreateLlmResponse = {
 					llmId: this.getId(),
-					llmRequestId: llmRequest.id,
+					llmCallId: llmRequest.id,
 					responseText: responseText,
 					requestTime,
 					timeToFirstToken: timeToFirstToken,
