@@ -7,7 +7,7 @@ import { GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../
 import { MultiLLM } from '../multi-llm';
 import Message = AnthropicSdk.Message;
 import { CallerId } from '#llm/llmCallService/llmCallService';
-import { CreateLlmResponse } from '#llm/llmCallService/llmRequestResponse';
+import { CreateLlmResponse } from '#llm/llmCallService/llmCall';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
@@ -128,7 +128,7 @@ export class Anthropic extends BaseLLM {
 			const llmRequest = await llmRequestSave;
 			const llmResponse: CreateLlmResponse = {
 				llmId: this.getId(),
-				llmRequestId: llmRequest.id,
+				llmCallId: llmRequest.id,
 				responseText: responseText,
 				requestTime,
 				timeToFirstToken: timeToFirstToken,
