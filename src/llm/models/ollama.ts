@@ -1,7 +1,7 @@
 /drop togimport axios from 'axios';
 import { AgentLLMs, agentContext } from '#agent/agentContext';
 import { CallerId } from '#llm/llmCallService/llmCallService';
-import { CreateLlmResponse } from '#llm/llmCallService/llmCall';
+import { LlmCall } from '#llm/llmCallService/llmCall';
 import { withActiveSpan } from '#o11y/trace';
 import { appContext } from '../../app';
 import { BaseLLM } from '../base-llm';
@@ -36,7 +36,14 @@ export class OllamaLLM extends BaseLLM {
 			});
 
 			const caller: CallerId = { agentId: agentContext().agentId };
-			const llmRequestSave = appContext().llmCallService.saveRequest(userPrompt, systemPrompt);
+			const caller: CallerId = { agentId: agentContext().agentId };
+			const llmCallSave: Promise<LlmCall> = appContext().llmCallService.saveRequest({
+				userPrompt,
+				systemPrompt,
+				llmId: this.getId(),
+				caller,
+				callStack: agentContext().callStack.join(' > '),
+			});
 			const requestTime = Date.now();
 
 			const url = `${process.env.OLLAMA_API_URL || 'http://localhost:11434'}/api/generate`;
@@ -56,17 +63,23 @@ export class OllamaLLM extends BaseLLM {
 			const timeToFirstToken = Date.now() - requestTime;
 			const finishTime = Date.now();
 
-			const llmRequest = await llmRequestSave;
-			const llmResponse: CreateLlmResponse = {
-				llmId: this.getId(),
-				llmCallId: llmRequest.id,
-				responseText: responseText,
-				requestTime,
-				timeToFirstToken: timeToFirstToken,
-				totalTime: finishTime - requestTime,
-				callStack: agentContext().callStack.join(' > '),
-			};
-			await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
+			const llmCall: LlmCall = await llmCallSave;
+
+			const inputCost = this.calculateInputCost(prompt);
+			const outputCost = this.calculateOutputCost(responseText);
+			const cost = inputCost + outputCost;
+
+			llmCall.responseText = responseText;
+			llmCall.timeToFirstToken = timeToFirstToken;
+			llmCall.totalTime = finishTime - requestTime;
+			llmCall.cost = cost;
+
+			try {
+				await appContext().llmCallService.saveResponse(llmCall);
+			} catch (e) {
+				// queue to save
+				console.error(e);
+			}
 
 			span.setAttributes({
 				response: responseText,
