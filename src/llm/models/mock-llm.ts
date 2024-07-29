@@ -1,7 +1,7 @@
 import { use } from 'chai';
 import { AgentLLMs, addCost, agentContext } from '#agent/agentContext';
 import { CallerId } from '#llm/llmCallService/llmCallService';
-import { CreateLlmResponse } from '#llm/llmCallService/llmRequestResponse';
+import { CreateLlmResponse } from '#llm/llmCallService/llmCall';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { appContext } from '../../app';
@@ -88,7 +88,7 @@ export class MockLLM extends BaseLLM {
 			const llmRequest = await llmRequestSave;
 			const llmResponse: CreateLlmResponse = {
 				llmId: this.getId(),
-				llmRequestId: llmRequest.id,
+				llmCallId: llmRequest.id,
 				responseText,
 				requestTime,
 				timeToFirstToken: timeToFirstToken,
