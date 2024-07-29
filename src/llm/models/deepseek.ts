@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { addCost, agentContext } from '#agent/agentContext';
 import { CallerId } from '#llm/llmCallService/llmCallService';
-import { CreateLlmResponse } from '#llm/llmCallService/llmRequestResponse';
+import { CreateLlmResponse } from '#llm/llmCallService/llmCall';
 import { withSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { sleep } from '#utils/async-utils';
@@ -111,7 +111,7 @@ export class DeepseekLLM extends BaseLLM {
 				const llmRequest = await llmRequestSave;
 				const llmResponse: CreateLlmResponse = {
 					llmId: this.getId(),
-					llmRequestId: llmRequest.id,
+					llmCallId: llmRequest.id,
 					responseText,
 					requestTime,
 					timeToFirstToken: timeToFirstToken,
