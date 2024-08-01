@@ -6,14 +6,14 @@ import { MaxTokensError } from '../errors';
 import { GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../llm';
 import { MultiLLM } from '../multi-llm';
 import Message = AnthropicSdk.Message;
-import { CallerId } from '#llm/llmCallService/llmCallService';
-import { CreateLlmResponse } from '#llm/llmCallService/llmRequestResponse';
+import { LlmCall } from '#llm/llmCallService/llmCall';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { appContext } from '../../app';
 import { RetryableError } from '../../cache/cacheRetry';
 import TextBlock = AnthropicSdk.TextBlock;
+import { CallerId } from '#llm/llmCallService/llmCallService';
 
 export const ANTHROPIC_SERVICE = 'anthropic';
 
@@ -97,8 +97,13 @@ export class Anthropic extends BaseLLM {
 				service: this.service,
 			});
 
-			const caller: CallerId = { agentId: agentContext().agentId };
-			const llmRequestSave = appContext().llmCallService.saveRequest(userPrompt, systemPrompt);
+			const llmCallSave: Promise<LlmCall> = appContext().llmCallService.saveRequest({
+				userPrompt,
+				systemPrompt,
+				llmId: this.getId(),
+				agentId: agentContext().agentId,
+				callStack: agentContext().callStack.join(' > '),
+			});
 			const requestTime = Date.now();
 
 			let message: Message;
@@ -125,17 +130,7 @@ export class Anthropic extends BaseLLM {
 			const timeToFirstToken = Date.now() - requestTime;
 			const finishTime = Date.now();
 
-			const llmRequest = await llmRequestSave;
-			const llmResponse: CreateLlmResponse = {
-				llmId: this.getId(),
-				llmRequestId: llmRequest.id,
-				responseText: responseText,
-				requestTime,
-				timeToFirstToken: timeToFirstToken,
-				totalTime: finishTime - requestTime,
-				callStack: agentContext().callStack.join(' > '),
-			};
-			await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
+			const llmCall: LlmCall = await llmCallSave;
 
 			const inputTokens = message.usage.input_tokens;
 			const outputTokens = message.usage.output_tokens;
@@ -144,6 +139,12 @@ export class Anthropic extends BaseLLM {
 			const inputCost = this.calculateInputCost(prompt);
 			const outputCost = this.calculateOutputCost(responseText);
 			const cost = inputCost + outputCost;
+			addCost(cost);
+
+			llmCall.responseText = responseText;
+			llmCall.timeToFirstToken = timeToFirstToken;
+			llmCall.totalTime = finishTime - requestTime;
+			llmCall.cost = inputCost + outputCost;
 
 			span.setAttributes({
 				inputTokens,
@@ -156,7 +157,12 @@ export class Anthropic extends BaseLLM {
 				outputChars: responseText.length,
 			});
 
-			addCost(cost);
+			try {
+				await appContext().llmCallService.saveResponse(llmCall);
+			} catch (e) {
+				// queue to save
+				logger.error(e);
+			}
 
 			if (stopReason === 'max_tokens') {
 				throw new MaxTokensError(this.getMaxInputTokens(), responseText);

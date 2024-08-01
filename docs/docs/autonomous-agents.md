@@ -1,15 +1,22 @@
 # Autonomous AI Agents
 
-Nous provides two agents which can perform work autonomously by a control loop which iteratively plans and calls the provided functions.
+Nous provides two autonomous agents which work to complete the request via a control loop which iteratively (re-)plans and calls the functions available to the agent.
 
-The stable XML agent instructs the LLM to break down the task into steps which can be completed by the functions, 
-and then output a structured XML response. The XML part of the response is parsed to execute the function call to an integration/agent.
+At a high level they share the same internal state, agent memory, human-in-the loop, functional calling history etc. 
+
+The key difference is:
+- The XML agent returns the desired function call(s) in a custom XML format
+- The dynamic agent returns Python code which calls the functions.
+
+The dynamic agent has the advantage of being able to perform multiple function calls and perform validation logic,
+which can significantly reduce the time and cost of running the agent depending on the tasks.
 
 This custom prompt and parsing allows function calling on any sufficiently capable LLM. However, given the reasoning
 capabilities required for optimal plan generation and function selection, the best results will be from using the 
-most capable frontier models. Currently, we recommend using Claude 3.5 Sonnet for the 'hard' LLM which is used by the autonomous agent.
+most capable frontier models.
+Currently, we prefer and recommend using Claude 3.5 Sonnet for the 'hard' LLM which is used by the autonomous agent control loop.
 
-A second [experimental agent](https://github.com/TrafficGuard/nous/blob/main/src/agent/pyodideAgentRunner.ts) is available,
+A second [agent](https://github.com/TrafficGuard/nous/blob/main/src/agent/pythonAgentRunner.ts) is available,
 which prompts the agent to generate Python code to call the functions. Pyodide is used to execute the Python code in the Node.js runtime.
 This has the advantage of being able to invoke multiple function calls in one iteration of the control loop, reducing costs and latency.
 

@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { expect } from 'chai';
 import * as fs from 'fs/promises';
-import { agentContext } from '#agent/agentContext';
+import { agentContext, agentContextStorage, createContext } from '#agent/agentContext';
+import { mockLLMs } from '#llm/models/mock-llm';
 import { logger } from '#o11y/logger';
 import { currentUser } from '#user/userService/userContext';
 import { initInMemoryApplicationContext } from '../app';
@@ -32,7 +33,7 @@ class TestClass {
 	}
 }
 
-describe.skip('FirestoreFunctionCacheService', () => {
+describe('FirestoreFunctionCacheService', () => {
 	let cacheService: FirestoreCacheService;
 
 	beforeEach(async () => {
@@ -95,16 +96,25 @@ describe.skip('FirestoreFunctionCacheService', () => {
 			const result = await testClass.fooGlobal(1, 2);
 			expect(result).to.equal('3');
 			const cacheService = new FirestoreCacheService();
-			const cachedValue = await cacheService.getValue('global', 'TestClass', 'foo', [1, 2]);
+			const cachedValue = await cacheService.getValue('global', 'TestClass', 'fooGlobal', [1, 2]);
 			expect(cachedValue).to.equal('3');
 		});
 
 		it('should clear all cache entries for a specific agent', async () => {
-			await cacheService.setValue('agent', 'TestClass', 'foo', [1, 2], '3');
-			await cacheService.setValue('agent', 'TestClass', 'foo', [3, 4], '7');
+			agentContextStorage.enterWith(
+				createContext({
+					agentName: '',
+					functions: [],
+					initialPrompt: '',
+					llms: mockLLMs(),
+				}),
+			);
+			// Set one via the decorator, and one via the cacheService API
+			await new TestClass().bazAgent(1, 2);
+			await cacheService.setValue('agent', 'TestClass', 'foo', [3, 4], '3');
 			const clearedCount = await cacheService.clearAgentCache(agentContext().agentId);
 			expect(clearedCount).to.equal(2);
-			const value1 = await cacheService.getValue('agent', 'TestClass', 'foo', [1, 2]);
+			const value1 = await cacheService.getValue('agent', 'TestClass', 'bazAgent', [1, 2]);
 			const value2 = await cacheService.getValue('agent', 'TestClass', 'foo', [3, 4]);
 			expect(value1).to.be.undefined;
 			expect(value2).to.be.undefined;

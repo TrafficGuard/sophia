@@ -1,12 +1,9 @@
 import axios, { AxiosInstance } from 'axios';
-import { logger } from '#o11y/logger';
-import { cacheRetry } from '../cache/cacheRetry';
-
-import { writeFileSync } from 'fs';
-import { writeFile } from 'node:fs';
 import { func, funcClass } from '#functionSchema/functionDecorators';
+import { logger } from '#o11y/logger';
 import { functionConfig } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
+import { cacheRetry } from '../cache/cacheRetry';
 
 export interface JiraConfig {
 	baseUrl: string;
@@ -38,22 +35,23 @@ export class Jira {
 
 	/**
 	 * Gets the description of a JIRA issue
-	 * @param {string} issueId the issue id (e.g. XYZ-123)
+	 * @param {string} issueId - the issue id (e.g. XYZ-123)
 	 * @returns {Promise<string>} the issue description
 	 */
 	@func()
 	async getJiraDescription(issueId: string): Promise<string> {
+		if (!issueId) throw new Error('issueId is required');
 		try {
 			const response = await this.axios().get(`issue/${issueId}`);
-			const fields = response.data.fields;
+			// const fields = response.data.fields;
 
 			// const summaru =
 			// console.log(response.data)
-			console.log(response.data.fields.summary);
-			console.log('comments ============');
-			console.log(response.data.fields.comment.comments);
-			console.log('attachments ============');
-			console.log(response.data.fields.attachment);
+			// console.log(response.data.fields.summary);
+			// console.log('comments ============');
+			// console.log(response.data.fields.comment.comments);
+			// console.log('attachments ============');
+			// console.log(response.data.fields.attachment);
 			// /rest/api/3/attachment/content/{id}
 
 			// for (const attachment of response.data.fields.attachment) {

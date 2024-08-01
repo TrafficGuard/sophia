@@ -3,9 +3,10 @@ import { FUNC_SEP, FunctionSchema, getFunctionSchemas } from '#functionSchema/fu
 import { FunctionCall } from '#llm/llm';
 import { logger } from '#o11y/logger';
 
-import { functionFactory } from '#functionSchema/functionDecorators';
 import { FileSystem } from '#functions/storage/filesystem';
 import { GetToolType, ToolType, toolType } from '#functions/toolType';
+
+import { functionFactory } from '#functionSchema/functionDecorators';
 
 /**
  * Holds the instances of the classes with function callable methods.
@@ -28,7 +29,8 @@ export class LlmFunctions {
 	fromJSON(obj: any): this {
 		const functionClassNames = (obj.functionClasses ?? obj.tools) as string[]; // obj.tools for backward compat with dev version
 		for (const functionClassName of functionClassNames) {
-			if (functionFactory[functionClassName]) this.functionInstances[functionClassName] = new functionFactory[functionClassName]();
+			const ctor = functionFactory()[functionClassName];
+			if (ctor) this.functionInstances[functionClassName] = new ctor();
 			else logger.warn(`${functionClassName} not found`);
 		}
 		return this;

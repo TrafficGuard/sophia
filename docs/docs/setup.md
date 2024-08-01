@@ -85,8 +85,8 @@ If a prompt isn't provided, then it will read the prompt from the file indicated
 - `npm run agent` runs the autonomous agent, using the functions configured in src/cli/agent.ts, and if no arguments reading the input from *src/cli/agent-in*
 - `npm run code` runs the Code Editing agent on the repository, if no arguments reading the input from *src/cli/code-in*
 - `npm run swe` runs the Software engineer agent, which can find a remote repo to clone, edit and create a pull/merge request. If no arguments reading the input from *src/cli/swe-in*
-- `npm run research` runs the autonomous agent with the web research functions configured.
-- `npm run util` used for running any random piece of code to test.
+
+Full details at [Running from the CLI](getting-started-cli.md)
 
 ### Local server & UI
 
@@ -100,6 +100,8 @@ cd frontend
 npm run start:local
 ```
 The UI will be available at [http://localhost:4200](http://localhost:4200)
+
+Full details at [Running from the UI](getting-started-ui.md)
 
 Documentation for deploying on Google Cloud will be provided soon.
 

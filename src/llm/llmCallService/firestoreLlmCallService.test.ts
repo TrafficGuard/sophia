@@ -4,8 +4,8 @@ import sinon from 'sinon';
 import { logger } from '#o11y/logger';
 
 import { FirestoreLlmCallService } from '#llm/llmCallService/firestoreLlmCallService';
-import { LLMCall, LlmCallService } from '#llm/llmCallService/llmCallService';
-import { LlmResponse } from '#llm/llmCallService/llmRequestResponse';
+import { CreateLlmRequest, LlmCall } from '#llm/llmCallService/llmCall';
+import { LlmCallService } from '#llm/llmCallService/llmCallService';
 
 const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST;
 
@@ -40,112 +40,121 @@ describe('FirestoreLlmCallService', () => {
 		}
 	});
 
-	// test with null systemPrompt
+	describe('saveRequest and getCall', () => {
+		it('should save a request and retrieve it', async () => {
+			const request: CreateLlmRequest = {
+				userPrompt: 'Test user prompt',
+				systemPrompt: 'Test system prompt',
+				description: 'Test description',
+				llmId: 'test-llm',
+				agentId: 'test-agent',
+				callStack: 'test > call > stack',
+			};
 
-	describe('saveRequest', () => {
-		it('should save and load the same object', async () => {
-			const llmRequestSave = await service.saveRequest('user prompt', 'system prompt');
-			const llmRequestLoad = await service.getRequest(llmRequestSave.id);
-			expect(llmRequestSave.id).to.equal(llmRequestLoad.id);
-			expect(llmRequestSave.userPromptText).to.equal(llmRequestLoad.userPromptText);
-			expect(llmRequestSave.systemPromptId).to.equal(llmRequestLoad.systemPromptId);
+			const savedRequest = await service.saveRequest(request);
+			expect(savedRequest).to.have.property('id');
+			expect(savedRequest).to.have.property('requestTime');
 
-			// Test with variationSourceId and variationNote
-			const llmVariationSave = await service.saveRequest('user prompt2', 'system prompt', llmRequestSave.id, 'note');
-			const llmVariationLoad = await service.getRequest(llmVariationSave.id);
-			expect(llmVariationSave.variationSourceId).to.equal(llmVariationLoad.variationSourceId);
-			expect(llmVariationSave.variationNote).to.equal(llmVariationLoad.variationNote);
-		});
-
-		it('should only create one SystemPrompt with particular text, always creates unique UserPrompt objects when the prompt text is the same', async () => {
-			const llmRequest1 = await service.saveRequest('user prompt', 'system prompt');
-
-			const systemPrompt1 = await service.getSystemPromptByText('system prompt');
-			expect(systemPrompt1).to.not.be.null;
-			expect(systemPrompt1.text).to.equal('system prompt');
-
-			const llmRequest2 = await service.saveRequest('user prompt', 'system prompt');
-
-			const systemPrompt2 = await service.getSystemPromptByText('system prompt');
-			expect(systemPrompt2).to.not.be.null;
-			expect(systemPrompt2.text).to.equal('system prompt');
-
-			// Should be the same SystemPrompt object as the text is the same
-			expect(systemPrompt1.id).to.equal(systemPrompt2.id);
-			// Should be the same LlmRequest object as the text is the same
-			expect(llmRequest1.id).to.equal(llmRequest2.id);
+			const retrievedCall = await service.getCall(savedRequest.id);
+			expect(retrievedCall).to.not.be.null;
+			expect(retrievedCall.userPrompt).to.equal(request.userPrompt);
+			expect(retrievedCall.systemPrompt).to.equal(request.systemPrompt);
+			expect(retrievedCall.description).to.equal(request.description);
+			expect(retrievedCall.llmId).to.equal(request.llmId);
+			expect(retrievedCall.agentId).to.equal(request.agentId);
+			expect(retrievedCall.callStack).to.equal(request.callStack);
 		});
 	});
 
-	describe('saveResponse and getResponse', () => {
-		it('should save and load all the values', async () => {
-			const llmRequest = await service.saveRequest('user prompt', 'system prompt');
+	describe('saveResponse', () => {
+		it('should save a response and retrieve it', async () => {
+			const request: CreateLlmRequest = {
+				userPrompt: 'Test user prompt',
+				systemPrompt: 'Test system prompt',
+				description: 'Test description',
+				llmId: 'test-llm',
+				agentId: 'test-agent',
+				callStack: 'test > call > stack',
+			};
 
-			const responseId = await service.saveResponse(
-				llmRequest.id,
-				{ agentId: 'agentId' },
-				{
-					timeToFirstToken: 100,
-					llmId: 'vertex:gemini-1.5-pro',
-					llmRequestId: llmRequest.id,
-					requestTime: 1000,
-					responseText: 'so smart',
-					totalTime: 200,
-				},
-			);
-			const response: LlmResponse = await service.getResponse(responseId);
+			const savedRequest = await service.saveRequest(request);
 
-			expect(response.agentId).to.equal('agentId');
-			expect(response.timeToFirstToken).to.equal(100);
-			expect(response.llmId).to.equal('vertex:gemini-1.5-pro');
-			expect(response.llmRequestId).to.equal(llmRequest.id);
-			expect(response.requestTime).to.equal(1000);
-			expect(response.responseText).to.equal('so smart');
-			expect(response.totalTime).to.equal(200);
+			const response: LlmCall = {
+				...savedRequest,
+				responseText: 'Test response',
+				cost: 0.1,
+				timeToFirstToken: 100,
+				totalTime: 500,
+			};
+
+			await service.saveResponse(response);
+
+			const retrievedCall = await service.getCall(savedRequest.id);
+			expect(retrievedCall).to.not.be.null;
+			expect(retrievedCall.id).to.equal(response.id);
+			expect(retrievedCall.userPrompt).to.equal(response.userPrompt);
+			expect(retrievedCall.systemPrompt).to.equal(response.systemPrompt);
+			expect(retrievedCall.description).to.equal(response.description);
+			expect(retrievedCall.llmId).to.equal(response.llmId);
+			expect(retrievedCall.agentId).to.equal(request.agentId);
+			expect(retrievedCall.callStack).to.equal(response.callStack);
+			expect(retrievedCall.responseText).to.equal(response.responseText);
+			expect(retrievedCall.cost).to.equal(response.cost);
+			expect(retrievedCall.timeToFirstToken).to.equal(response.timeToFirstToken);
+			expect(retrievedCall.totalTime).to.equal(response.totalTime);
 		});
 	});
 
 	describe('getLlmCallsForAgent', () => {
 		it('should load all the responses for an agent', async () => {
-			const llmRequest1 = await service.saveRequest('user prompt', 'system prompt');
-			const llmId = 'vertex:gemini-1.5-pro';
-			await service.saveResponse(
-				llmRequest1.id,
-				{ agentId: 'agentId' },
+			const agentId = 'test-agent';
+			const requests: CreateLlmRequest[] = [
 				{
-					timeToFirstToken: 1100,
-					llmId,
-					llmRequestId: llmRequest1.id,
-					requestTime: 1000,
-					responseText: 'take1',
-					totalTime: 200,
+					agentId,
+					userPrompt: 'Test user prompt 1',
+					systemPrompt: 'Test system prompt 1',
+					description: 'Test description 1',
+					llmId: 'test-llm-1',
+					callStack: 'test > call > stack',
 				},
-			);
-
-			await service.saveResponse(
-				llmRequest1.id,
-				{ agentId: 'agentId' },
 				{
-					timeToFirstToken: 1100,
-					llmId,
-					llmRequestId: llmRequest1.id,
-					requestTime: 2000,
-					responseText: 'take2',
-					totalTime: 200,
+					agentId,
+					userPrompt: 'Test user prompt 2',
+					systemPrompt: 'Test system prompt 2',
+					description: 'Test description 2',
+					llmId: 'test-llm-2',
+					callStack: 'test > call > stack',
 				},
-			);
+			];
 
-			const calls: LLMCall[] = await service.getLlmCallsForAgent('agentId');
-			expect(calls.length).to.equal(2);
-			expect(calls.some((call) => call.response.responseText === 'take1')).to.be.true;
-			expect(calls.some((call) => call.response.responseText === 'take2')).to.be.true;
-			const call = calls[0];
-			// The request, response and system prompt should be loaded
-			expect(call.request).to.not.be.null;
-			expect(call.request.id).to.equal(llmRequest1.id);
-			expect(call.request.userPromptText).to.equal('user prompt');
-			expect(call.request.systemPrompt).to.not.be.undefined;
-			expect(call.request.systemPrompt.text).to.equal('system prompt');
+			for (const request of requests) {
+				const savedRequest = await service.saveRequest(request);
+				await service.saveResponse({
+					...savedRequest,
+					responseText: `Response for ${request.userPrompt}`,
+					cost: 0.1,
+					timeToFirstToken: 100,
+					totalTime: 500,
+				});
+			}
+
+			const calls = await service.getLlmCallsForAgent(agentId);
+			expect(calls).to.have.lengthOf(2);
+			calls.forEach((call) => {
+				expect(call).to.have.property('agentId');
+				expect(call).to.have.property('id');
+				expect(call).to.have.property('userPrompt');
+				expect(call).to.have.property('systemPrompt');
+				expect(call).to.have.property('description');
+				expect(call).to.have.property('llmId');
+				expect(call).to.have.property('callStack');
+				expect(call).to.have.property('responseText');
+				expect(call).to.have.property('cost');
+				expect(call).to.have.property('timeToFirstToken');
+				expect(call).to.have.property('totalTime');
+				expect(call).to.have.property('requestTime');
+			});
+			expect(calls[0].requestTime).to.be.greaterThan(calls[1].requestTime);
 		});
 	});
 });

@@ -12,7 +12,6 @@
     "gen": "     node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register  src/cli/gen.ts",
     "agent": "   node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register src/cli/agent.ts",
     "gaia": "   node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register src/cli/gaia.ts",
-    "pyagent": " node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register src/cli/pyAgent.ts",
     "py": "      node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register src/cli/py.ts",
     "code": "    node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register src/cli/code.ts",
     "swe": "     node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register src/cli/swe.ts",

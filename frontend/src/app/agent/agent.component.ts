@@ -10,58 +10,36 @@ import { AgentContext, AgentRunningState } from '@app/agents/agents.component';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 
-export interface LLMCall {
-  request: LlmRequest;
-  response: LlmResponse;
-  userPromptExpanded?: boolean;
-  responseTextExpanded?: boolean;
-}
-export interface LlmRequest {
-  id: number;
-  userPromptText: string;
-  systemPromptId: number;
-  /** Hydrated from systemPromptId */
-  systemPrompt?: SystemPrompt;
-
-  variationSourceId?: number;
-  variationNote?: string;
-  /** Hydrated value from variationSourceId */
-  variationSource?: LlmRequest;
-}
-
-export interface SystemPrompt {
-  /** hash of the system prompt text */
-  id: number;
-  // description: string
-  text: string;
-  variationSourceId?: number;
-  variationNote?: string;
-  /** Hydrated value from variationSourceId */
-  variationSource?: SystemPrompt;
-}
-
-export interface LlmResponse {
+export interface LlmCall {
+  // LlmRequest fields
   /** UUID */
   id: string;
-  llmRequestId: number;
-  /** Hydrated from llmRequestId */
-  llmRequest?: LlmRequest;
-  /** From GenerateTextOptions.id */
-  description: string;
+  /** From the GenerateTextOptions.id field */
+  description?: string;
+  systemPrompt?: string;
+  userPrompt: string;
   /** Populated when called by an agent */
   agentId?: string;
   /** Populated when called by a user through the UI */
   userId?: string;
-  responseText: string;
-  callStack: string;
+  callStack?: string;
   /** LLM service/model identifier */
   llmId: string;
   /** Time of the LLM request */
   requestTime: number;
+
+  // LlmResponse fields
+  responseText?: string;
   /** Duration in millis until the first response from the LLM */
-  firstResponse: number;
+  timeToFirstToken?: number;
   /** Duration in millis for the full response */
-  totalTime: number;
+  totalTime?: number;
+  /** Cost in $USD */
+  cost?: number;
+
+  // UI state field
+  responseTextExpanded: boolean
+  userPromptExpanded: boolean
 }
 
 @Component({
@@ -71,7 +49,7 @@ export interface LlmResponse {
 })
 export class AgentComponent implements OnInit {
   llms: Array<{ id: string; name: string }> = [];
-  llmCalls: LLMCall[] = [];
+  llmCalls: LlmCall[] = [];
   agentId: string | null = null;
   llmNameMap: Map<string, string> = new Map();
   llmCallSystemPromptOpenState: boolean[] = [];
@@ -395,9 +373,9 @@ export class AgentComponent implements OnInit {
           if (calls) {
             this.llmCalls = calls.data;
             this.llmCalls.forEach((call) => {
-              call.request.userPromptText = call.request.userPromptText.replace('\\n', '<br/>');
-              if (call.request.systemPrompt)
-                call.request.systemPrompt.text = call.request.systemPrompt.text.replace('\\n', '<br/>');
+              call.userPrompt = call.userPrompt.replace('\\n', '<br/>');
+              if (call.systemPrompt)
+                call.systemPrompt = call.systemPrompt.replace('\\n', '<br/>');
             });
           }
         });
@@ -487,10 +465,10 @@ export class AgentComponent implements OnInit {
     }/data/panel/AgentContext/${agent.agentId}?project=${environment.gcpProject}`;
   }
 
-  llmCallUrl(llmResponse: LlmResponse): string {
+  llmCallUrl(llmCall: LlmCall): string {
     return `https://console.cloud.google.com/firestore/databases/${
       environment.firestoreDb || '(default)'
-    }/data/panel/LlmResponse/${llmResponse.id}?project=${environment.gcpProject}`;
+    }/data/panel/LlmCall/${llmCall.id}?project=${environment.gcpProject}`;
   }
 
   traceUrl(agent: AgentContext): string {

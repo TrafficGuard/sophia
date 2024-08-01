@@ -3,6 +3,7 @@ import { AgentContext, AgentLLMs, createContext, llms } from '#agent/agentContex
 import { AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
 import { runPythonAgent } from '#agent/pythonAgentRunner';
 import { runXmlAgent } from '#agent/xmlAgentRunner';
+import { FUNC_SEP } from '#functionSchema/functions';
 import { FunctionCall, FunctionCallResult } from '#llm/llm';
 import { logger } from '#o11y/logger';
 import { User } from '#user/user';
@@ -10,34 +11,32 @@ import { errorToString } from '#utils/errors';
 import { CDATA_END, CDATA_START } from '#utils/xml-utils';
 import { appContext } from '../app';
 
-export const SUPERVISOR_RESUMED_FUNCTION_NAME = 'Supervisor.Resumed';
-export const SUPERVISOR_CANCELLED_FUNCTION_NAME = 'Supervisor.Cancelled';
+export const SUPERVISOR_RESUMED_FUNCTION_NAME: string = `Supervisor${FUNC_SEP}Resumed`;
+export const SUPERVISOR_CANCELLED_FUNCTION_NAME: string = `Supervisor${FUNC_SEP}Cancelled`;
 const FUNCTION_OUTPUT_SUMMARIZE_MIN_LENGTH = 2000;
 
 /**
  * Configuration for running an autonomous agent
  */
 export interface RunAgentConfig {
-	/** Uses currentUser() if not provided */
+	/** The user who created the agent. Uses currentUser() if not provided */
 	user?: User;
 	/** The name of this agent */
 	agentName: string;
-	/** The type of autonomous agent function calling. Defaults to XML */
+	/** The type of autonomous agent function calling. Defaults to python/dynamic */
 	type?: 'xml' | 'python';
-	/** The functions the agent has available to call */
+	/** The function classes the agent has available to call */
 	functions: LlmFunctions | Array<new () => any>;
-	/** The initial prompt */
+	/** The user prompt */
 	initialPrompt: string;
 	/** The agent system prompt */
 	systemPrompt?: string;
-	/** Settings for requiring a human in the loop */
+	/** Settings for requiring a human-in-the-loop */
 	humanInLoop?: { budget?: number; count?: number; functionErrorCount?: number };
-	/** The LLMs available to use */
+	/** The default LLMs available to use */
 	llms: AgentLLMs;
 	/** The agent to resume */
 	resumeAgentId?: string;
-	/** Message to add to the prompt when resuming */
-	resumeMessage?: string;
 	/** The base path of the context FileSystem. Defaults to the process working directory */
 	fileSystemPath?: string;
 }

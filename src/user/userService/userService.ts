@@ -8,9 +8,10 @@ export interface UserService {
 	createUser(user: Partial<User>): Promise<User>;
 
 	/**
-	 * When running in single-user mode returns the user
+	 * When running in single-user mode ensure the single user as been created
 	 */
 	ensureSingleUser(): Promise<void>;
+
 	getSingleUser(): User;
 
 	/**

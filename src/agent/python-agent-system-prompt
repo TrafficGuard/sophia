@@ -124,10 +124,10 @@ Remember: The goal is to transform ambiguous or contextual information into clea
 As you progress through the task, you may need to:
 
 1. Update the task understanding:
-   Output an updated <revised_task></revised_task> that expands on the original user_request, incorporating new information and applying relevant reasoning techniques.
+   Output an updated <expanded_user_request></expanded_user_request> that expands on the original user_request, incorporating new information and applying relevant reasoning techniques.
 
 2. Refine the plan:
-   Produce an updated <plan_outline></plan_outline> keeping all completed/attempted items, and updating the anticipated future items based on new information and previous function call results/errors.
+   Produce an updated <plan></plan> keeping all completed/attempted items, and updating the anticipated future items based on new information and previous function call results/errors.
    You may compress descriptions of successfully completed item hierarchies while keeping key details.
 
 3. Manage memory:
@@ -206,6 +206,7 @@ We can retrieve the two pages, and then create a report by processing the combin
 
 <python-code>
 # Do not use Example_xxx functions in your code
+# Check if the content is in memory from a previous step. Result: None found
 tokenDesignPage: str = await Example_getPage("https://docs.github.com/docs/new-runner-token-design")
 runnerRegistrationPage: str = await Example_getPage("https://blog.github.com/new-runner-registration")
 webPages: str = f'<page1>${tokenDesignPage}</page1><page2>${runnerRegistrationPage}</page2>'
@@ -291,6 +292,7 @@ Select the function(s) to best complete the next step. You may call more than on
 # The files projectInfo.json and CONVENTIONS.md may possibly exists to tell you more about a code project.
 # All maths and counting must be done in Python code
 # Example:
+# Check if the desired content is in memory from a previous step. Result: (None found/Found ...)
 # Get the two lists asked for in the next step details
 list1str: str = await Agent_getMemory("list1-json")
 list1: List[str] = json.loads(list1str)

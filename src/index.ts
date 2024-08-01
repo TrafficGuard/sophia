@@ -1,6 +1,6 @@
 import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
 
-import { initApp } from './app';
+import { initServer } from './app';
 
 process.on('uncaughtException', (err) => {
 	console.error('There was an uncaught error', err);
@@ -9,4 +9,4 @@ process.on('uncaughtException', (err) => {
 	// process.exit(1); // Exit the
 });
 
-initApp().catch(console.error);
+initServer().catch(console.error);

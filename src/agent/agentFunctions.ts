@@ -22,17 +22,18 @@ export class Agent {
 	/**
 	 * Request feedback/interaction from a supervisor when a decision or approval needs to be made, or additional details are required, before proceeding with the plan.
 	 * Minimise calls to requestFeedback by attempting/verifying possible options first.
-	 * @param request {string} Notes on what additional information/decision is required. Be specific on what you have been doing up to this point, and provide relevant information to help with the decision/feedback.
+	 * @param {string} request Notes on what additional information/decision is required. Be specific on what you have been doing up to this point, and provide relevant information to help with the decision/feedback.
 	 */
 	@func()
-	async requestFeedback(request: string): Promise<void> {
+	async requestFeedback(request: string): Promise<string> {
 		// arg name must match REQUEST_FEEDBACK_PARAM_NAME
 		logger.info(`Feedback requested: ${request}`);
+		return ''; // This will be replaced by the supervisor feedback
 	}
 
 	/**
 	 * Notifies that the user request has completed and there is no more work to be done, or that no more useful progress can be made with the functions.
-	 * @param note {string} A detailed description that answers/completes the user request.
+	 * @param {string} note A detailed description that answers/completes the user request.
 	 */
 	@func()
 	async completed(note: string): Promise<void> {
@@ -42,8 +43,8 @@ export class Agent {
 
 	/**
 	 * Stores content to your working memory, and continues on with the plan. You can assume the memory element now contains this key and content.
-	 * @param key {string} A descriptive identifier (alphanumeric and underscores allowed, under 30 characters) for the new memory contents explaining the source of the content. This must not exist in the current memory.
-	 * @param content {string} The plain text contents to store in the working memory
+	 * @param {string} key A descriptive identifier (alphanumeric and underscores allowed, under 30 characters) for the new memory contents explaining the source of the content. This must not exist in the current memory.
+	 * @param {string} content The plain text contents to store in the working memory
 	 */
 	@func()
 	async saveMemory(key: string, content: string): Promise<void> {
@@ -57,8 +58,8 @@ export class Agent {
 	/**
 	 * Updates existing content in your working memory, and continues on with the plan. You can assume the memory element now contains this key and content.
 	 * Note this will over-write any existing memory content
-	 * @param key {string} An existing key in the memory contents to update the contents of.
-	 * @param content {string} The plain text content to store in the working memory under the key
+	 * @param {string} key An existing key in the memory contents to update the contents of.
+	 * @param {string} content The plain text content to store in the working memory under the key
 	 */
 	@func()
 	async deleteMemory(key: string, content: string): Promise<void> {
@@ -69,7 +70,7 @@ export class Agent {
 
 	/**
 	 * Retrieves contents from memory
-	 * @param key {string} An existing key in the memory to retrieve.
+	 * @param {string} key An existing key in the memory to retrieve.
 	 * @return {string} The memory contents
 	 */
 	@func()

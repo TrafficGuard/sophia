@@ -7,8 +7,14 @@ import { FileSystem } from '#functions/storage/filesystem';
 import { UtilFunctions } from '#functions/util';
 import { GPT4o } from '#llm/models/openai';
 import { appContext } from '../app';
+import { functionRegistry } from '../functionRegistry';
 
 describe('agentContext', () => {
+	before(() => {
+		// Required for deserialisation of functions
+		functionRegistry();
+	});
+
 	describe('serialisation', () => {
 		it('should be be identical after serialisation and deserialization', async () => {
 			const llms = {
@@ -17,7 +23,8 @@ describe('agentContext', () => {
 				hard: GPT4o(),
 				xhard: GPT4o(),
 			};
-			const functions = new LlmFunctions();
+			// We want to check that the FileSystem gets re-added by the resetFileSystemFunction function
+			const functions = new LlmFunctions(UtilFunctions, FileSystem);
 
 			const config: RunAgentConfig = {
 				agentName: 'SWE',
@@ -28,8 +35,6 @@ describe('agentContext', () => {
 			};
 			const agentContext: AgentContext = createContext(config);
 			agentContext.fileSystem.setWorkingDirectory('./workingDir');
-			agentContext.functions.addFunctionClass(UtilFunctions);
-			agentContext.functions.addFunctionClass(FileSystem); // add this last so deep equals is happy as it gets re-added by the resetFileSystemFunction function
 			agentContext.memory.memory_key = 'memory_value';
 			agentContext.functionCallHistory.push({
 				function_name: 'func',
@@ -54,7 +59,11 @@ describe('agentContext', () => {
 
 			const deserialised = await deserializeAgentContext(serialized);
 			const reserialised = serializeContext(deserialised);
+
 			expect(serialized).to.be.deep.equal(reserialised);
+
+			// test agentContext.resetFileSystemFunction()
+			expect(deserialised.fileSystem === deserialised.functions.getFunctionInstanceMap()[FileSystem.name]).to.be.true;
 		});
 	});
 });

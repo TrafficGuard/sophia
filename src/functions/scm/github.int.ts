@@ -49,9 +49,9 @@ describe('GitHub Integration Tests', () => {
 		it('should get the projects and clone the first one', async () => {
 			const projects = await github.getProjects();
 			expect(projects.length).to.be.greaterThan(0);
-			console.log(projects[0]);
+			// console.log(projects[0]);
 			const firstProject = projects[0];
-			const clonePath = await github.cloneProject(`${firstProject.name}`);
+			const clonePath = await github.cloneProject(`${firstProject.name}`, 'main');
 			expect(clonePath).to.be.a('string');
 			expect(existsSync(clonePath)).to.be.true;
 		});

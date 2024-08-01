@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { addCost, agentContext } from '#agent/agentContext';
+import { LlmCall } from '#llm/llmCallService/llmCall';
 import { CallerId } from '#llm/llmCallService/llmCallService';
-import { CreateLlmResponse } from '#llm/llmCallService/llmRequestResponse';
 import { withSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { sleep } from '#utils/async-utils';
@@ -82,8 +82,13 @@ export class DeepseekLLM extends BaseLLM {
 				service: this.service,
 			});
 
-			const caller: CallerId = { agentId: agentContext().agentId };
-			const llmRequestSave = appContext().llmCallService.saveRequest(userPrompt, systemPrompt);
+			const llmCallSave: Promise<LlmCall> = appContext().llmCallService.saveRequest({
+				userPrompt,
+				systemPrompt,
+				llmId: this.getId(),
+				agentId: agentContext().agentId,
+				callStack: agentContext().callStack.join(' > '),
+			});
 			const requestTime = Date.now();
 
 			const messages = [];
@@ -108,21 +113,24 @@ export class DeepseekLLM extends BaseLLM {
 
 				const timeToFirstToken = Date.now() - requestTime;
 				const finishTime = Date.now();
-				const llmRequest = await llmRequestSave;
-				const llmResponse: CreateLlmResponse = {
-					llmId: this.getId(),
-					llmRequestId: llmRequest.id,
-					responseText,
-					requestTime,
-					timeToFirstToken: timeToFirstToken,
-					totalTime: finishTime - requestTime,
-					callStack: agentContext().callStack.join(' > '),
-				};
-				await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
+				const llmCall: LlmCall = await llmCallSave;
 
 				const inputCost = this.calculateInputCost(prompt);
 				const outputCost = this.calculateOutputCost(responseText);
 				const cost = inputCost + outputCost;
+				addCost(cost);
+
+				llmCall.responseText = responseText;
+				llmCall.timeToFirstToken = timeToFirstToken;
+				llmCall.totalTime = finishTime - requestTime;
+				llmCall.cost = cost;
+
+				try {
+					await appContext().llmCallService.saveResponse(llmCall);
+				} catch (e) {
+					// queue to save
+					console.error(e);
+				}
 
 				span.setAttributes({
 					response: responseText,
@@ -132,8 +140,6 @@ export class DeepseekLLM extends BaseLLM {
 					cost,
 					outputChars: responseText.length,
 				});
-
-				addCost(cost);
 
 				return responseText;
 			} catch (e) {

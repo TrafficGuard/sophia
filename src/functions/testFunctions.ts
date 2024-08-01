@@ -23,8 +23,8 @@ export class TestFunctions {
 
 	/**
 	 * Calculates the sum of two numbers. Always use this when needing to sum numbers.
-	 * @param num1 {number} the first number
-	 * @param num2 {number} the second number
+	 * @param {number} num1 the first number
+	 * @param {number} num2 the second number
 	 * @returns the sum of the numbers
 	 */
 	@func()

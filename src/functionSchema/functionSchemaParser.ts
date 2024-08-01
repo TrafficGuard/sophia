@@ -18,21 +18,21 @@ const CACHED_BASE_PATH = '.nous/functions/';
  *
  * With the example class:
  * <code>
- * @funcClass(__filename)
+ * \@funcClass(__filename)
  * export class FuncClass {
  *    /**
  *     * Description of simple method
  *     *\/
- *    @func()
+ *    \@func()
  *    simpleMethod(): void {}
  *
  *   /**
  *     * Description of complexMethod
- *     * @param arg1 {string} the first arg
- *     * @param arg2 {number} the second arg
- *     * @return Promise<Date> the current date
+ *     * \@param {string} arg1 the first arg
+ *     * \@param {number} arg2 the second arg
+ *     * \@return Promise<Date> the current date
  *     *\/
- *    @func()
+ *    \@func()
  *    async complexMethod(arg1: string, arg2?: number): Promise<Date> {
  *        return new Date()
  *    }
@@ -67,7 +67,7 @@ const CACHED_BASE_PATH = '.nous/functions/';
  *      ]
  *   }
  * }
- * @param sourceFilePath the full path to the source file
+ * @param {string} sourceFilePath the full path to the source file
  * @returns An array of FunctionSchema objects
  */
 export function functionSchemaParser(sourceFilePath: string): Record<string, FunctionSchema> {
@@ -116,24 +116,61 @@ export function functionSchemaParser(sourceFilePath: string): Record<string, Fun
 
 			const jsDocs: JSDoc = method.getJsDocs()[0];
 			let returns = '';
+			let returnType = '';
 			const paramDescriptions = {};
+			let paramIndex = 0;
 			jsDocs.getTags().forEach((tag: JSDocTag) => {
-				if (tag.getTagName() === 'returns') {
-					returns = tag.getText().replace('@returns', '').trim();
+				if (tag.getTagName() === 'returns' || tag.getTagName() === 'return') {
+					returnType = method.getReturnType().getText();
+					// Remove Promise wrapper if present
+					if (returnType.startsWith('Promise<') && returnType.endsWith('>')) {
+						returnType = returnType.slice(8, -1);
+					}
+					returns = tag.getText().replace('@returns', '').replace('@return', '').trim();
+					// Remove type information from returns if present
+					if (returns.startsWith('{') && returns.includes('}')) {
+						returns = returns.slice(returns.indexOf('}') + 1).trim();
+					}
 					if (returns.length) {
 						returns = returns.charAt(0).toUpperCase() + returns.slice(1);
 					}
 				}
 				if (tag.getTagName() === 'param') {
+					// For a @param tag the getText() should be in the format
+					// @param {number} a - The first number to add.
+					// We will handle the type (e.g. {number}) being optional, as it's not required.
+					// And handle the dash "-" separator being optional
+					// The @params must be in the same order and have the same name as the function arguments
+
 					const text = tag.getText().trim();
-					const paramName = text.split(' ')[1];
-					let description = text.split(' ').slice(2).join(' ').trim();
+
+					// remove the @param tag
+					let descriptionParts = text.split(' ').slice(1);
+					// remove the type if there is one
+					if (descriptionParts[0].startsWith('{')) {
+						const closingBrace = descriptionParts.findIndex((value) => value.trim().endsWith('}'));
+						descriptionParts = descriptionParts.slice(closingBrace + 1);
+					}
+					// Remove the arg name, which must match the actual argument name
+					const argName = method.getParameters()[paramIndex]?.getName();
+					if (descriptionParts[0] === argName) {
+						descriptionParts = descriptionParts.slice(1);
+						paramIndex++;
+					} else {
+						throw new Error(`JSDoc param name ${descriptionParts[0]} does not match arg name ${argName}`);
+					}
+					if (descriptionParts[0] === '-') {
+						descriptionParts = descriptionParts.slice(1);
+					}
+					let description = descriptionParts.join(' ');
 					if (description.endsWith('*')) {
 						description = description.slice(0, -1).trim();
 					}
-					// Remove the type
-					if (description.startsWith('{')) description = description.substring(description.indexOf('}') + 1).trim();
-					paramDescriptions[paramName] = description;
+					if (description.length) {
+						description = description.charAt(0).toUpperCase() + description.slice(1);
+					}
+					logger.debug(`Parsed description for ${className}_${methodName}.${argName} to be: ${description}`);
+					paramDescriptions[argName] = description;
 				}
 			});
 
@@ -149,7 +186,10 @@ export function functionSchemaParser(sourceFilePath: string): Record<string, Fun
 				if (param.isOptional() || param.hasInitializer()) {
 					paramDef.optional = true;
 				}
-				if (paramDef.description) params.push(paramDef);
+				if (!paramDef.description) {
+					logger.warn(`No description for param ${className}_${methodName}.${param.getName()}`);
+				}
+				params.push(paramDef);
 			});
 
 			const funcDef: FunctionSchema = {
@@ -158,7 +198,10 @@ export function functionSchemaParser(sourceFilePath: string): Record<string, Fun
 				description: methodDescription,
 				parameters: params,
 			};
-			if (returns) funcDef.returns = returns;
+			if (returnType && returnType !== 'void') {
+				funcDef.returnType = returnType;
+				if (returns) funcDef.returns = returns;
+			}
 			functionSchemas[funcDef.name] = funcDef;
 		});
 	});
