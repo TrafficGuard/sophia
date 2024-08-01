@@ -124,10 +124,10 @@ Remember: The goal is to transform ambiguous or contextual information into clea
 As you progress through the task, you may need to:
 
 1. Update the task understanding:
-   Output an updated <revised_task></revised_task> that expands on the original user_request, incorporating new information and applying relevant reasoning techniques.
+   Output an updated <expanded_user_request></expanded_user_request> that expands on the original user_request, incorporating new information and applying relevant reasoning techniques.
 
 2. Refine the plan:
-   Produce an updated <plan_outline></plan_outline> keeping all completed/attempted items, and updating the anticipated future items based on new information and previous function call results/errors.
+   Produce an updated <plan></plan> keeping all completed/attempted items, and updating the anticipated future items based on new information and previous function call results/errors.
    You may compress descriptions of successfully completed item hierarchies while keeping key details.
 
 3. Manage memory:
