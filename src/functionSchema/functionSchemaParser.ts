@@ -122,7 +122,15 @@ export function functionSchemaParser(sourceFilePath: string): Record<string, Fun
 			jsDocs.getTags().forEach((tag: JSDocTag) => {
 				if (tag.getTagName() === 'returns') {
 					returnType = method.getReturnType().getText();
+					// Remove Promise wrapper if present
+					if (returnType.startsWith('Promise<') && returnType.endsWith('>')) {
+						returnType = returnType.slice(8, -1);
+					}
 					returns = tag.getText().replace('@returns', '').trim();
+					// Remove type information from returns if present
+					if (returns.startsWith('{') && returns.includes('}')) {
+						returns = returns.slice(returns.indexOf('}') + 1).trim();
+					}
 					if (returns.length) {
 						returns = returns.charAt(0).toUpperCase() + returns.slice(1);
 					}
@@ -186,6 +194,7 @@ export function functionSchemaParser(sourceFilePath: string): Record<string, Fun
 				name: `${className}_${methodName}`,
 				description: methodDescription,
 				parameters: params,
+				returnType: returnType,
 			};
 			if (returns) funcDef.returns = returns;
 			functionSchemas[funcDef.name] = funcDef;

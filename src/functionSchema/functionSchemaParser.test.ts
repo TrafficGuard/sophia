@@ -46,6 +46,24 @@ export class TestClass {
 	methodReturnsPromise(): Promise<string> {
 		return Promise.resolve('test');
 	}
+
+	/**
+	 * Method with complex return type
+	 * @returns {Record<string, number>} A record of string keys and number values
+	 */
+	@func()
+	methodWithComplexReturnType(): Record<string, number> {
+		return { a: 1, b: 2 };
+	}
+
+	/**
+	 * Method with Promise and complex return type
+	 * @returns {Promise<Record<string, number>>} A promise that resolves to a record of string keys and number values
+	 */
+	@func()
+	methodWithPromiseComplexReturnType(): Promise<Record<string, number>> {
+		return Promise.resolve({ a: 1, b: 2 });
+	}
 }
 
 describe('functionDefinitionParser', () => {
@@ -107,6 +125,29 @@ describe('functionDefinitionParser', () => {
 				description: 'Method with Promise return type',
 				parameters: [],
 				returns: 'A string value',
+				returnType: 'string',
+			});
+		});
+
+		it('should parse method with complex return type correctly', () => {
+			expect(functionSchemas.TestClass_methodWithComplexReturnType).to.deep.equal({
+				class: 'TestClass',
+				name: 'TestClass_methodWithComplexReturnType',
+				description: 'Method with complex return type',
+				parameters: [],
+				returns: 'A record of string keys and number values',
+				returnType: 'Record<string, number>',
+			});
+		});
+
+		it('should parse method with Promise and complex return type correctly', () => {
+			expect(functionSchemas.TestClass_methodWithPromiseComplexReturnType).to.deep.equal({
+				class: 'TestClass',
+				name: 'TestClass_methodWithPromiseComplexReturnType',
+				description: 'Method with Promise and complex return type',
+				parameters: [],
+				returns: 'A promise that resolves to a record of string keys and number values',
+				returnType: 'Record<string, number>',
 			});
 		});
 	});
