@@ -66,7 +66,7 @@ export class TestClass {
 	}
 }
 
-describe('functionDefinitionParser', () => {
+describe.only('functionDefinitionParser', () => {
 	let functionSchemas: Record<string, FunctionSchema>;
 
 	before(async () => {
@@ -115,6 +115,7 @@ describe('functionDefinitionParser', () => {
 				description: 'Method with return type',
 				parameters: [],
 				returns: 'A string value',
+				returnType: 'string',
 			});
 		});
 
