@@ -1,21 +1,12 @@
 import { use } from 'chai';
 import { AgentLLMs, addCost, agentContext } from '#agent/agentContext';
-import { CallerId } from '#llm/llmCallService/llmCallService';
 import { LlmCall } from '#llm/llmCallService/llmCall';
+import { CallerId } from '#llm/llmCallService/llmCallService';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { appContext } from '../../app';
 import { BaseLLM } from '../base-llm';
 import { GenerateTextOptions, combinePrompts, logTextGeneration } from '../llm';
-
-export function mockLLMs(): AgentLLMs {
-	return {
-		easy: new MockLLM(),
-		medium: new MockLLM(),
-		hard: new MockLLM(),
-		xhard: new MockLLM(),
-	};
-}
 
 export class MockLLM extends BaseLLM {
 	lastPrompt = '';
@@ -32,6 +23,10 @@ export class MockLLM extends BaseLLM {
 			(input: string) => 0,
 			(output: string) => 0,
 		);
+	}
+
+	reset() {
+		this.responses.length = 0;
 	}
 
 	setResponse(response: string, callback?: (prompt: string) => void) {
@@ -71,20 +66,18 @@ export class MockLLM extends BaseLLM {
 			if (this.responses.length === 0)
 				throw new Error(`Need to call setResponses on MockLLM before calling generateText for prompt id:${opts?.id ?? '<no id>'} prompt:${userPrompt}`);
 
-			const caller: CallerId = { agentId: agentContext().agentId };
-			const caller: CallerId = { agentId: agentContext().agentId };
 			const llmCallSave: Promise<LlmCall> = appContext().llmCallService.saveRequest({
 				userPrompt,
 				systemPrompt,
 				llmId: this.getId(),
-				caller,
+				agentId: agentContext().agentId,
 				callStack: agentContext().callStack.join(' > '),
 			});
 			const requestTime = Date.now();
 
 			// remove the first item from this.responses
 			const { response: responseText, callback } = this.responses.shift()!;
-
+			logger.info(`this.responses.length ${this.responses.length}`);
 			// Call the callback function if it exists
 			if (callback) {
 				callback(userPrompt);
@@ -97,6 +90,7 @@ export class MockLLM extends BaseLLM {
 			const inputCost = this.calculateInputCost(prompt);
 			const outputCost = this.calculateOutputCost(responseText);
 			const cost = inputCost + outputCost;
+			addCost(cost);
 
 			llmCall.responseText = responseText;
 			llmCall.timeToFirstToken = timeToFirstToken;
@@ -110,9 +104,6 @@ export class MockLLM extends BaseLLM {
 				console.error(e);
 			}
 
-			const inputCost = this.calculateInputCost(prompt);
-			const outputCost = this.calculateOutputCost(responseText);
-			const cost = inputCost + outputCost;
 			span.setAttributes({
 				response: responseText,
 				timeToFirstToken,
@@ -122,10 +113,19 @@ export class MockLLM extends BaseLLM {
 				outputChars: responseText.length,
 			});
 
-			addCost(cost);
-
 			logger.info(`MockLLM response ${responseText}`);
 			return responseText;
 		});
 	}
+}
+
+export const mockLLM = new MockLLM();
+
+export function mockLLMs(): AgentLLMs {
+	return {
+		easy: mockLLM,
+		medium: mockLLM,
+		hard: mockLLM,
+		xhard: mockLLM,
+	};
 }

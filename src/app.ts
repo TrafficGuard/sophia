@@ -35,14 +35,14 @@ export interface AppFastifyInstance extends TypeBoxFastifyInstance, ApplicationC
 
 let applicationContext: ApplicationContext;
 
-// Ensures the functions are registered
+// Ensures all the functions are registered
 functionRegistry();
 
 /**
  * @return the main application context
  */
 export function appContext(): ApplicationContext {
-	// Default to in-memory so unit tests don't initialise every time
+	// Default to in-memory so unit tests don't need to initialise every time
 	applicationContext ??= initInMemoryApplicationContext();
 	return applicationContext;
 }
@@ -50,7 +50,7 @@ export function appContext(): ApplicationContext {
 /**
  * Creates the applications services and starts the Fastify server.
  */
-export async function initApp(): Promise<void> {
+export async function initServer(): Promise<void> {
 	// If the process has the argument --db=file, or DATABASE=file env var, then use file based persistence
 	const args = process.argv.slice(2); // Remove the first two elements (node and script path)
 	const dbArg = args.find((arg) => arg.startsWith('--db='));

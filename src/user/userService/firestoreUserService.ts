@@ -1,5 +1,5 @@
 import { DocumentSnapshot, Firestore } from '@google-cloud/firestore';
-import { LlmResponse } from '#llm/llmCallService/llmRequestResponse';
+import { LlmCall } from '#llm/llmCallService/llmCall';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
 import { isSingleUser } from '#user/userService/userContext';

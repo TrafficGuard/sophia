@@ -7,7 +7,7 @@ import { startAgent } from '#agent/agentRunner';
 import { FileSystem } from '#functions/storage/filesystem';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
-import { LLMCall } from '#llm/llmCallService/llmCallService';
+import { LlmCall } from '#llm/llmCallService/llmCall';
 import { ClaudeLLMs } from '#llm/models/anthropic';
 import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { sleep } from '#utils/async-utils';
@@ -99,9 +99,9 @@ async function answerGaiaQuestion(task: GaiaQuestion): Promise<GaiaResult> {
 
 		// Extract reasoning trace from LLM calls
 		const reasoningTrace: string[] = llmCalls
-			.filter((call: LLMCall) => call.response.responseText.includes('<python-code>'))
+			.filter((call: LlmCall) => call.responseText.includes('<python-code>'))
 			.map((call) => {
-				const match = call.response.responseText.match(/<python-code>(.*?)<\/python-code>/s);
+				const match = call.responseText.match(/<python-code>(.*?)<\/python-code>/s);
 				return match ? match[1].trim() : '';
 			});
 

@@ -8,6 +8,9 @@ theme:
     repo: fontawesome/brands/github
   features:
     - search.suggest
+    - navigation.path
+    - navigation.sections
+    - navigation.expand
 
 markdown_extensions:
   - attr_list
@@ -28,13 +31,19 @@ repo_name: trafficguard/nous
 
 nav:
   - index.md
-  - setup.md
-  - observability.md
-  - functions.md
-  - agents.md
-  - autonomous-agents.md
-  - software-engineer.md
-  - code-review.md
+  - 'Getting stared':
+      - 'Setup': setup.md
+      - 'CLI': getting-started-cli.md
+      - 'Web UI': getting-started-ui.md
+      - 'Environment variables': environment-variables.md
+      - 'Observability': observability.md
+  - Concepts:
+    - functions.md
+    - agent-concepts.md
+  - Agents:
+    - autonomous-agents.md
+    - software-engineer.md
+    - code-review.md
   - integrations.md
   - roadmap.md
   - Blog:

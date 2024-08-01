@@ -1,6 +1,7 @@
 import { OpenAI as OpenAISDK } from 'openai';
-import { addCost, agentContext, getFileSystem } from '#agent/agentContext';
+import { addCost, agentContext } from '#agent/agentContext';
 import { LlmCall } from '#llm/llmCallService/llmCall';
+import { CallerId } from '#llm/llmCallService/llmCallService';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
@@ -88,12 +89,11 @@ export class OpenAI extends BaseLLM {
 				service: this.service,
 			});
 
-			const caller: CallerId = { agentId: agentContext().agentId };
 			const llmCallSave: Promise<LlmCall> = appContext().llmCallService.saveRequest({
 				userPrompt,
 				systemPrompt,
 				llmId: this.getId(),
-				caller,
+				agentId: agentContext().agentId,
 				callStack: agentContext().callStack.join(' > '),
 			});
 			const requestTime = Date.now();
@@ -112,7 +112,7 @@ export class OpenAI extends BaseLLM {
 
 			const stream = await this.sdk().chat.completions.create({
 				model: this.model,
-				response_format: { type: opts.type === 'json' ? 'json_object' : 'text' },
+				response_format: { type: opts?.type === 'json' ? 'json_object' : 'text' },
 				messages,
 				stream: true,
 			});
@@ -126,20 +126,16 @@ export class OpenAI extends BaseLLM {
 
 			const llmCall: LlmCall = await llmCallSave;
 
+			const inputCost = this.calculateInputCost(prompt);
+			const outputCost = this.calculateOutputCost(responseText);
+			const cost = inputCost + outputCost;
+
 			llmCall.responseText = responseText;
 			llmCall.timeToFirstToken = timeToFirstToken;
 			llmCall.totalTime = finishTime - requestTime;
+			llmCall.cost = cost;
+			addCost(cost);
 
-			const inputCost = this.calculateInputCost(prompt);
-			const outputCost = this.calculateOutputCost(responseText);
-			llmCall.cost = inputCost + outputCost;
-
-			try {
-				await appContext().llmCallService.saveResponse(llmCall);
-			} catch (e) {
-				// queue to save
-				logger.error(e);
-			}
 			span.setAttributes({
 				inputChars: prompt.length,
 				outputChars: responseText.length,
@@ -149,7 +145,12 @@ export class OpenAI extends BaseLLM {
 				cost,
 			});
 
-			addCost(cost);
+			try {
+				await appContext().llmCallService.saveResponse(llmCall);
+			} catch (e) {
+				// queue to save
+				logger.error(e);
+			}
 
 			return responseText;
 		});

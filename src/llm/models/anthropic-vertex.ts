@@ -5,8 +5,8 @@ import { BaseLLM } from '../base-llm';
 import { MaxTokensError } from '../errors';
 import { GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../llm';
 import Message = Anthropic.Message;
-import { CallerId } from '#llm/llmCallService/llmCallService';
 import { LlmCall } from '#llm/llmCallService/llmCall';
+import { CallerId } from '#llm/llmCallService/llmCallService';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
@@ -115,13 +115,11 @@ class AnthropicVertexLLM extends BaseLLM {
 			});
 			if (opts?.id) span.setAttribute('id', opts.id);
 
-			const caller: CallerId = { agentId: agentContext().agentId };
-			const caller: CallerId = { agentId: agentContext().agentId };
 			const llmCallSave: Promise<LlmCall> = appContext().llmCallService.saveRequest({
 				userPrompt,
 				systemPrompt,
 				llmId: this.getId(),
-				caller,
+				agentId: agentContext().agentId,
 				callStack: agentContext().callStack.join(' > '),
 			});
 			const requestTime = Date.now();
@@ -168,29 +166,19 @@ class AnthropicVertexLLM extends BaseLLM {
 
 			const llmCall: LlmCall = await llmCallSave;
 
+			// TODO
+			const inputTokens = message.usage.input_tokens;
+			const outputTokens = message.usage.output_tokens;
+
 			const inputCost = this.calculateInputCost(combinedPrompt);
 			const outputCost = this.calculateOutputCost(responseText);
 			const cost = inputCost + outputCost;
+			addCost(cost);
 
 			llmCall.responseText = responseText;
 			llmCall.timeToFirstToken = timeToFirstToken;
 			llmCall.totalTime = finishTime - requestTime;
 			llmCall.cost = cost;
-
-			try {
-				await appContext().llmCallService.saveResponse(llmCall);
-			} catch (e) {
-				// queue to save
-				logger.error(e);
-			}
-
-			const inputTokens = message.usage.input_tokens;
-			const outputTokens = message.usage.output_tokens;
-			const inputCost = this.calculateInputCost(combinedPrompt);
-			const outputCost = this.calculateOutputCost(responseText);
-			const cost = inputCost + outputCost;
-
-			addCost(cost);
 
 			span.setAttributes({
 				inputTokens,
@@ -203,19 +191,17 @@ class AnthropicVertexLLM extends BaseLLM {
 				callStack: agentContext().callStack.join(' > '),
 			});
 
+			try {
+				await appContext().llmCallService.saveResponse(llmCall);
+			} catch (e) {
+				// queue to save
+				logger.error(e);
+			}
+
 			if (message.stop_reason === 'max_tokens') {
 				// TODO we can replay with request with the current response appended so the LLM can complete it
 				logger.error('= RESPONSE exceeded max tokens ===============================');
 				logger.debug(responseText);
-				console.log('==================================================');
-				console.log('==================================================');
-				console.log();
-				console.log();
-				console.log(responseText);
-				console.log();
-				console.log();
-				console.log('==================================================');
-				console.log('==================================================');
 				throw new MaxTokensError(maxOutputTokens, responseText);
 			}
 			return responseText;

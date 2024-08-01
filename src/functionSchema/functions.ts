@@ -15,6 +15,7 @@ export interface FunctionSchema {
 	description: string;
 	parameters: FunctionParameter[];
 	returns?: string;
+	returnType?: string;
 }
 
 export interface FunctionParameter {

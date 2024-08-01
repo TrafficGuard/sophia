@@ -25,7 +25,7 @@ describe('LocalFileStore', () => {
 		await fs.promises.rm(localFileStore.basePath, { recursive: true, force: true });
 	});
 
-	it.skip('should save a file successfully with metadata', async () =>
+	it('should save a file successfully with metadata', async () =>
 		withContext(async () => {
 			const localFileStore = new LocalFileStore();
 			const filename = 'test-file.txt';
@@ -34,11 +34,11 @@ describe('LocalFileStore', () => {
 
 			await localFileStore.saveFile(filename, contents, description);
 
-			const fullPath = path.join(localFileStore.basePath, filename);
+			const fullPath = path.join(localFileStore.basePath, testAgentId, filename);
 			const savedContents = await fs.promises.readFile(fullPath, 'utf8');
 			expect(savedContents).to.equal(contents);
 
-			const metadataPath = path.join(localFileStore.basePath, '.metadata.json');
+			const metadataPath = path.join(localFileStore.basePath, testAgentId, '.metadata.json');
 			const metadataContents = await fs.promises.readFile(metadataPath, 'utf8');
 			const metadata = JSON.parse(metadataContents);
 			expect(metadata[filename]).to.exist;

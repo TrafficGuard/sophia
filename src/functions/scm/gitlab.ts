@@ -210,9 +210,9 @@ export class GitLab implements SourceControlManagement {
 
 	/**
 	 * Creates a Merge request
-	 * @param title {string} The title of the merge request
-	 * @param description {string} The description of the merge request
-	 * @param targetBranch {string} The branch to merge to
+	 * @param {string} title The title of the merge request
+	 * @param {string} description The description of the merge request
+	 * @param {string} targetBranch The branch to merge to
 	 * @return the merge request URL if available, else null
 	 */
 	@func()

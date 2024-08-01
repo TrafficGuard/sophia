@@ -152,8 +152,8 @@ export class FileSystem {
 	 * @returns the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
 	 */
 	@func()
-	async getFileContentsRecursivelyAsXml(dirPath: string, storeToMemory: boolean): Promise<string> {
-		const filenames = await this.listFilesRecursively(dirPath);
+	async getFileContentsRecursivelyAsXml(dirPath: string, storeToMemory: boolean, filter: (path) => boolean = () => true): Promise<string> {
+		const filenames = (await this.listFilesRecursively(dirPath)).filter(filter);
 		const contents = await this.readFilesAsXml(filenames);
 		if (storeToMemory) agentContext().memory[`file-contents-${join(this.getWorkingDirectory(), dirPath)}`] = contents;
 		return contents;
@@ -323,7 +323,7 @@ export class FileSystem {
 
 	/**
 	 * Gets the contents of a list of local files, which must be relative to the current working directory
-	 * @param filePaths {Array<string>} The files paths to read the contents
+	 * @param {Array<string>} filePaths The files paths to read the contents
 	 * @returns {Promise<Map<string, string>>} the contents of the files in a Map object keyed by the file path
 	 */
 	async readFiles(filePaths: string[]): Promise<Map<string, string>> {
@@ -342,7 +342,7 @@ export class FileSystem {
 
 	/**
 	 * Gets the contents of a list of files, returning a formatted XML string of all file contents
-	 * @param filePaths {Array<string>} The files paths to read the contents of
+	 * @param {Array<string>} filePaths The files paths to read the contents of
 	 * @returns {Promise<string>} the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
 	 */
 	@func()
@@ -404,14 +404,15 @@ export class FileSystem {
 	async writeFile(filePath: string, contents: string): Promise<void> {
 		const fileSystemPath = filePath.startsWith(this.basePath) ? filePath : join(this.getWorkingDirectory(), filePath);
 		logger.info(`Writing file "${filePath}" to ${fileSystemPath}`);
-		await promisify(fs.mkdir)(fileSystemPath, { recursive: true });
+		const parentPath = join(filePath, '..'); // what if we're in a root folder? unlikely
+		await promisify(fs.mkdir)(parentPath, { recursive: true });
 		writeFileSync(fileSystemPath, contents);
 	}
 
 	/**
 	 * Reads a file, then transforms the contents using a LLM to perform the described changes, then writes back to the file.
-	 * @param filePath {string} The file to update
-	 * @param descriptionOfChanges {string} A natual language description of the changes to make to the file contents
+	 * @param {string} filePath The file to update
+	 * @param {string} descriptionOfChanges A natual language description of the changes to make to the file contents
 	 */
 	@func()
 	async editFileContents(filePath: string, descriptionOfChanges: string): Promise<void> {

@@ -13,7 +13,7 @@ import {
 } from '#agent/agentRunner';
 import { PY_AGENT_SPAN, convertTypeScriptToPython } from '#agent/pythonAgentRunner';
 import { TEST_FUNC_NOOP, TEST_FUNC_SKY_COLOUR, TEST_FUNC_SUM, TEST_FUNC_THROW_ERROR, THROW_ERROR_TEXT, TestFunctions } from '#functions/testFunctions';
-import { MockLLM } from '#llm/models/mock-llm';
+import { MockLLM, mockLLM, mockLLMs } from '#llm/models/mock-llm';
 import { logger } from '#o11y/logger';
 import { setTracer } from '#o11y/trace';
 import { User } from '#user/user';
@@ -38,13 +38,7 @@ const SKY_COLOUR_FUNCTION_CALL_PLAN = `<response>\n<plan>Get the sky colour</pla
 
 describe('pythonAgentRunner', () => {
 	const ctx = initInMemoryApplicationContext();
-	let mockLLM = new MockLLM();
-	let llms: AgentLLMs = {
-		easy: mockLLM,
-		medium: mockLLM,
-		hard: mockLLM,
-		xhard: mockLLM,
-	};
+
 	let functions = new LlmFunctions();
 	const AGENT_NAME = 'test';
 
@@ -54,7 +48,7 @@ describe('pythonAgentRunner', () => {
 			initialPrompt: 'test prompt',
 			systemPrompt: '<functions></functions>',
 			type: 'python',
-			llms,
+			llms: mockLLMs(),
 			functions,
 			user: ctx.userService.getSingleUser(),
 		};
@@ -88,13 +82,7 @@ describe('pythonAgentRunner', () => {
 		initInMemoryApplicationContext();
 		// This is needed for the tests on the LlmCall.callStack property
 		setTracer(null, agentContextStorage);
-		mockLLM = new MockLLM();
-		llms = {
-			easy: mockLLM,
-			medium: mockLLM,
-			hard: mockLLM,
-			xhard: mockLLM,
-		};
+		mockLLM.reset();
 		functions = new LlmFunctions();
 	});
 
@@ -177,9 +165,10 @@ describe('pythonAgentRunner', () => {
 			expect(agent.state).to.equal('feedback');
 
 			let postFeedbackPrompt: string;
-			mockLLM.addResponse(COMPLETE_FUNCTION_CALL_PLAN, (prompt) => {
+			(agent.llms.hard as MockLLM).addResponse(COMPLETE_FUNCTION_CALL_PLAN, (prompt) => {
 				postFeedbackPrompt = prompt;
 			});
+			logger.info('Providing feedback...');
 			await provideFeedback(agent.agentId, agent.executionId, feedbackNote);
 			agent = await waitForAgent();
 
@@ -187,6 +176,7 @@ describe('pythonAgentRunner', () => {
 			// TODO check that the note is after the <python-code> block
 			// in the function call results.
 			// Should have all the calls from that iterations in the results not the history
+			expect(postFeedbackPrompt).to.not.be.undefined;
 			expect(postFeedbackPrompt).to.include(feedbackNote);
 			expect(agent.state).to.equal('completed');
 			expect(agent.functionCallHistory[0].stdout).to.equal(feedbackNote);
@@ -291,7 +281,7 @@ describe('pythonAgentRunner', () => {
 		});
 	});
 
-	describe.only('LLM calls', () => {
+	describe('LLM calls', () => {
 		it('should have the call stack', async () => {
 			functions.addFunctionClass(TestFunctions);
 			mockLLM.addResponse(SKY_COLOUR_FUNCTION_CALL_PLAN);
@@ -305,8 +295,8 @@ describe('pythonAgentRunner', () => {
 			const calls = await appContext().llmCallService.getLlmCallsForAgent(agent.agentId);
 			expect(calls.length).to.equal(3);
 			const skyCall = calls[1];
-			expect(skyCall.response.callStack).to.equal(`${AGENT_NAME} > ${PY_AGENT_SPAN} > skyColour > generateText`);
-			expect(skyCall.response.responseText).to.equal('blue');
+			expect(skyCall.callStack).to.equal(`${AGENT_NAME} > ${PY_AGENT_SPAN} > skyColour > generateText`);
+			expect(skyCall.responseText).to.equal('blue');
 		});
 	});
 

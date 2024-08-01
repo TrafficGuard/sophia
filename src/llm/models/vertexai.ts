@@ -1,7 +1,8 @@
 import { HarmBlockThreshold, HarmCategory, SafetySetting, VertexAI } from '@google-cloud/vertexai';
+import axios from 'axios';
 import { AgentLLMs, addCost, agentContext } from '#agent/agentContext';
+import { CreateLlmRequest, LlmCall } from '#llm/llmCallService/llmCall';
 import { CallerId } from '#llm/llmCallService/llmCallService';
-import { CreateLlmResponse } from '#llm/llmCallService/llmRequestResponse';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
@@ -99,59 +100,64 @@ class VertexLLM extends BaseLLM {
 				service: this.service,
 			});
 
-			const caller: CallerId = { agentId: agentContext().agentId };
-			const llmRequestSave = appContext().llmCallService.saveRequest(userPrompt, systemPrompt);
+			const llmCallSave: Promise<LlmCall> = appContext().llmCallService.saveRequest({
+				userPrompt,
+				systemPrompt,
+				llmId: this.getId(),
+				agentId: agentContext().agentId,
+				callStack: agentContext().callStack.join(' > '),
+			});
 			const requestTime = Date.now();
 
-			const generativeModel = this.vertex().getGenerativeModel({
-				model: this.model,
-				systemInstruction: systemPrompt ? { role: 'system', parts: [{ text: systemPrompt }] } : undefined,
-				generationConfig: {
-					maxOutputTokens: 8192,
-					temperature: opts?.temperature,
-					topP: opts?.temperature,
-					stopSequences: opts?.stopSequences,
-				},
-				safetySettings: SAFETY_SETTINGS,
-			});
-
-			// const request = {
-			// 	contents: [{ role: 'user', parts: [{ text: prompt }] }],
-			// };
-
-			// const inputTokens = await generativeModel.countTokens(request);
-
-			const streamingResp = await generativeModel.generateContentStream(userPrompt);
 			let responseText = '';
-			let timeToFirstToken = null;
-			for await (const item of streamingResp.stream) {
-				if (!timeToFirstToken) timeToFirstToken = Date.now() - requestTime;
-				if (item.candidates[0]?.content?.parts?.length > 0) {
-					responseText += item.candidates[0].content.parts[0].text;
+			let timeToFirstToken: number;
+
+			if (this.model.includes('Llama')) {
+				responseText = await restCall(userPrompt, systemPrompt);
+				timeToFirstToken = Date.now();
+			} else {
+				const generativeModel = this.vertex().getGenerativeModel({
+					model: this.model,
+					systemInstruction: systemPrompt ? { role: 'system', parts: [{ text: systemPrompt }] } : undefined,
+					generationConfig: {
+						maxOutputTokens: 8192,
+						temperature: opts?.temperature,
+						topP: opts?.temperature,
+						stopSequences: opts?.stopSequences,
+					},
+					safetySettings: SAFETY_SETTINGS,
+				});
+
+				const streamingResp = await generativeModel.generateContentStream(userPrompt);
+
+				let timeToFirstToken = null;
+				for await (const item of streamingResp.stream) {
+					if (!timeToFirstToken) timeToFirstToken = Date.now() - requestTime;
+					if (item.candidates[0]?.content?.parts?.length > 0) {
+						responseText += item.candidates[0].content.parts[0].text;
+					}
+					// if(item.usageMetadata)
 				}
 			}
 
-			const finishTime = Date.now();
-			const llmRequest = await llmRequestSave;
-			const llmResponse: CreateLlmResponse = {
-				llmId: this.getId(),
-				llmRequestId: llmRequest.id,
-				responseText: responseText,
-				requestTime,
-				timeToFirstToken,
-				totalTime: finishTime - requestTime,
-				callStack: agentContext().callStack.join(' > '),
-			};
-			logger.info(`Call stack: ${agentContext().callStack.join(' > ')}`);
-			try {
-				await appContext().llmCallService.saveResponse(llmRequest.id, caller, llmResponse);
-			} catch (e) {
-				logger.error(e);
-			}
+			const llmCall: LlmCall = await llmCallSave;
 
 			const inputCost = this.calculateInputCost(userPrompt + (systemPrompt ?? ''));
 			const outputCost = this.calculateOutputCost(responseText);
 			const cost = inputCost + outputCost;
+
+			const finishTime = Date.now();
+
+			llmCall.responseText = responseText;
+			llmCall.timeToFirstToken = timeToFirstToken;
+			llmCall.totalTime = finishTime;
+
+			try {
+				await appContext().llmCallService.saveResponse(llmCall);
+			} catch (e) {
+				// queue to save
+				logger.error(e);
+			}
 
 			span.setAttributes({
 				inputChars: promptLength,
@@ -165,6 +171,64 @@ class VertexLLM extends BaseLLM {
 
 			return responseText;
 		});
+	}
+}
+
+async function restCall(userPrompt: string, systemPrompt: string): Promise<string> {
+	// Replace these placeholders with actual values
+	const ACCESS_TOKEN = ''; // You can run `$(gcloud auth print-access-token)` manually to get this
+
+	// Define the payload as an object
+
+	const messages = [];
+	// if(systemPrompt) messages.push({
+	// 	"role": "system",
+	// 	"content": systemPrompt
+	// })
+	// messages.push({
+	// 	"role": "user",
+	// 	"content": userPrompt
+	// })
+	messages.push({
+		role: 'user',
+		content: combinePrompts(userPrompt, systemPrompt),
+	});
+
+	const payload = {
+		model: 'meta/llama3-405b-instruct-maas',
+		stream: false,
+		messages,
+	};
+
+	// Create the request configuration
+	const config = {
+		headers: {
+			Authorization: `Bearer ${ACCESS_TOKEN}`,
+			'Content-Type': 'application/json',
+		},
+	};
+
+	const REGION = 'us-central1';
+	const ENDPOINT = `${REGION}-aiplatform.googleapis.com`;
+	const PROJECT_ID = 'tg-infra-dev';
+	try {
+		const url = `https://${ENDPOINT}/v1beta1/projects/${PROJECT_ID}/locations/${REGION}/endpoints/openapi/chat/completions`;
+		const response: any = await axios.post(url, payload, config);
+
+		console.log(typeof response);
+
+		// response = '{"data":' + response.substring(4) + "}"
+		console.log(response.data);
+		// const data = JSON.parse(response).data
+		const data = response.data;
+		console.log(data);
+		// console.log(data.choices)
+		const content = data.choices[0].delta.content;
+		console.log('Response:', content);
+		return content;
+	} catch (error) {
+		console.error('Error:', error);
+		throw error;
 	}
 }
 

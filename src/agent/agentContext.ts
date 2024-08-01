@@ -153,14 +153,19 @@ export function getFileSystem(): FileSystem {
 	return filesystem;
 }
 
+/**
+ * After we have added functions or deserialized an agent, we need to make sure that if the
+ * agent has the FileSystem function available that it's the same object as the FileSystem on the agent context
+ * @param agent
+ */
 function resetFileSystemFunction(agent: AgentContext) {
-	// TODO create a test for this that the context.filesystem is the same reference as the context.functions["FileSystem"]}
 	// Make sure we have the same FileSystem object on the context and in the functions
 	const functions: LlmFunctions = Array.isArray(agent.functions) ? new LlmFunctions(...agent.functions) : agent.functions;
 	if (functions.getFunctionClassNames().includes(FileSystem.name)) {
 		functions.removeFunctionClass(FileSystem.name);
 		functions.addFunctionInstance(agent.fileSystem, FileSystem.name);
 	}
+	agent.functions = functions;
 }
 
 export function createContext(config: RunAgentConfig): AgentContext {
@@ -171,7 +176,7 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		executionId: randomUUID(),
 		traceId: '',
 		name: config.agentName,
-		type: config.type ?? 'xml',
+		type: config.type ?? 'python',
 		user: config.user ?? currentUser(),
 		inputPrompt: '',
 		userPrompt: config.initialPrompt,
@@ -249,6 +254,7 @@ export async function deserializeAgentContext(serialized: Record<string, any>): 
 
 	context.fileSystem = new FileSystem().fromJSON(serialized.fileSystem);
 	context.functions = new LlmFunctions().fromJSON(serialized.functions ?? serialized.toolbox); // toolbox for backward compat
+
 	resetFileSystemFunction(context as AgentContext); // TODO add a test for this
 
 	context.memory = serialized.memory;

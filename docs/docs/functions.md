@@ -1,12 +1,12 @@
-# LLM Function calling
+# LLM Function schemas
 
-Nous provides an automated way to create LLM functions schemas, avoiding the duplicate work of creating a function schema separate from the code implementation. 
+Nous provides an automated way to create LLM function schemas, avoiding the duplicate work of creating a function schema separate from the code implementation. 
 
 The *ts-morph* package is used to parse the source code at build-time/runtime to generate the schemas.
 
 ## Defining functions
 
-The following is an example of a class which exposes class methods as callable functions by the LLM agents.
+The following is an example of a class which exposes class methods as callable functions to the LLM agents.
 
 ```typescript
 import { func, funcClass } from '#functionSchema/functions';
@@ -55,16 +55,16 @@ For array type arguments the runtime will convert a string that is a JSON array 
 
 Currently, functions can only be made available as a group of all the functions defined in a class.
 
-On the roadmap is fine-grained selection of functions.
-
 ```typescript
-const config: RunAgentConfig = {
+import { GitLab } from '#functions/gitlab'
+import { Jira } from '#functions/jira'
+
+await runAgent({
     agentName: 'ABC-123 discovery',
     llms: GPT(),
     functions: [GitLab, Jira],
     initialPrompt: "What project in GitLab has the code to complete Jira ABC-123?",
-};
-const response = await runAgent(config)
+})
 ```
 
 Each iteration of the autonomous agent control loop updates the system prompt with the available functions,

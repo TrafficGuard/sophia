@@ -4,8 +4,8 @@ import sinon from 'sinon';
 import { logger } from '#o11y/logger';
 
 import { FirestoreLlmCallService } from '#llm/llmCallService/firestoreLlmCallService';
+import { CreateLlmRequest, LlmCall } from '#llm/llmCallService/llmCall';
 import { LlmCallService } from '#llm/llmCallService/llmCallService';
-import {CreateLlmRequest, LlmCall} from '#llm/llmCallService/llmCall';
 
 const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST;
 
@@ -40,7 +40,6 @@ describe('FirestoreLlmCallService', () => {
 		}
 	});
 
-
 	describe('saveRequest and getCall', () => {
 		it('should save a request and retrieve it', async () => {
 			const request: CreateLlmRequest = {
@@ -48,8 +47,8 @@ describe('FirestoreLlmCallService', () => {
 				systemPrompt: 'Test system prompt',
 				description: 'Test description',
 				llmId: 'test-llm',
-				caller: { agentId: 'test-agent' },
-				callStack: 'test > call > stack'
+				agentId: 'test-agent',
+				callStack: 'test > call > stack',
 			};
 
 			const savedRequest = await service.saveRequest(request);
@@ -62,7 +61,7 @@ describe('FirestoreLlmCallService', () => {
 			expect(retrievedCall.systemPrompt).to.equal(request.systemPrompt);
 			expect(retrievedCall.description).to.equal(request.description);
 			expect(retrievedCall.llmId).to.equal(request.llmId);
-			expect(retrievedCall.caller).to.deep.equal(request.caller);
+			expect(retrievedCall.agentId).to.equal(request.agentId);
 			expect(retrievedCall.callStack).to.equal(request.callStack);
 		});
 	});
@@ -74,8 +73,8 @@ describe('FirestoreLlmCallService', () => {
 				systemPrompt: 'Test system prompt',
 				description: 'Test description',
 				llmId: 'test-llm',
-				caller: { agentId: 'test-agent', userId: 'test-user' },
-				callStack: 'test > call > stack'
+				agentId: 'test-agent',
+				callStack: 'test > call > stack',
 			};
 
 			const savedRequest = await service.saveRequest(request);
@@ -85,7 +84,7 @@ describe('FirestoreLlmCallService', () => {
 				responseText: 'Test response',
 				cost: 0.1,
 				timeToFirstToken: 100,
-				totalTime: 500
+				totalTime: 500,
 			};
 
 			await service.saveResponse(response);
@@ -97,7 +96,7 @@ describe('FirestoreLlmCallService', () => {
 			expect(retrievedCall.systemPrompt).to.equal(response.systemPrompt);
 			expect(retrievedCall.description).to.equal(response.description);
 			expect(retrievedCall.llmId).to.equal(response.llmId);
-			expect(retrievedCall.caller).to.deep.equal(response.caller);
+			expect(retrievedCall.agentId).to.equal(request.agentId);
 			expect(retrievedCall.callStack).to.equal(response.callStack);
 			expect(retrievedCall.responseText).to.equal(response.responseText);
 			expect(retrievedCall.cost).to.equal(response.cost);
@@ -111,21 +110,21 @@ describe('FirestoreLlmCallService', () => {
 			const agentId = 'test-agent';
 			const requests: CreateLlmRequest[] = [
 				{
+					agentId,
 					userPrompt: 'Test user prompt 1',
 					systemPrompt: 'Test system prompt 1',
 					description: 'Test description 1',
 					llmId: 'test-llm-1',
-					caller: { agentId, userId: 'test-user-1' },
-					callStack: 'test > call > stack'
+					callStack: 'test > call > stack',
 				},
 				{
+					agentId,
 					userPrompt: 'Test user prompt 2',
 					systemPrompt: 'Test system prompt 2',
 					description: 'Test description 2',
 					llmId: 'test-llm-2',
-					caller: { agentId, userId: 'test-user-2' },
-					callStack: 'test > call > stack'
-				}
+					callStack: 'test > call > stack',
+				},
 			];
 
 			for (const request of requests) {
@@ -135,14 +134,14 @@ describe('FirestoreLlmCallService', () => {
 					responseText: `Response for ${request.userPrompt}`,
 					cost: 0.1,
 					timeToFirstToken: 100,
-					totalTime: 500
+					totalTime: 500,
 				});
 			}
 
 			const calls = await service.getLlmCallsForAgent(agentId);
 			expect(calls).to.have.lengthOf(2);
-			calls.forEach(call => {
-				expect(call.caller.agentId).to.equal(agentId);
+			calls.forEach((call) => {
+				expect(call).to.have.property('agentId');
 				expect(call).to.have.property('id');
 				expect(call).to.have.property('userPrompt');
 				expect(call).to.have.property('systemPrompt');

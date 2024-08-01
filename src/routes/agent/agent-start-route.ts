@@ -7,8 +7,9 @@ import { logger } from '#o11y/logger';
 import { AppFastifyInstance } from '../../app';
 
 import { startAgent } from '#agent/agentRunner';
-import { functionFactory } from '#functionSchema/functionDecorators';
 import { currentUser } from '#user/userService/userContext';
+
+import { functionFactory } from '#functionSchema/functionDecorators';
 
 const v1BasePath = '/api/agent/v1';
 export async function agentStartRoute(fastify: AppFastifyInstance) {
@@ -35,14 +36,14 @@ export async function agentStartRoute(fastify: AppFastifyInstance) {
 
 			logger.info(req.body, `Starting agent ${name}`);
 
-			logger.info(Object.keys(functionFactory));
+			logger.info(Object.keys(functionFactory()));
 			const llmFunctions = new LlmFunctions();
 			for (const functionClassName of functions) {
-				const functionClass = functionFactory[functionClassName];
+				const functionClass = functionFactory()[functionClassName];
 				if (!functionClass) {
 					logger.error(`Function class ${functionClassName} not found in the functionFactory`);
 				} else {
-					llmFunctions.addFunctionClass(functionFactory[functionClassName]);
+					llmFunctions.addFunctionClass(functionFactory()[functionClassName]);
 				}
 			}
 

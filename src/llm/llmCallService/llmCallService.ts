@@ -1,24 +1,16 @@
-import { CreateLlmResponse, LlmRequest, LlmResponse, SystemPrompt } from '#llm/llmCallService/llmRequestResponse';
+import { CreateLlmRequest, LlmCall, LlmRequest } from '#llm/llmCallService/llmCall';
+
 export interface CallerId {
 	agentId?: string;
 	userId?: string;
 }
 
-export interface LLMCall {
-	request: LlmRequest;
-	response: LlmResponse;
-}
-
 export interface LlmCallService {
-	saveRequest(userPrompt: string, systemPrompt?: string, variationSourceId?: number, variationNote?: string): Promise<LlmRequest>;
+	saveRequest(request: CreateLlmRequest): Promise<LlmCall>;
 
-	getRequest(llmRequestId: number): Promise<LlmRequest | null>;
+	saveResponse(llmCall: LlmCall): Promise<void>;
 
-	getSystemPromptByText(promptText: string): Promise<SystemPrompt | null>;
+	getCall(llmCallId: string): Promise<LlmCall | null>;
 
-	saveResponse(requestId: number, caller: CallerId, llmResponse: CreateLlmResponse): Promise<string>;
-
-	getResponse(llmResponseId: string): Promise<LlmResponse | null>;
-
-	getLlmCallsForAgent(agentId: string): Promise<LLMCall[]>;
+	getLlmCallsForAgent(agentId: string): Promise<LlmCall[]>;
 }

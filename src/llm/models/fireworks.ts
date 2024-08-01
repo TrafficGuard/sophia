@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import { addCost, agentContext } from '#agent/agentContext';
-import { CallerId } from '#llm/llmCallService/llmCallService';
 import { LlmCall } from '#llm/llmCallService/llmCall';
+import { CallerId } from '#llm/llmCallService/llmCallService';
 import { withSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { sleep } from '#utils/async-utils';
@@ -52,13 +52,11 @@ export class FireworksLLM extends BaseLLM {
 				service: this.service,
 			});
 
-			const caller: CallerId = { agentId: agentContext().agentId };
-			const caller: CallerId = { agentId: agentContext().agentId };
 			const llmCallSave: Promise<LlmCall> = appContext().llmCallService.saveRequest({
 				userPrompt,
 				systemPrompt,
 				llmId: this.getId(),
-				caller,
+				agentId: agentContext().agentId,
 				callStack: agentContext().callStack.join(' > '),
 			});
 			const requestTime = Date.now();
@@ -84,14 +82,15 @@ export class FireworksLLM extends BaseLLM {
 
 				const responseText = completion.choices[0].message.content;
 
-				const timeToFirstToken = Date.now() - requestTime;
-				const finishTime = Date.now();
-
 				const llmCall: LlmCall = await llmCallSave;
 
 				const inputCost = this.calculateInputCost(prompt);
 				const outputCost = this.calculateOutputCost(responseText);
 				const cost = inputCost + outputCost;
+				addCost(cost);
+
+				const timeToFirstToken = Date.now() - requestTime;
+				const finishTime = Date.now();
 
 				llmCall.responseText = responseText;
 				llmCall.timeToFirstToken = timeToFirstToken;
@@ -112,8 +111,6 @@ export class FireworksLLM extends BaseLLM {
 					cost,
 					outputChars: responseText.length,
 				});
-
-				addCost(cost);
 
 				return responseText;
 			} catch (e) {

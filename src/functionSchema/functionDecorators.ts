@@ -7,6 +7,13 @@ import { FUNC_SEP, FunctionSchema, getFunctionSchemas, setFunctionSchemas } from
 
 export const FUNC_DECORATOR_NAME = 'func';
 
+let _functionFactory = {};
+
+export function functionFactory() {
+	if (_functionFactory === undefined) _functionFactory = {};
+	return _functionFactory;
+}
+
 /**
  * Decorator which flags a class method to be exposed as a function for the agents.
  */
@@ -75,8 +82,6 @@ export function func() {
 	};
 }
 
-export const functionFactory = {};
-
 /**
  * Decorator for classes which contain functions to make available to the LLMs.
  * This is required so ts-morph can read the source code to dynamically generate the schemas.
@@ -84,7 +89,7 @@ export const functionFactory = {};
  */
 export function funcClass(filename: string) {
 	return function ClassDecorator<C extends new (...args: any[]) => any>(target: C, _ctx: ClassDecoratorContext) {
-		functionFactory[target.name] = target;
+		functionFactory()[target.name] = target;
 		setFunctionSchemas(target, functionSchemaParser(filename));
 		return target;
 	};

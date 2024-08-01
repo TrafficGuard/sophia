@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
+import { CreateLlmRequest, LlmCall, LlmRequest } from '#llm/llmCallService/llmCall';
 import { CallerId, LlmCallService } from '#llm/llmCallService/llmCallService';
-import { LlmRequest, LlmCall, CreateLlmRequest } from '#llm/llmCallService/llmCall';
 
 export class InMemoryLlmCallService implements LlmCallService {
 	llmCallStore = new Map<string, LlmCall>();
@@ -10,7 +10,7 @@ export class InMemoryLlmCallService implements LlmCallService {
 	}
 
 	async getLlmCallsForAgent(agentId: string): Promise<LlmCall[]> {
-		return Array.from(this.llmCallStore.values()).filter(call => call.agentId === agentId);
+		return Array.from(this.llmCallStore.values()).filter((call) => call.agentId === agentId);
 	}
 
 	async saveRequest(request: CreateLlmRequest): Promise<LlmCall> {
@@ -19,7 +19,7 @@ export class InMemoryLlmCallService implements LlmCallService {
 		const llmCall: LlmCall = {
 			id,
 			...request,
-			requestTime
+			requestTime,
 		};
 		this.llmCallStore.set(id, llmCall);
 		return llmCall;

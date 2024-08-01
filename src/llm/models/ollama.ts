@@ -1,7 +1,7 @@
-/drop togimport axios from 'axios';
+import axios from 'axios';
 import { AgentLLMs, agentContext } from '#agent/agentContext';
-import { CallerId } from '#llm/llmCallService/llmCallService';
 import { LlmCall } from '#llm/llmCallService/llmCall';
+import { CallerId } from '#llm/llmCallService/llmCallService';
 import { withActiveSpan } from '#o11y/trace';
 import { appContext } from '../../app';
 import { BaseLLM } from '../base-llm';
@@ -35,13 +35,11 @@ export class OllamaLLM extends BaseLLM {
 				service: this.service,
 			});
 
-			const caller: CallerId = { agentId: agentContext().agentId };
-			const caller: CallerId = { agentId: agentContext().agentId };
 			const llmCallSave: Promise<LlmCall> = appContext().llmCallService.saveRequest({
 				userPrompt,
 				systemPrompt,
 				llmId: this.getId(),
-				caller,
+				agentId: agentContext().agentId,
 				callStack: agentContext().callStack.join(' > '),
 			});
 			const requestTime = Date.now();
@@ -58,21 +56,16 @@ export class OllamaLLM extends BaseLLM {
 				},
 			});
 
-			console.log(response);
 			const responseText = response.data.response;
 			const timeToFirstToken = Date.now() - requestTime;
 			const finishTime = Date.now();
 
 			const llmCall: LlmCall = await llmCallSave;
 
-			const inputCost = this.calculateInputCost(prompt);
-			const outputCost = this.calculateOutputCost(responseText);
-			const cost = inputCost + outputCost;
-
 			llmCall.responseText = responseText;
 			llmCall.timeToFirstToken = timeToFirstToken;
 			llmCall.totalTime = finishTime - requestTime;
-			llmCall.cost = cost;
+			llmCall.cost = 0; // VM cost?
 
 			try {
 				await appContext().llmCallService.saveResponse(llmCall);

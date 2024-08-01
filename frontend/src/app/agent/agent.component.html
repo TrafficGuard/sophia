@@ -309,19 +309,19 @@
 
   <mat-tab label="LLM Calls">
     <mat-card *ngFor="let call of llmCalls; let i = index">
-      <mat-card-title id="{{ call.response.id }}"
-        >{{ call.response.callStack }} {{ call.response.description }}
-        <a href="{{ llmCallUrl(call.response) }}" style="font-size: x-small">GCP</a></mat-card-title
+      <mat-card-title id="{{ call.id }}"
+        >{{ call.callStack }} {{ call.description }}
+        <a href="{{ llmCallUrl(call) }}" style="font-size: x-small">GCP</a></mat-card-title
       >
       <mat-card-content>
         <p>
-          <strong>LLM:</strong> {{ call.response.llmId }} &nbsp;&nbsp; <strong>Request Time:</strong>
-          {{ call.response.requestTime | date : 'medium' }}. &nbsp;&nbsp; <strong>Total Time:</strong>
-          {{ (call.response.totalTime / 1000).toFixed(1) }}s
+          <strong>LLM:</strong> {{ call.llmId }} &nbsp;&nbsp; <strong>Request Time:</strong>
+          {{ call.requestTime | date : 'medium' }}. &nbsp;&nbsp; <strong>Total Time:</strong>
+          {{ (call.totalTime ?? 0 / 1000).toFixed(1) }}s
         </p>
 
         <mat-expansion-panel
-          *ngIf="call.request.systemPromptId"
+          *ngIf="call.systemPrompt"
           (opened)="systemPromptExpanded = true"
           (closed)="systemPromptExpanded = false"
         >
@@ -330,17 +330,17 @@
               <strong
                 >System Prompt:
                 <span *ngIf="!systemPromptExpanded" class="expansion-preview"
-                  >{{ call.request.systemPrompt?.text | slice : 0 : 50 }} ...</span
+                  >{{ call.systemPrompt | slice : 0 : 50 }} ...</span
                 >
               </strong>
             </mat-panel-title>
           </mat-expansion-panel-header>
           <!-- prettier-ignore -->
-          <div matExpansionPanelContent style="white-space: pre-wrap">{{ call.request.systemPrompt?.text }}</div>
+          <div matExpansionPanelContent style="white-space: pre-wrap">{{ call.systemPrompt }}</div>
         </mat-expansion-panel>
 
         <mat-expansion-panel
-          *ngIf="extractFunctionCallHistory(call.request.userPromptText)"
+          *ngIf="extractFunctionCallHistory(call.userPrompt)"
           (opened)="functionCallHistoryExpanded = true"
           (closed)="functionCallHistoryExpanded = false"
         >
@@ -348,16 +348,16 @@
             <mat-panel-title [ngClass]="{ 'hidden-title': functionCallHistoryExpanded }">
               <strong>Function Call History: </strong>
               <span *ngIf="!functionCallHistoryExpanded" class="expansion-preview">
-                {{ extractFunctionCallHistory(call.request.userPromptText) | slice : 0 : 150 }} ...
+                {{ extractFunctionCallHistory(call.userPrompt) | slice : 0 : 150 }} ...
               </span>
             </mat-panel-title>
           </mat-expansion-panel-header>
           <!-- prettier-ignore -->
-          <div matExpansionPanelContent style="white-space: pre-wrap">{{ extractFunctionCallHistory(call.request.userPromptText) }}</div>
+          <div matExpansionPanelContent style="white-space: pre-wrap">{{ extractFunctionCallHistory(call.userPrompt) }}</div>
         </mat-expansion-panel>
 
         <mat-expansion-panel
-          *ngIf="extractMemoryContent(call.request.userPromptText)"
+          *ngIf="extractMemoryContent(call.userPrompt)"
           (opened)="memoryContentsExpanded = true"
           (closed)="memoryContentsExpanded = false"
         >
@@ -365,12 +365,12 @@
             <mat-panel-title [ngClass]="{ 'hidden-title': memoryContentsExpanded }">
               <strong>Memory Contents: </strong>
               <span *ngIf="!memoryContentsExpanded" class="expansion-preview">
-                {{ extractMemoryContent(call.request.userPromptText) | slice : 0 : 150 }}
+                {{ extractMemoryContent(call.userPrompt) | slice : 0 : 150 }}
               </span>
             </mat-panel-title>
           </mat-expansion-panel-header>
           <!-- prettier-ignore -->
-          <div matExpansionPanelContent style="white-space: pre-wrap">{{ extractMemoryContent(call.request.userPromptText) }}</div>
+          <div matExpansionPanelContent style="white-space: pre-wrap">{{ extractMemoryContent(call.userPrompt) }}</div>
         </mat-expansion-panel>
 
         <mat-expansion-panel (opened)="call.userPromptExpanded = true" (closed)="call.userPromptExpanded = false">
@@ -378,24 +378,24 @@
             <mat-panel-title [ngClass]="{ 'hidden-title': call.userPromptExpanded }">
               <strong>User Prompt: </strong>
               <span *ngIf="!call.userPromptExpanded" class="expansion-preview">
-                {{ removeFunctionCallHistory(removeMemoryContent(call.request.userPromptText)) | slice : 0 : 150 }} ...
+                {{ removeFunctionCallHistory(removeMemoryContent(call.userPrompt)) | slice : 0 : 150 }} ...
               </span>
             </mat-panel-title>
           </mat-expansion-panel-header>
           <!-- prettier-ignore -->
-          <div matExpansionPanelContent style="white-space: pre-wrap">{{ removeFunctionCallHistory(removeMemoryContent(call.request.userPromptText)) }}</div>
+          <div matExpansionPanelContent style="white-space: pre-wrap">{{ removeFunctionCallHistory(removeMemoryContent(call.userPrompt)) }}</div>
         </mat-expansion-panel>
         <mat-expansion-panel (opened)="call.responseTextExpanded = true" (closed)="call.responseTextExpanded = false">
           <mat-expansion-panel-header>
             <mat-panel-title [ngClass]="{ 'hidden-title': call.responseTextExpanded }">
               <strong>Response Text: </strong>
               <span *ngIf="!call.responseTextExpanded" class="expansion-preview">
-                {{ call.response.responseText | slice : 0 : 150 }} ...
+                {{ call.responseText | slice : 0 : 150 }} ...
               </span>
             </mat-panel-title>
           </mat-expansion-panel-header>
           <!-- prettier-ignore -->
-          <div matExpansionPanelContent style="white-space: pre-wrap">{{ call.response.responseText }}</div>
+          <div matExpansionPanelContent style="white-space: pre-wrap">{{ call.responseText }}</div>
         </mat-expansion-panel>
 
         <!--

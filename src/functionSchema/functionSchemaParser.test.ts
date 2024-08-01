@@ -1,9 +1,8 @@
+import { unlinkSync } from 'node:fs';
 import { expect } from 'chai';
-import {func, funcClass} from './functionDecorators';
+import { func, funcClass } from './functionDecorators';
 import { functionSchemaParser } from './functionSchemaParser';
 import { FunctionSchema } from './functions';
-import {unlinkSync} from "node:fs";
-
 
 @funcClass(__filename)
 export class TestClass {
@@ -78,11 +77,11 @@ export class TestClass {
 	}
 }
 
-describe.only('functionDefinitionParser', () => {
+describe('functionDefinitionParser', () => {
 	let functionSchemas: Record<string, FunctionSchema>;
 
 	before(async () => {
-		unlinkSync('.nous/functions/src/functionSchema/functionSchemaParser.test.json')
+		unlinkSync('.nous/functions/src/functionSchema/functionSchemaParser.test.json');
 		functionSchemas = functionSchemaParser(__filename);
 	});
 
@@ -97,7 +96,7 @@ describe.only('functionDefinitionParser', () => {
 		});
 
 		it('should parse method with parameters correctly', () => {
-			expect(functionSchemas['TestClass_methodWithParams']).to.deep.equal({
+			expect(functionSchemas.TestClass_methodWithParams).to.deep.equal({
 				class: 'TestClass',
 				name: 'TestClass_methodWithParams',
 				description: 'Method with parameters',

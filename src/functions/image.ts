@@ -28,7 +28,7 @@ export class ImageGen {
 	/**
 	 * Generates an image with the given description
 	 * @param description A detailed description of the image
-	 * @param size {"1792x1024" | "256x256" | "512x512" | "1024x1024" | "1024x1792"} the generated image size. Defaults to 256x256
+	 * @param {"1792x1024" | "256x256" | "512x512" | "1024x1024" | "1024x1792"} size  the generated image size. Defaults to 256x256
 	 * @returns the location of the image file
 	 */
 	@func()

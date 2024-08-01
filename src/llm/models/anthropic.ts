@@ -13,6 +13,7 @@ import { currentUser } from '#user/userService/userContext';
 import { appContext } from '../../app';
 import { RetryableError } from '../../cache/cacheRetry';
 import TextBlock = AnthropicSdk.TextBlock;
+import { CallerId } from '#llm/llmCallService/llmCallService';
 
 export const ANTHROPIC_SERVICE = 'anthropic';
 
@@ -96,12 +97,11 @@ export class Anthropic extends BaseLLM {
 				service: this.service,
 			});
 
-			const caller: CallerId = { agentId: agentContext().agentId };
 			const llmCallSave: Promise<LlmCall> = appContext().llmCallService.saveRequest({
 				userPrompt,
 				systemPrompt,
 				llmId: this.getId(),
-				caller,
+				agentId: agentContext().agentId,
 				callStack: agentContext().callStack.join(' > '),
 			});
 			const requestTime = Date.now();
@@ -132,18 +132,6 @@ export class Anthropic extends BaseLLM {
 
 			const llmCall: LlmCall = await llmCallSave;
 
-			llmCall.responseText = responseText;
-			llmCall.timeToFirstToken = timeToFirstToken;
-			llmCall.totalTime = finishTime - requestTime;
-			llmCall.cost = inputCost + outputCost;
-
-			try {
-				await appContext().llmCallService.saveResponse(llmCall);
-			} catch (e) {
-				// queue to save
-				logger.error(e);
-			}
-
 			const inputTokens = message.usage.input_tokens;
 			const outputTokens = message.usage.output_tokens;
 			const stopReason = message.stop_reason;
@@ -151,6 +139,12 @@ export class Anthropic extends BaseLLM {
 			const inputCost = this.calculateInputCost(prompt);
 			const outputCost = this.calculateOutputCost(responseText);
 			const cost = inputCost + outputCost;
+			addCost(cost);
+
+			llmCall.responseText = responseText;
+			llmCall.timeToFirstToken = timeToFirstToken;
+			llmCall.totalTime = finishTime - requestTime;
+			llmCall.cost = inputCost + outputCost;
 
 			span.setAttributes({
 				inputTokens,
@@ -163,7 +157,12 @@ export class Anthropic extends BaseLLM {
 				outputChars: responseText.length,
 			});
 
-			addCost(cost);
+			try {
+				await appContext().llmCallService.saveResponse(llmCall);
+			} catch (e) {
+				// queue to save
+				logger.error(e);
+			}
 
 			if (stopReason === 'max_tokens') {
 				throw new MaxTokensError(this.getMaxInputTokens(), responseText);

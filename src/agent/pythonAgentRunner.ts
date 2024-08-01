@@ -299,16 +299,21 @@ function convertJsonToPythonDeclaration(jsonDefinitions: FunctionSchema[]): stri
 
 	for (const def of jsonDefinitions) {
 		functions += `
-fun ${def.name}(${def.parameters.map((p) => `${p.name}: ${p.optional ? `Optional[${type(p)}]` : type(p)}`).join(', ')})
+fun ${def.name}(${def.parameters.map((p) => `${p.name}: ${p.optional ? `Optional[${type(p)}]` : type(p)}`).join(', ')}) -> ${
+			def.returnType ? convertTypeScriptToPython(def.returnType) : 'None'
+		}
     """
     ${def.description}
 
     Args:
-        ${def.parameters.map((p) => `${p.name} (${p.optional ? `Optional[${type(p)}]` : type(p)}) -- ${p.description}`).join('\n        ')}
-    ${def.returns ? `\nReturns:\n        ${def.returns}\n    """` : '"""'}
+        ${def.parameters.map((p) => `${p.name}: ${p.description}`).join('\n        ')}
+    ${def.returns ? `Returns:\n        ${def.returns}\n    """` : '"""'}
 	`;
 	}
 	functions += '\n</functions>';
+	// arg and return typings. Shouldn't need to duplicate in the docstring
+	// (${p.optional ? `Optional[${type(p)}]` : type(p)}):
+	// ${def.returnType}:
 	return functions;
 }
 

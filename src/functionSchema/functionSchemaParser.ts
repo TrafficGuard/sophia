@@ -118,15 +118,15 @@ export function functionSchemaParser(sourceFilePath: string): Record<string, Fun
 			let returns = '';
 			let returnType = '';
 			const paramDescriptions = {};
-			let paramIndex = 0
+			let paramIndex = 0;
 			jsDocs.getTags().forEach((tag: JSDocTag) => {
-				if (tag.getTagName() === 'returns') {
+				if (tag.getTagName() === 'returns' || tag.getTagName() === 'return') {
 					returnType = method.getReturnType().getText();
 					// Remove Promise wrapper if present
 					if (returnType.startsWith('Promise<') && returnType.endsWith('>')) {
 						returnType = returnType.slice(8, -1);
 					}
-					returns = tag.getText().replace('@returns', '').trim();
+					returns = tag.getText().replace('@returns', '').replace('@return', '').trim();
 					// Remove type information from returns if present
 					if (returns.startsWith('{') && returns.includes('}')) {
 						returns = returns.slice(returns.indexOf('}') + 1).trim();
@@ -148,23 +148,26 @@ export function functionSchemaParser(sourceFilePath: string): Record<string, Fun
 					let descriptionParts = text.split(' ').slice(1);
 					// remove the type if there is one
 					if (descriptionParts[0].startsWith('{')) {
-						const closingBrace = descriptionParts.findIndex(value => value.trim().endsWith('}'));
-						descriptionParts = descriptionParts.slice(closingBrace + 1)
+						const closingBrace = descriptionParts.findIndex((value) => value.trim().endsWith('}'));
+						descriptionParts = descriptionParts.slice(closingBrace + 1);
 					}
 					// Remove the arg name, which must match the actual argument name
-					const argName = method.getParameters()[paramIndex]?.getName()
+					const argName = method.getParameters()[paramIndex]?.getName();
 					if (descriptionParts[0] === argName) {
 						descriptionParts = descriptionParts.slice(1);
 						paramIndex++;
 					} else {
-						throw new Error(`JSDoc param name ${descriptionParts[0]} does not match arg name ${argName}`)
+						throw new Error(`JSDoc param name ${descriptionParts[0]} does not match arg name ${argName}`);
 					}
 					if (descriptionParts[0] === '-') {
 						descriptionParts = descriptionParts.slice(1);
 					}
-					let description = descriptionParts.join(' ')
+					let description = descriptionParts.join(' ');
 					if (description.endsWith('*')) {
 						description = description.slice(0, -1).trim();
+					}
+					if (description.length) {
+						description = description.charAt(0).toUpperCase() + description.slice(1);
 					}
 					logger.debug(`Parsed description for ${className}_${methodName}.${argName} to be: ${description}`);
 					paramDescriptions[argName] = description;
@@ -183,8 +186,8 @@ export function functionSchemaParser(sourceFilePath: string): Record<string, Fun
 				if (param.isOptional() || param.hasInitializer()) {
 					paramDef.optional = true;
 				}
-				if(!paramDef.description) {
-					logger.warn(`No description for param ${className}_${methodName}.${param.getName()}`)
+				if (!paramDef.description) {
+					logger.warn(`No description for param ${className}_${methodName}.${param.getName()}`);
 				}
 				params.push(paramDef);
 			});
@@ -195,7 +198,7 @@ export function functionSchemaParser(sourceFilePath: string): Record<string, Fun
 				description: methodDescription,
 				parameters: params,
 			};
-			if (returnType !== 'void') {
+			if (returnType && returnType !== 'void') {
 				funcDef.returnType = returnType;
 				if (returns) funcDef.returns = returns;
 			}
