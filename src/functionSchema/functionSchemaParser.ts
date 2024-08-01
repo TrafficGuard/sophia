@@ -194,9 +194,11 @@ export function functionSchemaParser(sourceFilePath: string): Record<string, Fun
 				name: `${className}_${methodName}`,
 				description: methodDescription,
 				parameters: params,
-				returnType: returnType,
 			};
-			if (returns) funcDef.returns = returns;
+			if (returnType !== 'void') {
+				funcDef.returnType = returnType;
+				if (returns) funcDef.returns = returns;
+			}
 			functionSchemas[funcDef.name] = funcDef;
 		});
 	});
