@@ -1,11 +1,16 @@
 import { DocumentSnapshot, Firestore } from '@google-cloud/firestore';
+import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext, AgentRunningState } from '#agent/agentContext';
 import { deserializeAgentContext, serializeContext } from '#agent/agentContext';
+import { functionFactory } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 import { span, withSpan } from '#o11y/trace';
 import { envVar } from '#utils/env-var';
 import { AgentStateService } from './agentStateService';
 
+/**
+ * Google Firestore implementation of AgentStateService
+ */
 /**
  * Google Firestore implementation of AgentStateService
  */
@@ -99,5 +104,24 @@ export class FirestoreAgentStateService implements AgentStateService {
 		}
 		// TODO delete LlmCalls and FunctionCache entries for the agent
 		await batch.commit();
+	}
+
+	async updateFunctions(agentId: string, functions: string[]): Promise<void> {
+		const agent = await this.load(agentId);
+		if (!agent) {
+			throw new Error('Agent not found');
+		}
+
+		agent.functions = new LlmFunctions();
+		for (const functionName of functions) {
+			const FunctionClass = functionFactory()[functionName];
+			if (FunctionClass) {
+				agent.functions.addFunctionClass(FunctionClass);
+			} else {
+				logger.warn(`Function ${functionName} not found in function factory`);
+			}
+		}
+
+		await this.save(agent);
 	}
 }

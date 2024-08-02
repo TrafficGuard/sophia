@@ -28,6 +28,7 @@ export class ProfileComponent implements OnInit {
         groqKey: new FormControl(''),
         togetheraiKey: new FormControl(''),
         fireworksKey: new FormControl(''),
+        deepseekKey: new FormControl(''),
       }),
       functionConfig: new FormGroup({
         GitHub: new FormGroup({

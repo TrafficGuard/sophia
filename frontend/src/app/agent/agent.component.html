@@ -9,14 +9,6 @@
       <form [formGroup]="feedbackForm" (ngSubmit)="onSubmitFeedback()">
         <mat-card-title>Feedback Requested</mat-card-title>
         <mat-card-content style="margin-bottom: 0; margin-top: 15px">
-          <div
-            *ngIf="agentDetails.feedbackMessage"
-            class="agent-feedback-message"
-            style="width: 1000px; margin-bottom: 20px"
-          >
-            <strong>Agent's Feedback Request:</strong>
-            <p>{{ agentDetails.feedbackMessage }}</p>
-          </div>
           <mat-expansion-panel
             *ngIf="agentDetails.functionCallHistory && agentDetails.functionCallHistory.length > 0"
             style="width: 1000px; margin-bottom: 20px"
@@ -27,15 +19,15 @@
                 <!-- Needs to match Agent.requestFeedback arg name -->
                 <span class="expansion-preview"
                   >{{
-                    agentDetails.functionCallHistory[
-                      agentDetails.functionCallHistory.length - 1
-                    ].parameters.request.trim() | slice : 0 : 140
+                    agentDetails.functionCallHistory[agentDetails.functionCallHistory.length - 1].parameters[
+                      'request'
+                    ].trim() | slice : 0 : 140
                   }}...</span
                 >
               </mat-panel-title>
             </mat-expansion-panel-header>
             <!-- prettier-ignore -->
-            <div matExpansionPanelContent style="white-space: pre-wrap">{{ agentDetails.functionCallHistory[agentDetails.functionCallHistory.length - 1].parameters.request.trim() }}</div>
+            <div matExpansionPanelContent style="white-space: pre-wrap">{{ agentDetails.functionCallHistory[agentDetails.functionCallHistory.length - 1].parameters['request'].trim() }}</div>
           </mat-expansion-panel>
           <mat-form-field appearance="fill" class="full-width">
             <textarea
@@ -48,7 +40,7 @@
         </mat-card-content>
         <mat-card-actions style="margin-bottom: 0">
           <button mat-raised-button color="primary" type="submit" [disabled]="!feedbackForm.valid || isSubmitting">
-            {{ isSubmitting ? 'Submitting...' : 'Submit Feedback' }}
+            {{ isSubmitting ? 'Sending...' : 'Send Feedback' }}
           </button>
           <button mat-raised-button (click)="cancelAgent()" [disabled]="isSubmitting">Cancel Agent</button>
         </mat-card-actions>
@@ -89,28 +81,6 @@
       </form>
     </mat-card>
 
-    <mat-card *ngIf="agentDetails.state === 'completed' && showResumeForm">
-      <form [formGroup]="resumeForm" (ngSubmit)="onResumeCompleted()">
-        <mat-card-title>Resume Completed Agent</mat-card-title>
-        <mat-card-content>
-          <mat-form-field appearance="fill" class="full-width">
-            <textarea
-              matInput
-              class="resumeField"
-              placeholder="Provide additional instructions or context (optional)"
-              formControlName="resumeInstructions"
-            ></textarea>
-          </mat-form-field>
-        </mat-card-content>
-        <mat-card-actions>
-          <button mat-raised-button color="primary" type="submit" [disabled]="isSubmitting">
-            {{ isSubmitting ? 'Resuming...' : 'Resume' }}
-          </button>
-          <button mat-raised-button (click)="cancelResumeForm()" [disabled]="isSubmitting">Cancel</button>
-        </mat-card-actions>
-      </form>
-    </mat-card>
-
     <mat-card *ngIf="agentDetails.state === 'hil'">
       <form [formGroup]="hilForm" (ngSubmit)="onResumeHil()">
         <mat-card-title>Human In Loop check</mat-card-title>
@@ -143,27 +113,31 @@
           class="fixed-width-field"><strong>Execution ID:</strong></span> {{ agentDetails.executionId }}
         </mat-list-item>-->
         <mat-list-item
-          ><span class="fixed-width-field"><strong>Name:</strong></span> {{ agentDetails.name }}
-        </mat-list-item>
+          ><span class="fixed-width-field right-align"><strong>Name</strong></span>
+          {{ agentDetails.name }}</mat-list-item
+        >
         <mat-list-item
-          ><span class="fixed-width-field"><strong>Type:</strong></span> {{ agentDetails.type }}
-        </mat-list-item>
+          ><span class="fixed-width-field right-align"><strong>Type</strong></span>
+          {{ agentDetails.type }}</mat-list-item
+        >
         <mat-list-item *ngIf="agentDetails.parentAgentId"
-          ><span class="fixed-width-field"><strong>Parent Agent ID:</strong></span> {{ agentDetails.parentAgentId }}
-        </mat-list-item>
+          ><span class="fixed-width-field right-align"><strong>Parent Agent ID</strong></span>
+          {{ agentDetails.parentAgentId }}</mat-list-item
+        >
         <mat-list-item *ngIf="agentDetails.userId"
-          ><span class="fixed-width-field"><strong>User ID:</strong></span> {{ agentDetails.userId }}
-        </mat-list-item>
+          ><span class="fixed-width-field right-align"><strong>User ID</strong></span>
+          {{ agentDetails.userId }}</mat-list-item
+        >
         <mat-list-item>
-          <span class="fixed-width-field"><strong>State:</strong></span>
+          <span class="fixed-width-field right-align"><strong>State</strong></span>
           {{ displayState(agentDetails.state) }}
-          <a *ngIf="agentDetails.state === 'completed'" (click)="openResumeForm()" class="resume-link">Resume</a>
+          <a *ngIf="agentDetails.state === 'completed'" (click)="openResumeModal()" class="resume-link">Resume agent</a>
         </mat-list-item>
 
         <mat-expansion-panel (opened)="userPromptExpanded = true" (closed)="userPromptExpanded = false">
           <mat-expansion-panel-header>
             <mat-panel-title>
-              <span class="fixed-width-field"><strong>User Prompt:</strong></span>
+              <span class="fixed-width-field right-align"><strong>User Prompt</strong></span>
               <span class="expansion-preview" [ngClass]="{ hidden: userPromptExpanded }">{{
                 agentDetails.userPrompt | slice : 0 : 150
               }}</span>
@@ -180,7 +154,7 @@
         >
           <mat-expansion-panel-header>
             <mat-panel-title>
-              <span class="fixed-width-field"><strong>Output:</strong></span>
+              <span class="fixed-width-field right-align"><strong>Output</strong></span>
               <span class="expansion-preview" [ngClass]="{ hidden: outputExpanded }">{{
                 output | slice : 0 : 150
               }}</span>
@@ -209,19 +183,44 @@
         </mat-list-item>
 
         <mat-list-item class="function-row">
-          <span class="fixed-width-field"><strong>Functions:</strong></span>
-          <div class="function-column">{{ agentDetails.functions.sort().join(', ') }}</div>
+          <span class="fixed-width-field right-align"><strong>Functions</strong></span>
+          <div class="function-column">
+            <span>{{ agentDetails.functions.sort().join(', ') }}</span>
+            <button
+              mat-icon-button
+              (click)="openFunctionEditModal()"
+              aria-label="Edit functions"
+              *ngIf="agentDetails.state !== 'agent' && agentDetails.state !== 'functions'"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+          </div>
         </mat-list-item>
 
-        <mat-list-item class="llm-row">
-          <span class="fixed-width-field"><strong>LLMS:</strong></span>
-          <div class="llm-column"><strong>Easy:</strong> {{ getLlmName(agentDetails.llms.easy) }}</div>
-          <div class="llm-column"><strong>Medium:</strong> {{ getLlmName(agentDetails.llms.medium) }}</div>
-          <div class="llm-column"><strong>Hard:</strong> {{ getLlmName(agentDetails.llms.hard) }}</div>
+        <mat-list-item class="llm-row" style="height: 66px">
+          <span class="fixed-width-field right-align" style="vertical-align: top; height: 100%"
+            ><strong>LLMS</strong></span
+          >
+          <div class="llm-container">
+            <div class="llm-column">
+              <span class="llm-level">Easy:</span>
+              <span class="llm-value">{{ getLlmName(agentDetails.llms.easy) }}</span>
+            </div>
+            <div class="llm-column">
+              <span class="llm-level">Med:</span>
+              <span class="llm-value">{{ getLlmName(agentDetails.llms.medium) }}</span>
+            </div>
+            <div class="llm-column">
+              <span class="llm-level">Hard:</span>
+              <span class="llm-value">{{ getLlmName(agentDetails.llms.hard) }}</span>
+            </div>
+          </div>
         </mat-list-item>
 
         <mat-list-item
-          ><span class="fixed-width-field"><strong>Cost:</strong></span> ${{ agentDetails.cost | number : '1.2-2' }}
+          ><span class="fixed-width-field right-align"><strong>Cost</strong></span> ${{
+            agentDetails.cost | number : '1.2-2'
+          }}
         </mat-list-item>
         <!--
         <mat-list-item
@@ -234,7 +233,7 @@
         </mat-list-item>
         -->
         <mat-list-item
-          ><span class="fixed-width-field"><strong>Working Directory:</strong></span>
+          ><span class="fixed-width-field right-align"><strong>Working Directory</strong></span>
           {{ agentDetails.fileSystem.workingDirectory }}
         </mat-list-item>
       </mat-list>
@@ -405,7 +404,7 @@
       </mat-card-content>
     </mat-card>
     <div *ngIf="llmCalls.length === 0">
-      <p>No LLM calls found for this agent.</p>
+      <p style="padding-left: 10px">No LLM calls found for this agent.</p>
     </div>
   </mat-tab>
 </mat-tab-group>

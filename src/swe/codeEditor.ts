@@ -1,8 +1,13 @@
-import { writeFileSync } from 'fs';
-import fs from 'node:fs';
+import { readFileSync, writeFileSync } from 'fs';
+import fs, { readFile, unlinkSync } from 'node:fs';
+import path from 'path';
 import { promisify } from 'util';
 import { addCost, agentContext, getFileSystem } from '#agent/agentContext';
 import { func, funcClass } from '#functionSchema/functionDecorators';
+import { LLM } from '#llm/llm';
+import { Anthropic, Claude3_5_Sonnet } from '#llm/models/anthropic';
+import { DeepseekLLM, deepseekCoder } from '#llm/models/deepseek';
+import { GPT4o } from '#llm/models/openai';
 import { logger } from '#o11y/logger';
 import { getActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
@@ -37,24 +42,24 @@ export class CodeEditor {
 		const deepSeekKey = currentUser().llmConfig.deepseekKey || process.env.DEEPSEEK_API_KEY;
 		const openaiKey = currentUser().llmConfig.openaiKey || process.env.OPENAI_API_KEY;
 
-		// TODO get the costs from the LLM classes
-		let inputCharCost = 0;
-		let outputCharCost = 0;
+		let llm: LLM;
+
 		if (anthropicKey) {
 			modelArg = '--sonnet';
 			env = { ANTHROPIC_API_KEY: anthropicKey };
 			span.setAttribute('model', 'sonnet');
-			inputCharCost = 3 / (1_000_000 * 3.5);
-			outputCharCost = 15 / (1_000_000 * 3.5);
+			llm = Claude3_5_Sonnet();
 		} else if (deepSeekKey) {
 			modelArg = '--model deepseek/deepseek-coder';
 			env = { DEEPSEEK_API_KEY: deepSeekKey };
 			span.setAttribute('model', 'deepseek');
+			llm = deepseekCoder();
 		} else if (openaiKey) {
 			// default to gpt4o
 			modelArg = '';
 			env = { OPENAI_API_KEY: openaiKey };
 			span.setAttribute('model', 'openai');
+			llm = GPT4o();
 		} else {
 			throw new Error('Aider code editing requires a key for Anthropic, Deepseek or OpenAI');
 		}
@@ -78,19 +83,24 @@ export class CodeEditor {
 		const { stdout, stderr, exitCode } = await execCommand(cmd, { envVars: env });
 		logger.debug(stdout + stderr);
 
-		const llmHistory = await getFileSystem().readFile(llmHistoryFile);
-		const parsedInput = this.parseAiderInput(llmHistory);
-		const parsedOutput = this.parseAiderOutput(llmHistory);
+		try {
+			const llmHistory = readFileSync(llmHistoryFile).toString();
+			const parsedInput = this.parseAiderInput(llmHistory);
+			const parsedOutput = this.parseAiderOutput(llmHistory);
 
-		const cost = inputCharCost * parsedInput.length + outputCharCost * parsedOutput.length;
-		addCost(cost);
-		logger.debug(`Aider cost ${cost}`);
+			const costs = llm.calculateCost(parsedInput, parsedOutput);
+			addCost(costs[0]);
+			logger.debug(`Aider cost ${costs[0]}`);
 
-		span.setAttributes({
-			inputChars: parsedInput.length,
-			outputChars: parsedOutput.length,
-			cost,
-		});
+			span.setAttributes({
+				inputChars: parsedInput.length,
+				outputChars: parsedOutput.length,
+				cost: costs[0],
+			});
+			unlinkSync(llmHistoryFile);
+		} catch (e) {
+			logger.error(e);
+		}
 
 		if (exitCode > 0) throw new Error(`${stdout} ${stderr}`);
 	}

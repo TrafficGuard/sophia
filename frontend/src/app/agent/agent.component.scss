@@ -1,8 +1,13 @@
 .fixed-width-field {
-  display: inline-block;
-  width: 150px; /* Adjust the width as needed */
-  min-width: 150px;
-  margin-right: 10px;
+  display: grid;
+  width: 110px; /* Adjust the width as needed */
+  min-width: 110px;
+  padding-bottom: 1px;
+}
+
+.right-align {
+  text-align: right;
+  padding-right: 15px; /* Add some padding to separate from the value */
 }
 
 .full-width,
@@ -26,16 +31,34 @@
   text-wrap: nowrap;
 }
 
+.llm-container {
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+}
+
 .llm-column {
-  flex: 1;
-  text-align: left;
-  padding-right: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.llm-level {
+  width: 40px;
+  font-weight: 500;
+  text-align: right;
+}
+
+.llm-value {
+  flex-grow: 1;
+  padding-left: 10px;
 }
 .hidden {
   display: none;
 }
 .resume-link {
-  margin-left: 10px;
+  margin-left: 30px;
   color: #1976d2;
   cursor: pointer;
   text-decoration: underline;
@@ -55,4 +78,24 @@
   p {
     margin: 0;
   }
+}
+.function-column {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  button[mat-icon-button] {
+    margin-right: 8px;
+  }
+
+  mat-selection-list {
+    max-width: 100%;
+    margin-bottom: 8px;
+  }
+}
+.function-column {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
 }

@@ -1,0 +1,20 @@
+<h2 mat-dialog-title>Edit Functions</h2>
+<mat-dialog-content>
+  <mat-form-field class="full-width">
+    <input matInput placeholder="Filter functions" [(ngModel)]="searchTerm" />
+  </mat-form-field>
+  <mat-selection-list #functionList class="function-list">
+    <mat-list-option
+      *ngFor="let func of filterFunctions()"
+      [value]="func"
+      [selected]="selectedFunctions.includes(func)"
+      (click)="toggleFunction(func)"
+    >
+      {{ func }}
+    </mat-list-option>
+  </mat-selection-list>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-button color="primary" (click)="onSave()">Save</button>
+</mat-dialog-actions>

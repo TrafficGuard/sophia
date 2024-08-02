@@ -30,6 +30,11 @@ export interface FunctionCall {
 export interface FunctionCallResult extends FunctionCall {
   stdout?: string;
   stderr?: string;
+
+  stdoutExpanded: boolean;
+  stdoutSummary?: string;
+  stderrExpanded: boolean;
+  stderrSummary?: string;
 }
 
 /**
@@ -73,9 +78,10 @@ export interface AgentContext {
   /** Empty string in single-user mode */
   userId: string;
   userEmail?: string;
-
+  type: 'xml' | 'python';
   state: AgentRunningState;
   inputPrompt: string;
+  userPrompt: string;
   systemPrompt: string;
   functionCallHistory: FunctionCallResult[];
 
@@ -90,12 +96,10 @@ export interface AgentContext {
   /** Budget remaining until human intervention is required */
   budgetRemaining: number;
 
-  llms: AgentLLMs;
+  llms: { easy: string; medium: string; hard: string; xhard: string };
 
   /** Working filesystem */
-  fileSystem?: FileSystem | null;
-  /** Directory for cloning repositories etc */
-  tempDir: string;
+  fileSystem: { workingDirectory: string };
   /** The functions available to the agent */
   functions: string[];
   /** Memory persisted over the agent's control loop iterations */

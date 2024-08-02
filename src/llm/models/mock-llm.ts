@@ -1,12 +1,10 @@
-import { use } from 'chai';
 import { AgentLLMs, addCost, agentContext } from '#agent/agentContext';
 import { LlmCall } from '#llm/llmCallService/llmCall';
-import { CallerId } from '#llm/llmCallService/llmCallService';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { appContext } from '../../app';
 import { BaseLLM } from '../base-llm';
-import { GenerateTextOptions, combinePrompts, logTextGeneration } from '../llm';
+import { GenerateTextOptions, combinePrompts } from '../llm';
 
 export class MockLLM extends BaseLLM {
 	lastPrompt = '';
@@ -103,6 +101,8 @@ export class MockLLM extends BaseLLM {
 				// queue to save
 				console.error(e);
 			}
+
+			this.lastPrompt = userPrompt;
 
 			span.setAttributes({
 				response: responseText,

@@ -1,0 +1,18 @@
+<h2 mat-dialog-title>Resume Completed Agent</h2>
+<mat-dialog-content>
+  <form [formGroup]="resumeForm">
+    <mat-form-field appearance="fill" class="full-width">
+      <textarea
+        matInput
+        class="resumeField"
+        placeholder="Provide additional instructions or context (optional)"
+        formControlName="resumeInstructions"
+        rows="5"
+      ></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="!resumeForm.valid">Resume</button>
+  <button mat-raised-button (click)="onCancel()">Cancel</button>
+</mat-dialog-actions>

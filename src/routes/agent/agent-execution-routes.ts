@@ -1,8 +1,10 @@
 import { Type } from '@sinclair/typebox';
+import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext } from '#agent/agentContext';
 import { cancelAgent, provideFeedback, resumeCompleted, resumeError, resumeHil } from '#agent/agentRunner';
 import { runXmlAgent } from '#agent/xmlAgentRunner';
 import { send, sendBadRequest } from '#fastify/index';
+import { functionFactory } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 import { AppFastifyInstance, appContext } from '../../app';
 
@@ -112,6 +114,45 @@ export async function agentExecutionRoutes(fastify: AppFastifyInstance) {
 			} catch (error) {
 				logger.error(error, 'Error resuming completed agent');
 				sendBadRequest(reply, 'Error resuming completed agent');
+			}
+		},
+	);
+
+	/** Updates the functions available to an agent */
+	fastify.post(
+		`${v1BasePath}/update-functions`,
+		{
+			schema: {
+				body: Type.Object({
+					agentId: Type.String(),
+					functions: Type.Array(Type.String()),
+				}),
+			},
+		},
+		async (req, reply) => {
+			const { agentId, functions } = req.body;
+
+			try {
+				const agent = await fastify.agentStateService.load(agentId);
+				if (!agent) {
+					throw new Error('Agent not found');
+				}
+
+				agent.functions = new LlmFunctions();
+				for (const functionName of functions) {
+					const FunctionClass = functionFactory()[functionName];
+					if (FunctionClass) {
+						agent.functions.addFunctionClass(FunctionClass);
+					} else {
+						logger.warn(`Function ${functionName} not found in function factory`);
+					}
+				}
+
+				await fastify.agentStateService.save(agent);
+				send(reply, 200, { message: 'Agent functions updated successfully' });
+			} catch (error) {
+				logger.error('Error updating agent functions:', error);
+				sendBadRequest(reply, 'Error updating agent functions');
 			}
 		},
 	);

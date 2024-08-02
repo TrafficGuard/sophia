@@ -17,4 +17,6 @@ export interface AgentStateService {
 	 * @param ids Array of agent IDs to delete
 	 */
 	delete(ids: string[]): Promise<void>;
+
+	updateFunctions(agentId: string, functions: string[]): Promise<void>;
 }

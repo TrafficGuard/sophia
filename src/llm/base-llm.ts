@@ -60,4 +60,11 @@ export abstract class BaseLLM implements LLM {
 	getDisplayName(): string {
 		return this.displayName;
 	}
+
+	calculateCost(input: string, output: string): [totalCost: number, inputCost: number, outputCost: number] {
+		const inputCost = this.calculateInputCost(input);
+		const outputCost = this.calculateOutputCost(output);
+		const totalCost = inputCost + outputCost;
+		return [totalCost, inputCost, outputCost];
+	}
 }

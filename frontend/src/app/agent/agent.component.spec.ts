@@ -4,6 +4,8 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MaterialModule } from '@app/material.module';
+import { of, throwError } from 'rxjs';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 describe('AgentComponent', () => {
   let component: AgentComponent;
@@ -12,7 +14,7 @@ describe('AgentComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [AgentComponent],
-      imports: [HttpClientTestingModule, RouterTestingModule, ReactiveFormsModule, MaterialModule],
+      imports: [HttpClientTestingModule, RouterTestingModule, ReactiveFormsModule, MaterialModule, MatSnackBarModule],
     }).compileComponents();
   });
 
@@ -24,6 +26,55 @@ describe('AgentComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should save functions and update UI', () => {
+    const httpClientSpy = jasmine.createSpyObj('HttpClient', ['post']);
+    httpClientSpy.post.and.returnValue(of({}));
+    component.http = httpClientSpy as any;
+    component.agentDetails = { functions: ['func1', 'func2', 'func3'] };
+    component.agentId = 'test-agent-id';
+    component.functionSelections = [true, false, true];
+    component.editMode = true;
+
+    component.saveFunctions();
+
+    expect(httpClientSpy.post).toHaveBeenCalledWith(`${environment.serverUrl}/agent/v1/update-functions`, {
+      agentId: 'test-agent-id',
+      functions: ['func1', 'func3'],
+    });
+    expect(component.editMode).toBeFalse();
+    expect(component.isSavingFunctions).toBeFalse();
+  });
+
+  it('should handle errors when saving functions', () => {
+    const httpClientSpy = jasmine.createSpyObj('HttpClient', ['post']);
+    httpClientSpy.post.and.returnValue(throwError(() => new Error('Test error')));
+    component.http = httpClientSpy as any;
+    component.agentDetails = { functions: ['func1', 'func2'] };
+    component.agentId = 'test-agent-id';
+    component.functionSelections = [true, true];
+    component.editMode = true;
+
+    component.saveFunctions();
+
+    expect(httpClientSpy.post).toHaveBeenCalled();
+    expect(component.isSavingFunctions).toBeFalse();
+    expect(component.editMode).toBeTrue();
+  });
+
+  it('should set isSavingFunctions to true when saving functions', () => {
+    const httpClientSpy = jasmine.createSpyObj('HttpClient', ['post']);
+    httpClientSpy.post.and.returnValue(of({}));
+    component.http = httpClientSpy as any;
+    component.agentDetails = { functions: ['func1', 'func2'] };
+    component.agentId = 'test-agent-id';
+    component.functionSelections = [true, true];
+    component.editMode = true;
+
+    component.saveFunctions();
+
+    expect(component.isSavingFunctions).toBeTrue();
   });
 
   describe('extractFunctionCallHistory', () => {

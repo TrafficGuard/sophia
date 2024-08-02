@@ -1,7 +1,9 @@
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs';
 import { unlinkSync } from 'node:fs';
+import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext, AgentRunningState, deserializeAgentContext, serializeContext } from '#agent/agentContext';
 import { AgentStateService } from '#agent/agentStateService/agentStateService';
+import { functionFactory } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 
 export class FileAgentStateService implements AgentStateService {
@@ -53,4 +55,24 @@ export class FileAgentStateService implements AgentStateService {
 			}
 		}
 	}
+
+	async updateFunctions(agentId: string, functions: string[]): Promise<void> {
+		const agent = await this.load(agentId);
+		if (!agent) {
+			throw new Error('Agent not found');
+		}
+
+		agent.functions = new LlmFunctions();
+		for (const functionName of functions) {
+			const FunctionClass = functionFactory()[functionName];
+			if (FunctionClass) {
+				agent.functions.addFunctionClass(FunctionClass);
+			} else {
+				logger.warn(`Function ${functionName} not found in function factory`);
+			}
+		}
+
+		await this.save(agent);
+	}
+
 }
