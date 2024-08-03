@@ -45,18 +45,11 @@ type FileFilter = (filename: string) => boolean;
  */
 @funcClass(__filename)
 export class FileSystem {
-	/** The path relative to the basePath */
-	private _workingDirectory = '';
+	/** The filesystem path */
+	private workingDirectory = '';
 	vcs: VersionControlSystem | null = null;
 	log: Pino.Logger;
 
-	get workingDirectory(): string {
-		return this._workingDirectory;
-	}
-
-	set workingDirectory(newName: string) {
-		this._workingDirectory = newName;
-	}
 	/**
 	 * @param basePath The root folder allowed to be accessed by this file system instance. This should only be accessed by system level
 	 * functions. Generally getWorkingDirectory() should be used
@@ -80,7 +73,7 @@ export class FileSystem {
 				logger.error(`Invalid NOUS_FS env var. ${fsEnvVar} does not exist`);
 			}
 		}
-		this._workingDirectory = this.basePath;
+		this.workingDirectory = this.basePath;
 
 		this.log = logger.child({ FileSystem: this.basePath });
 		// We will want to re-visit this, the .git folder can be in a parent directory
@@ -106,33 +99,37 @@ export class FileSystem {
 	 * @returns the full path of the working directory on the filesystem
 	 */
 	getWorkingDirectory(): string {
-		if (this.workingDirectory.startsWith(this.basePath)) return this.workingDirectory;
-		return path.join(this.basePath, this.workingDirectory);
+		return this.workingDirectory;
 	}
 
 	/**
-	 * Set the working directory, relative to the filesystem's basePath if starting with "/", otherwise relative to the current working directory.
+	 * Set the working directory. The dir argument may be an absolute filesystem path, otherwise relative to the current working directory.
+	 * If the dir starts with / it will first be checked as an absolute directory, then as relative path to the working directory.
 	 * @param dir the new working directory
 	 */
 	@func()
 	setWorkingDirectory(dir: string): void {
 		if (!dir) throw new Error('dir must be provided');
+		let relativeDir = dir;
+		// Check absolute directory path
+		if (dir.startsWith('/')) {
+			if(existsSync(dir)) {
+				this.workingDirectory = dir;
+				this.log.info(`workingDirectory is now ${this.workingDirectory}`);
+				return
+			} else {
+				// try it as a relative path
+				relativeDir = dir.substring(1)
+			}
+		}
+		let relativePath = path.join(this.getWorkingDirectory(), relativeDir)
+		if (existsSync(relativePath)) {
+			this.workingDirectory = relativePath;
+			this.log.info(`workingDirectory is now ${this.workingDirectory}`);
+			return
+		}
 
-		if (dir.startsWith('/') && existsSync(dir)) this.workingDirectory = dir;
-		else this.workingDirectory = join(this.workingDirectory, dir);
-
-		this.log.info(`workingDirectory is now ${this.workingDirectory}`);
-
-		// if (`/${dir}`.startsWith(this.basePath)) dir = `/${dir}`;
-		// let newWorkingDirectory = dir.startsWith(this.basePath) ? dir.replace(this.basePath, '') : dir;
-		// newWorkingDirectory = dir.startsWith('/') ? newWorkingDirectory : path.join(this.workingDirectory, newWorkingDirectory);
-		// // Get the relative path from baseUrl to new working path
-		// const newFullWorkingDir = join(this.basePath, newWorkingDirectory);
-		// let relativePath = path.relative(this.basePath, newFullWorkingDir);
-		// // If the relative path starts with '..', new path is higher than basePath, so set it as the current dir
-		// if (relativePath.startsWith('..')) relativePath = './';
-		// this.log.debug(`  this.workingDirectory: ${relativePath}`);
-		// this.workingDirectory = relativePath;
+		throw new Error(`New working directory ${dir} does not exist (current working directory ${this.workingDirectory}`);
 	}
 
 	/**
@@ -225,23 +222,19 @@ export class FileSystem {
 
 	/**
 	 * List all the files recursively under the given path, excluding any paths in a .gitignore file if it exists
-	 * @param dirPath The directory to search under (Optional - defaults to the workingDirectory)
 	 * @returns the list of files
 	 */
 	@func()
 	async listFilesRecursively(dirPath = './'): Promise<string[]> {
 		// const dirPath = './'
-		if (dirPath !== './') throw new Error('listFilesRecursively needs to be fixed to work with the dirPath not being the workingDirectory');
-		this.log.debug(`basePath: ${this.basePath}`);
 		this.log.debug(`cwd: ${this.workingDirectory}`);
-		this.log.debug(`cwd(): ${this.getWorkingDirectory()}`);
 
-		const fullPath = path.join(this.getWorkingDirectory(), dirPath);
+		const startPath = path.join(this.getWorkingDirectory(), dirPath);
 		// TODO check isnt going higher than this.basePath
 
 		const filter: FileFilter = (name) => true;
 		const ig = ignore();
-		const gitIgnorePath = path.join(fullPath, '.gitignore');
+		const gitIgnorePath = path.join(startPath, '.gitignore');
 		// console.log(gitIgnorePath);
 		if (existsSync(gitIgnorePath)) {
 			// read the gitignore file into a string array
@@ -252,8 +245,8 @@ export class FileSystem {
 			ig.add('.git');
 		}
 
-		const files: string[] = await this.listFilesRecurse(this.basePath, fullPath, ig);
-		return files.map((file) => path.relative(this.getWorkingDirectory(), file));
+		const files: string[] = await this.listFilesRecurse(this.workingDirectory, startPath, ig);
+		return files.map((file) => path.relative(this.workingDirectory, file));
 	}
 
 	async listFilesRecurse(rootPath: string, dirPath: string, ig, filter: (file: string) => boolean = (name) => true): Promise<string[]> {
