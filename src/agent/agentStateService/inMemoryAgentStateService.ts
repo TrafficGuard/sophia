@@ -1,5 +1,8 @@
+import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext, AgentRunningState, deserializeAgentContext, serializeContext } from '#agent/agentContext';
 import { AgentStateService } from '#agent/agentStateService/agentStateService';
+import { functionFactory } from '#functionSchema/functionDecorators';
+import { logger } from '#o11y/logger';
 
 /**
  * In-memory implementation of AgentStateService for tests. Serializes/deserializes
@@ -41,5 +44,24 @@ export class InMemoryAgentStateService implements AgentStateService {
 
 	async delete(ids: string[]): Promise<void> {
 		for (const id of ids) this.stateMap.delete(id);
+	}
+
+	async updateFunctions(agentId: string, functions: string[]): Promise<void> {
+		const agent = await this.load(agentId);
+		if (!agent) {
+			throw new Error('Agent not found');
+		}
+
+		agent.functions = new LlmFunctions();
+		for (const functionName of functions) {
+			const FunctionClass = functionFactory()[functionName];
+			if (FunctionClass) {
+				agent.functions.addFunctionClass(FunctionClass);
+			} else {
+				logger.warn(`Function ${functionName} not found in function factory`);
+			}
+		}
+
+		await this.save(agent);
 	}
 }

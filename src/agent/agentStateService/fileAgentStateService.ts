@@ -74,5 +74,4 @@ export class FileAgentStateService implements AgentStateService {
 
 		await this.save(agent);
 	}
-
 }
