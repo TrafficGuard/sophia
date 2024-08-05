@@ -5,6 +5,7 @@ import path, { join } from 'path';
 import { promisify } from 'util';
 import ignore, { Ignore } from 'ignore';
 import Pino from 'pino';
+import fs from 'fs/promises';
 import { agentContext } from '#agent/agentContext';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { parseArrayParameterValue } from '#functionSchema/functionUtils';
@@ -229,46 +230,34 @@ export class FileSystem {
 	 */
 	@func()
 	async listFilesRecursively(dirPath = './'): Promise<string[]> {
-		// const dirPath = './'
 		this.log.debug(`cwd: ${this.workingDirectory}`);
 
 		const startPath = path.join(this.getWorkingDirectory(), dirPath);
 		// TODO check isnt going higher than this.basePath
 
-		const filter: FileFilter = (name) => true;
-		const ig = ignore();
-		const gitIgnorePath = path.join(startPath, '.gitignore');
-		// console.log(gitIgnorePath);
-		if (existsSync(gitIgnorePath)) {
-			// read the gitignore file into a string array
-			// console.log(`Found ${gitIgnorePath}`);
-			let lines = await fs.readFile(gitIgnorePath, 'utf8').then((data) => data.split('\n'));
-			lines = lines.map((line) => line.trim()).filter((line) => line.length && !line.startsWith('#'), filter);
-			ig.add(lines);
-			ig.add('.git');
-		}
+		const ig = await this.loadGitignoreRules(startPath);
 
 		const files: string[] = await this.listFilesRecurse(this.workingDirectory, startPath, ig);
 		return files.map((file) => path.relative(this.workingDirectory, file));
 	}
 
-	async listFilesRecurse(rootPath: string, dirPath: string, ig, filter: (file: string) => boolean = (name) => true): Promise<string[]> {
+	private async listFilesRecurse(rootPath: string, dirPath: string, parentIg: Ignore, filter: (file: string) => boolean = (name) => true): Promise<string[]> {
 		const relativeRoot = this.basePath;
 		this.log.debug(`listFilesRecurse dirPath: ${dirPath}`);
 		const files: string[] = [];
 
+		const ig = await this.loadGitignoreRules(dirPath);
+		const mergedIg = ignore().merge(parentIg).merge(ig);
+
 		const dirents = await fs.readdir(dirPath, { withFileTypes: true });
 		for (const dirent of dirents) {
+			const relativePath = path.relative(rootPath, path.join(dirPath, dirent.name));
 			if (dirent.isDirectory()) {
-				const relativePath = path.relative(rootPath, path.join(dirPath, dirent.name));
-				if (!ig.ignores(relativePath) && !ig.ignores(`${relativePath}/`)) {
-					files.push(...(await this.listFilesRecurse(rootPath, path.join(dirPath, dirent.name), ig, filter)));
+				if (!mergedIg.ignores(relativePath) && !mergedIg.ignores(`${relativePath}/`)) {
+					files.push(...(await this.listFilesRecurse(rootPath, path.join(dirPath, dirent.name), mergedIg, filter)));
 				}
 			} else {
-				const relativePath = path.relative(relativeRoot, path.join(dirPath, dirent.name));
-
-				if (!ig.ignores(relativePath)) {
-					// console.log(`pushing ${dirPath}/${dirent.name}`)
+				if (!mergedIg.ignores(relativePath)) {
 					files.push(path.join(dirPath, dirent.name));
 				}
 			}
@@ -417,14 +406,23 @@ export class FileSystem {
 		await this.writeFile(filePath, updatedContent);
 	}
 
-	private async loadGitignore(dirPath: string): Promise<Ignore> {
+	private async loadGitignoreRules(startPath: string): Promise<Ignore> {
 		const ig = ignore();
-		const gitIgnorePath = path.join(dirPath, '.gitignore');
-		if (existsSync(gitIgnorePath)) {
-			let lines = await fs.readFile(gitIgnorePath, 'utf8').then((data) => data.split('\n'));
-			lines = lines.map((line) => line.trim()).filter((line) => line.length && !line.startsWith('#'));
-			ig.add(lines);
+		let currentPath = startPath;
+
+		while (currentPath.startsWith(this.basePath)) {
+			const gitIgnorePath = path.join(currentPath, '.gitignore');
+			if (existsSync(gitIgnorePath)) {
+				const lines = await fs.readFile(gitIgnorePath, 'utf8').then((data) => 
+					data.split('\n')
+						.map((line) => line.trim())
+						.filter((line) => line.length && !line.startsWith('#'))
+				);
+				ig.add(lines);
+			}
+			currentPath = path.dirname(currentPath);
 		}
+
 		ig.add('.git');
 		return ig;
 	}
