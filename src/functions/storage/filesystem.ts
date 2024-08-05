@@ -3,7 +3,7 @@ import { access, existsSync, lstat, lstatSync, mkdir, readFile, readdir, stat, w
 import { resolve } from 'node:path';
 import path, { join } from 'path';
 import { promisify } from 'util';
-import ignore, { Ignore } from 'ignore';
+import ignore from 'ignore';
 import Pino from 'pino';
 import fsPromises from 'fs/promises';
 import { agentContext } from '#agent/agentContext';
@@ -247,7 +247,7 @@ export class FileSystem {
 		const files: string[] = [];
 
 		const ig = await this.loadGitignoreRules(dirPath);
-		const mergedIg = ignore().add(parentIg.ignores()).add(ig.ignores());
+		const mergedIg = ignore().add(parentIg).add(ig);
 
 		const dirents = await fs.readdir(dirPath, { withFileTypes: true });
 		for (const dirent of dirents) {
