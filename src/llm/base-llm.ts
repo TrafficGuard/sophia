@@ -1,4 +1,4 @@
-import { CDATA_END, CDATA_START } from '#utils/xml-utils';
+import { countTokens } from '#llm/tokens';
 import { FunctionResponse, GenerateFunctionOptions, GenerateJsonOptions, GenerateTextOptions, LLM } from './llm';
 import { extractJsonResult, extractStringResult, parseFunctionCallsXml } from './responseParsers';
 
@@ -66,5 +66,10 @@ export abstract class BaseLLM implements LLM {
 		const outputCost = this.calculateOutputCost(output);
 		const totalCost = inputCost + outputCost;
 		return [totalCost, inputCost, outputCost];
+	}
+
+	countTokens(text: string): Promise<number> {
+		// defaults to gpt4o token parser
+		return countTokens(text);
 	}
 }

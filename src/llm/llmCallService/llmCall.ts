@@ -27,6 +27,8 @@ export interface LlmCall extends LlmRequest {
 	totalTime?: number;
 	/** Cost in $USD */
 	cost?: number;
+	inputTokens?: number;
+	outputTokens?: number;
 }
 
 export type CreateLlmRequest = Omit<LlmRequest, 'id' | 'requestTime'>;

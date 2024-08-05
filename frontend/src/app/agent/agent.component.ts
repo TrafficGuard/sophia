@@ -39,6 +39,8 @@ export interface LlmCall {
   totalTime?: number;
   /** Cost in $USD */
   cost?: number;
+  inputTokens: number;
+  outputTokens: number;
 
   // UI state field
   responseTextExpanded: boolean;

@@ -80,6 +80,12 @@ export interface LLM {
 	 * @param output the output text
 	 */
 	calculateCost(input: string, output: string): [totalCost: number, inputCost: number, outputCost: number];
+
+	/**
+	 * @param text
+	 * @returns the number of tokens in the text for this LLM
+	 */
+	countTokens(text: string): Promise<number>;
 }
 
 /**

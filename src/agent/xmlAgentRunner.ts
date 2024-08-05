@@ -58,7 +58,6 @@ export async function runXmlAgent(agent: AgentContext): Promise<AgentExecution> 
 
 	const execution: Promise<any> = withActiveSpan(agent.name, async (span: Span) => {
 		agent.traceId = span.spanContext().traceId;
-
 		span.setAttributes({
 			initialPrompt: agent.inputPrompt,
 			'service.name': getServiceName(),
@@ -71,6 +70,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<AgentExecution> 
 		let shouldContinue = true;
 		while (shouldContinue) {
 			shouldContinue = await withActiveSpan(XML_AGENT_SPAN, async (span) => {
+				agent.callStack = [];
 				let completed = false;
 				let requestFeedback = false;
 				let anyFunctionCallErrors = false;

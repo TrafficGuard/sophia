@@ -179,6 +179,8 @@ class AnthropicVertexLLM extends BaseLLM {
 			llmCall.timeToFirstToken = timeToFirstToken;
 			llmCall.totalTime = finishTime - requestTime;
 			llmCall.cost = cost;
+			llmCall.inputTokens = inputTokens;
+			llmCall.outputTokens = outputTokens;
 
 			span.setAttributes({
 				inputTokens,

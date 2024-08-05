@@ -42,7 +42,7 @@ As Claude is only available in [select regions](https://cloud.google.com/vertex-
 
 ### Non-Google Cloud setup
 
-If you want to get running ASAP then in `variables/local.env` update the `DATABASE` variable to `file` or `memory`.
+If you want to get running ASAP then in `variables/local.env` update the `DATABASE` variable to `memory`.
 
 ## Configuration quick start
 
@@ -50,7 +50,7 @@ The `variables/local.env` file contains the configuration when running Nous loca
 
 If you have configured Google Cloud then update `TRACE_AGENT_ENABLED` to `true`.
 
-By default, Nous runs in a single user mode. A user profile will be created the first time the application is run.
+By default, Nous runs in `single_user` authentication mode. A user profile will be created the first time the application is run.
 Update the `SINGLE_USER_EMAIL` variable with your email before running Nous for the first time.
 
 The LLM service API keys and integration configurations can be set in web UI, or alternatively in the `variables/local.env` file. Values in the user profile take preferences over the environment configuration values.
@@ -107,12 +107,14 @@ Documentation for deploying on Google Cloud will be provided soon.
 
 ### Tests
 
-**Unit tests**
+**Running tests**
 
-`npm run test:unit`
-
-**Integration tests**
-```
+Keep the Firestore emulator running in a separate shell or in the background
+```bash
 gcloud emulators firestore start --host-port=127.0.0.1:8243
-npm run test:integration
 ```
+```bash
+npm run test
+```
+
+

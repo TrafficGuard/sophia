@@ -8,7 +8,9 @@ import { environment } from '@env/environment';
 import { AgentEventService } from '@app/agent-event.service';
 
 interface StartAgentResponse {
-  agentId: string;
+  data: {
+    agentId: string;
+  }
 }
 
 @Component({
@@ -132,11 +134,9 @@ export class RunAgentComponent implements OnInit {
         llmHard: this.runAgentForm.value.llmHard,
       })
       .subscribe({
-        next: (data) => {
-          console.log('start data');
-          console.log(data);
+        next: (response) => {
           this.snackBar.open('Agent started', 'Close', { duration: 3000 });
-          this.router.navigate(['/agent', data.agentId]).catch((e) => console.error); // Assuming the response contains the agentId
+          this.router.navigate(['/agent', response.data.agentId]).catch((e) => console.error); // Assuming the response contains the agentId
         },
         error: (error) => {
           this.snackBar.open(`Error ${error.message}`, 'Close', { duration: 3000 });

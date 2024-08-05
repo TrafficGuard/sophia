@@ -56,7 +56,10 @@ completes with the answer in the required format, read and appending from the fi
 
 Without the task_id argument it will attempt to complete all questions in the dataset.
 
-You will first need to download the dataset and convert it to the format required (to be provided...)
+You will first need to download the dataset and convert it to the format required (more detailed steps soon...)
+
+It is extremely important you don't commit and push to a public repository the test/validation dataset.
+Make sure the directory you save the files to is in the .gitignore.
 
 ### scrape
 

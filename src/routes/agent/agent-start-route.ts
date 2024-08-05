@@ -62,7 +62,7 @@ export async function agentStartRoute(fastify: AppFastifyInstance) {
 				functions: llmFunctions,
 			});
 			const agentId: string = agentExecution.agentId;
-			const execution: Promise<any> = agentExecution.execution;
+			send(reply, 200, { agentId });
 		},
 	);
 }

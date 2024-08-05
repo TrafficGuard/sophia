@@ -1,15 +1,11 @@
 # Agent concepts
 
-## Design philosophy
-
-
-
 ## Agent types
 
 ### 1. Autonomous agents
 
-Nous comes with two fully autonomous agents (XML and Python/dynamic), which are capable of applying reasoning to break down
-a user request into a plan which can be complete by the available function calls.
+Nous comes with two fully autonomous agents (XML and Python/dynamic), which applying reasoning to break down
+a user request into a plan to be completed by the available function calls.
 
 ### 2. Workflow agents
 

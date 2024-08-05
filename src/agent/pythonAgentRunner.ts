@@ -55,7 +55,6 @@ export async function runPythonAgent(agent: AgentContext): Promise<AgentExecutio
 
 	const execution: Promise<any> = withActiveSpan(agent.name, async (span: Span) => {
 		agent.traceId = span.spanContext().traceId;
-
 		span.setAttributes({
 			initialPrompt: agent.inputPrompt,
 			'service.name': getServiceName(),
@@ -72,6 +71,7 @@ export async function runPythonAgent(agent: AgentContext): Promise<AgentExecutio
 		let shouldContinue = true;
 		while (shouldContinue) {
 			shouldContinue = await withActiveSpan(PY_AGENT_SPAN, async (span) => {
+				agent.callStack = [];
 				// Might need to reload the agent for dynamic updating of the tools
 				const functionsXml = convertJsonToPythonDeclaration(getAllFunctionSchemas(agent.functions.getFunctionInstances()));
 				const systemPromptWithFunctions = updateFunctionSchemas(pythonSystemPrompt, functionsXml);

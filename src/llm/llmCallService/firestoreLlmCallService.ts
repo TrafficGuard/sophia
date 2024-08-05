@@ -35,6 +35,8 @@ export class FirestoreLlmCallService implements LlmCallService {
 			agentId: data.agentId,
 			userId: data.userId,
 			callStack: data.callStack,
+			inputTokens: data.inputTokens,
+			outputTokens: data.outputTokens,
 		};
 	}
 
