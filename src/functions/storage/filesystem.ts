@@ -3,9 +3,9 @@ import { access, existsSync, lstat, lstatSync, mkdir, readFile, readdir, stat, w
 import { resolve } from 'node:path';
 import path, { join } from 'path';
 import { promisify } from 'util';
-import ignore from 'ignore';
-import Pino from 'pino';
 import fsPromises from 'fs/promises';
+import ignore, { Ignore } from 'ignore';
+import Pino from 'pino';
 import { agentContext } from '#agent/agentContext';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { parseArrayParameterValue } from '#functionSchema/functionUtils';
@@ -114,20 +114,19 @@ export class FileSystem {
 		let relativeDir = dir;
 		// Check absolute directory path
 		if (dir.startsWith('/')) {
-			if(existsSync(dir)) {
+			if (existsSync(dir)) {
 				this.workingDirectory = dir;
 				this.log.info(`workingDirectory is now ${this.workingDirectory}`);
-				return
-			} else {
-				// try it as a relative path
-				relativeDir = dir.substring(1)
+				return;
 			}
+			// try it as a relative path
+			relativeDir = dir.substring(1);
 		}
-		let relativePath = path.join(this.getWorkingDirectory(), relativeDir)
+		const relativePath = path.join(this.getWorkingDirectory(), relativeDir);
 		if (existsSync(relativePath)) {
 			this.workingDirectory = relativePath;
 			this.log.info(`workingDirectory is now ${this.workingDirectory}`);
-			return
+			return;
 		}
 
 		throw new Error(`New working directory ${dir} does not exist (current working directory ${this.workingDirectory}`);
@@ -167,8 +166,8 @@ export class FileSystem {
 		// --count Only show count of line matches for each file
 		// rg likes this spawnCommand. Doesn't work it others execs
 		const results = await spawnCommand(`rg --count ${arg(contentsRegex)}`);
-		if(results.stderr.includes('command not found: rg')) {
-			
+		if (results.stderr.includes('command not found: rg')) {
+			throw new Error('Command not found: rg. Install ripgrep');
 		}
 		if (results.exitCode > 0) throw new Error(results.stderr);
 		return results.stdout;
@@ -413,10 +412,11 @@ export class FileSystem {
 		while (currentPath.startsWith(this.basePath)) {
 			const gitIgnorePath = path.join(currentPath, '.gitignore');
 			if (existsSync(gitIgnorePath)) {
-				const lines = await fs.readFile(gitIgnorePath, 'utf8').then((data) => 
-					data.split('\n')
+				const lines = await fs.readFile(gitIgnorePath, 'utf8').then((data) =>
+					data
+						.split('\n')
 						.map((line) => line.trim())
-						.filter((line) => line.length && !line.startsWith('#'))
+						.filter((line) => line.length && !line.startsWith('#')),
 				);
 				ig.add(lines);
 			}
