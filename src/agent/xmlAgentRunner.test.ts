@@ -10,6 +10,7 @@ import {
 	cancelAgent,
 	provideFeedback,
 	startAgent,
+	startAgentAndWait,
 } from '#agent/agentRunner';
 import { XML_AGENT_SPAN } from '#agent/xmlAgentRunner';
 import { TEST_FUNC_NOOP, TEST_FUNC_SKY_COLOUR, TEST_FUNC_SUM, THROW_ERROR_TEXT, TestFunctions } from '#functions/testFunctions';
@@ -170,7 +171,7 @@ describe.skip('xmlAgentRunner', () => {
 			const response = `<function_calls><function_call><function_name>${functionName}</function_name><parameters></parameters></function_call></function_calls>`;
 			mockLLM.setResponse(response);
 
-			const id = await startAgent(runConfig({ functions }));
+			const id = await startAgentAndWait(runConfig({ functions }));
 			const ctx = await appContext().agentStateService.load(id);
 			expect(ctx.state).to.equal('error');
 			expect(ctx.error).to.include(THROW_ERROR_TEXT);

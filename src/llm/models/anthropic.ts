@@ -20,7 +20,7 @@ export const ANTHROPIC_SERVICE = 'anthropic';
 export function anthropicLLMRegistry(): Record<string, () => LLM> {
 	return {
 		[`${ANTHROPIC_SERVICE}:claude-3-haiku`]: Claude3_Haiku,
-		[`${ANTHROPIC_SERVICE}:claude-3-sonnet`]: Claude3_5_Sonnet,
+		[`${ANTHROPIC_SERVICE}:claude-3-5-sonnet`]: Claude3_5_Sonnet,
 		[`${ANTHROPIC_SERVICE}:claude-3-opus`]: Claude3_Opus,
 	};
 }

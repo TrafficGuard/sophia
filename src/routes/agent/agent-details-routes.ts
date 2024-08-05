@@ -2,6 +2,7 @@ import { Type } from '@sinclair/typebox';
 import { FastifyReply } from 'fastify';
 import { AgentContext } from '#agent/agentContext';
 import { serializeContext } from '#agent/agentContext';
+import { AgentExecution, agentExecutions } from '#agent/agentRunner';
 import { send, sendBadRequest, sendSuccess } from '#fastify/index';
 import { logger } from '#o11y/logger';
 import { AppFastifyInstance } from '../../app';
@@ -66,6 +67,43 @@ export async function agentDetailsRoutes(fastify: AppFastifyInstance) {
 				logger.error('Error deleting agents:', error);
 				sendBadRequest(reply, 'Error deleting agents');
 			}
+		},
+	);
+
+	// Server-Send Events route for real-time agent updates
+	fastify.get(
+		`${basePath}/listen/:agentId`,
+		{
+			schema: {
+				params: Type.Object({
+					agentId: Type.String(),
+				}),
+			},
+		},
+		async (req, reply) => {
+			const agentId = req.params.agentId;
+			const agentExecution: AgentExecution = agentExecutions[agentId];
+			if (!agentExecution) {
+				return sendBadRequest(reply);
+			}
+
+			reply.raw.writeHead(200, {
+				'Content-Type': 'text/event-stream',
+				'Cache-Control': 'no-cache',
+				Connection: 'keep-alive',
+				'Access-Control-Allow-Origin': '*', // Need to set CORS headers
+				'Access-Control-Allow-Credentials': 'true',
+			});
+
+			agentExecution.execution
+				.then((result) => {
+					reply.raw.write(`data: ${JSON.stringify({ event: 'completed', agentId })}\n\n`);
+					reply.raw.end();
+				})
+				.catch((error) => {
+					reply.raw.write(`data: ${JSON.stringify({ event: 'error', agentId, error })}\n\n`);
+					reply.raw.end();
+				});
 		},
 	);
 }

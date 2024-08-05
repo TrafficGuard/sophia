@@ -10,6 +10,7 @@ import {
 	cancelAgent,
 	provideFeedback,
 	startAgent,
+	startAgentAndWait,
 } from '#agent/agentRunner';
 import { PY_AGENT_SPAN, convertTypeScriptToPython } from '#agent/pythonAgentRunner';
 import { TEST_FUNC_NOOP, TEST_FUNC_SKY_COLOUR, TEST_FUNC_SUM, TEST_FUNC_THROW_ERROR, THROW_ERROR_TEXT, TestFunctions } from '#functions/testFunctions';
@@ -233,7 +234,7 @@ describe('pythonAgentRunner', () => {
 				nextPrompt = prompt;
 			});
 
-			const id = await startAgent(runConfig({ functions }));
+			const id = await startAgentAndWait(runConfig({ functions }));
 			const ctx = await appContext().agentStateService.load(id);
 
 			console.log(`Next prompt ===============\n${nextPrompt}`);

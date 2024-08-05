@@ -3,7 +3,7 @@ import { Span, SpanStatusCode } from '@opentelemetry/api';
 import { PyodideInterface, loadPyodide } from 'pyodide';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK, AGENT_SAVE_MEMORY_CONTENT_PARAM_NAME } from '#agent/agentFunctions';
 import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, buildToolStatePrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
-import { formatFunctionError, formatFunctionResult, notificationMessage } from '#agent/agentRunner';
+import { AgentExecution, formatFunctionError, formatFunctionResult, notificationMessage } from '#agent/agentRunner';
 import { agentHumanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
 import { getServiceName } from '#fastify/trace-init/trace-init';
 import { FUNC_SEP, FunctionParameter, FunctionSchema, getAllFunctionSchemas } from '#functionSchema/functions';
@@ -20,7 +20,7 @@ export const PY_AGENT_SPAN = 'PythonAgent';
 
 let pyodide: PyodideInterface;
 
-export async function runPythonAgent(agent: AgentContext): Promise<string> {
+export async function runPythonAgent(agent: AgentContext): Promise<AgentExecution> {
 	if (!pyodide) pyodide = await loadPyodide();
 
 	// Hot reload (TODO only when not deployed)
@@ -53,7 +53,7 @@ export async function runPythonAgent(agent: AgentContext): Promise<string> {
 
 	await agentStateService.save(agent);
 
-	await withActiveSpan(agent.name, async (span: Span) => {
+	const execution: Promise<any> = withActiveSpan(agent.name, async (span: Span) => {
 		agent.traceId = span.spanContext().traceId;
 
 		span.setAttributes({
@@ -286,7 +286,7 @@ str(await main())`.trim();
 			logger.warn(e`Failed to send supervisor notification message ${message}`);
 		}
 	});
-	return agent.agentId; //{ agentId: agent.agentId, execution };
+	return { agentId: agent.agentId, execution };
 }
 
 /**

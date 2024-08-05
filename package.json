@@ -80,6 +80,7 @@
     "fast-glob": "^3.3.2",
     "fast-xml-parser": "^4.3.6",
     "fastify": "^4.26.2",
+    "fastify-cors": "^6.1.0",
     "fastify-healthcheck": "^4.4.0",
     "fastify-raw-body": "^4.3.0",
     "firebase-admin": "^12.1.0",

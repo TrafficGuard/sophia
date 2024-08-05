@@ -98,6 +98,12 @@ function listen(port: number): void {
 }
 
 async function loadPlugins(config: FastifyConfig) {
+	await fastifyInstance.register(import('@fastify/cors'), {
+		origin: '*', // TODO restrict to UI domain
+		methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow these HTTP methods
+		allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers
+		credentials: true,
+	});
 	fastifyInstance.register(require('fastify-healthcheck'), {
 		healthcheckUrl: config.healthcheckUrl ?? '/health-check',
 	});
@@ -107,11 +113,6 @@ async function loadPlugins(config: FastifyConfig) {
 		encoding: 'utf8',
 		runFirst: true,
 		routes: [],
-	});
-	await fastifyInstance.register(import('@fastify/cors'), {
-		origin: '*', // Allow requests from all origins
-		methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow these HTTP methods
-		allowedHeaders: ['content-type', 'authorization'], // Allow these headers
 	});
 }
 

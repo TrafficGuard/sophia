@@ -1,3 +1,4 @@
+import { Agent } from 'node:http';
 import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext, AgentLLMs, createContext, llms } from '#agent/agentContext';
 import { AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
@@ -44,23 +45,43 @@ export interface RunAgentConfig {
 /**
  * The reference to a running agent
  */
-interface AgentExecution {
+export interface AgentExecution {
 	agentId: string;
 	execution: Promise<any>;
 }
 
-async function runAgent(agent: AgentContext): Promise<string> {
+/**
+ * The active running agents
+ */
+export const agentExecutions: Record<string, AgentExecution> = {};
+
+async function runAgent(agent: AgentContext): Promise<AgentExecution> {
+	let execution: AgentExecution;
 	switch (agent.type) {
 		case 'xml':
-			return runXmlAgent(agent);
+			execution = await runXmlAgent(agent);
+			break;
 		case 'python':
-			return runPythonAgent(agent);
+			execution = await runPythonAgent(agent);
+			break;
 		default:
 			throw new Error(`Invalid agent type ${agent.type}`);
 	}
+
+	agentExecutions[agent.agentId] = execution;
+	execution.execution.finally(() => {
+		delete agentExecutions[agent.agentId];
+	});
+	return execution;
 }
 
-export async function startAgent(config: RunAgentConfig): Promise<string> {
+export async function startAgentAndWait(config: RunAgentConfig): Promise<string> {
+	const agentExecution = await startAgent(config);
+	await agentExecution.execution;
+	return agentExecution.agentId;
+}
+
+export async function startAgent(config: RunAgentConfig): Promise<AgentExecution> {
 	const agent: AgentContext = createContext(config);
 
 	if (config.initialPrompt?.includes('<user_request>')) {

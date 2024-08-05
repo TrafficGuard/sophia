@@ -225,7 +225,6 @@ export class FileSystem {
 
 	/**
 	 * List all the files recursively under the given path, excluding any paths in a .gitignore file if it exists
-	 * @param dirPath The directory to search under (Optional - defaults to the workingDirectory)
 	 * @returns the list of files
 	 */
 	@func()

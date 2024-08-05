@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { Span, SpanStatusCode } from '@opentelemetry/api';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
 import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, buildToolStatePrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
-import { formatFunctionError, formatFunctionResult, notificationMessage, summariseLongFunctionOutput } from '#agent/agentRunner';
+import { AgentExecution, formatFunctionError, formatFunctionResult, notificationMessage, summariseLongFunctionOutput } from '#agent/agentRunner';
 import { agentHumanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
 import { getServiceName } from '#fastify/trace-init/trace-init';
 import { FunctionSchema, getAllFunctionSchemas } from '#functionSchema/functions';
@@ -18,7 +18,7 @@ export const XML_AGENT_SPAN = 'XmlAgent';
 
 const stopSequences = ['</response>'];
 
-export async function runXmlAgent(agent: AgentContext): Promise<string> {
+export async function runXmlAgent(agent: AgentContext): Promise<AgentExecution> {
 	// Hot reload (TODO only when not deployed)
 	const xmlSystemPrompt = readFileSync('src/agent/xml-agent-system-prompt').toString();
 
@@ -56,7 +56,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 
 	await agentStateService.save(agent);
 
-	await withActiveSpan(agent.name, async (span: Span) => {
+	const execution: Promise<any> = withActiveSpan(agent.name, async (span: Span) => {
 		agent.traceId = span.spanContext().traceId;
 
 		span.setAttributes({
@@ -230,7 +230,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<string> {
 			logger.warn(e`Failed to send supervisor notification message ${message}`);
 		}
 	});
-	return agent.agentId; //{ agentId: agent.agentId, execution };
+	return { agentId: agent.agentId, execution };
 }
 
 /**

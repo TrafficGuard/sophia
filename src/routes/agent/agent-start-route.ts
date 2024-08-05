@@ -6,7 +6,7 @@ import { getLLM } from '#llm/llmFactory';
 import { logger } from '#o11y/logger';
 import { AppFastifyInstance } from '../../app';
 
-import { startAgent } from '#agent/agentRunner';
+import { AgentExecution, startAgent } from '#agent/agentRunner';
 import { currentUser } from '#user/userService/userContext';
 
 import { functionFactory } from '#functionSchema/functionDecorators';
@@ -47,7 +47,7 @@ export async function agentStartRoute(fastify: AppFastifyInstance) {
 				}
 			}
 
-			startAgent({
+			const agentExecution: AgentExecution = await startAgent({
 				user: currentUser(),
 				agentName: name,
 				initialPrompt: userPrompt,
@@ -61,8 +61,8 @@ export async function agentStartRoute(fastify: AppFastifyInstance) {
 				},
 				functions: llmFunctions,
 			});
-
-			send(reply, 200);
+			const agentId: string = agentExecution.agentId;
+			const execution: Promise<any> = agentExecution.execution;
 		},
 	);
 }

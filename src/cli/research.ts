@@ -1,14 +1,14 @@
 import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { readFileSync } from 'fs';
+
 import { AgentLLMs } from '#agent/agentContext';
 import { startAgent } from '#agent/agentRunner';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
 import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { fireworksLlama3_70B } from '#llm/models/fireworks';
-import { GroqLLM, grokLLMs, groqMixtral8x7b } from '#llm/models/groq';
+import { groqMixtral8x7b } from '#llm/models/groq';
 import { Ollama_LLMs } from '#llm/models/ollama';
 import { togetherLlama3_70B } from '#llm/models/together';
 import { CliOptions, getLastRunAgentId, parseProcessArgs, saveAgentId } from './cli';

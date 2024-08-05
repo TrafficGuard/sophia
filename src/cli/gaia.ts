@@ -3,7 +3,7 @@ import '#fastify/trace-init/trace-init'; // leave an empty line next so this doe
 import { promises as fs, readFileSync } from 'fs';
 import { AgentLLMs } from '#agent/agentContext';
 import { AGENT_COMPLETED_PARAM_NAME } from '#agent/agentFunctions';
-import { startAgent } from '#agent/agentRunner';
+import { startAgent, startAgentAndWait } from '#agent/agentRunner';
 import { FileSystem } from '#functions/storage/filesystem';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
@@ -82,7 +82,7 @@ async function answerGaiaQuestion(task: GaiaQuestion): Promise<GaiaResult> {
 	if (task.Level === '3') budget = 4;
 
 	try {
-		const agentId = await startAgent({
+		const agentId = await startAgentAndWait({
 			initialPrompt: prompt,
 			llms: ClaudeVertexLLMs(),
 			agentName: `gaia-${task.task_id}`,

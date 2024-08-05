@@ -3,7 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
 import { environment } from '@env/environment';
+import { AgentEventService } from '@app/agent-event.service';
+
+interface StartAgentResponse {
+  agentId: string;
+}
 
 @Component({
   selector: 'app-run-agent',
@@ -16,7 +22,12 @@ export class RunAgentComponent implements OnInit {
   runAgentForm: FormGroup;
   isSubmitting: boolean = false;
 
-  constructor(private http: HttpClient, private snackBar: MatSnackBar) {
+  constructor(
+    private http: HttpClient,
+    private snackBar: MatSnackBar,
+    private router: Router,
+    private agentEventService: AgentEventService
+  ) {
     this.runAgentForm = new FormGroup({
       name: new FormControl('', Validators.required),
       userPrompt: new FormControl('', Validators.required),
@@ -108,7 +119,7 @@ export class RunAgentComponent implements OnInit {
       .filter((_, index) => this.runAgentForm.value['function' + index])
       .map((tool, _) => tool);
     this.http
-      .post(`${environment.serverUrl}/agent/v1/start`, {
+      .post<StartAgentResponse>(`${environment.serverUrl}/agent/v1/start`, {
         name: this.runAgentForm.value.name,
         userPrompt: this.runAgentForm.value.userPrompt,
         type: this.runAgentForm.value.type,
@@ -122,7 +133,10 @@ export class RunAgentComponent implements OnInit {
       })
       .subscribe({
         next: (data) => {
+          console.log('start data');
+          console.log(data);
           this.snackBar.open('Agent started', 'Close', { duration: 3000 });
+          this.router.navigate(['/agent', data.agentId]).catch((e) => console.error); // Assuming the response contains the agentId
         },
         error: (error) => {
           this.snackBar.open(`Error ${error.message}`, 'Close', { duration: 3000 });
