@@ -5,7 +5,7 @@ import path, { join } from 'path';
 import { promisify } from 'util';
 import ignore, { Ignore } from 'ignore';
 import Pino from 'pino';
-import fs from 'fs/promises';
+import fsPromises from 'fs/promises';
 import { agentContext } from '#agent/agentContext';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { parseArrayParameterValue } from '#functionSchema/functionUtils';
@@ -247,7 +247,7 @@ export class FileSystem {
 		const files: string[] = [];
 
 		const ig = await this.loadGitignoreRules(dirPath);
-		const mergedIg = ignore().merge(parentIg).merge(ig);
+		const mergedIg = ignore().add(parentIg.ignores()).add(ig.ignores());
 
 		const dirents = await fs.readdir(dirPath, { withFileTypes: true });
 		for (const dirent of dirents) {
