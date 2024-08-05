@@ -166,6 +166,9 @@ export class FileSystem {
 		// --count Only show count of line matches for each file
 		// rg likes this spawnCommand. Doesn't work it others execs
 		const results = await spawnCommand(`rg --count ${arg(contentsRegex)}`);
+		if(results.stderr.includes('command not found: rg')) {
+			
+		}
 		if (results.exitCode > 0) throw new Error(results.stderr);
 		return results.stdout;
 	}
