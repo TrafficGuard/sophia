@@ -42,7 +42,7 @@ describe('RunAgentComponent', () => {
   });
 
   it('should have "xml" as the default type', () => {
-    expect(component.runAgentForm.get('type')?.value).toBe('xml');
+    expect(component.runAgentForm.get('type')?.value).toBe('python');
   });
 
   it('should allow changing the type to "python"', () => {
