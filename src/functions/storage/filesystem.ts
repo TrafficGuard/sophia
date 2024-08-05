@@ -3,6 +3,7 @@ import { access, existsSync, lstat, lstatSync, mkdir, readFile, readdir, stat, w
 import { resolve } from 'node:path';
 import path, { join } from 'path';
 import { promisify } from 'util';
+import fsPromises from 'fs/promises';
 import ignore, { Ignore } from 'ignore';
 import Pino from 'pino';
 import { agentContext } from '#agent/agentContext';
@@ -45,18 +46,11 @@ type FileFilter = (filename: string) => boolean;
  */
 @funcClass(__filename)
 export class FileSystem {
-	/** The path relative to the basePath */
-	private _workingDirectory = '';
+	/** The filesystem path */
+	private workingDirectory = '';
 	vcs: VersionControlSystem | null = null;
 	log: Pino.Logger;
 
-	get workingDirectory(): string {
-		return this._workingDirectory;
-	}
-
-	set workingDirectory(newName: string) {
-		this._workingDirectory = newName;
-	}
 	/**
 	 * @param basePath The root folder allowed to be accessed by this file system instance. This should only be accessed by system level
 	 * functions. Generally getWorkingDirectory() should be used
@@ -80,7 +74,7 @@ export class FileSystem {
 				logger.error(`Invalid NOUS_FS env var. ${fsEnvVar} does not exist`);
 			}
 		}
-		this._workingDirectory = this.basePath;
+		this.workingDirectory = this.basePath;
 
 		this.log = logger.child({ FileSystem: this.basePath });
 		// We will want to re-visit this, the .git folder can be in a parent directory
@@ -106,33 +100,36 @@ export class FileSystem {
 	 * @returns the full path of the working directory on the filesystem
 	 */
 	getWorkingDirectory(): string {
-		if (this.workingDirectory.startsWith(this.basePath)) return this.workingDirectory;
-		return path.join(this.basePath, this.workingDirectory);
+		return this.workingDirectory;
 	}
 
 	/**
-	 * Set the working directory, relative to the filesystem's basePath if starting with "/", otherwise relative to the current working directory.
+	 * Set the working directory. The dir argument may be an absolute filesystem path, otherwise relative to the current working directory.
+	 * If the dir starts with / it will first be checked as an absolute directory, then as relative path to the working directory.
 	 * @param dir the new working directory
 	 */
 	@func()
 	setWorkingDirectory(dir: string): void {
 		if (!dir) throw new Error('dir must be provided');
+		let relativeDir = dir;
+		// Check absolute directory path
+		if (dir.startsWith('/')) {
+			if (existsSync(dir)) {
+				this.workingDirectory = dir;
+				this.log.info(`workingDirectory is now ${this.workingDirectory}`);
+				return;
+			}
+			// try it as a relative path
+			relativeDir = dir.substring(1);
+		}
+		const relativePath = path.join(this.getWorkingDirectory(), relativeDir);
+		if (existsSync(relativePath)) {
+			this.workingDirectory = relativePath;
+			this.log.info(`workingDirectory is now ${this.workingDirectory}`);
+			return;
+		}
 
-		if (dir.startsWith('/') && existsSync(dir)) this.workingDirectory = dir;
-		else this.workingDirectory = join(this.workingDirectory, dir);
-
-		this.log.info(`workingDirectory is now ${this.workingDirectory}`);
-
-		// if (`/${dir}`.startsWith(this.basePath)) dir = `/${dir}`;
-		// let newWorkingDirectory = dir.startsWith(this.basePath) ? dir.replace(this.basePath, '') : dir;
-		// newWorkingDirectory = dir.startsWith('/') ? newWorkingDirectory : path.join(this.workingDirectory, newWorkingDirectory);
-		// // Get the relative path from baseUrl to new working path
-		// const newFullWorkingDir = join(this.basePath, newWorkingDirectory);
-		// let relativePath = path.relative(this.basePath, newFullWorkingDir);
-		// // If the relative path starts with '..', new path is higher than basePath, so set it as the current dir
-		// if (relativePath.startsWith('..')) relativePath = './';
-		// this.log.debug(`  this.workingDirectory: ${relativePath}`);
-		// this.workingDirectory = relativePath;
+		throw new Error(`New working directory ${dir} does not exist (current working directory ${this.workingDirectory}`);
 	}
 
 	/**
@@ -169,6 +166,9 @@ export class FileSystem {
 		// --count Only show count of line matches for each file
 		// rg likes this spawnCommand. Doesn't work it others execs
 		const results = await spawnCommand(`rg --count ${arg(contentsRegex)}`);
+		if (results.stderr.includes('command not found: rg')) {
+			throw new Error('Command not found: rg. Install ripgrep');
+		}
 		if (results.exitCode > 0) throw new Error(results.stderr);
 		return results.stdout;
 	}
@@ -229,49 +229,34 @@ export class FileSystem {
 	 */
 	@func()
 	async listFilesRecursively(dirPath = './'): Promise<string[]> {
-		// const dirPath = './'
-		if (dirPath !== './') throw new Error('listFilesRecursively needs to be fixed to work with the dirPath not being the workingDirectory');
-		this.log.debug(`basePath: ${this.basePath}`);
 		this.log.debug(`cwd: ${this.workingDirectory}`);
-		this.log.debug(`cwd(): ${this.getWorkingDirectory()}`);
 
-		const fullPath = path.join(this.getWorkingDirectory(), dirPath);
+		const startPath = path.join(this.getWorkingDirectory(), dirPath);
 		// TODO check isnt going higher than this.basePath
 
-		const filter: FileFilter = (name) => true;
-		const ig = ignore();
-		const gitIgnorePath = path.join(fullPath, '.gitignore');
-		// console.log(gitIgnorePath);
-		if (existsSync(gitIgnorePath)) {
-			// read the gitignore file into a string array
-			// console.log(`Found ${gitIgnorePath}`);
-			let lines = await fs.readFile(gitIgnorePath, 'utf8').then((data) => data.split('\n'));
-			lines = lines.map((line) => line.trim()).filter((line) => line.length && !line.startsWith('#'), filter);
-			ig.add(lines);
-			ig.add('.git');
-		}
+		const ig = await this.loadGitignoreRules(startPath);
 
-		const files: string[] = await this.listFilesRecurse(this.basePath, fullPath, ig);
-		return files.map((file) => path.relative(this.getWorkingDirectory(), file));
+		const files: string[] = await this.listFilesRecurse(this.workingDirectory, startPath, ig);
+		return files.map((file) => path.relative(this.workingDirectory, file));
 	}
 
-	async listFilesRecurse(rootPath: string, dirPath: string, ig, filter: (file: string) => boolean = (name) => true): Promise<string[]> {
+	private async listFilesRecurse(rootPath: string, dirPath: string, parentIg: Ignore, filter: (file: string) => boolean = (name) => true): Promise<string[]> {
 		const relativeRoot = this.basePath;
 		this.log.debug(`listFilesRecurse dirPath: ${dirPath}`);
 		const files: string[] = [];
 
+		const ig = await this.loadGitignoreRules(dirPath);
+		const mergedIg = ignore().add(parentIg).add(ig);
+
 		const dirents = await fs.readdir(dirPath, { withFileTypes: true });
 		for (const dirent of dirents) {
+			const relativePath = path.relative(rootPath, path.join(dirPath, dirent.name));
 			if (dirent.isDirectory()) {
-				const relativePath = path.relative(rootPath, path.join(dirPath, dirent.name));
-				if (!ig.ignores(relativePath) && !ig.ignores(`${relativePath}/`)) {
-					files.push(...(await this.listFilesRecurse(rootPath, path.join(dirPath, dirent.name), ig, filter)));
+				if (!mergedIg.ignores(relativePath) && !mergedIg.ignores(`${relativePath}/`)) {
+					files.push(...(await this.listFilesRecurse(rootPath, path.join(dirPath, dirent.name), mergedIg, filter)));
 				}
 			} else {
-				const relativePath = path.relative(relativeRoot, path.join(dirPath, dirent.name));
-
-				if (!ig.ignores(relativePath)) {
-					// console.log(`pushing ${dirPath}/${dirent.name}`)
+				if (!mergedIg.ignores(relativePath)) {
 					files.push(path.join(dirPath, dirent.name));
 				}
 			}
@@ -420,14 +405,24 @@ export class FileSystem {
 		await this.writeFile(filePath, updatedContent);
 	}
 
-	private async loadGitignore(dirPath: string): Promise<Ignore> {
+	private async loadGitignoreRules(startPath: string): Promise<Ignore> {
 		const ig = ignore();
-		const gitIgnorePath = path.join(dirPath, '.gitignore');
-		if (existsSync(gitIgnorePath)) {
-			let lines = await fs.readFile(gitIgnorePath, 'utf8').then((data) => data.split('\n'));
-			lines = lines.map((line) => line.trim()).filter((line) => line.length && !line.startsWith('#'));
-			ig.add(lines);
+		let currentPath = startPath;
+
+		while (currentPath.startsWith(this.basePath)) {
+			const gitIgnorePath = path.join(currentPath, '.gitignore');
+			if (existsSync(gitIgnorePath)) {
+				const lines = await fs.readFile(gitIgnorePath, 'utf8').then((data) =>
+					data
+						.split('\n')
+						.map((line) => line.trim())
+						.filter((line) => line.length && !line.startsWith('#')),
+				);
+				ig.add(lines);
+			}
+			currentPath = path.dirname(currentPath);
 		}
+
 		ig.add('.git');
 		return ig;
 	}

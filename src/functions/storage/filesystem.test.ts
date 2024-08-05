@@ -2,7 +2,7 @@ import path, { join, resolve } from 'path';
 import { expect } from 'chai';
 import { FileSystem } from './filesystem';
 
-describe('FileSystem', () => {
+describe.only('FileSystem', () => {
 	describe.skip('setWorkingDirectory with fakePath', () => {
 		const fileSystem = new FileSystem('/basePath');
 		it('should be able to set a path from the baseDir when the new working directory starts with /', async () => {
@@ -77,26 +77,30 @@ describe('FileSystem', () => {
 	});
 
 	describe('listFilesRecursively', () => {
-		const fileSystem = new FileSystem(path.join(process.cwd(), 'test', 'filesystem'));
-		it('should list all files under the filesystem baseDir', async () => {
-			const files: string[] = await fileSystem.listFilesRecursively();
+		describe('test filesystem', () => {
+			let fileSystem: FileSystem;
+			beforeEach(() => {
+				// set the workingDirectory to test/filesystem
+				fileSystem = new FileSystem(path.join(process.cwd(), 'test', 'filesystem'));
+			});
 
-			expect(files).to.contain('toplevel');
-			expect(files).to.contain('dir1/file1a');
-			expect(files).to.contain('dir1/file1b');
-			expect(files).to.contain('dir1/dir2/file2a');
-		});
-		it('should list files and folders in working directory', async () => {
-			fileSystem.setWorkingDirectory('dir1/dir2');
-			const files: string[] = await fileSystem.listFilesRecursively();
+			it('should list all files under the filesystem baseDir honouring .gitignore files in current and sub-directories', async () => {
+				const files: string[] = await fileSystem.listFilesRecursively();
 
-			expect(files.length).to.equal(1);
-			// paths should be relative to the working directory
-			expect(files).to.contain('file2a');
-
-			// files = await fileSystem.listFilesRecursively('src');
-			// expect(files).to.contain('src/index.ts');
-			// expect(files).not.to.contain('package.json');
+				expect(files).to.contain('toplevel');
+				expect(files).to.contain('dir1/file1a');
+				expect(files).to.contain('dir1/file1b');
+				expect(files).to.contain('dir1/dir2/dir3/file3a');
+				expect(files).not.to.contain('dir1/dir2/file2a'); // dir1/dir2/.gitignore ignore file2a
+				expect(files).not.to.contain('dir1/dir2/dir3/file3b'); // .gitignore ignore file3b
+			});
+			it('should list files and folders in working directory honouring .gitignore in current and parent directory', async () => {
+				fileSystem.setWorkingDirectory('dir1/dir2');
+				const files: string[] = await fileSystem.listFilesRecursively();
+				// file2a is ignored by the .gitignore in the current directory
+				// file3b is ignored by the .gitignore in the parent directory
+				expect(files).to.deep.equal(['.gitignore', 'dir3/file3a']);
+			});
 		});
 	});
 

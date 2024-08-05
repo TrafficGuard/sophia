@@ -44,7 +44,7 @@ ${repositoryMap}
 <requirements>${requirements}</requirements>
 <task>
 The end goal is to meet the requirements defined.  This will be achieved by editing the source code and configuration.
-Your task is select only from files in the <project_map /> the ones which will be required to edit to fulfill the requirements.
+Your task is to select from in <project_map> the files which will be required to edit to fulfill the requirements.
 You will select:
 1. The primary files which you anticipate will need to be edited, and their corresponding test files.
 2. The secondary supporting files which contain documentation and type information (interfaces, types, classes, function, consts etc) that will be required to correctly makes the changes. Include any files imported by the primary files. If the requirements reference any files relevant to the changes then include them too.
