@@ -107,7 +107,7 @@
         <mat-list-item><span
           class="fixed-width-field"><strong>Execution ID:</strong></span> {{ agentDetails.executionId }}
         </mat-list-item>-->
-        <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; justify-content: space-between; align-items: center">
           <div>
             <mat-list-item>
               <span class="fixed-width-field right-align"><strong>Name</strong></span>
@@ -315,15 +315,18 @@
     <mat-card *ngFor="let call of llmCalls; let i = index">
       <mat-card-title id="{{ call.id }}"
         >{{ call.callStack }} {{ call.description }}
-        <a href="{{ llmCallUrl(call) }}" style="font-size: x-small" target="_blank"><mat-icon>storage</mat-icon></a></mat-card-title
+        <a href="{{ llmCallUrl(call) }}" style="font-size: x-small" target="_blank"
+          ><mat-icon>storage</mat-icon></a
+        ></mat-card-title
       >
       <mat-card-content>
         <p>
           <strong>LLM:</strong> {{ call.llmId }} &nbsp;&nbsp; <strong>Request Time:</strong>
           {{ call.requestTime | date : 'medium' }}. &nbsp;&nbsp; <strong>Total Time:</strong>
-          {{ ((call.totalTime ?? 0) / 1000).toFixed(1) }}s&nbsp;&nbsp;
-          <strong>Tokens in/out:</strong> {{ call.inputTokens }}/{{ call.outputTokens }}&nbsp;&nbsp;
-          <strong>Cost: </strong> ${{ call.cost?.toFixed(4) }}
+          {{ ((call.totalTime ?? 0) / 1000).toFixed(1) }}s&nbsp;&nbsp; <strong>Tokens in/out:</strong>
+          {{ call.inputTokens }}/{{ call.outputTokens }}&nbsp;&nbsp; <strong>Cost: </strong> ${{
+            call.cost?.toFixed(4)
+          }}
         </p>
 
         <mat-expansion-panel

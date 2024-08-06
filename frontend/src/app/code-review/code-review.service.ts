@@ -2,21 +2,22 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CodeReviewConfig } from './code-review.model';
+import { Data } from '@shared';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CodeReviewService {
-  private apiUrl = '/api/code-review-configs';
+  private apiUrl = '/code-review-configs';
 
   constructor(private http: HttpClient) {}
 
-  getCodeReviewConfigs(): Observable<CodeReviewConfig[]> {
-    return this.http.get<CodeReviewConfig[]>(this.apiUrl);
+  getCodeReviewConfigs(): Observable<Data<CodeReviewConfig[]>> {
+    return this.http.get<Data<CodeReviewConfig[]>>(this.apiUrl);
   }
 
-  getCodeReviewConfig(id: string): Observable<CodeReviewConfig> {
-    return this.http.get<CodeReviewConfig>(`${this.apiUrl}/${id}`);
+  getCodeReviewConfig(id: string): Observable<Data<CodeReviewConfig>> {
+    return this.http.get<Data<CodeReviewConfig>>(`${this.apiUrl}/${id}`);
   }
 
   createCodeReviewConfig(config: Omit<CodeReviewConfig, 'id'>): Observable<string> {

@@ -10,7 +10,7 @@ import { AgentEventService } from '@app/agent-event.service';
 interface StartAgentResponse {
   data: {
     agentId: string;
-  }
+  };
 }
 
 @Component({

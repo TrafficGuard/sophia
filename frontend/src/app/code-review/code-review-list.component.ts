@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { CodeReviewEditComponent } from './code-review-edit.component';
+import { Router } from '@angular/router';
 import { CodeReviewService } from './code-review.service';
 import { CodeReviewConfig } from './code-review.model';
+import { ConfirmDialogComponent } from '../shared/confirm-dialog/confirm-dialog.component';
+import { MatDialogModule } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-code-review-list',
@@ -10,11 +12,11 @@ import { CodeReviewConfig } from './code-review.model';
   styleUrls: ['./code-review-list.component.scss'],
 })
 export class CodeReviewListComponent implements OnInit {
-  configs: CodeReviewConfig[] = [];
+  configs: CodeReviewConfig[] | null = null;
   isLoading = false;
   errorMessage = '';
 
-  constructor(private dialog: MatDialog, private codeReviewService: CodeReviewService) {}
+  constructor(private codeReviewService: CodeReviewService, private router: Router, private dialog: MatDialog) {}
 
   ngOnInit() {
     this.loadConfigs();
@@ -24,7 +26,8 @@ export class CodeReviewListComponent implements OnInit {
     this.isLoading = true;
     this.codeReviewService.getCodeReviewConfigs().subscribe(
       (configs) => {
-        this.configs = configs;
+        console.log(configs);
+        this.configs = configs.data;
         this.isLoading = false;
       },
       (error) => {
@@ -34,27 +37,33 @@ export class CodeReviewListComponent implements OnInit {
     );
   }
 
-  openEditDialog(id?: string) {
-    const dialogRef = this.dialog.open(CodeReviewEditComponent, {
-      width: '600px',
-      data: { id },
+  openEditPage(id?: string) {
+    if (id) {
+      this.router.navigate(['/code-reviews/edit', id]).catch(console.error);
+    } else {
+      this.router.navigate(['/code-reviews/new']).catch(console.error);
+    }
+  }
+
+  confirmDelete(config: CodeReviewConfig) {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '400px',
+      data: { title: 'Confirm Deletion', message: `Are you sure you want to delete "${config.description}"?` },
     });
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        this.loadConfigs();
+        this.deleteConfig(config.id);
       }
     });
   }
 
-  deleteConfig(id: string) {
-    if (confirm('Are you sure you want to delete this configuration?')) {
-      this.codeReviewService.deleteCodeReviewConfig(id).subscribe(
-        () => this.loadConfigs(),
-        (error) => {
-          this.errorMessage = 'Error deleting configuration';
-        }
-      );
-    }
+  private deleteConfig(id: string) {
+    this.codeReviewService.deleteCodeReviewConfig(id).subscribe(
+      () => this.loadConfigs(),
+      (error) => {
+        this.errorMessage = 'Error deleting configuration';
+      }
+    );
   }
 }
