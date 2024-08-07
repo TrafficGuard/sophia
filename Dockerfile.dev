@@ -1,0 +1,46 @@
+# Development Dockerfile to be run from the docker-compose.yml (run: docker compose up)
+FROM python:3.11
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+#COPY .nvmrc .
+# $(cat .nvmrc)
+RUN curl -sL https://deb.nodesource.com/setup_20.x -o nodesource_setup.sh
+RUN chmod +x ./nodesource_setup.sh && ./nodesource_setup.sh
+RUN apt install -y nodejs
+
+RUN npm install -g pm2
+
+RUN pip install aider-chat
+
+ENV user     nous
+ENV homedir  /home/nous/
+RUN useradd --create-home -g users nous
+WORKDIR $homedir
+
+RUN mkdir ".husky"
+COPY .husky/install.mjs .husky/install.mjs
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+# Install Angular dependencies and build Angular app
+WORKDIR $homedir/frontend
+COPY frontend/package*.json ./
+RUN npm install
+
+# Set work directory back to home
+WORKDIR $homedir
+
+# Switch to non-root user
+USER $user
+
+ENV NODE_ENV production
+
+# In the frontend package.jsson the `ng serve` needs the arg --host 0.0.0.0 for it to be available from the host machine
+EXPOSE 4200
+EXPOSE 3000
+CMD ["pm2-runtime", "start", "resources/ecosystem.config.js"]
+
