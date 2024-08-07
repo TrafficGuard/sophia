@@ -1,6 +1,6 @@
 import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
 
-import { provideFeedback, resumeCompleted, resumeError, resumeHil, startAgent } from '#agent/agentRunner';
+import { provideFeedback, resumeCompleted, resumeError, resumeHil, startAgentAndWait } from '#agent/agentRunner';
 import { FileSystem } from '#functions/storage/filesystem';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
@@ -40,7 +40,7 @@ export async function main() {
 				return await provideFeedback(resumeAgentId, agent.executionId, initialPrompt);
 		}
 	}
-	const agentId = await startAgent({
+	const agentId = await startAgentAndWait({
 		agentName: 'cli-agent',
 		initialPrompt,
 		functions,

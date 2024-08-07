@@ -21,3 +21,5 @@ src/cli/*-out
 tg/
 pyodide/
 firestore-debug.log
+.npm/
+.pm2/

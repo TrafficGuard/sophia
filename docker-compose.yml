@@ -1,17 +1,21 @@
 # docker compose up --build
 services:
   node:
-    container_name: nous
-    restart: unless-stopped
+    container_name: nous-dev
+    restart: always
     ports:
-      - 8080:8080
+      - 4200:4200
+      - 3000:3000
     build:
       context: ./
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     volumes:
-      # - .:/nous
-      # Provides your Google Cloud application default credentials
-      - ~/.config/gcloud:/home/nous/.config/gcloud
-#    environment:
+      - ~/.config/gcloud:/home/nous/.config/gcloud # Comment out if not using Google Cloud
+      - .:/home/nous
+      # Install node_modules into the container for cross-platform compatability
+      - /home/nous/node_modules
+      - /home/nous/frontend/node_modules
+    environment:
+#      GIT_DISCOVERY_ACROSS_FILESYSTEM: 1
 #      - var=value
 

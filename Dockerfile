@@ -1,3 +1,4 @@
+# Production Dockerfile
 FROM python:3.11
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -28,7 +29,7 @@ USER $user
 
 RUN mkdir .nous
 # Generate the function schemas
-RUN npm run functionsSchemas
+RUN npm run functionSchemas
 
 ENV NODE_ENV production
 ENV PORT 8080
