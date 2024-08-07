@@ -44,6 +44,8 @@ export class CodeReviewEditComponent implements OnInit {
       requires: this.fb.group({
         text: [[], [Validators.required, this.arrayNotEmpty]],
       }),
+      tags: [[], this.arrayNotEmpty],
+      project_paths: [[], this.arrayNotEmpty],
       examples: this.fb.array([], [Validators.required, this.arrayNotEmpty]),
     });
   }
@@ -158,6 +160,52 @@ export class CodeReviewEditComponent implements OnInit {
       const currentTexts = (requiredText?.value as string[]) || [];
       requiredText?.setValue([...currentTexts, value.trim()]);
       requiredText?.updateValueAndValidity();
+    }
+
+    if (input) {
+      input.value = '';
+    }
+  }
+
+  removeTag(tag: string) {
+    const tags = this.editForm.get('tags');
+    const currentTags = (tags?.value as string[]) || [];
+    tags?.setValue(currentTags.filter((t) => t !== tag));
+    tags?.updateValueAndValidity();
+  }
+
+  addTag(event: MatChipInputEvent) {
+    const input = event.input;
+    const value = event.value;
+
+    if ((value || '').trim()) {
+      const tags = this.editForm.get('tags');
+      const currentTags = (tags?.value as string[]) || [];
+      tags?.setValue([...currentTags, value.trim()]);
+      tags?.updateValueAndValidity();
+    }
+
+    if (input) {
+      input.value = '';
+    }
+  }
+
+  removeProjectPath(path: string) {
+    const projectPaths = this.editForm.get('project_paths');
+    const currentPaths = (projectPaths?.value as string[]) || [];
+    projectPaths?.setValue(currentPaths.filter((p) => p !== path));
+    projectPaths?.updateValueAndValidity();
+  }
+
+  addProjectPath(event: MatChipInputEvent) {
+    const input = event.input;
+    const value = event.value;
+
+    if ((value || '').trim()) {
+      const projectPaths = this.editForm.get('project_paths');
+      const currentPaths = (projectPaths?.value as string[]) || [];
+      projectPaths?.setValue([...currentPaths, value.trim()]);
+      projectPaths?.updateValueAndValidity();
     }
 
     if (input) {

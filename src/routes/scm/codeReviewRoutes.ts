@@ -54,6 +54,8 @@ export async function codeReviewRoutes(fastify: FastifyInstance) {
 					requires: Type.Object({
 						text: Type.Array(Type.String()),
 					}),
+					tags: Type.Array(Type.String()),
+					project_paths: Type.Array(Type.String()),
 					examples: Type.Array(
 						Type.Object({
 							code: Type.String(),

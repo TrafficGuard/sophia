@@ -59,6 +59,53 @@
         <div class="spacer"></div>
       </div>
 
+      <div class="form-row">
+        <div class="row full-width">
+          <div class="col">
+            <mat-form-field appearance="fill" class="full-width">
+              <mat-label>Tags</mat-label>
+              <mat-chip-list #tagChipList>
+                <mat-chip
+                  *ngFor="let tag of editForm.get('tags')?.value"
+                  [removable]="true"
+                  (removed)="removeTag(tag)"
+                >
+                  {{ tag }}
+                  <mat-icon matChipRemove>cancel</mat-icon>
+                </mat-chip>
+                <input
+                  placeholder="Press enter to add..."
+                  [matChipInputFor]="tagChipList"
+                  (matChipInputTokenEnd)="addTag($event)"
+                />
+              </mat-chip-list>
+            </mat-form-field>
+          </div>
+
+          <div class="col">
+            <mat-form-field appearance="fill" class="full-width">
+              <mat-label>Project Paths</mat-label>
+              <mat-chip-list #projectPathChipList>
+                <mat-chip
+                  *ngFor="let path of editForm.get('project_paths')?.value"
+                  [removable]="true"
+                  (removed)="removeProjectPath(path)"
+                >
+                  {{ path }}
+                  <mat-icon matChipRemove>cancel</mat-icon>
+                </mat-chip>
+                <input
+                  placeholder="Press enter to add..."
+                  [matChipInputFor]="projectPathChipList"
+                  (matChipInputTokenEnd)="addProjectPath($event)"
+                />
+              </mat-chip-list>
+            </mat-form-field>
+          </div>
+        </div>
+        <div class="spacer"></div>
+      </div>
+
       <div formArrayName="examples" class="examples-section">
         <div class="examples-header">
           <h3>
