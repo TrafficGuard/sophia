@@ -2,23 +2,14 @@ import { randomUUID } from 'crypto';
 import { DocumentSnapshot, Firestore } from '@google-cloud/firestore';
 import { CreateLlmRequest, LlmCall, LlmRequest } from '#llm/llmCallService/llmCall';
 import { LlmCallService } from '#llm/llmCallService/llmCallService';
-import { envVar } from '#utils/env-var';
+import { firestoreDb } from '../../firestore';
 
 // TODO add composite index LlmCall	agentId Ascending requestTime Descending __name__ Descending
 /**
  * Implementation of the LlmCallService interface using Google Firestore.
- * Required the environment variables GCLOUD_PROJECT and FIRESTORE_DATABASE
- * If FIRESTORE_DATABASE is nullish then the (default) database will be used.
  */
 export class FirestoreLlmCallService implements LlmCallService {
-	db: Firestore;
-	constructor() {
-		this.db = new Firestore({
-			projectId: process.env.FIRESTORE_EMULATOR_HOST ? 'demo-nous' : envVar('GCLOUD_PROJECT'),
-			databaseId: process.env.FIRESTORE_DATABASE,
-			ignoreUndefinedProperties: true,
-		});
-	}
+	private db: Firestore = firestoreDb();
 
 	private deserialize(id: string, data: any): LlmCall {
 		return {

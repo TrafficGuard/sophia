@@ -16,6 +16,7 @@ import { Firestore, Timestamp } from '@google-cloud/firestore';
 import { agentContext } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
 import { currentUser } from '#user/userService/userContext';
+import { firestoreDb } from '../firestore';
 import { CacheScope, FunctionCacheService } from './functionCacheService';
 
 /**
@@ -38,15 +39,7 @@ import { CacheScope, FunctionCacheService } from './functionCacheService';
  *                               ʟ  <hash(... )>
  */
 export class FirestoreCacheService implements FunctionCacheService {
-	private db: Firestore;
-
-	constructor() {
-		this.db = new Firestore({
-			projectId: process.env.FIRESTORE_EMULATOR_HOST ? undefined : process.env.GCLOUD_PROJECT,
-			databaseId: process.env.FIRESTORE_DATABASE,
-			ignoreUndefinedProperties: true,
-		});
-	}
+	private db: Firestore = firestoreDb();
 
 	getScopePath(scope: CacheScope): string {
 		switch (scope) {

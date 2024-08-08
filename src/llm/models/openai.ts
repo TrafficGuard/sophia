@@ -32,8 +32,8 @@ export function GPT4o() {
 		'GPT4o',
 		'gpt-4o',
 		128_000,
-		(input: string) => (input.length * 5) / (1_000_000 * 4),
-		(output: string) => (output.length * 15) / (1_000_000 * 4),
+		(input: string) => (input.length * 2.5) / 1_000_000,
+		(output: string) => (output.length * 10) / (1_000_000 * 4),
 	);
 }
 

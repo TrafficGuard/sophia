@@ -4,26 +4,15 @@ import { AgentContext, AgentRunningState } from '#agent/agentContext';
 import { deserializeAgentContext, serializeContext } from '#agent/agentContext';
 import { functionFactory } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
-import { span, withSpan } from '#o11y/trace';
-import { envVar } from '#utils/env-var';
+import { span } from '#o11y/trace';
+import { firestoreDb } from '../../firestore';
 import { AgentStateService } from './agentStateService';
 
 /**
  * Google Firestore implementation of AgentStateService
  */
-/**
- * Google Firestore implementation of AgentStateService
- */
 export class FirestoreAgentStateService implements AgentStateService {
-	db: Firestore;
-
-	constructor() {
-		this.db = new Firestore({
-			projectId: process.env.FIRESTORE_EMULATOR_HOST ? 'demo-nous' : envVar('GCLOUD_PROJECT'),
-			databaseId: process.env.FIRESTORE_DATABASE,
-			ignoreUndefinedProperties: true,
-		});
-	}
+	db: Firestore = firestoreDb();
 
 	@span()
 	async save(state: AgentContext): Promise<void> {

@@ -13,7 +13,9 @@ export abstract class BaseLLM implements LLM {
 		protected readonly service: string,
 		protected readonly model: string,
 		private maxInputTokens: number,
+		/** Needed for Aider when we only have the text size */
 		public readonly calculateInputCost: (input: string) => number,
+		/** Needed for Aider when we only have the text size */
 		public readonly calculateOutputCost: (output: string) => number,
 	) {}
 

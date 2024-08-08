@@ -7,6 +7,9 @@ import { FirestoreLlmCallService } from '#llm/llmCallService/firestoreLlmCallSer
 import { InMemoryLlmCallService } from '#llm/llmCallService/inMemoryLlmCallService';
 import { LlmCallService } from '#llm/llmCallService/llmCallService';
 import { logger } from '#o11y/logger';
+import { CodeReviewService } from '#swe/codeReview/codeReviewService';
+import { FirestoreCodeReviewService } from '#swe/codeReview/firestoreCodeReviewService';
+import { InMemoryCodeReviewService } from '#swe/codeReview/memoryCodeReviewService';
 import { FileUserService } from '#user/userService/fileUserService';
 import { FirestoreUserService } from '#user/userService/firestoreUserService';
 import { InMemoryUserService } from '#user/userService/inMemoryUserService';
@@ -23,12 +26,14 @@ import { gitlabRoutesV1 } from './routes/gitlab/gitlabRoutes-v1';
 import { llmCallRoutes } from './routes/llms/llm-call-routes';
 import { llmRoutes } from './routes/llms/llm-routes';
 import { profileRoute } from './routes/profile/profile-route';
+import { codeReviewRoutes } from './routes/scm/codeReviewRoutes';
 
 export interface ApplicationContext {
 	agentStateService: AgentStateService;
 	userService: UserService;
 	llmCallService: LlmCallService;
 	functionCacheService: FunctionCacheService;
+	codeReviewService: CodeReviewService;
 }
 
 export interface AppFastifyInstance extends TypeBoxFastifyInstance, ApplicationContext {}
@@ -75,6 +80,7 @@ export async function initServer(): Promise<void> {
 				profileRoute as RouteDefinition,
 				llmRoutes as RouteDefinition,
 				llmCallRoutes as RouteDefinition,
+				codeReviewRoutes as RouteDefinition,
 				// Add your routes below this line
 			],
 			instanceDecorators: applicationContext, // This makes all properties on the ApplicationContext interface available on the fastify instance in the routes
@@ -92,6 +98,7 @@ export async function initFirestoreApplicationContext(): Promise<ApplicationCont
 		userService: new FirestoreUserService(),
 		llmCallService: new FirestoreLlmCallService(),
 		functionCacheService: new FirestoreCacheService(),
+		codeReviewService: new FirestoreCodeReviewService(),
 	};
 	await applicationContext.userService.ensureSingleUser();
 	return applicationContext;
@@ -104,6 +111,7 @@ export async function initFileApplicationContext(): Promise<ApplicationContext> 
 		userService: new FileUserService(),
 		llmCallService: new InMemoryLlmCallService(),
 		functionCacheService: new FileFunctionCacheService(),
+		codeReviewService: new InMemoryCodeReviewService(),
 	};
 	await applicationContext.userService.ensureSingleUser();
 	return applicationContext;
@@ -115,6 +123,7 @@ export function initInMemoryApplicationContext(): ApplicationContext {
 		userService: new InMemoryUserService(),
 		llmCallService: new InMemoryLlmCallService(),
 		functionCacheService: new FileFunctionCacheService(),
+		codeReviewService: new InMemoryCodeReviewService(),
 	};
 	applicationContext.userService.ensureSingleUser().catch();
 	return applicationContext;

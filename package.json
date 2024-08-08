@@ -92,6 +92,7 @@
     "ignore": "^5.3.1",
     "jsdom": "^24.0.0",
     "lodash": "^4.17.20",
+    "micromatch": "^4.0.7",
     "module-alias": "^2.2.2",
     "openai": "^4.28.4",
     "pino": "^8.18.0",

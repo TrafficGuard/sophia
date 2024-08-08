@@ -44,8 +44,8 @@ export class CodeReviewEditComponent implements OnInit {
       requires: this.fb.group({
         text: [[], [Validators.required, this.arrayNotEmpty]],
       }),
-      tags: [[], this.arrayNotEmpty],
-      project_paths: [[], this.arrayNotEmpty],
+      tags: [[]],
+      project_paths: [[]],
       examples: this.fb.array([], [Validators.required, this.arrayNotEmpty]),
     });
   }
@@ -59,7 +59,26 @@ export class CodeReviewEditComponent implements OnInit {
     this.isLoading = true;
     this.codeReviewService.getCodeReviewConfig(this.configId!).subscribe(
       (response) => {
-        this.editForm.patchValue(response.data);
+        const data = response.data;
+        this.editForm.patchValue(data);
+        
+        // Clear existing examples
+        while (this.examples.length !== 0) {
+          this.examples.removeAt(0);
+        }
+        
+        // Add examples from the loaded data
+        if (data.examples && Array.isArray(data.examples)) {
+          data.examples.forEach((example: any) => {
+            this.examples.push(
+              this.fb.group({
+                code: [example.code, Validators.required],
+                review_comment: [example.review_comment, Validators.required],
+              })
+            );
+          });
+        }
+        
         this.isLoading = false;
       },
       (error) => {

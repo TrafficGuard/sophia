@@ -9,15 +9,17 @@ import {
 	MergeRequestDiscussionNotePositionOptions,
 	ProjectSchema,
 } from '@gitbeaker/rest';
+import { micromatch } from 'micromatch';
 import { agentContext, getFileSystem, llms } from '#agent/agentContext';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
-import { ICodeReview, loadCodeReviews } from '#swe/codeReview/codeReviewParser';
+import { CodeReviewConfig, codeReviewToXml } from '#swe/codeReview/codeReviewModel';
 import { functionConfig } from '#user/userService/userContext';
 import { allSettledAndFulFilled } from '#utils/async-utils';
 import { envVar } from '#utils/env-var';
-import { checkExecResult, execCmd, execCommand, failOnError } from '#utils/exec';
+import { execCommand, failOnError } from '#utils/exec';
+import { appContext } from '../../app';
 import { cacheRetry } from '../../cache/cacheRetry';
 import { UtilFunctions } from '../util';
 import { GitProject } from './gitProject';
@@ -274,34 +276,32 @@ export class GitLab implements SourceControlManagement {
 		const mergeRequest: ExpandedMergeRequestSchema = await this.api().MergeRequests.show(gitlabProjectId, mergeRequestIId);
 		const diffs: MergeRequestDiffSchema[] = await this.getDiffs(gitlabProjectId, mergeRequestIId);
 
-		const codeReviewConfigs = await loadCodeReviews();
+		const codeReviewConfigs: CodeReviewConfig[] = await appContext().codeReviewService.listCodeReviewConfigs();
 
-		// Find the code review configurations which are relevant for this diff
+		let projectPath: string;
+		if (typeof gitlabProjectId === 'number') {
+			const project = await this.getProject(gitlabProjectId);
+			projectPath = `${project.namespace}/${project.name}`;
+		} else {
+			projectPath = gitlabProjectId;
+		}
+
+		// Find the code review configurations which are relevant for each diff
 		const codeReviews: Promise<DiffReview>[] = [];
 		for (const diff of diffs) {
 			for (const codeReview of codeReviewConfigs) {
-				let hasExtension = false;
-				for (const extension of codeReview.file_extensions?.include ?? []) {
-					if (diff.new_path.endsWith(extension)) {
-						hasExtension = true;
-						break;
-					}
-				}
-				if (!hasExtension) continue;
-				let hasText = false;
-				for (const text of codeReview.requires?.text ?? []) {
-					if (diff.diff.includes(text)) {
-						hasText = true;
-						break;
-					}
-				}
-				if (hasExtension && hasText) {
+				if (codeReview.projectPathGlobs.length && !micromatch.isMatch(projectPath, codeReview.projectPathGlobs)) continue;
+
+				const hasMatchingExtension = codeReview.file_extensions?.include.some((extension) => diff.new_path.endsWith(extension));
+				const hasRequiredText = codeReview.requires?.text.some((text) => diff.diff.includes(text));
+
+				if (hasMatchingExtension && hasRequiredText) {
 					codeReviews.push(this.reviewDiff(diff, codeReview));
 				}
 			}
 		}
 
-		let diffReviews = await allSettledAndFulFilled(codeReviews);
+		let diffReviews: DiffReview[] = await allSettledAndFulFilled(codeReviews);
 		diffReviews = diffReviews.filter((diffReview) => diffReview !== null);
 
 		for (const diffReview of diffReviews) {
@@ -328,9 +328,11 @@ export class GitLab implements SourceControlManagement {
 	 * @param codeReview
 	 */
 	@cacheRetry()
-	async reviewDiff(mrDiff: MergeRequestDiffSchema, codeReview: ICodeReview): Promise<DiffReview> {
+	async reviewDiff(mrDiff: MergeRequestDiffSchema, codeReview: CodeReviewConfig): Promise<DiffReview> {
 		// The first line of the diff has the starting line number e.g. @@ -0,0 +1,76 @@
 		let startingLineNumber = getStartingLineNumber(mrDiff.diff);
+
+		const lineCommenter = getBlankLineCommenter(mrDiff.new_path);
 
 		// Transform the diff, so it's not a diff, removing the deleted lines so only the unchanged and new lines remain
 		// i.e. the code in the latest commit
@@ -341,51 +343,50 @@ export class GitLab implements SourceControlManagement {
 			.map((line) => (line.startsWith('+') ? line.slice(1) : line));
 		// diffLines = diffLines.slice(1)
 		startingLineNumber -= 1;
-		diffLines[0] = `/*${startingLineNumber}*/`;
+		diffLines[0] = lineCommenter(startingLineNumber);
 
 		// Add lines numbers
 		for (let i = 1; i < diffLines.length; i++) {
 			const line = diffLines[i];
 			// Add the line number on blank lines
-			if (!line.trim().length) diffLines[i] = `/*${startingLineNumber + i}*/`;
-			// Add in a line number every ten lines
-			if (i % 10 === 0) {
-				const comment = `/*${startingLineNumber + i}*/`;
-				if (!line.slice(0, comment.length).trim().length) {
-					diffLines[i] = comment + line.slice(comment.length);
-				}
-			}
+			if (!line.trim().length) diffLines[i] = lineCommenter(startingLineNumber + i);
+			// Could add in a line number at least every 10 lines if the file type supports closing comments i.e. /* */
 		}
-		const currentCode = diffLines.join('\n');
+		const currentCode = diffLines.join(`\n${lineCommenter(startingLineNumber + diffLines.length)}`);
 
-		const prompt = `You are an AI software engineer whose task is to review the code changes for our software development style standards.
-		The following is the configuration of the particular code review that you must do.
-		${codeReview.xml}
-		The code to review is:
-		<code>
-		${currentCode}
-		</code>
-		The comments like /*14*/ at the start of lines are the line numbers.
-		Response only in JSON wrapped in <json></json>.
-		Based on the provided code review guidelines, analyze the code changes and identify any potential invalid code which violates the code review description. 
-		If no violations are found, responsd with an empty JSON array i.e. <json>[]</json>
-		If violations exist, provide the following information in JSON format:
-		(Line is number where the violation occurs (use the new_line number))
-		<example>
-		<json>
-		[{
-		  "lineNumber": number,
-		  "comment": "Explanation of the violation and suggestion for valid code in Markdown format"
-		}]
-		</json>
-		</example>
-		`;
+		const prompt = `You are an AI software engineer tasked with reviewing code changes for our software development style standards.
+
+Review Configuration:
+${codeReviewToXml(codeReview)}
+
+Code to Review:
+<code>
+${currentCode}
+</code>
+
+Instructions:
+1. Based on the provided code review guidelines, analyze the code changes from a diff and identify any potential violations.
+2. Consider the overall context and purpose of the code when identifying violations.
+3. Comments with a number at the start of lines indicate line numbers. Use these numbers to help determine the starting lineNumber for the review comment.
+4. Provide the review comments in the following JSON format. If no review violations are found return an empty array for violations.
+
+{
+  "violations": [
+    {
+      "lineNumber": number,
+      "comment": "Explanation of the violation and suggestion for valid code in Markdown format"
+    }
+  ]
+}
+
+Response only in JSON format. Do not wrap the JSON in any tags.
+`;
 		const reviewComments = (await llms().medium.generateJson(prompt, null, { id: 'reviewDiff' })) as Array<{ lineNumber: number; comment: string }>;
 
 		return { code: currentCode, comments: reviewComments, mrDiff };
 	}
 
-	// @func()
+	@func()
 	async getJobLogs(projectPath: string, jobId: string): Promise<string> {
 		if (!projectPath) throw new Error('Parameter "projectPath" must be truthy');
 		if (!jobId) throw new Error('Parameter "jobId" must be truthy');
@@ -413,4 +414,52 @@ export function getStartingLineNumber(diff: string): number {
 	diff = diff.slice(diff.indexOf('+'));
 	diff = diff.slice(0, diff.indexOf(','));
 	return parseInt(diff);
+}
+
+function getBlankLineCommenter(fileName: string): (lineNumber: number) => string {
+	const extension = fileName.split('.').pop();
+
+	switch (extension) {
+		case 'js':
+		case 'ts':
+		case 'java':
+		case 'c':
+		case 'cpp':
+		case 'cs':
+		case 'css':
+		case 'php':
+		case 'swift':
+		case 'm': // Objective-C
+		case 'go':
+		case 'kt': // Kotlin
+		case 'kts': // Kotlin script
+		case 'groovy':
+		case 'scala':
+		case 'dart':
+			return (lineNumber) => `// ${lineNumber}`;
+		case 'py':
+		case 'sh':
+		case 'pl': // Perl
+		case 'rb':
+		case 'yaml':
+		case 'yml':
+		case 'tf':
+		case 'r':
+			return (lineNumber) => `# ${lineNumber}`;
+		case 'html':
+		case 'xml':
+		case 'jsx':
+			return (lineNumber) => `<!-- ${lineNumber} -->`;
+		case 'sql':
+			return (lineNumber) => `-- ${lineNumber}`;
+		case 'ini':
+			return (lineNumber) => `; ${lineNumber}`;
+		case 'hs': // Haskell
+		case 'lsp': // Lisp
+		case 'scm': // Scheme
+			return (lineNumber) => `-- ${lineNumber}`;
+		default:
+			// No line number comment if file type is unrecognized
+			return (lineNumber) => '';
+	}
 }

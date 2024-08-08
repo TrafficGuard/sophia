@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { CodeReviewConfig, FirestoreCodeReviewService } from './firestoreCodeReviewService';
+import { CodeReviewConfig } from '#swe/codeReview/codeReviewModel';
+import { FirestoreCodeReviewService } from './firestoreCodeReviewService';
 
 describe('FirestoreCodeReviewService', () => {
 	let service: FirestoreCodeReviewService;
@@ -79,7 +80,7 @@ describe('FirestoreCodeReviewService', () => {
 
 	describe('createCodeReviewConfig', () => {
 		it('should create a new code review config and return its id', async () => {
-			const newConfig = {
+			const newConfig: Omit<CodeReviewConfig, 'id'> = {
 				description: 'New Config',
 				file_extensions: {
 					include: ['.ts', '.js'],
@@ -87,6 +88,8 @@ describe('FirestoreCodeReviewService', () => {
 				requires: {
 					text: ['TODO', 'FIXME'],
 				},
+				tags: [],
+				projectPathGlobs: [],
 				examples: [
 					{
 						code: 'console.log("Hello, world!");',

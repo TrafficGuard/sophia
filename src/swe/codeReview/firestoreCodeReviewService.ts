@@ -1,32 +1,12 @@
 import { DocumentSnapshot, Firestore } from '@google-cloud/firestore';
 import { logger } from '#o11y/logger';
+import { CodeReviewConfig } from '#swe/codeReview/codeReviewModel';
+import { CodeReviewService } from '#swe/codeReview/codeReviewService';
 import { envVar } from '#utils/env-var';
+import { firestoreDb } from '../../firestore';
 
-export interface CodeReviewConfig {
-	id: string;
-	description: string;
-	file_extensions: {
-		include: string[];
-	};
-	requires: {
-		text: string[];
-	};
-	examples: {
-		code: string;
-		review_comment: string;
-	}[];
-}
-
-export class FirestoreCodeReviewService {
-	private db: Firestore;
-
-	constructor() {
-		this.db = new Firestore({
-			projectId: process.env.FIRESTORE_EMULATOR_HOST ? 'demo-nous' : envVar('GCLOUD_PROJECT'),
-			databaseId: process.env.FIRESTORE_DATABASE,
-			ignoreUndefinedProperties: true,
-		});
-	}
+export class FirestoreCodeReviewService implements CodeReviewService {
+	private db: Firestore = firestoreDb();
 
 	async getCodeReviewConfig(id: string): Promise<CodeReviewConfig | null> {
 		try {

@@ -18,12 +18,11 @@
 
 ## The Nous Story
 
-Nous started from a simple goal: to harness AI's potential to **enhance real-world productivity**, born in DevOps and Platform Engineering space. We envisioned a tool that could:
+Nous started from a simple goal: to harness AI's potential to enhance real-world productivity, born in DevOps and Platform Engineering space. We envisioned a tool that could:
 
-- Automate standard and simple requests using natural language prompts.
-- Intelligently triage build failures, support requests and production incidents.
+- Automate various processes and support requests, and triage build failures.
 - Review code for compliance with standards and best practices.
-- Assist with large/complex refactorings, and more.
+- Assist with large refactorings, and more.
 
 At TrafficGuard we process billions of events a month for our global clients, [increasing their ad spend ROI](https://www.trafficguard.ai/case-studies?ref=gh) by protecting against bots and other forms of invalid traffic.
 Our SaaS on GCP comprises projects developed in TypeScript, Python, GoogleSQL, PHP and Terraform, deployed from GitLab. 
@@ -42,7 +41,7 @@ Key features include:
 
 - Advanced autonomous agents
   - Reasoning/planning inspired from Google's [Self-Discover](https://arxiv.org/abs/2402.03620) paper
-  - Memory and function history for complex, multi-step workflows
+  - Memory and function call history for complex, multi-step workflows
   - Adaptive iterative planning with hierarchical task decomposition
   - Two control-loop function calling options (LLM-independent):
     - Custom XML-based function calling
@@ -65,7 +64,7 @@ Key features include:
 - Observability with OpenTelemetry tracing
 - Code Editing Agent:
   - Auto-detection of project initialization, compile, test and lint
-  - Find the relevant files to edit
+  - Find the relevant files to edit and perform initial analysis
   - Code editing loop with compile, lint, test, fix (editing delegates to [Aider](https://aider.chat/))
     - Compile error analyser can search online, add additional files and packages
 - Software Engineer Agent:
@@ -79,7 +78,7 @@ Key features include:
 
 ## UI Examples
 
-[New Agent](#new-agent) | [Sample trace](#sample-trace) | [Human in the loop notification](#human-in-the-loop-notification) | [Resume error](#resume-error) | [List agents](#list-agents)
+[New Agent](#new-agent) | [Sample trace](#sample-trace) | [Human in the loop notification](#human-in-the-loop-notification) | [Resume error](#resume-error) | [List agents](#list-agents) | [Code review config](#code-review-configuration)
 
 ### New Agent
 
@@ -93,13 +92,17 @@ Key features include:
 
 <img src="https://public.trafficguard.ai/nous/feedback.png" width="702">
 
-### Resume error
+### Agent requested feedback
 
-![Resume error](https://public.trafficguard.ai/nous/error.png)
+![Feedback requested](https://public.trafficguard.ai/nous/agent-feedback.png)
 
 ### List agents
 
 ![List agents](https://public.trafficguard.ai/nous/list.png)
+
+### Code review configuration
+
+![Code review configuration](https://public.trafficguard.ai/nous/code-review.png)
 
 ## Code Examples
 
@@ -147,18 +150,32 @@ console.log(result);
 
 #### Nous
 ```typescript
-import { initAgentContext, llms } from '#agent/context'
+import { llms } from '#agent/context'
 import { anthropicLLMs } from '#llms/anthropic'
-
-initAgentContext(anthropicLLMs());
 
 const prompt1 = (person: string) => `What is the city ${person} is from? Only respond with the name of the city.`;
 const prompt2 = (city: string, language: string) => `What country is the city ${city} in? Respond in ${language}.`;
 
-const city = await llms().easy.generateText(prompt1('Obama'));
-const result = await llms().easy.generateText(prompt2(city, 'German'));
+runAgentWorkflow({ llms: anthropicLLMs() }, async () => {
+  const city = await llms().easy.generateText(prompt1('Obama'));
+  const result = await llms().easy.generateText(prompt2(city, 'German'));
 
-console.log(result);
+  console.log(result);
+});
+```
+
+The Nous code also has the advantage of static typing with the prompt arguments, enabling you to refactor with ease.
+Using simple control flow allows easy debugging with breakpoints/logging.
+
+To run a fully autonomous agent:
+
+```typescript
+startAgent({
+  agentName: 'Create ollama',
+  initialPrompt: 'Research how to use ollama using node.js and create a new implementation under the llm folder. Look at a couple of the other files in that folder for the style which must be followed',
+  functions: [FileSystem, Perplexity, CodeEditinAgent],
+  llms,
+});
 ```
 
 The Nous code also has the advantage of static typing with the prompt arguments, enabling you to refactor with ease.
@@ -176,10 +193,10 @@ Visit our [documentation site](https://nous.trafficguard.ai/setup/) for the gett
 
 ## Contributing
 
-We welcome contributions to the project through [issues](https://github.com/TrafficGuard/nous/issues), [pull requests](https://github.com/TrafficGuard/nous/pulls)  or [discussions](https://github.com/TrafficGuard/nous/discussions)
+We warmly welcome contributions to the project through [issues](https://github.com/TrafficGuard/nous/issues), [pull requests](https://github.com/TrafficGuard/nous/pulls)  or [discussions](https://github.com/TrafficGuard/nous/discussions)
 
 Contributed by [TrafficGuard](https://www.trafficguard.ai) - Increasing the ROI on your ad spend.
 
-
+Reach out to us as nous@trafficguard.ai if you'd like support to ramp up as a contributor.
 
 

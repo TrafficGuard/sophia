@@ -17,7 +17,7 @@
           <div formGroupName="file_extensions" class="col">
             <mat-form-field appearance="fill" class="full-width">
               <mat-label>Included File Extensions</mat-label>
-              <mat-chip-list #chipList>
+              <mat-chip-list #chipList required>
                 <mat-chip
                   *ngFor="let ext of editForm.get('file_extensions.include')?.value"
                   [removable]="true"
@@ -38,7 +38,7 @@
           <div formGroupName="requires" class="col">
             <mat-form-field appearance="fill" class="full-width">
               <mat-label>Required Text In Diff</mat-label>
-              <mat-chip-list #requiredChipList>
+              <mat-chip-list #requiredChipList required>
                 <mat-chip
                   *ngFor="let text of editForm.get('requires.text')?.value"
                   [removable]="true"

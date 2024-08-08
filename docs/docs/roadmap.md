@@ -6,12 +6,14 @@ GitHub support
 
 Ollama support
 
+https://github.com/nextauthjs/next-auth/pull/9587
+
 Additional agents:
 
 - Slack chatbot agent
 - SWE-bench agent
-- Build failure investigation agent
-- Autonomous agent which generates Python executed by Pyodide for tool function calling
+- Add tools for GAIA agent
+- CI/CD failure investigation agent
 
 Improvements to the autonomous and code editing agents (a whole roadmap in itself)
 
