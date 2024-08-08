@@ -1,13 +1,12 @@
 import { Type } from '@sinclair/typebox';
-import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext, agentContextStorage, createContext } from '#agent/agentContext';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { send, sendSuccess } from '#fastify/index';
 import { GitLab } from '#functions/scm/gitlab';
-import { GEMINI_1_5_PRO_LLMS } from '#llm/models/vertexai';
+import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { logger } from '#o11y/logger';
-import { currentUser } from '#user/userService/userContext';
-import { AppFastifyInstance } from '../../app';
+import { envVar } from '#utils/env-var';
+import { AppFastifyInstance, appContext } from '../../app';
 import { envVarHumanInLoopSettings } from '../../cli/cliHumanInLoop';
 
 const basePath = '/api/webhooks';
@@ -31,9 +30,9 @@ export async function gitlabRoutesV1(fastify: AppFastifyInstance) {
 
 			const config: RunAgentConfig = {
 				agentName: `MR review - ${event.object_attributes.title}`,
-				llms: GEMINI_1_5_PRO_LLMS(),
-				functions: new LlmFunctions(),
-				user: currentUser(), // TODO need to specify a user for code reviews
+				llms: ClaudeVertexLLMs(),
+				functions: [],
+				user: await appContext().userService.getUserByEmail(envVar('GITLAB_REVIEW_USER_EMAIL')),
 				initialPrompt: '',
 				humanInLoop: envVarHumanInLoopSettings(),
 			};

@@ -286,19 +286,28 @@ export class GitLab implements SourceControlManagement {
 			projectPath = gitlabProjectId;
 		}
 
+		logger.info(`Reviewing ${projectPath}`);
+
 		// Find the code review configurations which are relevant for each diff
 		const codeReviews: Promise<DiffReview>[] = [];
 		for (const diff of diffs) {
 			for (const codeReview of codeReviewConfigs) {
-				if (codeReview.projectPathGlobs.length && !micromatch.isMatch(projectPath, codeReview.projectPathGlobs)) continue;
+				if (codeReview.projectPathGlobs.length && !micromatch.isMatch(projectPath, codeReview.projectPathGlobs)) {
+					logger.info(`Project path globs ${codeReview.projectPathGlobs} dont match ${projectPath}`);
+					continue;
+				}
 
 				const hasMatchingExtension = codeReview.file_extensions?.include.some((extension) => diff.new_path.endsWith(extension));
 				const hasRequiredText = codeReview.requires?.text.some((text) => diff.diff.includes(text));
-
+				logger.info(`hasMatchingExtension: ${hasMatchingExtension}. hasRequiredText: ${hasRequiredText}`);
 				if (hasMatchingExtension && hasRequiredText) {
 					codeReviews.push(this.reviewDiff(diff, codeReview));
 				}
 			}
+		}
+
+		if (!codeReviews.length) {
+			logger.info('No code review configurations matched the diffs');
 		}
 
 		let diffReviews: DiffReview[] = await allSettledAndFulFilled(codeReviews);
