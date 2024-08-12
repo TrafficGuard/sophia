@@ -15,7 +15,7 @@ services:
       # Install node_modules into the container for cross-platform compatability
       - /home/nous/node_modules
       - /home/nous/frontend/node_modules
-    environment:
+#    environment:
 #      GIT_DISCOVERY_ACROSS_FILESYSTEM: 1
 #      - var=value
 
