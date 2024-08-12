@@ -78,7 +78,7 @@ Key features include:
 
 ## UI Examples
 
-[New Agent](#new-agent) | [Sample trace](#sample-trace) | [Human in the loop notification](#human-in-the-loop-notification) | [Resume error](#resume-error) | [List agents](#list-agents) | [Code review config](#code-review-configuration)
+[New Agent](#new-agent) | [Sample trace](#sample-trace) | [Human in the loop notification](#human-in-the-loop-notification) | [Agent requested feedback](#agent-requested-feedback) | [List agents](#list-agents) | [Code review config](#code-review-configuration)
 
 ### New Agent
 
