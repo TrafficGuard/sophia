@@ -390,9 +390,11 @@ Instructions:
 
 Response only in JSON format. Do not wrap the JSON in any tags.
 `;
-		const reviewComments = (await llms().medium.generateJson(prompt, null, { id: 'reviewDiff' })) as Array<{ lineNumber: number; comment: string }>;
+		const reviewComments = (await llms().medium.generateJson(prompt, null, { id: 'reviewDiff', temperature: 0.5 })) as {
+			violations: Array<{ lineNumber: number; comment: string }>;
+		};
 
-		return { code: currentCode, comments: reviewComments, mrDiff };
+		return { code: currentCode, comments: reviewComments.violations, mrDiff };
 	}
 
 	@func()

@@ -1,5 +1,6 @@
 import { getFileSystem } from '#agent/agentContext';
 import { func, funcClass } from '#functionSchema/functionDecorators';
+import { GitProject } from '#functions/scm/gitProject';
 import { GitLabProject } from '#functions/scm/gitlab';
 import { getSourceControlManagementTool } from '#functions/scm/sourceControlManagement';
 import { logger } from '#o11y/logger';
@@ -38,9 +39,10 @@ export class SoftwareDeveloperAgent {
 		const requirementsSummary = await this.summariseRequirements(requirements);
 
 		const gitProject = await this.selectProject(requirementsSummary);
-		const targetBranch = gitProject.default_branch;
+		logger.info(`Selected project ${JSON.stringify(gitProject)}`);
+		const targetBranch = gitProject.defaultBranch;
 
-		const repoPath = await getSourceControlManagementTool().cloneProject(gitProject.path_with_namespace);
+		const repoPath = await getSourceControlManagementTool().cloneProject(`${gitProject.namespace}/${gitProject.name}`);
 		fileSystem.setWorkingDirectory(repoPath);
 
 		const projectInfo = await this.detectSingleProjectInfo();
@@ -86,7 +88,7 @@ export class SoftwareDeveloperAgent {
 
 	@cacheRetry({ scope: 'agent' })
 	@span()
-	async selectProject(requirements: string): Promise<GitLabProject> {
+	async selectProject(requirements: string): Promise<GitProject> {
 		return await selectProject(requirements);
 	}
 

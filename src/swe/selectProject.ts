@@ -1,11 +1,12 @@
 import { llms } from '#agent/agentContext';
+import { GitProject } from '#functions/scm/gitProject';
 import { GitLabProject } from '#functions/scm/gitlab';
 import { SourceControlManagement, getSourceControlManagementTool } from '#functions/scm/sourceControlManagement';
 import { buildPrompt } from '#swe/softwareDeveloperAgent';
 
-export async function selectProject(requirements: string): Promise<GitLabProject> {
+export async function selectProject(requirements: string): Promise<GitProject> {
 	const scm: SourceControlManagement = getSourceControlManagementTool();
-	const projects: any[] = await scm.getProjects();
+	const projects: GitProject[] = await scm.getProjects();
 	const prompt: string = buildPrompt({
 		information: `The following is a list of our projects in our git server:\n${JSON.stringify(projects)}`,
 		requirements,
