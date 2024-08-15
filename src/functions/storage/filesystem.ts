@@ -275,10 +275,12 @@ export class FileSystem {
 		let contents: string;
 		const relativeFullPath = path.join(this.getWorkingDirectory(), filePath);
 		logger.info(`Checking ${filePath} and ${relativeFullPath}`);
-		if (existsSync(filePath)) {
-			contents = (await fs.readFile(filePath)).toString();
-		} else if (existsSync(relativeFullPath)) {
+		// Check relative to current working directory first
+		if (existsSync(relativeFullPath)) {
 			contents = (await fs.readFile(relativeFullPath)).toString();
+			// Then check if it's an absolute path
+		} else if (filePath.startsWith('/') && existsSync(filePath)) {
+			contents = (await fs.readFile(filePath)).toString();
 		} else {
 			throw new Error(`File ${filePath} does not exist`);
 			// try {

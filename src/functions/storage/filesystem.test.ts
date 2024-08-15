@@ -164,11 +164,9 @@ describe.only('FileSystem', () => {
 		it('should get the file contents in the working directory', async () => {
 			fileSystem.setWorkingDirectory('./src');
 			const sampleIndexTsContents = '#fastify/trace-init';
-			let contents: string = await fileSystem.readFile('src/index.ts');
+			let contents: string = await fileSystem.readFile('index.ts');
 			expect(contents).to.include(sampleIndexTsContents);
-			contents = await fileSystem.readFile('src/index.ts');
-			expect(contents).to.include(sampleIndexTsContents);
-			contents = await fileSystem.readFile('./src/index.ts');
+			contents = await fileSystem.readFile('./index.ts');
 			expect(contents).to.include(sampleIndexTsContents);
 		});
 	});

@@ -2,10 +2,9 @@ import { access, existsSync, lstat, lstatSync, mkdir, readFile, readdir, stat, w
 import path from 'path';
 import { promisify } from 'util';
 import { createByModelName } from '@microsoft/tiktokenizer';
-import { agentContext, getFileSystem, llms } from '#agent/agentContext';
-import { FileSystem } from '#functions/storage/filesystem';
+import { getFileSystem, llms } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
-import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
+
 import { ProjectInfo } from './projectDetection';
 const fs = {
 	readFile: promisify(readFile),
@@ -33,9 +32,11 @@ export async function selectFilesToEdit(requirements: string, projectInfo: Proje
 		// await tools.generateProjectMap();
 	}
 
-	const tokenizer = await createByModelName('gpt-4o');
+	const tokenizer = await createByModelName('gpt-4o'); // TODO model specific tokenizing
 	const fileSystemTreeTokens = tokenizer.encode(repositoryMap).length;
 	logger.info(`FileSystem tree tokens: ${fileSystemTreeTokens}`);
+
+	if (projectInfo.fileSelection) requirements += `\nAdditional note: ${projectInfo.fileSelection}`;
 
 	const prompt = `
 <project_map>
@@ -70,7 +71,7 @@ The file paths MUST exist in the <project_map /> file_contents path attributes.
 </example>
 </task>
 `;
-	let selectedFiles = (await llms().easy.generateJson(prompt, null, { id: 'selectFilesToEdit' })) as SelectFilesResponse;
+	let selectedFiles = (await llms().medium.generateJson(prompt, null, { id: 'selectFilesToEdit' })) as SelectFilesResponse;
 
 	selectedFiles = removeLockFiles(selectedFiles);
 

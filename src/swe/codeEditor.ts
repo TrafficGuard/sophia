@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'fs';
 import fs, { readFile, unlinkSync } from 'node:fs';
-import path from 'path';
+import path, { join } from 'path';
 import { promisify } from 'util';
 import { addCost, agentContext, getFileSystem } from '#agent/agentContext';
 import { func, funcClass } from '#functionSchema/functionDecorators';
@@ -64,14 +64,17 @@ export class CodeEditor {
 			throw new Error('Aider code editing requires a key for Anthropic, Deepseek or OpenAI');
 		}
 
-		await promisify(fs.mkdir)('.nous/aider/llm-history', { recursive: true });
-		const llmHistoryFile = `.nous/aider/llm-history/${agentContext().agentId}-${Date.now()}`;
+		// User a folder in Nous process directory, not the FileSystem working directory
+		// as we want all the 'system' files in one place.
+		const llmHistoryFolder = join(process.cwd(), '.nous/aider/llm-history');
+		await promisify(fs.mkdir)(llmHistoryFolder, { recursive: true });
+		const llmHistoryFile = `${llmHistoryFolder}/${agentContext().agentId}-${Date.now()}`;
 
 		try {
 			writeFileSync(llmHistoryFile, '');
 		} catch (e) {
 			logger.error(e, 'Fatal Error reading/writing Aider llmH-history-file');
-			const error = new Error(`Fatal Error reading/writing Aider llmH-history-file. Error: ${e.message}`);
+			const error = new Error(`Fatal Error reading/writing Aider llm-history-file. Error: ${e.message}`);
 			if (e.stack) error.stack = e.stack;
 			throw error;
 		}
@@ -81,7 +84,10 @@ export class CodeEditor {
 			.join(' ')}`;
 
 		const { stdout, stderr, exitCode } = await execCommand(cmd, { envVars: env });
-		logger.debug(stdout + stderr);
+		if (stdout) logger.info(stdout);
+		if (stderr) logger.error(stderr);
+
+		// TODO parse  $0.12 session from the output
 
 		try {
 			const llmHistory = readFileSync(llmHistoryFile).toString();
@@ -97,7 +103,8 @@ export class CodeEditor {
 				outputChars: parsedOutput.length,
 				cost: costs[0],
 			});
-			unlinkSync(llmHistoryFile);
+			// unlinkSync(llmHistoryFile);
+			// TODO should save them as LLMCalls
 		} catch (e) {
 			logger.error(e);
 		}

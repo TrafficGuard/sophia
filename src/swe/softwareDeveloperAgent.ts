@@ -1,4 +1,4 @@
-import { getFileSystem } from '#agent/agentContext';
+import { addNote, agentContext, getFileSystem } from '#agent/agentContext';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { GitProject } from '#functions/scm/gitProject';
 import { GitLabProject } from '#functions/scm/gitlab';
@@ -32,9 +32,10 @@ export class SoftwareDeveloperAgent {
 	/**
 	 * Runs the software developer agent to complete the user request/requirements. This will find the appropriate Git project/repository, clone it, make the changes, compile and test if applicable, commit and create a pull/merge request to review.
 	 * @param requirements the requirements to implement. Provide ALL the details that might be required by this agent to complete the requirements task. Do not refer to details in memory etc, you must provide the actual details.
+	 * @returns the Merge/Pull request URL if one was created
 	 */
 	@func()
-	async runSoftwareDeveloperWorkflow(requirements: string): Promise<void> {
+	async runSoftwareDeveloperWorkflow(requirements: string): Promise<string> {
 		const fileSystem = getFileSystem();
 		const requirementsSummary = await this.summariseRequirements(requirements);
 
@@ -57,16 +58,23 @@ export class SoftwareDeveloperAgent {
 		const branchName = await this.createBranchName(requirements);
 		await fileSystem.vcs.switchToBranch(branchName);
 
+		const initialHeadSha: string = await fileSystem.vcs.getHeadSha();
+
 		try {
 			await new CodeEditingAgent().runCodeEditWorkflow(requirementsSummary, projectInfo);
 		} catch (e) {
 			logger.warn(e.message);
-			// catch so we can push the changes made so far for review
+			// If no changes were made then throw an error
+			const currentHeadSha: string = await fileSystem.vcs.getHeadSha();
+			if (initialHeadSha === currentHeadSha) {
+				throw e;
+			}
+			// Otherwise swallow the exception so we can push the changes made so far for review
 		}
 
 		const { title, description } = await generatePullRequestTitleDescription(requirements, projectInfo.devBranch);
 
-		await getSourceControlManagementTool().createMergeRequest(title, description, branchName, targetBranch);
+		return await getSourceControlManagementTool().createMergeRequest(title, description, branchName, targetBranch);
 	}
 
 	@cacheRetry({ scope: 'agent' })

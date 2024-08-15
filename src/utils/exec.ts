@@ -289,3 +289,12 @@ export async function runShellCommand(cmd: string, opts?: ExecCmdOptions): Promi
 
 	return result;
 }
+
+/**
+ * Handles quoting of strings used as shell arguments
+ * @param s
+ */
+export function shellEscape(s: string): string {
+	// return "'" + s.replace(/'/g, "'\\''") + "'";
+	return `"${s.replace(/["\\$`]/g, '\\$&')}"`;
+}

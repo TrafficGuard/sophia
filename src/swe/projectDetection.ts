@@ -36,6 +36,8 @@ export interface ProjectInfo extends ProjectScripts {
 	languageTools: LanguageTools | null;
 	/** The base development branch to make new branches from */
 	devBranch: string;
+	/** Note to include in the file selection prompts. e.g. "Do not include the files XYZ unless explicitly instructed" */
+	fileSelection: string;
 }
 
 export async function getProjectInfo(): Promise<ProjectInfo | null> {
@@ -179,6 +181,7 @@ Explain your reasoning, then output a Markdown JSON block, with the JSON formatt
 	const projectInfo: ProjectInfo = {
 		...projectDetection,
 		...projectScripts,
+		fileSelection: 'Do not include package manager lock files',
 		languageTools: getLanguageTools(projectDetection.language),
 	};
 	logger.info(projectInfo, 'ProjectInfo detected');

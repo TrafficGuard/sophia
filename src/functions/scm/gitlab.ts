@@ -4,7 +4,6 @@ import {
 	CommitDiffSchema,
 	ExpandedMergeRequestSchema,
 	Gitlab as GitlabApi,
-	Jobs,
 	MergeRequestDiffSchema,
 	MergeRequestDiscussionNotePositionOptions,
 	ProjectSchema,
@@ -18,7 +17,7 @@ import { CodeReviewConfig, codeReviewToXml } from '#swe/codeReview/codeReviewMod
 import { functionConfig } from '#user/userService/userContext';
 import { allSettledAndFulFilled } from '#utils/async-utils';
 import { envVar } from '#utils/env-var';
-import { execCommand, failOnError } from '#utils/exec';
+import { execCommand, failOnError, shellEscape } from '#utils/exec';
 import { appContext } from '../../app';
 import { cacheRetry } from '../../cache/cacheRetry';
 import { UtilFunctions } from '../util';
@@ -60,10 +59,6 @@ export type GitLabProject = Pick<
 	| 'owner'
 	| 'ci_config_path'
 >;
-
-function sanitize(s: string): string {
-	return s.replaceAll("'", "\\'");
-}
 
 @funcClass(__filename)
 export class GitLab implements SourceControlManagement {
@@ -225,9 +220,9 @@ export class GitLab implements SourceControlManagement {
 
 		// TODO if the user has changed their gitlab token, then need to update the origin URL with it
 		// TODO description -o merge_request.description='${sanitize(description)}' need to remove new line characters
-		const cmd = `git push --set-upstream origin '${currentBranch}' -o merge_request.create -o merge_request.target='${targetBranch}' -o merge_request.remove_source_branch -o merge_request.title='${sanitize(
+		const cmd = `git push --set-upstream origin '${currentBranch}' -o merge_request.create -o merge_request.target='${targetBranch}' -o merge_request.remove_source_branch -o merge_request.title=${shellEscape(
 			title,
-		)}'`;
+		)}`;
 		const { exitCode, stdout, stderr } = await execCommand(cmd);
 		if (exitCode > 0) throw new Error(`${stdout}\n${stderr}`);
 
