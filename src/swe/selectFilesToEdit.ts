@@ -151,10 +151,12 @@ export async function loadBuildDocsSummaries(): Promise<Map<string, Summary>> {
 				const filePath = path.join(docsDir, file);
 				logger.info(`Processing file: ${filePath}`);
 				try {
-					const content = await fileSystem.readFile(filePath);
-					const summary: Summary = JSON.parse(content);
-					summaries.set(summary.path, summary);
-					logger.info(`Successfully added summary for ${summary.path}`);
+					if(await fileSystem.fileExists(filePath)) {
+						const content = await fileSystem.readFile(filePath);
+						const summary: Summary = JSON.parse(content);
+						summaries.set(summary.path, summary);
+						logger.info(`Successfully added summary for ${summary.path}`);
+					}
 				} catch (error) {
 					logger.warn(`Failed to read or parse summary file: ${filePath}`);
 					logger.error(`Error details: ${errorToString(error)}`);
