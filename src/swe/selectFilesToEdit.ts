@@ -132,13 +132,23 @@ export async function loadBuildDocsSummaries(): Promise<Map<string, Summary>> {
 
 	try {
 		logger.info(`Current working directory: ${fileSystem.getWorkingDirectory()}`);
-		logger.info(`Full path to docs directory: ${join(fileSystem.getWorkingDirectory(), docsDir)}`);
+		const fullDocsPath = join(fileSystem.getWorkingDirectory(), docsDir);
+		logger.info(`Full path to docs directory: ${fullDocsPath}`);
+
+		// Check if the directory exists
+		const dirExists = await fileSystem.fileExists(docsDir);
+		logger.info(`Does ${docsDir} directory exist? ${dirExists}`);
+
+		if (!dirExists) {
+			logger.warn(`The ${docsDir} directory does not exist.`);
+			return summaries;
+		}
 
 		const files = await fileSystem.listFilesRecursively(docsDir);
 		logger.info(`Found ${files.length} files in ${docsDir}`);
 
 		if (files.length === 0) {
-			logger.warn(`No files found in ${docsDir}. Directory might be empty or not exist.`);
+			logger.warn(`No files found in ${docsDir}. Directory might be empty.`);
 		}
 
 		for (const file of files) {
