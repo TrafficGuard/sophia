@@ -22,7 +22,7 @@ export interface SelectedFile {
 interface ProjectMap {
 	text: string;
 	tokens: number;
-	description: string;
+	description: string;/add
 }
 
 function roundToFirstTwoDigits(number: number): number {
@@ -59,7 +59,7 @@ export async function generateProjectMaps(projectInfo: ProjectInfo) {
 	logger.info(`fileSystemTree ${await countTokens(fileSystemTree)}`);
 
 	// Load buildDocs summaries
-	const summaries = await loadBuildDocsSummaries();
+	const summaries: Map<string, Summary> = await loadBuildDocsSummaries();
 
 	// Generate different project maps
 	const hierarchicalMap = generateHierarchicalMap(fileSystemTree, summaries);
