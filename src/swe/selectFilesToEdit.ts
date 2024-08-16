@@ -131,10 +131,18 @@ export async function loadBuildDocsSummaries(): Promise<Map<string, Summary>> {
 	logger.info(`Attempting to load summaries from ${docsDir}`);
 
 	try {
+		logger.info(`Current working directory: ${fileSystem.getWorkingDirectory()}`);
+		logger.info(`Full path to docs directory: ${join(fileSystem.getWorkingDirectory(), docsDir)}`);
+
 		const files = await fileSystem.listFilesRecursively(docsDir);
 		logger.info(`Found ${files.length} files in ${docsDir}`);
 
+		if (files.length === 0) {
+			logger.warn(`No files found in ${docsDir}. Directory might be empty or not exist.`);
+		}
+
 		for (const file of files) {
+			logger.info(`Examining file: ${file}`);
 			if (file.endsWith('.json')) {
 				const filePath = join(docsDir, file);
 				logger.info(`Processing file: ${filePath}`);
@@ -146,11 +154,15 @@ export async function loadBuildDocsSummaries(): Promise<Map<string, Summary>> {
 					logger.info(`Successfully added summary for ${summary.path}`);
 				} catch (error) {
 					logger.warn(`Failed to read or parse summary file: ${filePath}`, error);
+					logger.error(`Error details:`, error);
 				}
+			} else {
+				logger.info(`Skipping non-JSON file: ${file}`);
 			}
 		}
 	} catch (error) {
 		logger.error(`Error listing files in ${docsDir}:`, error);
+		logger.error(`Error stack:`, error.stack);
 	}
 
 	logger.info(`Loaded ${summaries.size} summaries`);
