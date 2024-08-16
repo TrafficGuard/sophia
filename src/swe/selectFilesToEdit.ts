@@ -139,7 +139,7 @@ function generateMarkdownDocumentation(fileSystemTree: string, summaries: Map<st
     markdown += '## Project Structure\n\n';
     markdown += '```\n' + fileSystemTree + '\n```\n\n';
 
-    markdown += '## File Summaries\n\n';
+    markdown += '## File and Folder Summaries\n\n';
     const lines = fileSystemTree.split('\n');
     let currentIndentation = 0;
 
@@ -158,23 +158,8 @@ function generateMarkdownDocumentation(fileSystemTree: string, summaries: Map<st
         const summary = summaries.get(path);
         if (summary) {
             markdown += `${summary.paragraph}\n\n`;
-        }
-
-        const fileExtension = path.split('.').pop()?.toLowerCase();
-        
-        if (fileExtension === 'ts') {
-            const typeInfo = extractTypeInfo(path, langProjectMap);
-            if (typeInfo && typeInfo.trim() !== `// Type information for ${path}`) {
-                markdown += '**Type Information:**\n\n```typescript\n' + typeInfo + '\n```\n\n';
-            }
-        } else if (fileExtension === 'html') {
-            markdown += '**Content:** HTML markup for component template\n\n';
-        } else if (fileExtension === 'scss' || fileExtension === 'css') {
-            markdown += '**Content:** Styles for component\n\n';
-        } else if (!fileExtension) {
-            markdown += '**Type:** Directory\n\n';
         } else {
-            markdown += `**Type:** ${fileExtension.toUpperCase()} file\n\n`;
+            markdown += `No summary available.\n\n`;
         }
     }
 
