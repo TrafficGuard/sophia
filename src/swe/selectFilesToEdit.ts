@@ -1,19 +1,12 @@
-import { access, existsSync, lstat, lstatSync, mkdir, readFile, readdir, stat, writeFileSync } from 'node:fs';
-import path from 'path';
-import { promisify } from 'util';
+import {promises as fs, writeFileSync} from "node:fs";
+import path, {join} from 'path';
 import { createByModelName } from '@microsoft/tiktokenizer';
 import { getFileSystem, llms } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
-
 import { ProjectInfo } from './projectDetection';
-const fs = {
-	readFile: promisify(readFile),
-	stat: promisify(stat),
-	readdir: promisify(readdir),
-	access: promisify(access),
-	mkdir: promisify(mkdir),
-	lstat: promisify(lstat),
-};
+import {countTokens} from "#llm/tokens";
+import {Summary} from "#swe/documentationBuilder";
+
 
 export interface SelectFilesResponse {
 	primaryFiles: SelectedFile[];
@@ -25,11 +18,191 @@ export interface SelectedFile {
 	reason: string;
 }
 
+
+interface ProjectMap {
+	text: string;
+	tokens: number;
+	description: string;
+}
+
+function roundToFirstTwoDigits(number: number): number {
+	// Convert the number to its absolute value for proper digits counting
+	let absNumber = Math.abs(number);
+
+	// If the number has two or fewer digits, return it as-is
+	if (absNumber < 100) {
+		return number;
+	}
+
+	// Get the number of digits in the number
+	const digits = Math.floor(Math.log10(absNumber)) + 1;
+
+	// Calculate the factor to scale down and up
+	const factor = Math.pow(10, digits - 2);
+
+	// Round the number to the nearest factor
+	return Math.round(number / factor) * factor;
+}
+
+/**
+ *
+ */
+export async function generateProjectMaps(projectInfo: ProjectInfo) {
+	let langProjectMap: string = '';
+	if (projectInfo.languageTools) {
+		langProjectMap = await projectInfo.languageTools.generateProjectMap();
+		logger.info(`langProjectMap ${await countTokens(langProjectMap)}`);
+		writeFileSync('doc-langProjectMap', langProjectMap)
+	}
+
+	const fileSystemTree = await getFileSystem().getFileSystemTree();
+	logger.info(`fileSystemTree ${await countTokens(fileSystemTree)}`);
+
+	// Load buildDocs summaries
+	const summaries = await loadBuildDocsSummaries();
+
+	// Generate different project maps
+	const hierarchicalMap = generateHierarchicalMap(fileSystemTree, summaries);
+	logger.info(`hierarchicalMap ${await countTokens(hierarchicalMap)}`);
+	writeFileSync('doc-hierarchicalMap', hierarchicalMap)
+
+	const detailedDocumentation = generateDetailedDocumentation(summaries, langProjectMap);
+	logger.info(`detailedDocumentation ${await countTokens(detailedDocumentation)}`);
+	writeFileSync('doc-detailedDocumentation', detailedDocumentation)
+
+	const markdownDocumentation = generateMarkdownDocumentation(fileSystemTree, summaries, langProjectMap);
+	logger.info(`markdownDocumentation ${await countTokens(markdownDocumentation)}`);
+	writeFileSync('doc-markdownDocumentation', markdownDocumentation)
+
+	const summaryFocusedOverview = generateSummaryFocusedOverview(summaries);
+	logger.info(`summaryFocusedOverview ${await countTokens(summaryFocusedOverview)}`);
+	writeFileSync('doc-summaryFocusedOverview', summaryFocusedOverview)
+
+	const combined = generateCombinedMap(fileSystemTree, langProjectMap, summaries);
+	logger.info(`combined ${await countTokens(combined)}`);
+	writeFileSync('doc-combined', combined)
+
+	return {
+		fileSystemTree,
+		langProjectMap,
+		hierarchicalMap,
+		detailedDocumentation,
+		markdownDocumentation,
+		summaryFocusedOverview
+	};
+}
+
+async function loadBuildDocsSummaries(): Promise<Map<string, Summary>> {
+	const summaries = new Map<string, Summary>();
+	const docsDir = join('.nous', 'docs');
+	const files = await getFileSystem().listFilesRecursively(docsDir);
+
+	for (const file of files) {
+		if (file.endsWith('.json')) {
+			const content = await fs.readFile(join(docsDir, file), 'utf-8');
+			const summary: Summary = JSON.parse(content);
+			summaries.set(summary.path, summary);
+		}
+	}
+
+	return summaries;
+}
+
+function generateHierarchicalMap(fileSystemTree: string, summaries: Map<string, Summary>): string {
+	const lines = fileSystemTree.split('\n');
+	return lines.map(line => {
+		const trimmedLine = line.trim();
+		const matchingSummary = Array.from(summaries.entries()).find(([path, _]) => trimmedLine.endsWith(path));
+		if (matchingSummary) {
+			return `${line} - ${matchingSummary[1].sentence}`;
+		}
+		return line;
+	}).join('\n');
+}
+
+function generateDetailedDocumentation(summaries: Map<string, Summary>, langProjectMap: string): string {
+	let result = '';
+	for (const [path, summary] of summaries) {
+		result += `File: ${path}\n`;
+		result += `Summary: ${summary.paragraph}\n`;
+		const typeInfo = extractTypeInfo(path, langProjectMap);
+		if (typeInfo) {
+			result += `Type Information:\n${typeInfo}\n`;
+		}
+		result += '\n';
+	}
+	return result;
+}
+
+function generateMarkdownDocumentation(fileSystemTree: string, summaries: Map<string, Summary>, langProjectMap: string): string {
+	let markdown = '# Project Documentation\n\n';
+	const lines = fileSystemTree.split('\n');
+
+	for (const line of lines) {
+		const path = line.trim();
+		const indentation = line.length - line.trimLeft().length;
+		const heading = '#'.repeat(Math.floor(indentation / 2) + 1);
+
+		markdown += `${heading} ${path}\n\n`;
+
+		const summary = summaries.get(path);
+		if (summary) {
+			markdown += `${summary.paragraph}\n\n`;
+		}
+
+		const typeInfo = extractTypeInfo(path, langProjectMap);
+		if (typeInfo) {
+			markdown += '```typescript\n' + typeInfo + '\n```\n\n';
+		}
+	}
+
+	return markdown;
+}
+
+function generateSummaryFocusedOverview(summaries: Map<string, Summary>): string {
+	let overview = '';
+	for (const [path, summary] of summaries) {
+		overview += `${path}:\n`;
+		overview += `  ${summary.sentence}\n`;
+		overview += `  ${summary.paragraph}\n\n`;
+	}
+	return overview;
+}
+
+function extractTypeInfo(path: string, langProjectMap: string): string | null {
+	// This function would parse the langProjectMap to extract type information for a specific file
+	// The implementation depends on the format of langProjectMap
+	// For this example, we'll just return a placeholder
+	return `// Type information for ${path}`;
+}
+
+
+function generateFlatMap(summaries: Map<string, Summary>): string {
+	return Array.from(summaries.entries())
+		.map(([path, summary]) => `${path}:\n  ${summary.sentence}\n  ${summary.paragraph}`)
+		.join('\n\n');
+}
+
+function generateCombinedMap(fileSystemTree: string, langProjectMap: string | undefined, summaries: Map<string, Summary>): string {
+	let result = "File System Tree:\n" + fileSystemTree + "\n\n";
+
+	if (langProjectMap) {
+		result += "Language Project Map:\n" + langProjectMap + "\n\n";
+	}
+
+	result += "File and Folder Summaries:\n" + generateFlatMap(summaries);
+
+	return result;
+}
+
+
 export async function selectFilesToEdit(requirements: string, projectInfo: ProjectInfo): Promise<SelectFilesResponse> {
 	const tools = projectInfo.languageTools;
 	const repositoryMap = await getFileSystem().getFileSystemTree();
+	/** Project map generated by language/runtime tooling */
+	let langProjectMap: string
 	if (tools) {
-		// await tools.generateProjectMap();
+		langProjectMap = await tools.generateProjectMap();
 	}
 
 	const tokenizer = await createByModelName('gpt-4o'); // TODO model specific tokenizing
