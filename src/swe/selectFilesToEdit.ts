@@ -148,14 +148,15 @@ export async function loadBuildDocsSummaries(): Promise<Map<string, Summary>> {
 
 		for (const file of files) {
 			if (file.endsWith('.json')) {
-				const filePath = path.join(docsDir, file);
-				logger.info(`Processing file: ${filePath}`);
+				logger.info(`Processing file: ${file}`);
 				try {
-					if(await fileSystem.fileExists(filePath)) {
-						const content = await fileSystem.readFile(filePath);
+					if(await fileSystem.fileExists(file)) {
+						const content = await fileSystem.readFile(file);
 						const summary: Summary = JSON.parse(content);
 						summaries.set(summary.path, summary);
 						logger.info(`Successfully added summary for ${summary.path}`);
+					} else {
+						logger.warn(`File does not exist: ${file}`);
 					}
 				} catch (error) {
 					logger.warn(`Failed to read or parse summary file: ${filePath}`);
