@@ -144,7 +144,7 @@ export async function loadBuildDocsSummaries(): Promise<Map<string, Summary>> {
 			return summaries;
 		}
 
-		const files = await fileSystem.listFilesRecursively(docsDir);
+		const files = await fileSystem.listFilesRecursively(docsDir, false);
 		logger.info(`Found ${files.length} files in ${docsDir}`);
 
 		if (files.length === 0) {
