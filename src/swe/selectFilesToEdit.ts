@@ -150,9 +150,21 @@ function generateMarkdownDocumentation(fileSystemTree: string, summaries: Map<st
 			markdown += `${summary.paragraph}\n\n`;
 		}
 
-		const typeInfo = extractTypeInfo(path, langProjectMap);
-		if (typeInfo) {
-			markdown += '```typescript\n' + typeInfo + '\n```\n\n';
+		const fileExtension = path.split('.').pop()?.toLowerCase();
+		
+		if (fileExtension === 'ts') {
+			const typeInfo = extractTypeInfo(path, langProjectMap);
+			if (typeInfo) {
+				markdown += '```typescript\n' + typeInfo + '\n```\n\n';
+			}
+		} else if (fileExtension === 'html') {
+			markdown += 'This file contains HTML markup for the component\'s template.\n\n';
+		} else if (fileExtension === 'scss' || fileExtension === 'css') {
+			markdown += 'This file contains styles for the component.\n\n';
+		} else if (!fileExtension) {
+			markdown += 'This is a directory containing related files.\n\n';
+		} else {
+			markdown += `This is a ${fileExtension.toUpperCase()} file.\n\n`;
 		}
 	}
 
