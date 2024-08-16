@@ -135,40 +135,50 @@ function generateDetailedDocumentation(summaries: Map<string, Summary>, langProj
 }
 
 function generateMarkdownDocumentation(fileSystemTree: string, summaries: Map<string, Summary>, langProjectMap: string): string {
-	let markdown = '# Project Documentation\n\n';
-	const lines = fileSystemTree.split('\n');
+    let markdown = '# Project Documentation\n\n';
+    markdown += '## Project Structure\n\n';
+    markdown += '```\n' + fileSystemTree + '\n```\n\n';
 
-	for (const line of lines) {
-		const path = line.trim();
-		const indentation = line.length - line.trimLeft().length;
-		const heading = '#'.repeat(Math.floor(indentation / 2) + 1);
+    markdown += '## File Summaries\n\n';
+    const lines = fileSystemTree.split('\n');
+    let currentIndentation = 0;
 
-		markdown += `${heading} ${path}\n\n`;
+    for (const line of lines) {
+        const path = line.trim();
+        const indentation = line.length - line.trimLeft().length;
+        
+        if (indentation > currentIndentation) {
+            markdown += '\n';
+        }
+        currentIndentation = indentation;
 
-		const summary = summaries.get(path);
-		if (summary) {
-			markdown += `${summary.paragraph}\n\n`;
-		}
+        const heading = '#'.repeat(Math.min(indentation + 3, 6)); // Limit to h6
+        markdown += `${heading} ${path}\n\n`;
 
-		const fileExtension = path.split('.').pop()?.toLowerCase();
-		
-		if (fileExtension === 'ts') {
-			const typeInfo = extractTypeInfo(path, langProjectMap);
-			if (typeInfo) {
-				markdown += '```typescript\n' + typeInfo + '\n```\n\n';
-			}
-		} else if (fileExtension === 'html') {
-			markdown += 'This file contains HTML markup for the component\'s template.\n\n';
-		} else if (fileExtension === 'scss' || fileExtension === 'css') {
-			markdown += 'This file contains styles for the component.\n\n';
-		} else if (!fileExtension) {
-			markdown += 'This is a directory containing related files.\n\n';
-		} else {
-			markdown += `This is a ${fileExtension.toUpperCase()} file.\n\n`;
-		}
-	}
+        const summary = summaries.get(path);
+        if (summary) {
+            markdown += `${summary.paragraph}\n\n`;
+        }
 
-	return markdown;
+        const fileExtension = path.split('.').pop()?.toLowerCase();
+        
+        if (fileExtension === 'ts') {
+            const typeInfo = extractTypeInfo(path, langProjectMap);
+            if (typeInfo && typeInfo.trim() !== `// Type information for ${path}`) {
+                markdown += '**Type Information:**\n\n```typescript\n' + typeInfo + '\n```\n\n';
+            }
+        } else if (fileExtension === 'html') {
+            markdown += '**Content:** HTML markup for component template\n\n';
+        } else if (fileExtension === 'scss' || fileExtension === 'css') {
+            markdown += '**Content:** Styles for component\n\n';
+        } else if (!fileExtension) {
+            markdown += '**Type:** Directory\n\n';
+        } else {
+            markdown += `**Type:** ${fileExtension.toUpperCase()} file\n\n`;
+        }
+    }
+
+    return markdown;
 }
 
 function generateSummaryFocusedOverview(summaries: Map<string, Summary>): string {
