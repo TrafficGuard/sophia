@@ -128,18 +128,11 @@ async function generateStructuredDocumentation(summaries: Map<string, Summary>):
 export async function loadBuildDocsSummaries(): Promise<Map<string, Summary>> {
 	const summaries = new Map<string, Summary>();
 	const fileSystem = getFileSystem();
-	const docsDir = join('.nous', 'docs');
+	const docsDir = '.nous/docs';
 	logger.info(`Attempting to load summaries from ${docsDir}`);
 
 	try {
-		logger.info(`Current working directory: ${fileSystem.getWorkingDirectory()}`);
-		const fullDocsPath = join(fileSystem.getWorkingDirectory(), docsDir);
-		logger.info(`Full path to docs directory: ${fullDocsPath}`);
-
-		// Check if the directory exists
 		const dirExists = await fileSystem.fileExists(docsDir);
-		logger.info(`Does ${docsDir} directory exist? ${dirExists}`);
-
 		if (!dirExists) {
 			logger.warn(`The ${docsDir} directory does not exist.`);
 			return summaries;
@@ -150,27 +143,22 @@ export async function loadBuildDocsSummaries(): Promise<Map<string, Summary>> {
 
 		if (files.length === 0) {
 			logger.warn(`No files found in ${docsDir}. Directory might be empty.`);
+			return summaries;
 		}
 
 		for (const file of files) {
-			logger.info(`Examining file: ${file}`);
 			if (file.endsWith('.json')) {
-				const filePath = join(docsDir, file);
+				const filePath = path.join(docsDir, file);
 				logger.info(`Processing file: ${filePath}`);
 				try {
-					if (await fileSystem.fileExists(filePath)) {
-						const content = await fileSystem.readFile(filePath);
-						logger.info(`File content length: ${content.length}`);
-						const summary: Summary = JSON.parse(content);
-						summaries.set(summary.path, summary);
-						logger.info(`Successfully added summary for ${summary.path}`);
-					}
+					const content = await fileSystem.readFile(filePath);
+					const summary: Summary = JSON.parse(content);
+					summaries.set(summary.path, summary);
+					logger.info(`Successfully added summary for ${summary.path}`);
 				} catch (error) {
 					logger.warn(`Failed to read or parse summary file: ${filePath}`);
 					logger.error(`Error details: ${errorToString(error)}`);
 				}
-			} else {
-				logger.info(`Skipping non-JSON file: ${file}`);
 			}
 		}
 	} catch (error) {
