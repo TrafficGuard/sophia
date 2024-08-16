@@ -532,6 +532,29 @@ export class FileSystem {
 
 		return Array.from(tree.values()).join('');
 	}
+
+	@func()
+	async getFileSystemTreeStructure(dirPath = './'): Promise<Record<string, string[]>> {
+		const files = await this.listFilesRecursively(dirPath);
+		const tree: Record<string, string[]> = {};
+
+		files.forEach((file) => {
+			const parts = file.split(path.sep);
+			const isFile = !file.endsWith('/');
+			const dirPath = isFile ? parts.slice(0, -1).join(path.sep) : file;
+			const fileName = isFile ? parts[parts.length - 1] : '';
+
+			if (!tree[dirPath]) {
+				tree[dirPath] = [];
+			}
+
+			if (isFile) {
+				tree[dirPath].push(fileName);
+			}
+		});
+
+		return tree;
+	}
 }
 
 /**
