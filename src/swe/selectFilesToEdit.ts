@@ -128,19 +128,29 @@ async function loadBuildDocsSummaries(): Promise<Map<string, Summary>> {
 	const summaries = new Map<string, Summary>();
 	const fileSystem = getFileSystem();
 	const docsDir = join('.nous', 'docs');
-	const files = await fileSystem.listFilesRecursively(docsDir);
+	logger.info(`Attempting to load summaries from ${docsDir}`);
 
-	for (const file of files) {
-		if (file.endsWith('.json')) {
-			const filePath = join(docsDir, file);
-			try {
-				const content = await fileSystem.readFile(filePath);
-				const summary: Summary = JSON.parse(content);
-				summaries.set(summary.path, summary);
-			} catch (error) {
-				logger.warn(`Failed to read or parse summary file: ${filePath}`, error);
+	try {
+		const files = await fileSystem.listFilesRecursively(docsDir);
+		logger.info(`Found ${files.length} files in ${docsDir}`);
+
+		for (const file of files) {
+			if (file.endsWith('.json')) {
+				const filePath = join(docsDir, file);
+				logger.info(`Processing file: ${filePath}`);
+				try {
+					const content = await fileSystem.readFile(filePath);
+					logger.info(`File content length: ${content.length}`);
+					const summary: Summary = JSON.parse(content);
+					summaries.set(summary.path, summary);
+					logger.info(`Successfully added summary for ${summary.path}`);
+				} catch (error) {
+					logger.warn(`Failed to read or parse summary file: ${filePath}`, error);
+				}
 			}
 		}
+	} catch (error) {
+		logger.error(`Error listing files in ${docsDir}:`, error);
 	}
 
 	logger.info(`Loaded ${summaries.size} summaries`);
