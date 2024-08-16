@@ -141,25 +141,27 @@ function generateMarkdownDocumentation(fileSystemTree: string, summaries: Map<st
 
     markdown += '## File and Folder Summaries\n\n';
     const lines = fileSystemTree.split('\n');
-    let currentIndentation = 0;
+    let currentPath = '';
 
     for (const line of lines) {
-        const path = line.trim();
+        const trimmedLine = line.trim();
         const indentation = line.length - line.trimLeft().length;
         
-        if (indentation > currentIndentation) {
-            markdown += '\n';
-        }
-        currentIndentation = indentation;
+        // Update the current path based on indentation
+        const parts = currentPath.split('/');
+        parts.length = Math.floor(indentation / 2); // Assuming 2 spaces per indentation level
+        currentPath = parts.join('/');
+        if (currentPath) currentPath += '/';
+        currentPath += trimmedLine;
 
-        const heading = '#'.repeat(Math.min(indentation + 3, 6)); // Limit to h6
-        markdown += `${heading} ${path}\n\n`;
+        const heading = '#'.repeat(Math.min(indentation / 2 + 3, 6)); // Limit to h6
+        markdown += `${heading} ${trimmedLine}\n\n`;
 
-        const summary = summaries.get(path);
+        const summary = summaries.get(currentPath);
         if (summary) {
             markdown += `${summary.paragraph}\n\n`;
         } else {
-            markdown += `No summary available.\n\n`;
+            markdown += `No summary available for ${currentPath}\n\n`;
         }
     }
 
