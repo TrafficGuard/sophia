@@ -126,14 +126,15 @@ async function generateStructuredDocumentation(summaries: Map<string, Summary>):
 
 async function loadBuildDocsSummaries(): Promise<Map<string, Summary>> {
 	const summaries = new Map<string, Summary>();
-	const docsDir = join(getFileSystem().getWorkingDirectory(), '.nous', 'docs');
-	const files = await getFileSystem().listFilesRecursively(docsDir);
+	const fileSystem = getFileSystem();
+	const docsDir = join('.nous', 'docs');
+	const files = await fileSystem.listFilesRecursively(docsDir);
 
 	for (const file of files) {
 		if (file.endsWith('.json')) {
 			const filePath = join(docsDir, file);
 			try {
-				const content = await fs.readFile(filePath, 'utf-8');
+				const content = await fileSystem.readFile(filePath);
 				const summary: Summary = JSON.parse(content);
 				summaries.set(summary.path, summary);
 			} catch (error) {
