@@ -82,14 +82,48 @@ export async function generateProjectMaps(projectInfo: ProjectInfo) {
 	logger.info(`combined ${await countTokens(combined)}`);
 	writeFileSync('doc-combined', combined)
 
+	const structuredDocumentation = await generateStructuredDocumentation(summaries);
+	logger.info(`structuredDocumentation ${await countTokens(structuredDocumentation)}`);
+	writeFileSync('doc-structuredDocumentation', structuredDocumentation);
+
 	return {
 		fileSystemTree,
 		langProjectMap,
 		hierarchicalMap,
 		detailedDocumentation,
 		markdownDocumentation,
-		summaryFocusedOverview
+		summaryFocusedOverview,
+		structuredDocumentation
 	};
+}
+
+async function generateStructuredDocumentation(summaries: Map<string, Summary>): Promise<string> {
+	const fileSystem = getFileSystem();
+	const treeStructure = await fileSystem.getFileSystemTreeStructure();
+	let documentation = '';
+
+	for (const [folderPath, files] of Object.entries(treeStructure)) {
+		const folderSummary = summaries.get(folderPath);
+		if (folderSummary) {
+			documentation += `${folderPath}/  ${folderSummary.paragraph}\n`;
+		} else {
+			documentation += `${folderPath}/\n`;
+		}
+
+		for (const file of files) {
+			const filePath = `${folderPath}/${file}`;
+			const fileSummary = summaries.get(filePath);
+			if (fileSummary) {
+				documentation += `  ${file}  ${fileSummary.sentence}\n`;
+			} else {
+				documentation += `  ${file}\n`;
+			}
+		}
+
+		documentation += '\n';
+	}
+
+	return documentation;
 }
 
 async function loadBuildDocsSummaries(): Promise<Map<string, Summary>> {
