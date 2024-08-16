@@ -137,8 +137,8 @@ export class FileSystem {
 	 * @param dirPath the directory to return all the files contents under
 	 * @returns the contents of the file(s) as a Map keyed by the file path
 	 */
-	async getFileContentsRecursively(dirPath: string): Promise<Map<string, string>> {
-		const filenames = await this.listFilesRecursively(dirPath);
+	async getFileContentsRecursively(dirPath: string, useGitIgnore = true): Promise<Map<string, string>> {
+		const filenames = await this.listFilesRecursively(dirPath, useGitIgnore);
 		return await this.readFiles(filenames);
 	}
 
@@ -228,35 +228,35 @@ export class FileSystem {
 	 * @returns the list of files
 	 */
 	@func()
-	async listFilesRecursively(dirPath = './'): Promise<string[]> {
+	async listFilesRecursively(dirPath = './', useGitIgnore = true): Promise<string[]> {
 		this.log.debug(`cwd: ${this.workingDirectory}`);
 
 		const startPath = path.join(this.getWorkingDirectory(), dirPath);
 		// TODO check isnt going higher than this.basePath
 
-		const ig = await this.loadGitignoreRules(startPath);
+		const ig = useGitIgnore ? await this.loadGitignoreRules(startPath) : ignore();
 
-		const files: string[] = await this.listFilesRecurse(this.workingDirectory, startPath, ig);
+		const files: string[] = await this.listFilesRecurse(this.workingDirectory, startPath, ig, useGitIgnore);
 		return files.map((file) => path.relative(this.workingDirectory, file));
 	}
 
-	private async listFilesRecurse(rootPath: string, dirPath: string, parentIg: Ignore, filter: (file: string) => boolean = (name) => true): Promise<string[]> {
+	private async listFilesRecurse(rootPath: string, dirPath: string, parentIg: Ignore, useGitIgnore: boolean = true, filter: (file: string) => boolean = (name) => true): Promise<string[]> {
 		const relativeRoot = this.basePath;
 		this.log.debug(`listFilesRecurse dirPath: ${dirPath}`);
 		const files: string[] = [];
 
-		const ig = await this.loadGitignoreRules(dirPath);
+		const ig = useGitIgnore ? await this.loadGitignoreRules(dirPath) : ignore();
 		const mergedIg = ignore().add(parentIg).add(ig);
 
 		const dirents = await fs.readdir(dirPath, { withFileTypes: true });
 		for (const dirent of dirents) {
 			const relativePath = path.relative(rootPath, path.join(dirPath, dirent.name));
 			if (dirent.isDirectory()) {
-				if (!mergedIg.ignores(relativePath) && !mergedIg.ignores(`${relativePath}/`)) {
-					files.push(...(await this.listFilesRecurse(rootPath, path.join(dirPath, dirent.name), mergedIg, filter)));
+				if (!useGitIgnore || !mergedIg.ignores(relativePath) && !mergedIg.ignores(`${relativePath}/`)) {
+					files.push(...(await this.listFilesRecurse(rootPath, path.join(dirPath, dirent.name), mergedIg, useGitIgnore, filter)));
 				}
 			} else {
-				if (!mergedIg.ignores(relativePath)) {
+				if (!useGitIgnore || !mergedIg.ignores(relativePath)) {
 					files.push(path.join(dirPath, dirent.name));
 				}
 			}
@@ -427,6 +427,59 @@ export class FileSystem {
 
 		ig.add('.git');
 		return ig;
+	}
+
+	async listFolders(dirPath: string = './'): Promise<string[]> {
+		const workingDir = this.getWorkingDirectory();
+		dirPath = path.join(workingDir, dirPath);
+		try {
+			const items = await fs.readdir(dirPath);
+			const folders: string[] = [];
+
+			for (const item of items) {
+				const itemPath = path.join(dirPath, item);
+				const stat = await fs.stat(itemPath);
+				if (stat.isDirectory()) {
+					const relativePath = path.relative(workingDir, itemPath);
+					folders.push(relativePath);
+				}
+			}
+			return folders;
+		} catch (error) {
+			console.error("Error reading directory:", error);
+			return [];
+		}
+	}
+
+	/**
+	 * Recursively lists all folders under the given root directory.
+	 * @param dir The root directory to start the search from. Defaults to the current working directory.
+	 * @returns A promise that resolves to an array of folder paths relative to the working directory.
+	 */
+	async getAllFoldersRecursively(dir: string = './'): Promise<string[]> {
+		const workingDir = this.getWorkingDirectory();
+		const startPath = path.join(workingDir, dir);
+		const ig = await this.loadGitignoreRules(startPath);
+
+		const folders: string[] = [];
+
+		const recurse = async (currentPath: string) => {
+			const relativePath = path.relative(workingDir, currentPath);
+			if (!relativePath || !ig.ignores(relativePath) && !ig.ignores(`${relativePath}/`)) {
+				folders.push(relativePath);
+
+				const dirents = await fs.readdir(currentPath, { withFileTypes: true });
+				for (const dirent of dirents) {
+					if (dirent.isDirectory()) {
+						const childPath = path.join(currentPath, dirent.name);
+						await recurse(childPath);
+					}
+				}
+			}
+		};
+		await recurse(startPath);
+		// Remove the root directory from the list if it was included
+		return folders.filter(folder => folder !== '.');
 	}
 
 	/**
