@@ -124,7 +124,7 @@ async function generateStructuredDocumentation(summaries: Map<string, Summary>):
 	return documentation;
 }
 
-async function loadBuildDocsSummaries(): Promise<Map<string, Summary>> {
+export async function loadBuildDocsSummaries(): Promise<Map<string, Summary>> {
 	const summaries = new Map<string, Summary>();
 	const fileSystem = getFileSystem();
 	const docsDir = join('.nous', 'docs');
