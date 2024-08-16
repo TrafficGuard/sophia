@@ -1,12 +1,11 @@
-import {promises as fs, writeFileSync} from "node:fs";
-import path, {join} from 'path';
+import { promises as fs, writeFileSync } from 'node:fs';
+import path, { join } from 'path';
 import { createByModelName } from '@microsoft/tiktokenizer';
 import { getFileSystem, llms } from '#agent/agentContext';
+import { countTokens } from '#llm/tokens';
 import { logger } from '#o11y/logger';
+import { Summary } from '#swe/documentationBuilder';
 import { ProjectInfo } from './projectDetection';
-import {countTokens} from "#llm/tokens";
-import {Summary} from "#swe/documentationBuilder";
-
 
 export interface SelectFilesResponse {
 	primaryFiles: SelectedFile[];
@@ -18,16 +17,15 @@ export interface SelectedFile {
 	reason: string;
 }
 
-
 interface ProjectMap {
 	text: string;
 	tokens: number;
-	description: string;/add
+	description: string;
 }
 
 function roundToFirstTwoDigits(number: number): number {
 	// Convert the number to its absolute value for proper digits counting
-	let absNumber = Math.abs(number);
+	const absNumber = Math.abs(number);
 
 	// If the number has two or fewer digits, return it as-is
 	if (absNumber < 100) {
@@ -38,7 +36,7 @@ function roundToFirstTwoDigits(number: number): number {
 	const digits = Math.floor(Math.log10(absNumber)) + 1;
 
 	// Calculate the factor to scale down and up
-	const factor = Math.pow(10, digits - 2);
+	const factor = 10 ** (digits - 2);
 
 	// Round the number to the nearest factor
 	return Math.round(number / factor) * factor;
@@ -48,11 +46,11 @@ function roundToFirstTwoDigits(number: number): number {
  *
  */
 export async function generateProjectMaps(projectInfo: ProjectInfo) {
-	let langProjectMap: string = '';
+	let langProjectMap = '';
 	if (projectInfo.languageTools) {
 		langProjectMap = await projectInfo.languageTools.generateProjectMap();
 		logger.info(`langProjectMap ${await countTokens(langProjectMap)}`);
-		writeFileSync('doc-langProjectMap', langProjectMap)
+		writeFileSync('doc-langProjectMap', langProjectMap);
 	}
 
 	const fileSystemTree = await getFileSystem().getFileSystemTree();
@@ -64,23 +62,23 @@ export async function generateProjectMaps(projectInfo: ProjectInfo) {
 	// Generate different project maps
 	const hierarchicalMap = generateHierarchicalMap(fileSystemTree, summaries);
 	logger.info(`hierarchicalMap ${await countTokens(hierarchicalMap)}`);
-	writeFileSync('doc-hierarchicalMap', hierarchicalMap)
+	writeFileSync('doc-hierarchicalMap', hierarchicalMap);
 
 	const detailedDocumentation = generateDetailedDocumentation(summaries, langProjectMap);
 	logger.info(`detailedDocumentation ${await countTokens(detailedDocumentation)}`);
-	writeFileSync('doc-detailedDocumentation', detailedDocumentation)
+	writeFileSync('doc-detailedDocumentation', detailedDocumentation);
 
 	const markdownDocumentation = generateMarkdownDocumentation(fileSystemTree, summaries, langProjectMap);
 	logger.info(`markdownDocumentation ${await countTokens(markdownDocumentation)}`);
-	writeFileSync('doc-markdownDocumentation', markdownDocumentation)
+	writeFileSync('doc-markdownDocumentation', markdownDocumentation);
 
 	const summaryFocusedOverview = generateSummaryFocusedOverview(summaries);
 	logger.info(`summaryFocusedOverview ${await countTokens(summaryFocusedOverview)}`);
-	writeFileSync('doc-summaryFocusedOverview', summaryFocusedOverview)
+	writeFileSync('doc-summaryFocusedOverview', summaryFocusedOverview);
 
 	const combined = generateCombinedMap(fileSystemTree, langProjectMap, summaries);
 	logger.info(`combined ${await countTokens(combined)}`);
-	writeFileSync('doc-combined', combined)
+	writeFileSync('doc-combined', combined);
 
 	const structuredDocumentation = await generateStructuredDocumentation(summaries);
 	logger.info(`structuredDocumentation ${await countTokens(structuredDocumentation)}`);
@@ -93,7 +91,7 @@ export async function generateProjectMaps(projectInfo: ProjectInfo) {
 		detailedDocumentation,
 		markdownDocumentation,
 		summaryFocusedOverview,
-		structuredDocumentation
+		structuredDocumentation,
 	};
 }
 
@@ -144,14 +142,16 @@ async function loadBuildDocsSummaries(): Promise<Map<string, Summary>> {
 
 function generateHierarchicalMap(fileSystemTree: string, summaries: Map<string, Summary>): string {
 	const lines = fileSystemTree.split('\n');
-	return lines.map(line => {
-		const trimmedLine = line.trim();
-		const matchingSummary = Array.from(summaries.entries()).find(([path, _]) => trimmedLine.endsWith(path));
-		if (matchingSummary) {
-			return `${line} - ${matchingSummary[1].sentence}`;
-		}
-		return line;
-	}).join('\n');
+	return lines
+		.map((line) => {
+			const trimmedLine = line.trim();
+			const matchingSummary = Array.from(summaries.entries()).find(([path, _]) => trimmedLine.endsWith(path));
+			if (matchingSummary) {
+				return `${line} - ${matchingSummary[1].sentence}`;
+			}
+			return line;
+		})
+		.join('\n');
 }
 
 function generateDetailedDocumentation(summaries: Map<string, Summary>, langProjectMap: string): string {
@@ -169,37 +169,37 @@ function generateDetailedDocumentation(summaries: Map<string, Summary>, langProj
 }
 
 function generateMarkdownDocumentation(fileSystemTree: string, summaries: Map<string, Summary>, langProjectMap: string): string {
-    let markdown = '# Project Documentation\n\n';
-    markdown += '## Project Structure\n\n';
-    markdown += '```\n' + fileSystemTree + '\n```\n\n';
+	let markdown = '# Project Documentation\n\n';
+	markdown += '## Project Structure\n\n';
+	// markdown += `\`\`\`\n${fileSystemTree}\n`\`\`\n\n`;
 
-    markdown += '## File and Folder Summaries\n\n';
-    const lines = fileSystemTree.split('\n');
-    let currentPath = '';
+	markdown += '## File and Folder Summaries\n\n';
+	const lines = fileSystemTree.split('\n');
+	let currentPath = '';
 
-    for (const line of lines) {
-        const trimmedLine = line.trim();
-        const indentation = line.length - line.trimLeft().length;
-        
-        // Update the current path based on indentation
-        const parts = currentPath.split('/');
-        parts.length = Math.floor(indentation / 2); // Assuming 2 spaces per indentation level
-        currentPath = parts.join('/');
-        if (currentPath) currentPath += '/';
-        currentPath += trimmedLine;
+	for (const line of lines) {
+		const trimmedLine = line.trim();
+		const indentation = line.length - line.trimLeft().length;
 
-        const heading = '#'.repeat(Math.min(indentation / 2 + 3, 6)); // Limit to h6
-        markdown += `${heading} ${trimmedLine}\n\n`;
+		// Update the current path based on indentation
+		const parts = currentPath.split('/');
+		parts.length = Math.floor(indentation / 2); // Assuming 2 spaces per indentation level
+		currentPath = parts.join('/');
+		if (currentPath) currentPath += '/';
+		currentPath += trimmedLine;
 
-        const summary = summaries.get(currentPath);
-        if (summary) {
-            markdown += `${summary.paragraph}\n\n`;
-        } else {
-            markdown += `No summary available for ${currentPath}\n\n`;
-        }
-    }
+		const heading = '#'.repeat(Math.min(indentation / 2 + 3, 6)); // Limit to h6
+		markdown += `${heading} ${trimmedLine}\n\n`;
 
-    return markdown;
+		const summary = summaries.get(currentPath);
+		if (summary) {
+			markdown += `${summary.paragraph}\n\n`;
+		} else {
+			markdown += `No summary available for ${currentPath}\n\n`;
+		}
+	}
+
+	return markdown;
 }
 
 function generateSummaryFocusedOverview(summaries: Map<string, Summary>): string {
@@ -219,7 +219,6 @@ function extractTypeInfo(path: string, langProjectMap: string): string | null {
 	return `// Type information for ${path}`;
 }
 
-
 function generateFlatMap(summaries: Map<string, Summary>): string {
 	return Array.from(summaries.entries())
 		.map(([path, summary]) => `${path}:\n  ${summary.sentence}\n  ${summary.paragraph}`)
@@ -227,23 +226,22 @@ function generateFlatMap(summaries: Map<string, Summary>): string {
 }
 
 function generateCombinedMap(fileSystemTree: string, langProjectMap: string | undefined, summaries: Map<string, Summary>): string {
-	let result = "File System Tree:\n" + fileSystemTree + "\n\n";
+	let result = `File System Tree:\n${fileSystemTree}\n\n`;
 
 	if (langProjectMap) {
-		result += "Language Project Map:\n" + langProjectMap + "\n\n";
+		result += `Language Project Map:\n${langProjectMap}\n\n`;
 	}
 
-	result += "File and Folder Summaries:\n" + generateFlatMap(summaries);
+	result += `File and Folder Summaries:\n${generateFlatMap(summaries)}`;
 
 	return result;
 }
-
 
 export async function selectFilesToEdit(requirements: string, projectInfo: ProjectInfo): Promise<SelectFilesResponse> {
 	const tools = projectInfo.languageTools;
 	const repositoryMap = await getFileSystem().getFileSystemTree();
 	/** Project map generated by language/runtime tooling */
-	let langProjectMap: string
+	let langProjectMap: string;
 	if (tools) {
 		langProjectMap = await tools.generateProjectMap();
 	}
