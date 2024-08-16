@@ -6,6 +6,7 @@ import { countTokens } from '#llm/tokens';
 import { logger } from '#o11y/logger';
 import { Summary } from '#swe/documentationBuilder';
 import { ProjectInfo } from './projectDetection';
+import {errorToString} from "#utils/errors";
 
 export interface SelectFilesResponse {
 	primaryFiles: SelectedFile[];
@@ -157,14 +158,16 @@ export async function loadBuildDocsSummaries(): Promise<Map<string, Summary>> {
 				const filePath = join(docsDir, file);
 				logger.info(`Processing file: ${filePath}`);
 				try {
-					const content = await fileSystem.readFile(filePath);
-					logger.info(`File content length: ${content.length}`);
-					const summary: Summary = JSON.parse(content);
-					summaries.set(summary.path, summary);
-					logger.info(`Successfully added summary for ${summary.path}`);
+					if (await fileSystem.fileExists(filePath)) {
+						const content = await fileSystem.readFile(filePath);
+						logger.info(`File content length: ${content.length}`);
+						const summary: Summary = JSON.parse(content);
+						summaries.set(summary.path, summary);
+						logger.info(`Successfully added summary for ${summary.path}`);
+					}
 				} catch (error) {
-					logger.warn(`Failed to read or parse summary file: ${filePath}`, error);
-					logger.error(`Error details:`, error);
+					logger.warn(`Failed to read or parse summary file: ${filePath}`);
+					logger.error(`Error details: ${errorToString(error)}`);
 				}
 			} else {
 				logger.info(`Skipping non-JSON file: ${file}`);
