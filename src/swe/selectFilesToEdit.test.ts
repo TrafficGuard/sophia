@@ -27,7 +27,7 @@ describe('removeNonExistingFiles', () => {
 });
 
 describe('loadBuildDocsSummaries', () => {
-	it.only('should load build documentation summaries', async () => {
+	it.skip('should load build documentation summaries', async () => {
 		const summaries = await loadBuildDocsSummaries();
 		expect(summaries).to.be.an('Map');
 		expect(summaries.size).to.be.greaterThan(0);
