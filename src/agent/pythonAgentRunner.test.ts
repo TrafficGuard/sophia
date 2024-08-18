@@ -296,7 +296,7 @@ describe('pythonAgentRunner', () => {
 			const calls = await appContext().llmCallService.getLlmCallsForAgent(agent.agentId);
 			expect(calls.length).to.equal(3);
 			const skyCall = calls[1];
-			expect(skyCall.callStack).to.equal(`skyColour > generateText`);
+			expect(skyCall.callStack).to.equal('skyColour > generateText');
 			expect(skyCall.responseText).to.equal('blue');
 		});
 	});
