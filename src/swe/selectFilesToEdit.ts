@@ -1,12 +1,10 @@
-import { promises as fs, writeFileSync } from 'node:fs';
-import path, { join } from 'path';
+import { promises as fs } from 'node:fs';
+import path from 'path';
 import { createByModelName } from '@microsoft/tiktokenizer';
 import { getFileSystem, llms } from '#agent/agentContext';
-import { countTokens } from '#llm/tokens';
 import { logger } from '#o11y/logger';
-import { Summary } from '#swe/documentationBuilder';
+import { ProjectMaps, generateProjectMaps } from '#swe/projectMap';
 import { ProjectInfo } from './projectDetection';
-import {errorToString} from "#utils/errors";
 
 export interface SelectFilesResponse {
 	primaryFiles: SelectedFile[];
@@ -18,276 +16,18 @@ export interface SelectedFile {
 	reason: string;
 }
 
-interface ProjectMap {
-	text: string;
-	tokens: number;
-	description: string;
-}
-
-function roundToFirstTwoDigits(number: number): number {
-	// Convert the number to its absolute value for proper digits counting
-	const absNumber = Math.abs(number);
-
-	// If the number has two or fewer digits, return it as-is
-	if (absNumber < 100) {
-		return number;
-	}
-
-	// Get the number of digits in the number
-	const digits = Math.floor(Math.log10(absNumber)) + 1;
-
-	// Calculate the factor to scale down and up
-	const factor = 10 ** (digits - 2);
-
-	// Round the number to the nearest factor
-	return Math.round(number / factor) * factor;
-}
-
-/**
- *
- */
-export async function generateProjectMaps(projectInfo: ProjectInfo) {
-	let langProjectMap = '';
-	if (projectInfo.languageTools) {
-		langProjectMap = await projectInfo.languageTools.generateProjectMap();
-		logger.info(`langProjectMap ${await countTokens(langProjectMap)}`);
-		writeFileSync('doc-langProjectMap', langProjectMap);
-	}
-
-	const fileSystemTree = await getFileSystem().getFileSystemTree();
-	logger.info(`fileSystemTree ${await countTokens(fileSystemTree)}`);
-
-	// Load buildDocs summaries
-	const summaries: Map<string, Summary> = await loadBuildDocsSummaries();
-
-	// Generate different project maps
-	const hierarchicalMap = generateHierarchicalMap(fileSystemTree, summaries);
-	logger.info(`hierarchicalMap ${await countTokens(hierarchicalMap)}`);
-	writeFileSync('doc-hierarchicalMap', hierarchicalMap);
-
-	const detailedDocumentation = generateDetailedDocumentation(summaries, langProjectMap);
-	logger.info(`detailedDocumentation ${await countTokens(detailedDocumentation)}`);
-	writeFileSync('doc-detailedDocumentation', detailedDocumentation);
-
-	const markdownDocumentation = generateMarkdownDocumentation(fileSystemTree, summaries, langProjectMap);
-	logger.info(`markdownDocumentation ${await countTokens(markdownDocumentation)}`);
-	writeFileSync('doc-markdownDocumentation', markdownDocumentation);
-
-	const summaryFocusedOverview = generateSummaryFocusedOverview(summaries);
-	logger.info(`summaryFocusedOverview ${await countTokens(summaryFocusedOverview)}`);
-	writeFileSync('doc-summaryFocusedOverview', summaryFocusedOverview);
-
-	const combined = generateCombinedMap(fileSystemTree, langProjectMap, summaries);
-	logger.info(`combined ${await countTokens(combined)}`);
-	writeFileSync('doc-combined', combined);
-
-	const structuredDocumentation = await generateStructuredDocumentation(summaries);
-	logger.info(`structuredDocumentation ${await countTokens(structuredDocumentation)}`);
-	writeFileSync('doc-structuredDocumentation', structuredDocumentation);
-
-	return {
-		fileSystemTree,
-		langProjectMap,
-		hierarchicalMap,
-		detailedDocumentation,
-		markdownDocumentation,
-		summaryFocusedOverview,
-		structuredDocumentation,
-	};
-}
-
-async function generateStructuredDocumentation(summaries: Map<string, Summary>): Promise<string> {
-	const fileSystem = getFileSystem();
-	const treeStructure = await fileSystem.getFileSystemTreeStructure();
-	let documentation = '';
-
-	for (const [folderPath, files] of Object.entries(treeStructure)) {
-		const folderSummary = summaries.get(folderPath);
-		if (folderSummary) {
-			documentation += `${folderPath}/  ${folderSummary.paragraph}\n`;
-		} else {
-			documentation += `${folderPath}/\n`;
-		}
-
-		for (const file of files) {
-			const filePath = `${folderPath}/${file}`;
-			const fileSummary = summaries.get(filePath);
-			if (fileSummary) {
-				documentation += `  ${file}  ${fileSummary.sentence}\n`;
-			} else {
-				documentation += `  ${file}\n`;
-			}
-		}
-
-		documentation += '\n';
-	}
-
-	return documentation;
-}
-
-export async function loadBuildDocsSummaries(): Promise<Map<string, Summary>> {
-	const summaries = new Map<string, Summary>();
-	const fileSystem = getFileSystem();
-	const docsDir = '.nous/docs';
-	logger.info(`Attempting to load summaries from ${docsDir}`);
-
-	try {
-		const dirExists = await fileSystem.fileExists(docsDir);
-		if (!dirExists) {
-			logger.warn(`The ${docsDir} directory does not exist.`);
-			return summaries;
-		}
-
-		const files = await fileSystem.listFilesRecursively(docsDir, false);
-		logger.info(`Found ${files.length} files in ${docsDir}`);
-
-		if (files.length === 0) {
-			logger.warn(`No files found in ${docsDir}. Directory might be empty.`);
-			return summaries;
-		}
-
-		for (const file of files) {
-			if (file.endsWith('.json')) {
-				logger.info(`Processing file: ${file}`);
-				try {
-					if(await fileSystem.fileExists(file)) {
-						const content = await fileSystem.readFile(file);
-						const summary: Summary = JSON.parse(content);
-						summaries.set(summary.path, summary);
-						logger.info(`Successfully added summary for ${summary.path}`);
-					} else {
-						logger.warn(`File does not exist: ${file}`);
-					}
-				} catch (error) {
-					logger.warn(`Failed to read or parse summary file: ${filePath}`);
-					logger.error(`Error details: ${errorToString(error)}`);
-				}
-			}
-		}
-	} catch (error) {
-		logger.error(`Error listing files in ${docsDir}:`, error);
-		logger.error(`Error stack:`, error.stack);
-	}
-
-	logger.info(`Loaded ${summaries.size} summaries`);
-	return summaries;
-}
-
-function generateHierarchicalMap(fileSystemTree: string, summaries: Map<string, Summary>): string {
-	const lines = fileSystemTree.split('\n');
-	return lines
-		.map((line) => {
-			const trimmedLine = line.trim();
-			const matchingSummary = Array.from(summaries.entries()).find(([path, _]) => trimmedLine.endsWith(path));
-			if (matchingSummary) {
-				return `${line} - ${matchingSummary[1].sentence}`;
-			}
-			return line;
-		})
-		.join('\n');
-}
-
-function generateDetailedDocumentation(summaries: Map<string, Summary>, langProjectMap: string): string {
-	let result = '';
-	for (const [path, summary] of summaries) {
-		result += `File: ${path}\n`;
-		result += `Summary: ${summary.paragraph}\n`;
-		const typeInfo = extractTypeInfo(path, langProjectMap);
-		if (typeInfo) {
-			result += `Type Information:\n${typeInfo}\n`;
-		}
-		result += '\n';
-	}
-	return result;
-}
-
-function generateMarkdownDocumentation(fileSystemTree: string, summaries: Map<string, Summary>, langProjectMap: string): string {
-	let markdown = '# Project Documentation\n\n';
-	markdown += '## Project Structure\n\n';
-	// markdown += `\`\`\`\n${fileSystemTree}\n`\`\`\n\n`;
-
-	markdown += '## File and Folder Summaries\n\n';
-	const lines = fileSystemTree.split('\n');
-	let currentPath = '';
-
-	for (const line of lines) {
-		const trimmedLine = line.trim();
-		const indentation = line.length - line.trimLeft().length;
-
-		// Update the current path based on indentation
-		const parts = currentPath.split('/');
-		parts.length = Math.floor(indentation / 2); // Assuming 2 spaces per indentation level
-		currentPath = parts.join('/');
-		if (currentPath) currentPath += '/';
-		currentPath += trimmedLine;
-
-		const heading = '#'.repeat(Math.min(indentation / 2 + 3, 6)); // Limit to h6
-		markdown += `${heading} ${trimmedLine}\n\n`;
-
-		const summary = summaries.get(currentPath);
-		if (summary) {
-			markdown += `${summary.paragraph}\n\n`;
-		} else {
-			markdown += `No summary available for ${currentPath}\n\n`;
-		}
-	}
-
-	return markdown;
-}
-
-function generateSummaryFocusedOverview(summaries: Map<string, Summary>): string {
-	let overview = '';
-	for (const [path, summary] of summaries) {
-		overview += `${path}:\n`;
-		overview += `  ${summary.sentence}\n`;
-		overview += `  ${summary.paragraph}\n\n`;
-	}
-	return overview;
-}
-
-function extractTypeInfo(path: string, langProjectMap: string): string | null {
-	// This function would parse the langProjectMap to extract type information for a specific file
-	// The implementation depends on the format of langProjectMap
-	// For this example, we'll just return a placeholder
-	return `// Type information for ${path}`;
-}
-
-function generateFlatMap(summaries: Map<string, Summary>): string {
-	return Array.from(summaries.entries())
-		.map(([path, summary]) => `${path}:\n  ${summary.sentence}\n  ${summary.paragraph}`)
-		.join('\n\n');
-}
-
-function generateCombinedMap(fileSystemTree: string, langProjectMap: string | undefined, summaries: Map<string, Summary>): string {
-	let result = `File System Tree:\n${fileSystemTree}\n\n`;
-
-	if (langProjectMap) {
-		result += `Language Project Map:\n${langProjectMap}\n\n`;
-	}
-
-	result += `File and Folder Summaries:\n${generateFlatMap(summaries)}`;
-
-	return result;
-}
-
 export async function selectFilesToEdit(requirements: string, projectInfo: ProjectInfo): Promise<SelectFilesResponse> {
-	const tools = projectInfo.languageTools;
-	const repositoryMap = await getFileSystem().getFileSystemTree();
-	/** Project map generated by language/runtime tooling */
-	let langProjectMap: string;
-	if (tools) {
-		langProjectMap = await tools.generateProjectMap();
-	}
+	const projectMaps: ProjectMaps = await generateProjectMaps(projectInfo);
 
 	const tokenizer = await createByModelName('gpt-4o'); // TODO model specific tokenizing
-	const fileSystemTreeTokens = tokenizer.encode(repositoryMap).length;
+	const fileSystemTreeTokens = tokenizer.encode(projectMaps.fileSystemTreeWithSummaries.text).length;
 	logger.info(`FileSystem tree tokens: ${fileSystemTreeTokens}`);
 
 	if (projectInfo.fileSelection) requirements += `\nAdditional note: ${projectInfo.fileSelection}`;
 
 	const prompt = `
 <project_map>
-${repositoryMap}
+${projectMaps.fileSystemTreeWithSummaries.text}
 </project_map>
 <requirements>${requirements}</requirements>
 <task>
@@ -303,15 +43,15 @@ The file paths MUST exist in the <project_map /> file_contents path attributes.
 <json>
 {
  "primaryFiles": [
-     { "path": "/dir/file1", "exists_in_project_map": true, "reason": "file1 will be edited because..." },
-     { "path": "/dir/file1.test", "exists_in_project_map": true, "reason": "file1.test is a test for /dir/file1 (only if the path exists)" },
-     { "path": "/dir/file2", "exists_in_project_map": true, "reason": "file2 will be edited because..." }
+     { "path": "/dir/file1", "reason": "file1 will be edited because..." },
+     { "path": "/dir/file1.test", "reason": "file1.test is a test for /dir/file1 (only if the path exists)" },
+     { "path": "/dir/file2", "reason": "file2 will be edited because..." }
  ],
  "secondaryFiles": [
-     { "path": "/dir/docs.txt", "exists_in_project_map": true, "reason": "Contains relevant documentation" },
-     { "path": "/dir/file3", "exists_in_project_map": true, "reason": "Contains types referenced by /dir/file1" },
-     { "path": "/dir/file4", "exists_in_project_map": true, "reason": "Contains types referenced by /dir/file1 and /dir/file2" },
-     { "path": "/dir/file5.txt", "exists_in_project_map": true, "reason": "Referenced in the task requirements" },
+     { "path": "/dir/docs.txt", "reason": "Contains relevant documentation" },
+     { "path": "/dir/file3", "reason": "Contains types referenced by /dir/file1" },
+     { "path": "/dir/file4", "reason": "Contains types referenced by /dir/file1 and /dir/file2" },
+     { "path": "/dir/file5.txt", "reason": "Referenced in the task requirements" },
  ]
 }
 </json>
@@ -401,6 +141,7 @@ export async function removeUnrelatedFiles(requirements: string, fileSelection: 
  * @param fileSelection
  */
 function removeLockFiles(fileSelection: SelectFilesResponse): SelectFilesResponse {
+	// TODO make this generic. maybe not necessary with the default projectInfo.selectFiles message of don't include package manager lock files
 	fileSelection.primaryFiles = fileSelection.primaryFiles.filter((file) => !file.path.endsWith('package-lock.json'));
 	fileSelection.secondaryFiles = fileSelection.secondaryFiles.filter((file) => !file.path.endsWith('package-lock.json'));
 	return fileSelection;

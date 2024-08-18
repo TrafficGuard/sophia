@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { FileSystem } from '#functions/storage/filesystem';
-import { removeNonExistingFiles, loadBuildDocsSummaries } from '#swe/selectFilesToEdit';
+import { loadBuildDocsSummaries } from '#swe/projectMap';
+import { removeNonExistingFiles } from '#swe/selectFilesToEdit';
 
 describe('removeNonExistingFiles', () => {
 	const fileSystem = new FileSystem();

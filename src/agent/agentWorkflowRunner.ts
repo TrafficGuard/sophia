@@ -14,6 +14,8 @@ import { appContext } from '../app';
  */
 export async function runAgentWorkflow(config: RunAgentConfig, workflow: (agent: AgentContext) => any): Promise<string> {
 	let context: AgentContext = createContext(config);
+	context.state = 'workflow';
+	await appContext().agentStateService.save(context);
 
 	return agentContextStorage.run(context, async () => {
 		try {

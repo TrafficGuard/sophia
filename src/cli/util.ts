@@ -11,7 +11,6 @@ import { Claude3_5_Sonnet_Vertex, Claude3_Haiku_Vertex, Claude3_Sonnet_Vertex, C
 import { GPT4o } from '#llm/models/openai';
 import { Gemini_1_5_Pro } from '#llm/models/vertexai';
 import { MultiLLM } from '#llm/multi-llm';
-import { CodeReviewConfig, loadCodeReviews } from '#swe/codeReview/codeReviewModel';
 import { appContext } from '../app';
 
 import { writeFileSync } from 'fs';

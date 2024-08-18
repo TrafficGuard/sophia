@@ -37,9 +37,11 @@ export async function gitlabRoutesV1(fastify: AppFastifyInstance) {
 				humanInLoop: envVarHumanInLoopSettings(),
 			};
 			const context: AgentContext = createContext(config);
-			agentContextStorage.enterWith(context);
-
-			new GitLab().reviewMergeRequest(event.project.id, event.object_attributes.id).catch((error) => logger.error(error, 'Error reviewing merge request'));
+			agentContextStorage.run(context, () => {
+				new GitLab()
+					.reviewMergeRequest(event.project.id, event.object_attributes.id)
+					.catch((error) => logger.error(error, `Error reviewing merge request ${event.project.id}, ${event.object_attributes.id}`));
+			});
 
 			send(reply, 200);
 		},

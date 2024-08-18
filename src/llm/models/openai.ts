@@ -1,7 +1,6 @@
 import { OpenAI as OpenAISDK } from 'openai';
 import { addCost, agentContext } from '#agent/agentContext';
 import { LlmCall } from '#llm/llmCallService/llmCall';
-import { CallerId } from '#llm/llmCallService/llmCallService';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
@@ -50,7 +49,13 @@ export function GPT4oMini() {
 export class OpenAI extends BaseLLM {
 	openAISDK: OpenAISDK | null = null;
 
-	constructor(name, model: Model, maxInputTokens: number, calculateInputCost: (input: string) => number, calculateOutputCost: (output: string) => number) {
+	constructor(
+		name: string,
+		model: Model,
+		maxInputTokens: number,
+		calculateInputCost: (input: string) => number,
+		calculateOutputCost: (output: string) => number,
+	) {
 		super(name, OPENAI_SERVICE, model, maxInputTokens, calculateInputCost, calculateOutputCost);
 	}
 

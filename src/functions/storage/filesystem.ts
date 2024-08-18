@@ -225,6 +225,7 @@ export class FileSystem {
 
 	/**
 	 * List all the files recursively under the given path, excluding any paths in a .gitignore file if it exists
+	 * @param dirPath
 	 * @returns the list of files
 	 */
 	@func()
@@ -240,7 +241,13 @@ export class FileSystem {
 		return files.map((file) => path.relative(this.workingDirectory, file));
 	}
 
-	private async listFilesRecurse(rootPath: string, dirPath: string, parentIg: Ignore, useGitIgnore: boolean = true, filter: (file: string) => boolean = (name) => true): Promise<string[]> {
+	private async listFilesRecurse(
+		rootPath: string,
+		dirPath: string,
+		parentIg: Ignore,
+		useGitIgnore = true,
+		filter: (file: string) => boolean = (name) => true,
+	): Promise<string[]> {
 		const relativeRoot = this.basePath;
 		this.log.debug(`listFilesRecurse dirPath: ${dirPath}`);
 		const files: string[] = [];
@@ -252,7 +259,7 @@ export class FileSystem {
 		for (const dirent of dirents) {
 			const relativePath = path.relative(rootPath, path.join(dirPath, dirent.name));
 			if (dirent.isDirectory()) {
-				if (!useGitIgnore || !mergedIg.ignores(relativePath) && !mergedIg.ignores(`${relativePath}/`)) {
+				if (!useGitIgnore || (!mergedIg.ignores(relativePath) && !mergedIg.ignores(`${relativePath}/`))) {
 					files.push(...(await this.listFilesRecurse(rootPath, path.join(dirPath, dirent.name), mergedIg, useGitIgnore, filter)));
 				}
 			} else {
@@ -271,10 +278,10 @@ export class FileSystem {
 	 */
 	@func()
 	async readFile(filePath: string): Promise<string> {
-		logger.info(`readFile ${filePath}`);
+		logger.debug(`readFile ${filePath}`);
 		let contents: string;
 		const relativeFullPath = path.join(this.getWorkingDirectory(), filePath);
-		logger.info(`Checking ${filePath} and ${relativeFullPath}`);
+		logger.debug(`Checking ${filePath} and ${relativeFullPath}`);
 		// Check relative to current working directory first
 		if (existsSync(relativeFullPath)) {
 			contents = (await fs.readFile(relativeFullPath)).toString();
@@ -359,11 +366,12 @@ export class FileSystem {
 	 */
 	@func()
 	async fileExists(filePath: string): Promise<boolean> {
-		logger.info(`fileExists: ${filePath}`);
+		// TODO remove the basePath checks. Either absolute or relative to this.cwd
+		logger.debug(`fileExists: ${filePath}`);
 		// Check if we've been given an absolute path
 		if (filePath.startsWith(this.basePath)) {
 			try {
-				logger.info(`fileExists: ${filePath}`);
+				logger.debug(`fileExists: ${filePath}`);
 				await fs.access(filePath);
 				return true;
 			} catch {}
@@ -389,7 +397,7 @@ export class FileSystem {
 	@func()
 	async writeFile(filePath: string, contents: string): Promise<void> {
 		const fileSystemPath = filePath.startsWith(this.basePath) ? filePath : join(this.getWorkingDirectory(), filePath);
-		logger.info(`Writing file "${filePath}" to ${fileSystemPath}`);
+		logger.debug(`Writing file "${filePath}" to ${fileSystemPath}`);
 		const parentPath = join(filePath, '..'); // what if we're in a root folder? unlikely
 		await promisify(fs.mkdir)(parentPath, { recursive: true });
 		writeFileSync(fileSystemPath, contents);
@@ -429,7 +437,7 @@ export class FileSystem {
 		return ig;
 	}
 
-	async listFolders(dirPath: string = './'): Promise<string[]> {
+	async listFolders(dirPath = './'): Promise<string[]> {
 		const workingDir = this.getWorkingDirectory();
 		dirPath = path.join(workingDir, dirPath);
 		try {
@@ -446,7 +454,7 @@ export class FileSystem {
 			}
 			return folders;
 		} catch (error) {
-			console.error("Error reading directory:", error);
+			console.error('Error reading directory:', error);
 			return [];
 		}
 	}
@@ -456,7 +464,7 @@ export class FileSystem {
 	 * @param dir The root directory to start the search from. Defaults to the current working directory.
 	 * @returns A promise that resolves to an array of folder paths relative to the working directory.
 	 */
-	async getAllFoldersRecursively(dir: string = './'): Promise<string[]> {
+	async getAllFoldersRecursively(dir = './'): Promise<string[]> {
 		const workingDir = this.getWorkingDirectory();
 		const startPath = path.join(workingDir, dir);
 		const ig = await this.loadGitignoreRules(startPath);
@@ -465,7 +473,7 @@ export class FileSystem {
 
 		const recurse = async (currentPath: string) => {
 			const relativePath = path.relative(workingDir, currentPath);
-			if (!relativePath || !ig.ignores(relativePath) && !ig.ignores(`${relativePath}/`)) {
+			if (!relativePath || (!ig.ignores(relativePath) && !ig.ignores(`${relativePath}/`))) {
 				folders.push(relativePath);
 
 				const dirents = await fs.readdir(currentPath, { withFileTypes: true });
@@ -479,7 +487,7 @@ export class FileSystem {
 		};
 		await recurse(startPath);
 		// Remove the root directory from the list if it was included
-		return folders.filter(folder => folder !== '.');
+		return folders.filter((folder) => folder !== '.');
 	}
 
 	/**
@@ -533,6 +541,11 @@ export class FileSystem {
 		return Array.from(tree.values()).join('');
 	}
 
+	/**
+	 * Returns the filesystem structure
+	 * @param dirPath
+	 * @returns a record with the keys as the folders paths, and the list values as the files in the folder
+	 */
 	@func()
 	async getFileSystemTreeStructure(dirPath = './'): Promise<Record<string, string[]>> {
 		const files = await this.listFilesRecursively(dirPath);
