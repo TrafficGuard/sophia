@@ -33,19 +33,23 @@ export class TypescriptTools implements LanguageTools {
 	async generateProjectMap(): Promise<string> {
 		// Note that the project needs to be in a compilable state otherwise this will fail
 		logger.info('Generating TypeScript project map');
-		const tempFolder = '.nous/dts';
+		const dtsFolder = '.nous/dts';
 		const tsConfigExists = await getFileSystem().fileExists('tsconfig.json');
 		if (!tsConfigExists) throw new Error(`tsconfig.json not found in ${getFileSystem().getWorkingDirectory()}`);
 
-		const { exitCode, stdout, stderr } = await execCommand(`npx tsc -d --declarationDir "./${tempFolder}" --emitDeclarationOnly`);
+		const { exitCode, stdout, stderr } = await execCommand(`npx tsc -d --declarationDir "./${dtsFolder}" --emitDeclarationOnly`);
 		// Always returns 0 with no output?
 		logger.info(`Generating TypeScript project result: ${exitCode} ${stdout} ${stderr}`);
 
 		const dtsFiles = new Map();
-		const allFiles = await getFileSystem().getFileContentsRecursively(tempFolder);
+		// getFileSystem().setWorkingDirectory(dtsFolder)
+		const allFiles = await getFileSystem().getFileContentsRecursively(dtsFolder, false);
+		// getFileSystem().setWorkingDirectory(process.cwd())
+
 		allFiles.forEach((value, key) => {
-			dtsFiles.set(key.replace('.d.ts', '.ts').replace(tempFolder, 'src'), value);
+			dtsFiles.set(key.replace('.d.ts', '.ts').replace(dtsFolder, 'src'), value);
 		});
+		logger.info(`${dtsFiles.size} dts files`);
 		return getFileSystem().formatFileContentsAsXml(dtsFiles);
 	}
 

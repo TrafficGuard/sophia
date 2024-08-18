@@ -153,7 +153,7 @@ export function functionSchemaParser(sourceFilePath: string): Record<string, Fun
 					}
 					// Remove the arg name, which must match the actual argument name
 					const argName = method.getParameters()[paramIndex]?.getName();
-					if (descriptionParts[0] === argName) {
+					if (descriptionParts[0].trim() === argName) {
 						descriptionParts = descriptionParts.slice(1);
 						paramIndex++;
 					} else {

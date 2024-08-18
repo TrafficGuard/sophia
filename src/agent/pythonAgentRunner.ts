@@ -115,6 +115,7 @@ export async function runPythonAgent(agent: AgentContext): Promise<AgentExecutio
 					const agentPlanResponse: string = await agentLLM.generateText(initialPrompt, systemPromptWithFunctions, {
 						id: 'dynamicAgentPlan',
 						stopSequences,
+						temperature: 0.5,
 					});
 
 					const llmPythonCode = extractPythonCode(agentPlanResponse);

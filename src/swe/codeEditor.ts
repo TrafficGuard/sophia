@@ -79,6 +79,8 @@ export class CodeEditor {
 			throw error;
 		}
 
+		// --map-tokens=2048
+
 		const cmd = `aider --no-check-update --yes ${modelArg} --llm-history-file="${llmHistoryFile}" --message-file=${messageFilePath} ${filesToEdit
 			.map((file) => `"${file}"`)
 			.join(' ')}`;

@@ -19,7 +19,7 @@ export async function reviewChanges(requirements: string, sourceBranchOrCommit: 
 		// 'If so explain why and finish with the output <complete/>. If not, detail what changes you would still like to make. Output your answer in the JSON matching this TypeScript interface:\n' +
 		// '{\n requirementsMet: boolean\n requirementsMetReasoning: string\n sameStyle: boolean\n sameStyleReasoning: string\n redundant: boolean\n redundantReasoning: string\n}'
 		action:
-			'Do the changes in the diff satisfy the requirements, and explain why? Are there any redundant changes in the diff? Was any code removed in the changes which should not have been? Review the style of the code changes in the diff carefully against the original code.  Do the changes follow all the style conventions of the original code? Explain why.\n' +
+			'Do the changes in the diff satisfy the requirements, and explain why? Are there any redundant changes in the diff? Was any code removed in the changes which should not have been? Is the solution sufficiently generic? Review the style of the code changes in the diff carefully against the original code.  Do the changes follow all the style conventions of the original code? Explain why.\n' +
 			'Review your analysis decide if any more code editing needs to be done, and then finish responding with a JSON array in the following format with the surrounding json tags:' +
 			'<json>' +
 			'[' +

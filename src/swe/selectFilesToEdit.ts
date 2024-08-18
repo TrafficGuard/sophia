@@ -1,19 +1,10 @@
-import { access, existsSync, lstat, lstatSync, mkdir, readFile, readdir, stat, writeFileSync } from 'node:fs';
+import { promises as fs } from 'node:fs';
 import path from 'path';
-import { promisify } from 'util';
 import { createByModelName } from '@microsoft/tiktokenizer';
 import { getFileSystem, llms } from '#agent/agentContext';
 import { logger } from '#o11y/logger';
-
+import { ProjectMaps, generateProjectMaps } from '#swe/projectMap';
 import { ProjectInfo } from './projectDetection';
-const fs = {
-	readFile: promisify(readFile),
-	stat: promisify(stat),
-	readdir: promisify(readdir),
-	access: promisify(access),
-	mkdir: promisify(mkdir),
-	lstat: promisify(lstat),
-};
 
 export interface SelectFilesResponse {
 	primaryFiles: SelectedFile[];
@@ -26,21 +17,17 @@ export interface SelectedFile {
 }
 
 export async function selectFilesToEdit(requirements: string, projectInfo: ProjectInfo): Promise<SelectFilesResponse> {
-	const tools = projectInfo.languageTools;
-	const repositoryMap = await getFileSystem().getFileSystemTree();
-	if (tools) {
-		// await tools.generateProjectMap();
-	}
+	const projectMaps: ProjectMaps = await generateProjectMaps(projectInfo);
 
 	const tokenizer = await createByModelName('gpt-4o'); // TODO model specific tokenizing
-	const fileSystemTreeTokens = tokenizer.encode(repositoryMap).length;
+	const fileSystemTreeTokens = tokenizer.encode(projectMaps.fileSystemTreeWithSummaries.text).length;
 	logger.info(`FileSystem tree tokens: ${fileSystemTreeTokens}`);
 
 	if (projectInfo.fileSelection) requirements += `\nAdditional note: ${projectInfo.fileSelection}`;
 
 	const prompt = `
 <project_map>
-${repositoryMap}
+${projectMaps.fileSystemTreeWithSummaries.text}
 </project_map>
 <requirements>${requirements}</requirements>
 <task>
@@ -56,15 +43,15 @@ The file paths MUST exist in the <project_map /> file_contents path attributes.
 <json>
 {
  "primaryFiles": [
-     { "path": "/dir/file1", "exists_in_project_map": true, "reason": "file1 will be edited because..." },
-     { "path": "/dir/file1.test", "exists_in_project_map": true, "reason": "file1.test is a test for /dir/file1 (only if the path exists)" },
-     { "path": "/dir/file2", "exists_in_project_map": true, "reason": "file2 will be edited because..." }
+     { "path": "/dir/file1", "reason": "file1 will be edited because..." },
+     { "path": "/dir/file1.test", "reason": "file1.test is a test for /dir/file1 (only if the path exists)" },
+     { "path": "/dir/file2", "reason": "file2 will be edited because..." }
  ],
  "secondaryFiles": [
-     { "path": "/dir/docs.txt", "exists_in_project_map": true, "reason": "Contains relevant documentation" },
-     { "path": "/dir/file3", "exists_in_project_map": true, "reason": "Contains types referenced by /dir/file1" },
-     { "path": "/dir/file4", "exists_in_project_map": true, "reason": "Contains types referenced by /dir/file1 and /dir/file2" },
-     { "path": "/dir/file5.txt", "exists_in_project_map": true, "reason": "Referenced in the task requirements" },
+     { "path": "/dir/docs.txt", "reason": "Contains relevant documentation" },
+     { "path": "/dir/file3", "reason": "Contains types referenced by /dir/file1" },
+     { "path": "/dir/file4", "reason": "Contains types referenced by /dir/file1 and /dir/file2" },
+     { "path": "/dir/file5.txt", "reason": "Referenced in the task requirements" },
  ]
 }
 </json>
@@ -154,6 +141,7 @@ export async function removeUnrelatedFiles(requirements: string, fileSelection: 
  * @param fileSelection
  */
 function removeLockFiles(fileSelection: SelectFilesResponse): SelectFilesResponse {
+	// TODO make this generic. maybe not necessary with the default projectInfo.selectFiles message of don't include package manager lock files
 	fileSelection.primaryFiles = fileSelection.primaryFiles.filter((file) => !file.path.endsWith('package-lock.json'));
 	fileSelection.secondaryFiles = fileSelection.secondaryFiles.filter((file) => !file.path.endsWith('package-lock.json'));
 	return fileSelection;

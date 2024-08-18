@@ -6,6 +6,8 @@ import { LanguageTools } from '../languageTools';
 export class PythonTools implements LanguageTools {
 	async generateProjectMap(): Promise<string> {
 		const { stdout, stderr, exitCode } = await execCommand('aider --show-repo-map');
+		// stubgen --ignore-errors -o stubs
+
 		if (exitCode > 0) throw new Error(`${stdout} ${stderr}`);
 		return stdout;
 	}

@@ -72,8 +72,8 @@ export function groqLlama3_70B(): LLM {
 	return new GroqLLM(
 		'Llama3 70b (Groq)',
 		GROQ_SERVICE,
-		'llama3-70b-8192',
-		8_192,
+		'llama-3.1-70b-versatile',
+		8000, //131_072,
 		(input: string) => (input.length * 0.59) / (1_000_000 * 4),
 		(output: string) => (output.length * 0.79) / (1_000_000 * 4),
 	);

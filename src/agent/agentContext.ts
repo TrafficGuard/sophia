@@ -41,6 +41,7 @@ export type AgentLLMs = Record<TaskLevel, LLM>;
  * timeout - for chat agents when there hasn't been a user input for a configured amount of time
  */
 export type AgentRunningState =
+	| 'workflow'
 	| 'agent'
 	| 'functions'
 	| 'error'

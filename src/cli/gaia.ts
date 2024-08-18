@@ -5,18 +5,22 @@ import { AgentLLMs } from '#agent/agentContext';
 import { AGENT_COMPLETED_PARAM_NAME } from '#agent/agentFunctions';
 import { startAgent, startAgentAndWait } from '#agent/agentRunner';
 import { FileSystem } from '#functions/storage/filesystem';
+import { UtilFunctions } from '#functions/util';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
 import { LlmCall } from '#llm/llmCallService/llmCall';
 import { ClaudeLLMs } from '#llm/models/anthropic';
-import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
+import { Claude3_5_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
+import { groqLlama3_70B } from '#llm/models/groq';
+import { Gemini_1_5_Flash } from '#llm/models/vertexai';
+import { logger } from '#o11y/logger';
 import { sleep } from '#utils/async-utils';
 import { appContext, initFirestoreApplicationContext } from '../app';
 
 const SYSTEM_PROMPT = `Finish your answer with the following template: FINAL ANSWER: [YOUR FINAL ANSWER]. YOUR FINAL ANSWER should be a number OR as few words as possible OR a comma separated list of numbers and/or strings. If you are asked for a number, don't use comma to write your number neither use units such as $ or percent sign unless specified otherwise. If you are asked for a string, don't use articles, neither abbreviations (e.g. for cities), and write the digits in plain text unless specified otherwise. If you are asked for a comma separated list, apply the above rules depending of whether the element to be put in the list is a number or a string.`;
 
-const tasksFile = 'resources/benchmarks/gaia.json';
-const resultsFile = 'resources/benchmarks/gaia.jsonl';
+const tasksFile = 'benchmarks/gaia.json';
+const resultsFile = 'benchmarks/gaia.jsonl';
 
 let llms: AgentLLMs;
 
@@ -40,7 +44,7 @@ async function readJsonFile(filePath: string): Promise<any> {
 		const data = await fs.readFile(filePath, 'utf8');
 		return JSON.parse(data);
 	} catch (error) {
-		console.error(`Error reading JSON file ${filePath}:`, error);
+		logger.error(`Error reading JSON file ${filePath}:`, error);
 		throw error;
 	}
 }
@@ -65,7 +69,7 @@ async function writeJsonlFile(filePath: string, data: GaiaResult): Promise<void>
 
 		await fs.writeFile(filePath, jsonlContent, 'utf8');
 	} catch (error) {
-		console.error(`Error writing JSONL file ${filePath}:`, error);
+		logger.error(`Error writing JSONL file ${filePath}:`, error);
 		throw error;
 	}
 }
@@ -84,14 +88,20 @@ async function answerGaiaQuestion(task: GaiaQuestion): Promise<GaiaResult> {
 	try {
 		const agentId = await startAgentAndWait({
 			initialPrompt: prompt,
-			llms: ClaudeVertexLLMs(),
+			// llms: ClaudeVertexLLMs(),
+			llms: {
+				easy: Gemini_1_5_Flash(),
+				medium: groqLlama3_70B(),
+				hard: Claude3_5_Sonnet_Vertex(),
+				xhard: Claude3_5_Sonnet_Vertex(),
+			},
 			agentName: `gaia-${task.task_id}`,
 			type: 'python',
 			humanInLoop: {
 				budget,
 				count: 100,
 			},
-			functions: [PublicWeb, Perplexity, FileSystem],
+			functions: [PublicWeb, Perplexity, FileSystem, UtilFunctions],
 		});
 
 		const agent = await appContext().agentStateService.load(agentId);
@@ -112,10 +122,10 @@ async function answerGaiaQuestion(task: GaiaQuestion): Promise<GaiaResult> {
 		return {
 			task_id: task.task_id,
 			model_answer: modelAnswer,
-			reasoning_trace: reasoningTrace,
+			reasoning_trace: [], //reasoningTrace,
 		};
 	} catch (error) {
-		console.error(`Error running Gaia task ${task.task_id}:`, error);
+		logger.error(`Error running Gaia task ${task.task_id}:`, error);
 		throw error;
 	}
 }
@@ -131,7 +141,7 @@ async function main() {
 	const args = process.argv.splice(2);
 	const questions = JSON.parse(readFileSync(tasksFile).toString()) as GaiaQuestion[];
 	if (args.length === 0) {
-		console.log('Running entire Gaia benchmark...');
+		logger.info('Running entire Gaia benchmark...');
 		await sleep(1000);
 		for (const question of questions) {
 			const result = await answerGaiaQuestion(question);
@@ -141,7 +151,7 @@ async function main() {
 		const taskId = args[0];
 		const question = questions.find((q) => q.task_id === taskId);
 		if (!question) {
-			console.error(`No task found with id ${taskId}`);
+			logger.error(`No task found with id ${taskId}`);
 			process.exit(1);
 		}
 		const result = await answerGaiaQuestion(question);
@@ -149,7 +159,7 @@ async function main() {
 	} else {
 		throw new Error('Only 1 arg supported');
 	}
-	console.log('Benchmark completed. Results appended to', resultsFile);
+	logger.info(`Benchmark completed. Results appended to ${resultsFile}`);
 }
 
 main().then(

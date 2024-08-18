@@ -290,7 +290,8 @@ Select the function(s) to best complete the next step. You may call more than on
 # When calling Agent_completed or Agent_requestFeedback you must directly return its result. (Ensure any required information has already been stored to memory)
 # This script may be running on repositories where the source code files are TypeScript, Java, Terraform, PHP, C#, C++, Ruby etc. Do not assume Python files.
 # The files projectInfo.json and CONVENTIONS.md may possibly exists to tell you more about a code project.
-# All maths and counting must be done in Python code
+# You can directly analyze contents in memory. If you need to analyze unstructured data you can return it to view in the next step.
+# All maths must be done in Python code
 # Example:
 # Check if the desired content is in memory from a previous step. Result: (None found/Found ...)
 # Get the two lists asked for in the next step details
