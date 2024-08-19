@@ -210,6 +210,16 @@ export const MAP_VERSION_TO_INSTALL_PYTEST: Record<string, VersionInstallation> 
     }])),
 };
 
+MAP_VERSION_TO_INSTALL_PYTEST["4.4"].pip_packages = [
+    "atomicwrites==1.4.1", "attrs==23.1.0", "more-itertools==10.1.0",
+    "pluggy==0.13.1", "py==1.11.0", "setuptools==68.0.0", "six==1.16.0",
+];
+
+MAP_VERSION_TO_INSTALL_PYTEST["4.5"].pip_packages = [
+    "atomicwrites==1.4.1", "attrs==23.1.0", "more-itertools==10.1.0",
+    "pluggy==0.11.0", "py==1.11.0", "setuptools==68.0.0", "six==1.16.0", "wcwidth==0.2.6"
+];
+
 export const TEST_PYTEST = "pytest --no-header -rA --tb=no -p no:cacheprovider";
 export const TEST_PYTEST_SKIP_NO_HEADER = "pytest -rA --tb=no -p no:cacheprovider";
 
