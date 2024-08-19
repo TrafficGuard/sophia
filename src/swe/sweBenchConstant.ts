@@ -465,6 +465,8 @@ export const MAP_VERSION_TO_INSTALL_ASTROPY: Record<string, VersionInstallation>
     return Object.fromEntries(versions.map(version => [version, baseConfig]));
 })();
 
+export const MAP_VERSION_TO_INSTALL_SYMPY = {}
+export const MAP_VERSION_TO_INSTALL_PYLINT = {}
 
 export const TEST_PYTEST = "pytest --no-header -rA --tb=no -p no:cacheprovider";
 export const TEST_PYTEST_SKIP_NO_HEADER = "pytest -rA --tb=no -p no:cacheprovider";
