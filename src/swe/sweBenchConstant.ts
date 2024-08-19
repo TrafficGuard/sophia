@@ -442,7 +442,28 @@ Object.values(MAP_VERSION_TO_INSTALL_SPHINX).forEach(spec => {
 });
 
 
-export const MAP_VERSION_TO_INSTALL_ASTROPY = {}
+export const MAP_VERSION_TO_INSTALL_ASTROPY: Record<string, VersionInstallation> = (() => {
+    const baseConfig: VersionInstallation = {
+        python: "3.9",
+        install: "pip install -e .[test]",
+        pre_install: ["pip install setuptools==68.0.0"],
+        pip_packages: [
+            "attrs==23.1.0", "exceptiongroup==1.1.3", "execnet==2.0.2", "hypothesis==6.82.6",
+            "iniconfig==2.0.0", "numpy==1.23.4", "packaging==23.1", "pluggy==1.3.0",
+            "psutil==5.9.5", "pyerfa==2.0.0.3", "pytest-arraydiff==0.5.0", "pytest-astropy-header==0.2.2",
+            "pytest-astropy==0.10.0", "pytest-cov==4.1.0", "pytest-doctestplus==1.0.0", "pytest-filter-subpackage==0.1.2",
+            "pytest-mock==3.11.1", "pytest-openfiles==0.5.0", "pytest-remotedata==0.4.0", "pytest-xdist==3.3.1",
+            "pytest==7.4.0", "PyYAML==6.0.1", "sortedcontainers==2.4.0", "tomli==2.0.1",
+        ],
+    };
+
+    const versions = [
+        "0.1", "0.2", "0.3", "0.4", "1.1", "1.2", "1.3", "3.0", "3.1", "3.2",
+        "4.1", "4.2", "4.3", "5.0", "5.1", "5.2"
+    ];
+
+    return Object.fromEntries(versions.map(version => [version, baseConfig]));
+})();
 
 
 export const TEST_PYTEST = "pytest --no-header -rA --tb=no -p no:cacheprovider";
