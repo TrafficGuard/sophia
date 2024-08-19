@@ -79,7 +79,7 @@ export class Anthropic extends BaseLLM {
 
 	private sdk(): AnthropicSdk {
 		if (!this.anthropic) {
-			this.anthropic = new AnthropicSdk({ apiKey: currentUser().llmConfig.anthropicKey ?? envVar('ANTHROPIC_API_KEY') });
+			this.anthropic = new AnthropicSdk({ apiKey: currentUser().llmConfig.anthropicKey || envVar('ANTHROPIC_API_KEY') });
 		}
 		return this.anthropic;
 	}
@@ -110,7 +110,7 @@ export class Anthropic extends BaseLLM {
 			try {
 				message = await this.sdk().messages.create({
 					max_tokens: 4096,
-					system: systemPrompt,
+					system: systemPrompt ? [{ type: 'text', text: systemPrompt }] : undefined,
 					messages: [{ role: 'user', content: prompt }],
 					model: this.model,
 					stop_sequences: opts?.stopSequences,
