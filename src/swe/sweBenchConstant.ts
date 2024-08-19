@@ -395,6 +395,17 @@ const SPHINX_ADDITIONAL_PRE_INSTALL_OTHERS = [
     "sed -i 's/sphinxcontrib-serializinghtml/sphinxcontrib-serializinghtml<=1.1.9/' setup.py",
 ];
 
+export const SPHINX_BASE_CONFIG: VersionInstallation = {
+    python: "3.9",
+    pip_packages: ["tox"],
+    install: "pip install -e .[test]",
+    pre_install: ["sed -i 's/pytest/pytest -rA/' tox.ini"],
+    arch_specific_packages: {
+        aarch64: "gxx_linux-aarch64 gcc_linux-aarch64 make",
+        x86_64: "gxx_linux-64 gcc_linux-64 make",
+    }
+};
+
 export const MAP_VERSION_TO_INSTALL_SPHINX: Record<string, VersionInstallation> = {};
 
 [...SPHINX_VERSIONS_1_5_TO_2_4, ...SPHINX_VERSIONS_3_0_TO_4_4, ...SPHINX_VERSIONS_4_5_TO_7_2].forEach(version => {
