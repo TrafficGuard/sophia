@@ -260,14 +260,42 @@ export class SWEBenchAgent {
 	}
 
 	private async getEnvironmentYml(task: SWEInstance): Promise<string> {
-		// This should implement logic similar to the get_environment_yml function in the Python scripts
-		// For simplicity, we'll just read the environment.yml file if it exists
+		const fs = getFileSystem();
+		let envYml = '';
+
+		// Try to read environment.yml
 		try {
-			return await getFileSystem().readFile('environment.yml');
+			envYml = await fs.readFile('environment.yml');
 		} catch (error) {
 			console.warn('environment.yml not found');
-			return '';
 		}
+
+		// If environment.yml doesn't exist, create one based on the installation instructions
+		if (!envYml) {
+			const installInstructions = this.getInstallInstructions(task.repo, task.version);
+			envYml = 'name: swe-bench\n';
+			envYml += `channels:\n  - defaults\n  - conda-forge\n`;
+			envYml += `dependencies:\n  - python=${installInstructions.python}\n`;
+
+			if (installInstructions.packages) {
+				const packages = installInstructions.packages.split(' ');
+				for (const pkg of packages) {
+					if (pkg !== 'python') {
+						envYml += `  - ${pkg}\n`;
+					}
+				}
+			}
+
+			if (installInstructions.pip_packages) {
+				envYml += `  - pip\n  - pip:\n`;
+				const pipPackages = installInstructions.pip_packages.split(' ');
+				for (const pkg of pipPackages) {
+					envYml += `    - ${pkg}\n`;
+				}
+			}
+		}
+
+		return envYml;
 	}
 
 	private async getReadmeFiles(): Promise<string[]> {
