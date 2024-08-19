@@ -1,0 +1,52 @@
+name: Integration Tests
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  integration-tests:
+    if: github.event.review.state == 'approved'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check if PR is ready to merge
+        id: check_pr
+        run: |
+          PR_NUMBER=$(jq -r .pull_request.number "$GITHUB_EVENT_PATH")
+          PR_STATE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                     "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER" \
+                     | jq -r .mergeable_state)
+          if [ "$PR_STATE" = "clean" ]; then
+            echo "PR is ready to merge"
+            echo "ready_to_merge=true" >> $GITHUB_OUTPUT
+          else
+            echo "PR is not ready to merge"
+            echo "ready_to_merge=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Use Node.js
+        if: steps.check_pr.outputs.ready_to_merge == 'true'
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+
+      - name: Install dependencies (server)
+        if: steps.check_pr.outputs.ready_to_merge == 'true'
+        run: npm install
+
+      - name: Run integration tests (server)
+        if: steps.check_pr.outputs.ready_to_merge == 'true'
+        run: npm run test:integration
+
+#      - name: Install dependencies (frontend)
+#        if: steps.check_pr.outputs.ready_to_merge == 'true'
+#        working-directory: ./frontend
+#        run: npm ci
+#
+#      - name: Run integration tests (frontend)
+#        if: steps.check_pr.outputs.ready_to_merge == 'true'
+#        working-directory: ./frontend
+#        run: npm run test:integration

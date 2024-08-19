@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-test:
+  backend:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,6 +29,17 @@ jobs:
 
       - name: Run tests (server)
         run: npm run test:ci
+
+  frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
 
       - name: Install dependencies (frontend)
         working-directory: ./frontend
