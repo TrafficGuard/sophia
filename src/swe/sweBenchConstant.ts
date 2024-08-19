@@ -261,6 +261,49 @@ MAP_VERSION_TO_INSTALL_PYTEST["5.4"] = {
     pre_test: ["pip install -e ."]
 };
 
+["6.0", "6.2", "6.3", "7.0", "7.1", "7.2", "7.4", "8.0"].forEach(version => {
+    if (version in MAP_VERSION_TO_INSTALL_PYTEST) {
+        MAP_VERSION_TO_INSTALL_PYTEST[version] = {
+            ...MAP_VERSION_TO_INSTALL_PYTEST[version],
+            pip_packages: []
+        };
+    }
+});
+
+MAP_VERSION_TO_INSTALL_PYTEST["6.0"].pip_packages = [
+    "attrs==23.1.0", "iniconfig==2.0.0", "more-itertools==10.1.0",
+    "packaging==23.1", "pluggy==0.13.1", "py==1.11.0", "toml==0.10.2"
+];
+
+["6.2", "6.3"].forEach(version => {
+    MAP_VERSION_TO_INSTALL_PYTEST[version].pip_packages = [
+        "attrs==23.1.0", "iniconfig==2.0.0", "packaging==23.1",
+        "pluggy==0.13.1", "py==1.11.0", "toml==0.10.2"
+    ];
+});
+
+MAP_VERSION_TO_INSTALL_PYTEST["7.0"].pip_packages = [
+    "attrs==23.1.0", "iniconfig==2.0.0", "packaging==23.1",
+    "pluggy==0.13.1", "py==1.11.0"
+];
+
+["7.1", "7.2"].forEach(version => {
+    MAP_VERSION_TO_INSTALL_PYTEST[version].pip_packages = [
+        "attrs==23.1.0", "iniconfig==2.0.0", "packaging==23.1",
+        "pluggy==0.13.1", "py==1.11.0", "tomli==2.0.1"
+    ];
+});
+
+MAP_VERSION_TO_INSTALL_PYTEST["7.4"].pip_packages = [
+    "iniconfig==2.0.0", "packaging==23.1", "pluggy==1.3.0",
+    "exceptiongroup==1.1.3", "tomli==2.0.1"
+];
+
+MAP_VERSION_TO_INSTALL_PYTEST["8.0"].pip_packages = [
+    "iniconfig==2.0.0", "packaging==23.1", "pluggy==1.3.0",
+    "exceptiongroup==1.1.3", "tomli==2.0.1"
+];
+
 export const TEST_PYTEST = "pytest --no-header -rA --tb=no -p no:cacheprovider";
 export const TEST_PYTEST_SKIP_NO_HEADER = "pytest -rA --tb=no -p no:cacheprovider";
 
