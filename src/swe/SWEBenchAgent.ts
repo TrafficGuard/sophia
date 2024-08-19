@@ -1,7 +1,10 @@
 import { getFileSystem } from '#agent/agentContext';
+import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { GitHub } from '#functions/scm/github';
+import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { countTokens } from '#llm/tokens';
+import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { PythonTools } from '#swe/lang/python/pythonTools';
 import { ProjectInfo } from '#swe/projectDetection';
@@ -60,8 +63,7 @@ export class SWEBenchAgent {
 		let bestResult: any = null;
 
 		for (let attempt = 0; attempt < this.MAX_ATTEMPTS; attempt++) {
-			const model = this.MODELS[attempt % this.MODELS.length];
-			const result = await this.attemptSolution(task, model);
+			const result = await this.attemptSolution(task);
 
 			if (result.isPlausible) {
 				return JSON.stringify(result);
@@ -75,55 +77,72 @@ export class SWEBenchAgent {
 		return JSON.stringify(bestResult);
 	}
 
-	private async attemptSolution(task: SWEInstance, model: string): Promise<any> {
-		// Setup
-		const repo = task.repo;
-		const path = await new GitHub().cloneProject(repo, task.environment_setup_commit);
-		getFileSystem().setWorkingDirectory(path);
+	private async attemptSolution(task: SWEInstance): Promise<any> {
+		return await runAgentWorkflow(
+			{
+				agentName: `swe-bench ${task.instance_id}`,
+				llms: ClaudeVertexLLMs(),
+				humanInLoop: {
+					budget: 2,
+				},
+				functions: [],
+				initialPrompt: '',
+			},
+			async (agent) => {
+				// Setup
+				const repo = task.repo;
+				const path = await new GitHub().cloneProject(repo, task.environment_setup_commit);
+				getFileSystem().setWorkingDirectory(path);
 
-		// Environment setup
-		await this.setupEnvironment(task);
+				// Environment setup
+				await this.setupEnvironment(task);
 
-		// Get README files
-		const readmeFiles = await this.getReadmeFiles();
+				// Get README files
+				const readmeFiles = await this.getReadmeFiles();
 
-		// Get relevant file contents
-		const relevantFiles = await this.getRelevantFiles(task.problem_statement, task.repo);
+				// Get relevant file contents
+				const relevantFiles = await this.getRelevantFiles(task.problem_statement, task.repo);
 
-		// Prepare edit requirements
-		const editRequirements = await this.prepareEditRequirements(task, readmeFiles, relevantFiles);
+				// Prepare edit requirements
+				const editRequirements = await this.prepareEditRequirements(task, readmeFiles, relevantFiles);
 
-		const codeEditingAgent = new CodeEditingAgent();
+				const codeEditingAgent = new CodeEditingAgent();
 
-		const editResult = await codeEditingAgent.runCodeEditWorkflow(editRequirements);
-		const success = editResult?.success ?? false;
-		const lintSuccess = editResult?.lintSuccess ?? false;
+				let success = false;
+				try {
+					await codeEditingAgent.runCodeEditWorkflow(editRequirements);
+					success = true;
+				} catch (e) {
+					logger.error(e);
+				}
 
-		const modelPatch = await this.generatePatch(task.base_commit);
+				const modelPatch = await this.generatePatch(task.base_commit);
 
-		// Extract minimal patch
-		const minimalPatch = this.extractMinimalPatch(modelPatch);
+				// Extract minimal patch
+				const minimalPatch = this.extractMinimalPatch(modelPatch);
 
-		// Run tests
-		const testResults = await this.runTests(task);
+				// Run tests
+				const testResults = await this.runTests(task);
 
-		// Prepare output
-		const output = {
-			instance_id: task.instance_id,
-			response: modelPatch,
-			problem_statement: task.problem_statement,
-			text_inputs: editRequirements,
-			model_patch: modelPatch,
-			minimal_patch: minimalPatch,
-			test_results: testResults,
-			model: model,
-			isPlausible: success && testResults.passed,
-			editOutcome: success,
-			lintOutcome: lintSuccess,
-			testOutcome: testResults.passed,
-		};
+				// Prepare output
+				const output = {
+					instance_id: task.instance_id,
+					response: modelPatch,
+					problem_statement: task.problem_statement,
+					text_inputs: editRequirements,
+					model_patch: modelPatch,
+					minimal_patch: minimalPatch,
+					test_results: testResults,
+					model: 'Claude',
 
-		return output;
+					isPlausible: success && testResults.passed,
+					editOutcome: success,
+					testOutcome: testResults.passed,
+				};
+
+				return output;
+			},
+		);
 	}
 
 	private isBetterResult(result: any, bestResult: any): boolean {
@@ -179,9 +198,8 @@ export class SWEBenchAgent {
 		const installInstructions = this.getInstallInstructions(task.repo, task.version);
 		if (installInstructions.instance_image ?? false) {
 			return `${namespace}/${imagePrefix}-${repoName}-instance:${task.instance_id}`;
-		} else {
-			return `${namespace}/${imagePrefix}-${repoName}-testbed:${task.version}`;
 		}
+		return `${namespace}/${imagePrefix}-${repoName}-testbed:${task.version}`;
 	}
 
 	private getInstallInstructions(repo: string, version: string): VersionInstallation {
