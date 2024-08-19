@@ -103,6 +103,44 @@ export const MAP_VERSION_TO_INSTALL_FLASK: Record<string, VersionInstallation> =
     }])),
 };
 
+export const MAP_VERSION_TO_INSTALL_DJANGO: Record<string, VersionInstallation> = {
+    ...Object.fromEntries(["1.7", "1.8", "1.9", "1.10", "1.11", "2.0", "2.1", "2.2"].map(k => [k, {
+        python: "3.5",
+        packages: "requirements.txt",
+        install: "python -m pip install -e .",
+    }])),
+    ...Object.fromEntries(["1.4", "1.5", "1.6"].map(k => [k, {
+        python: "3.5",
+        install: "python setup.py install",
+    }])),
+    ...Object.fromEntries(["3.0", "3.1", "3.2"].map(k => [k, {
+        python: "3.6",
+        packages: "requirements.txt",
+        install: "python -m pip install -e .",
+    }])),
+    ...Object.fromEntries(["4.0"].map(k => [k, {
+        python: "3.8",
+        packages: "requirements.txt",
+        install: "python -m pip install -e .",
+    }])),
+    ...Object.fromEntries(["4.1", "4.2"].map(k => [k, {
+        python: "3.9",
+        packages: "requirements.txt",
+        install: "python -m pip install -e .",
+    }])),
+    ...Object.fromEntries(["5.0"].map(k => [k, {
+        python: "3.11",
+        packages: "requirements.txt",
+        install: "python -m pip install -e .",
+    }])),
+};
+
+["2.2", "3.0", "3.1"].forEach(k => {
+    if (MAP_VERSION_TO_INSTALL_DJANGO[k]) {
+        MAP_VERSION_TO_INSTALL_DJANGO[k].env_vars_test = { "LANG": "en_US.UTF-8", "LC_ALL": "en_US.UTF-8" };
+    }
+});
+
 
 
 export const TEST_PYTEST = "pytest --no-header -rA --tb=no -p no:cacheprovider";
