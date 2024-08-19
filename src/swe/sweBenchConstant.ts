@@ -7,7 +7,8 @@ export interface VersionInstallation {
     pre_install?: string[];
     instance_image?: boolean;
     arch_specific_packages?: {
-        aarch64: string
+        aarch64?: string,
+        x86_64?: string
     };
     no_use_env?: boolean;
     pre_test?: string[];
