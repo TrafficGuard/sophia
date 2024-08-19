@@ -336,9 +336,24 @@ export class SWEBenchAgent {
 	}
 
 	private formatPrompt(problemStatement: string, style: string): string {
-		// This should implement the prompt formatting logic similar to the Python implementation
-		// For brevity, we'll just use a simple format here
-		return `Problem statement: ${problemStatement}\n\nPlease provide a patch to resolve this issue.\n\n`;
+		switch (style) {
+			case 'style-1':
+				return `Fix this issue:\n\n${problemStatement}\n\nPropose changes.`;
+			case 'style-2':
+				return `Problem statement: ${problemStatement}\n\nPlease provide a patch to resolve this issue.`;
+			case 'style-3':
+			default:
+				return `Below is a real GitHub issue from a popular GitHub repository.
+The issue was filed some time ago.
+The repo has been checked out at the commit that existed at the moment the issue was filed.
+If you are already familiar with this repo, be cautious!
+You are working with an old version of the repo!
+Filenames, directory names, file contents, etc may be different than what you're used to.
+
+Propose changes to update the repo to fix the problem below.
+
+${problemStatement}`;
+		}
 	}
 
 	private extractMinimalPatch(modelPatch: string): string {
