@@ -213,14 +213,50 @@ export class SWEBenchAgent {
 	}
 
 	private async getRequirements(task: SWEInstance): Promise<string> {
-		// This should implement logic similar to the get_requirements function in the Python scripts
-		// For simplicity, we'll just read the requirements.txt file if it exists
+		const fs = getFileSystem();
+		let requirements = '';
+
+		// Check for requirements.txt
 		try {
-			return await getFileSystem().readFile('requirements.txt');
+			requirements = await fs.readFile('requirements.txt');
 		} catch (error) {
 			console.warn('requirements.txt not found');
-			return '';
 		}
+
+		// Check for setup.py
+		if (!requirements) {
+			try {
+				const setupPy = await fs.readFile('setup.py');
+				const installRequiresMatch = setupPy.match(/install_requires\s*=\s*\[([\s\S]*?)\]/);
+				if (installRequiresMatch) {
+					requirements = installRequiresMatch[1]
+						.split(',')
+						.map(req => req.trim().replace(/['"]/g, ''))
+						.join('\n');
+				}
+			} catch (error) {
+				console.warn('setup.py not found or does not contain install_requires');
+			}
+		}
+
+		// Check for pyproject.toml
+		if (!requirements) {
+			try {
+				const pyprojectToml = await fs.readFile('pyproject.toml');
+				const dependenciesMatch = pyprojectToml.match(/\[tool\.poetry\.dependencies\]([\s\S]*?)(\[|$)/);
+				if (dependenciesMatch) {
+					requirements = dependenciesMatch[1]
+						.split('\n')
+						.filter(line => line.includes('='))
+						.map(line => line.split('=')[0].trim())
+						.join('\n');
+				}
+			} catch (error) {
+				console.warn('pyproject.toml not found or does not contain dependencies');
+			}
+		}
+
+		return requirements;
 	}
 
 	private async getEnvironmentYml(task: SWEInstance): Promise<string> {
