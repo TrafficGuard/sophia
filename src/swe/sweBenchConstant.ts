@@ -153,6 +153,56 @@ export const MAP_VERSION_TO_INSTALL_REQUESTS: Record<string, VersionInstallation
     }])
 );
 
+export const MAP_VERSION_TO_INSTALL_SEABORN: Record<string, VersionInstallation> = {
+    ...Object.fromEntries(["0.11"].map(k => [k, {
+        python: "3.9",
+        install: "pip install -e .",
+        pip_packages: [
+            "contourpy==1.1.0",
+            "cycler==0.11.0",
+            "fonttools==4.42.1",
+            "importlib-resources==6.0.1",
+            "kiwisolver==1.4.5",
+            "matplotlib==3.7.2",
+            "numpy==1.25.2",
+            "packaging==23.1",
+            "pandas==2.1.0",
+            "pillow==10.0.0",
+            "pyparsing==3.0.9",
+            "pytest",
+            "python-dateutil==2.8.2",
+            "pytz==2023.3.post1",
+            "scipy==1.11.2",
+            "six==1.16.0",
+            "tzdata==2023.1",
+            "zipp==3.16.2",
+        ],
+    }])),
+    ...Object.fromEntries(["0.12", "0.13"].map(k => [k, {
+        python: "3.9",
+        install: "pip install -e .[dev]",
+        pip_packages: [
+            "contourpy==1.1.0",
+            "cycler==0.11.0",
+            "fonttools==4.42.1",
+            "importlib-resources==6.0.1",
+            "kiwisolver==1.4.5",
+            "matplotlib==3.7.2",
+            "numpy==1.25.2",
+            "packaging==23.1",
+            "pandas==2.1.0",
+            "pillow==10.0.0",
+            "pyparsing==3.0.9",
+            "python-dateutil==2.8.2",
+            "pytz==2023.3.post1",
+            "scipy==1.11.2",
+            "six==1.16.0",
+            "tzdata==2023.1",
+            "zipp==3.16.2",
+        ],
+    }])),
+};
+
 
 
 export const TEST_PYTEST = "pytest --no-header -rA --tb=no -p no:cacheprovider";
