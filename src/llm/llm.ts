@@ -33,7 +33,48 @@ export type GenerateJsonOptions = Omit<GenerateTextOptions, 'type'>;
  */
 export type GenerateFunctionOptions = Omit<GenerateTextOptions, 'type'>;
 
+export interface LlmMessage {
+	role: 'system' | 'user' | 'assistant';
+	text: string;
+	/** Set the cache_control flag with Claude models */
+	cache: boolean;
+}
+
+export function system(text: string, cache = false): LlmMessage {
+	return {
+		role: 'system',
+		text: text,
+		cache,
+	};
+}
+
+export function user(text: string, cache = false): LlmMessage {
+	return {
+		role: 'user',
+		text: text,
+		cache,
+	};
+}
+
+/**
+ * Prefill the assistant message to help guide its response
+ * @see https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/prefill-claudes-response
+ * @param text
+ */
+export function assistant(text: string): LlmMessage {
+	return {
+		role: 'assistant',
+		text: text,
+		cache: false,
+	};
+}
+
 export interface LLM {
+	generateText2(messages: LlmMessage[]): Promise<string>;
+
+	/* Generates a response that is expected to be in JSON format, and returns the object */
+	generateJson2<T>(messages: LlmMessage[], opts?: GenerateJsonOptions): Promise<T>;
+
 	/* Generates text from a LLM */
 	generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string>;
 
@@ -133,16 +174,16 @@ export function combinePrompts(userPrompt: string, systemPrompt?: string): strin
 export function logTextGeneration(originalMethod: any, context: ClassMethodDecoratorContext): any {
 	return async function replacementMethod(this: BaseLLM, ...args: any[]) {
 		// system prompt
-		if (args.length > 1 && args[1]) {
-			logger.info(`= SYSTEM PROMPT ===================================================\n${args[1]}`);
-		}
-		logger.info(`= USER PROMPT =================================================================\n${args[0]}`);
-
-		const start = Date.now();
+		// if (args.length > 1 && args[1]) {
+		// 	logger.info(`= SYSTEM PROMPT ===================================================\n${args[1]}`);
+		// }
+		// logger.info(`= USER PROMPT =================================================================\n${args[0]}`);
+		//
+		// const start = Date.now();
 		const result = await originalMethod.call(this, ...args);
-		logger.info(`= RESPONSE ${this.model} ==========================================================\n${JSON.stringify(result)}`);
-		const duration = `${((Date.now() - start) / 1000).toFixed(1)}s`;
-		logger.info(`${duration}  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<`);
+		// logger.info(`= RESPONSE ${this.model} ==========================================================\n${JSON.stringify(result)}`);
+		// const duration = `${((Date.now() - start) / 1000).toFixed(1)}s`;
+		// logger.info(`${duration}  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<`);
 		return result;
 	};
 }

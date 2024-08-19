@@ -1,5 +1,5 @@
 import { countTokens } from '#llm/tokens';
-import { FunctionResponse, GenerateFunctionOptions, GenerateJsonOptions, GenerateTextOptions, LLM } from './llm';
+import { FunctionResponse, GenerateFunctionOptions, GenerateJsonOptions, GenerateTextOptions, LLM, LlmMessage } from './llm';
 import { extractJsonResult, extractStringResult, parseFunctionCallsXml } from './responseParsers';
 
 export interface SerializedLLM {
@@ -73,5 +73,14 @@ export abstract class BaseLLM implements LLM {
 	countTokens(text: string): Promise<number> {
 		// defaults to gpt4o token parser
 		return countTokens(text);
+	}
+
+	async generateJson2<T>(messages: LlmMessage[], opts?: GenerateJsonOptions): Promise<T> {
+		const response = await this.generateText2(messages, opts ? { type: 'json', ...opts } : { type: 'json' });
+		return extractJsonResult(response);
+	}
+
+	generateText2(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string> {
+		throw new Error('NotImplemented');
 	}
 }

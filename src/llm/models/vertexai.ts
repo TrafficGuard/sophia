@@ -1,8 +1,7 @@
-import { HarmBlockThreshold, HarmCategory, SafetySetting, VertexAI } from '@google-cloud/vertexai';
+import { GenerativeModel, HarmBlockThreshold, HarmCategory, SafetySetting, VertexAI } from '@google-cloud/vertexai';
 import axios from 'axios';
 import { AgentLLMs, addCost, agentContext } from '#agent/agentContext';
-import { CreateLlmRequest, LlmCall } from '#llm/llmCallService/llmCall';
-import { CallerId } from '#llm/llmCallService/llmCallService';
+import { LlmCall } from '#llm/llmCallService/llmCall';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
@@ -29,6 +28,7 @@ export function vertexLLMRegistry(): Record<string, () => LLM> {
 		[`${VERTEX_SERVICE}:gemini-experimental`]: Gemini_1_5_Experimental,
 		[`${VERTEX_SERVICE}:gemini-1.5-pro`]: Gemini_1_5_Pro,
 		[`${VERTEX_SERVICE}:gemini-1.5-flash`]: Gemini_1_5_Flash,
+		[`${VERTEX_SERVICE}:Llama3-405b-instruct-maas`]: Vertex_Llama3_405b,
 	};
 }
 
@@ -37,6 +37,8 @@ export function vertexLLMRegistry(): Record<string, () => LLM> {
 // https://cloud.google.com/vertex-ai/generative-ai/pricing
 
 // gemini-1.5-pro-latest
+// gemini-1.5-pro-exp-0801
+// exp-0801
 export function Gemini_1_5_Pro(version = '001') {
 	return new VertexLLM(
 		'Gemini 1.5 Pro',
@@ -67,6 +69,74 @@ export function Gemini_1_5_Flash(version = '001') {
 		1_000_000,
 		(input: string) => (input.length * 0.000125) / 1000,
 		(output: string) => (output.length * 0.000375) / 1000,
+	);
+}
+
+// async imageToText(urlOrBytes: string | Buffer): Promise<string> {
+//   return withActiveSpan('imageToText', async (span) => {
+//     const generativeVisionModel = this.vertex().getGenerativeModel({
+//       model: this.imageToTextModel,
+//     }) as GenerativeModel;
+//
+//     let filePart: { fileData?: { fileUri: string; mimeType: string }; inlineData?: { data: string; mimeType: string } };
+//     if (typeof urlOrBytes === 'string') {
+//       filePart = {
+//         fileData: {
+//           fileUri: urlOrBytes,
+//           mimeType: 'image/jpeg', // Adjust mime type if needed
+//         },
+//       };
+//     } else if (Buffer.isBuffer(urlOrBytes)) {
+//       filePart = {
+//         inlineData: {
+//           data: urlOrBytes.toString('base64'),
+//           mimeType: 'image/jpeg', // Adjust mime type if needed
+//         },
+//       };
+//     } else {
+//       throw new Error('Invalid input: must be a URL string or a Buffer');
+//     }
+//
+//     const textPart = {
+//       text: 'Describe the contents of this image',
+//     };
+//
+//     const request = {
+//       contents: [
+//         {
+//           role: 'user',
+//           parts: [filePart, textPart],
+//         },
+//       ],
+//     };
+//
+//     try {
+//       const response = await generativeVisionModel.generateContent(request);
+//       const fullTextResponse = response.response.candidates[0].content.parts[0].text;
+//
+//       span.setAttributes({
+//         inputType: typeof urlOrBytes === 'string' ? 'url' : 'buffer',
+//         outputLength: fullTextResponse.length,
+//       });
+//
+//       return fullTextResponse;
+//     } catch (error) {
+//       logger.error('Error in imageToText:', error);
+//       span.recordException(error);
+//       span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
+//       throw error;
+//     }
+//   });
+// }
+
+export function Vertex_Llama3_405b() {
+	return new VertexLLM(
+		'Llama3 405b (Vertex)',
+		VERTEX_SERVICE,
+		'Llama3-405b-instruct-maas', // meta/llama3
+		100_000,
+		(input: string) => 0,
+		(output: string) => 0,
 	);
 }
 
@@ -118,7 +188,7 @@ class VertexLLM extends BaseLLM {
 			} else {
 				const generativeModel = this.vertex().getGenerativeModel({
 					model: this.model,
-					systemInstruction: systemPrompt ? { role: 'system', parts: [{ text: systemPrompt }] } : undefined,
+					systemInstruction: systemPrompt, //  ? { role: 'system', parts: [{ text: systemPrompt }] } : undefined
 					generationConfig: {
 						maxOutputTokens: 8192,
 						temperature: opts?.temperature,
