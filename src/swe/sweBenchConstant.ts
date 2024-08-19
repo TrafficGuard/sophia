@@ -1,4 +1,3 @@
-import { Enum } from './enum';
 
 export interface VersionInstallation {
     python: string;
@@ -363,19 +362,6 @@ export const MAP_VERSION_TO_INSTALL_MATPLOTLIB: Record<string, VersionInstallati
     "3.7": MATPLOTLIB_3_5_to_3_7
 };
 
-
-import { VersionInstallation } from './types';
-
-const SPHINX_BASE_CONFIG: VersionInstallation = {
-    python: "3.9",
-    pip_packages: ["tox"],
-    install: "pip install -e .[test]",
-    pre_install: ["sed -i 's/pytest/pytest -rA/' tox.ini"],
-    arch_specific_packages: {
-        aarch64: "gxx_linux-aarch64 gcc_linux-aarch64 make",
-        x86_64: "gxx_linux-64 gcc_linux-64 make",
-    }
-};
 
 const SPHINX_VERSIONS_1_5_TO_2_4 = ["1.5", "1.6", "1.7", "1.8", "2.0", "2.1", "2.2", "2.3", "2.4"];
 const SPHINX_VERSIONS_3_0_TO_4_4 = ["3.0", "3.1", "3.2", "3.3", "3.4", "3.5", "4.0", "4.1", "4.2", "4.3", "4.4"];
