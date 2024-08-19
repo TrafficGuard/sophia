@@ -617,9 +617,58 @@ if (MAP_VERSION_TO_INSTALL_ASTROID['3.0']) {
     MAP_VERSION_TO_INSTALL_ASTROID['3.0'].pip_packages?.push("typing-extensions==4.8.0");
 }
 
-export const MAP_VERSION_TO_INSTALL_MARSHMALLOW = {}
-export const MAP_VERSION_TO_INSTALL_PVLIB = {}
-export const MAP_VERSION_TO_INSTALL_PYDICOM = {}
+export const MAP_VERSION_TO_INSTALL_MARSHMALLOW: Record<string, VersionInstallation> = {
+    ...Object.fromEntries(
+        ['2.18', '2.19', '2.20', '3.0', '3.12', '3.19', '3.9'].map(k => [k, {
+            python: "3.9",
+            install: "pip install -e '.[dev]'",
+        }])
+    )
+};
+
+export const MAP_VERSION_TO_INSTALL_PVLIB: Record<string, VersionInstallation> = {
+    ...Object.fromEntries(
+        ['0.5', '0.6', '0.7', '0.8', '0.9'].map(k => [k, {
+            python: "3.9",
+            install: "pip install -e .[all]",
+            packages: "pandas scipy",
+            pip_packages: ["jupyter", "ipython", "matplotlib", "pytest", "flake8"],
+        }])
+    )
+};
+
+export const MAP_VERSION_TO_INSTALL_PYDICOM: Record<string, VersionInstallation> = {
+    ...Object.fromEntries(
+        ['1.2', '1.3'].map(k => [k, {
+            python: "3.6",
+            install: "pip install -e .",
+            packages: "numpy==1.26.4",
+            pip_packages: ["pytest"],
+        }])
+    ),
+    ...Object.fromEntries(
+        ['1.4', '2.0'].map(k => [k, {
+            python: "3.8",
+            install: "pip install -e .",
+            packages: "numpy==1.26.4",
+            pip_packages: ["pytest==4.6.11"],
+        }])
+    ),
+    ...Object.fromEntries(
+        ['2.1', '2.2'].map(k => [k, {
+            python: "3.9",
+            install: "pip install -e .",
+            packages: "numpy==1.26.4",
+            pip_packages: ["pytest==4.6.11"],
+        }])
+    ),
+    '2.3': {
+        python: "3.10",
+        install: "pip install -e .",
+        packages: "numpy==1.26.4",
+        pip_packages: ["pytest"],
+    },
+};
 
 export const TEST_PYTEST = "pytest --no-header -rA --tb=no -p no:cacheprovider";
 export const TEST_PYTEST_SKIP_NO_HEADER = "pytest -rA --tb=no -p no:cacheprovider";
