@@ -304,6 +304,69 @@ MAP_VERSION_TO_INSTALL_PYTEST["8.0"].pip_packages = [
     "exceptiongroup==1.1.3", "tomli==2.0.1"
 ];
 
+// Conversion of the first part of MAP_VERSION_TO_INSTALL_MATPLOTLIB
+
+const MATPLOTLIB_3_5_to_3_7 = {
+    python: "3.11",
+    packages: "environment.yml",
+    install: "python -m pip install -e .",
+    pip_packages: [
+        "contourpy==1.1.0",
+        "cycler==0.11.0",
+        "fonttools==4.42.1",
+        "kiwisolver==1.4.5",
+        "numpy==1.25.2",
+        "packaging==23.1",
+        "pillow==10.0.0",
+        "pyparsing==3.0.9",
+        "python-dateutil==2.8.2",
+        "six==1.16.0",
+        "setuptools==66.1.1",
+        "setuptools-scm==7.1.0",
+        "typing-extensions==4.7.1",
+    ],
+    arch_specific_packages: {
+        aarch64: "gxx_linux-aarch64 gcc_linux-aarch64 make",
+    }
+}
+const MATPLOTLIB_3_1_to_3_4 ={
+    "python": "3.8",
+    "packages": "requirements.txt",
+    "install": "python -m pip install -e .",
+    "pip_packages": [
+],
+    "arch_specific_packages": {
+    "aarch64": "gxx_linux-aarch64 gcc_linux-aarch64 make",
+}
+}
+
+const MATPLOTLIB_3_0 = {
+    "python": "3.7",
+    "packages": "requirements.txt",
+    "install": "python -m pip install -e .",
+    "pip_packages": [
+        "freetype"
+    ],
+    "arch_specific_packages": {
+        "aarch64": "gxx_linux-aarch64 gcc_linux-aarch64 make",
+    }
+}
+
+export const MAP_VERSION_TO_INSTALL_MATPLOTLIB: Record<string, VersionInstallation> = {
+    "3.0": MATPLOTLIB_3_0,
+    "3.1": MATPLOTLIB_3_1_to_3_4,
+    "3.2": MATPLOTLIB_3_1_to_3_4,
+    "3.3": MATPLOTLIB_3_1_to_3_4,
+    "3.4": MATPLOTLIB_3_1_to_3_4,
+    "3.5": MATPLOTLIB_3_5_to_3_7,
+    "3.6": MATPLOTLIB_3_5_to_3_7,
+    "3.7": MATPLOTLIB_3_5_to_3_7
+};
+
+
+export const MAP_VERSION_TO_INSTALL_SPHINX = {}
+
+
 export const TEST_PYTEST = "pytest --no-header -rA --tb=no -p no:cacheprovider";
 export const TEST_PYTEST_SKIP_NO_HEADER = "pytest -rA --tb=no -p no:cacheprovider";
 
