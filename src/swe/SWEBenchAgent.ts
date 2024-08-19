@@ -296,8 +296,9 @@ export class SWEBenchAgent {
 		// For simplicity, we'll just return a default value
 		return 'pytest --no-header -rA --tb=no -p no:cacheprovider';
 	}
-}
+
 	private async generatePatch(baseCommit: string): Promise<string> {
 		const result = await execCommand(`git diff ${baseCommit} HEAD`);
 		return result.stdout;
 	}
+}
