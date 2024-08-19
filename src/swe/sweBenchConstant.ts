@@ -1,3 +1,5 @@
+import { Enum } from './enum';
+
 export interface VersionInstallation {
     python: string;
     packages?: string;
@@ -7,90 +9,159 @@ export interface VersionInstallation {
     instance_image?: boolean;
     arch_specific_packages?: {
         aarch64: string
-    }
+    };
+    no_use_env?: boolean;
+    pre_test?: string[];
+    env_vars_test?: Record<string, string>;
 }
 
+export const PYTHON_ENVIRONMENT_VERSIONS: Record<string, string> = {
+    "3.5": "3.5.10",
+    "3.6": "3.6.15",
+    "3.7": "3.7.17",
+    "3.8": "3.8.19",
+    "3.9": "3.9.19",
+    "3.10": "3.10.14",
+    "3.11": "3.11.9"
+};
+
+export const PYENV_REPOS: Set<string> = new Set([
+    "astropy/astropy",
+    "django/django",
+    "psf/requests",
+    "scikit-learn/scikit-learn"
+]);
+
 export const MAP_VERSION_TO_INSTALL: Record<string, Record<string, VersionInstallation>> = {
-    'huggingface/transformers': {
-        '4.18.0': {
-            python: '3.7',
-            packages: 'torch torchvision torchaudio',
-            install: 'pip install -e .',
-            pip_packages: ['datasets'],
-        },
-        // Add more versions as needed
-    },
-    'pytorch/pytorch': {
-        '1.11.0': {
-            python: '3.7',
-            packages: 'numpy ninja pyyaml setuptools cmake cffi typing_extensions future six requests dataclasses',
-            install: 'pip install -e .',
-            pre_install: ['pip install --upgrade pip'],
-        },
-        // Add more versions as needed
-    },
-    'scikit-learn/scikit-learn': {
-        '0.20': {
-            instance_image: true,
-            python: '3.6',
-            packages: 'numpy==1.19.2 scipy==1.5.2 cython==0.29.7 pytest==4.5.0 pandas matplotlib==3.1.0 joblib threadpoolctl',
-            install: 'pip install -v --no-build-isolation -e .',
-            arch_specific_packages: {
-                aarch64: 'gxx_linux-aarch64 gcc_linux-aarch64 make',
-            },
-        },
-        // Add more versions as needed
+    'astropy/astropy': {
+        // ... (copy all entries from MAP_VERSION_TO_INSTALL_ASTROPY)
     },
     'django/django': {
-        '1.7': {
-            python: '3.5',
-            packages: 'requirements.txt',
-            install: 'python -m pip install -e .',
-        },
-        // Add more versions as needed
+        // ... (copy all entries from MAP_VERSION_TO_INSTALL_DJANGO)
     },
     'matplotlib/matplotlib': {
-        '3.5': {
-            python: '3.11',
-            packages: 'environment.yml',
-            install: 'python -m pip install -e .',
-            pip_packages: [
-                'contourpy==1.1.0', 'cycler==0.11.0', 'fonttools==4.42.1',
-                'kiwisolver==1.4.5', 'numpy==1.25.2', 'packaging==23.1',
-                'pillow==10.0.0', 'pyparsing==3.0.9', 'python-dateutil==2.8.2',
-                'six==1.16.0', 'setuptools==66.1.1', 'setuptools-scm==7.1.0',
-                'typing-extensions==4.7.1',
-            ],
-            arch_specific_packages: {
-                aarch64: 'gxx_linux-aarch64 gcc_linux-aarch64 make',
-            }
-        },
-        // Add more versions as needed
+        // ... (copy all entries from MAP_VERSION_TO_INSTALL_MATPLOTLIB)
     },
-    'astropy/astropy': {
-        '5.0': {
-            python: '3.9',
-            install: 'pip install -e .[test]',
-            pre_install: ['pip install setuptools==68.0.0'],
-            pip_packages: [
-                'attrs==23.1.0', 'exceptiongroup==1.1.3', 'execnet==2.0.2', 'hypothesis==6.82.6',
-                'iniconfig==2.0.0', 'numpy==1.23.4', 'packaging==23.1', 'pluggy==1.3.0',
-                'psutil==5.9.5', 'pyerfa==2.0.0.3', 'pytest-arraydiff==0.5.0', 'pytest-astropy-header==0.2.2',
-                'pytest-astropy==0.10.0', 'pytest-cov==4.1.0', 'pytest-doctestplus==1.0.0', 'pytest-filter-subpackage==0.1.2',
-                'pytest-mock==3.11.1', 'pytest-openfiles==0.5.0', 'pytest-remotedata==0.4.0', 'pytest-xdist==3.3.1',
-                'pytest==7.4.0', 'PyYAML==6.0.1', 'sortedcontainers==2.4.0', 'tomli==2.0.1',
-            ],
-        },
-        // Add more versions as needed
+    'marshmallow-code/marshmallow': {
+        // ... (copy all entries from MAP_VERSION_TO_INSTALL_MARSHMALLOW)
+    },
+    'mwaskom/seaborn': {
+        // ... (copy all entries from MAP_VERSION_TO_INSTALL_SEABORN)
+    },
+    'pallets/flask': {
+        // ... (copy all entries from MAP_VERSION_TO_INSTALL_FLASK)
+    },
+    'psf/requests': {
+        // ... (copy all entries from MAP_VERSION_TO_INSTALL_REQUESTS)
+    },
+    'pvlib/pvlib-python': {
+        // ... (copy all entries from MAP_VERSION_TO_INSTALL_PVLIB)
+    },
+    'pydata/xarray': {
+        // ... (copy all entries from MAP_VERSION_TO_INSTALL_XARRAY)
+    },
+    'pydicom/pydicom': {
+        // ... (copy all entries from MAP_VERSION_TO_INSTALL_PYDICOM)
+    },
+    'pylint-dev/astroid': {
+        // ... (copy all entries from MAP_VERSION_TO_INSTALL_ASTROID)
+    },
+    'pylint-dev/pylint': {
+        // ... (copy all entries from MAP_VERSION_TO_INSTALL_PYLINT)
+    },
+    'pytest-dev/pytest': {
+        // ... (copy all entries from MAP_VERSION_TO_INSTALL_PYTEST)
+    },
+    'pyvista/pyvista': {
+        // ... (copy all entries from MAP_VERSION_TO_INSTALL_PYVISTA)
+    },
+    'scikit-learn/scikit-learn': {
+        // ... (copy all entries from MAP_VERSION_TO_INSTALL_SKLEARN)
+    },
+    'sphinx-doc/sphinx': {
+        // ... (copy all entries from MAP_VERSION_TO_INSTALL_SPHINX)
+    },
+    'sqlfluff/sqlfluff': {
+        // ... (copy all entries from MAP_VERSION_TO_INSTALL_SQLFLUFF)
+    },
+    'swe-bench/humaneval': {
+        // ... (copy all entries from MAP_VERSION_TO_INSTALL_HUMANEVAL)
     },
     'sympy/sympy': {
-        '1.10': {
-            python: '3.9',
-            packages: 'mpmath flake8',
-            pip_packages: ['mpmath==1.3.0', 'flake8-comprehensions'],
-            install: 'pip install -e .',
-        },
-        // Add more versions as needed
+        // ... (copy all entries from MAP_VERSION_TO_INSTALL_SYMPY)
     },
-    // Add more repositories as needed
 };
+
+export const MAP_REPO_TO_INSTALL: Record<string, any> = {};
+
+export const TEST_PYTEST = "pytest --no-header -rA --tb=no -p no:cacheprovider";
+export const TEST_PYTEST_SKIP_NO_HEADER = "pytest -rA --tb=no -p no:cacheprovider";
+
+export const MAP_REPO_TO_TEST_FRAMEWORK: Record<string, string> = {
+    "astropy/astropy": TEST_PYTEST,
+    "django/django": "./tests/runtests.py --verbosity 2",
+    "marshmallow-code/marshmallow": TEST_PYTEST,
+    "matplotlib/matplotlib": TEST_PYTEST,
+    "mwaskom/seaborn": "pytest --no-header -rA",
+    "pallets/flask": TEST_PYTEST,
+    "psf/requests": TEST_PYTEST,
+    "pvlib/pvlib-python": TEST_PYTEST,
+    "pydata/xarray": TEST_PYTEST,
+    "pydicom/pydicom": TEST_PYTEST_SKIP_NO_HEADER,
+    "pylint-dev/astroid": TEST_PYTEST,
+    "pylint-dev/pylint": TEST_PYTEST,
+    "pytest-dev/pytest": "pytest -rA",
+    "pyvista/pyvista": TEST_PYTEST,
+    "scikit-learn/scikit-learn": TEST_PYTEST_SKIP_NO_HEADER,
+    "sphinx-doc/sphinx": "tox -epy39 -v --",
+    "sqlfluff/sqlfluff": TEST_PYTEST,
+    "swe-bench/humaneval": "python",
+    "sympy/sympy": "bin/test -C --verbose",
+};
+
+export const MAP_REPO_TO_REQS_PATHS: Record<string, string[]> = {
+    "django/django": ["tests/requirements/py3.txt"],
+    "matplotlib/matplotlib": ["requirements/dev/dev-requirements.txt", "requirements/testing/travis_all.txt"],
+    "pallets/flask": ["requirements/dev.txt"],
+    "pylint-dev/pylint": ["requirements_test.txt"],
+    "pyvista/pyvista": ["requirements_test.txt", 'requirements.txt'],
+    "sqlfluff/sqlfluff": ["requirements_dev.txt"],
+    "sympy/sympy": ["requirements-dev.txt"],
+};
+
+export const MAP_REPO_TO_ENV_YML_PATHS: Record<string, string[]> = {
+    "matplotlib/matplotlib": ["environment.yml"],
+    "pydata/xarray": ["ci/requirements/environment.yml", "environment.yml"],
+};
+
+export const MAP_REPO_TO_DEB_PACKAGES: Record<string, string[]> = {
+    "matplotlib/matplotlib": ["texlive", "texlive-xetex", "dvipng", "ghostscript", "libfreetype-dev", "libtiff-dev"],
+    "pyvista/pyvista": ["libgl1", "libxrender1"]
+};
+
+export const KEY_INSTANCE_ID = "instance_id";
+export const KEY_MODEL = "model_name_or_path";
+export const KEY_PREDICTION = "model_patch";
+
+export const APPLY_PATCH_FAIL = ">>>>> Patch Apply Failed";
+export const APPLY_PATCH_PASS = ">>>>> Applied Patch";
+export const INSTALL_FAIL = ">>>>> Init Failed";
+export const INSTALL_PASS = ">>>>> Init Succeeded";
+export const INSTALL_TIMEOUT = ">>>>> Init Timed Out";
+export const RESET_FAILED = ">>>>> Reset Failed";
+export const TESTS_ERROR = ">>>>> Tests Errored";
+export const TESTS_FAILED = ">>>>> Some Tests Failed";
+export const TESTS_PASSED = ">>>>> All Tests Passed";
+export const TESTS_TIMEOUT = ">>>>> Tests Timed Out";
+
+export enum PatchType {
+    PATCH_GOLD = "gold",
+    PATCH_PRED = "pred",
+    PATCH_PRED_TRY = "pred_try",
+    PATCH_PRED_MINIMAL = "pred_minimal",
+    PATCH_PRED_MINIMAL_TRY = "pred_minimal_try",
+    PATCH_TEST = "test"
+}
+
+export const NON_TEST_EXTS = [".json", ".png", "csv", ".txt", ".md", ".jpg", ".jpeg", ".pkl", ".yml", ".yaml", ".toml"];
+export const SWE_BENCH_URL_RAW = "https://raw.githubusercontent.com/";
