@@ -24,6 +24,17 @@ export interface SWEInstance {
 	environment_setup_commit: string;
 }
 
+interface EditRequirements {
+	problemStatement: string;
+	readmeContents: string;
+	relevantFileContents: string;
+}
+
+interface TestResult {
+	passed: boolean;
+	output: string;
+}
+
 interface VersionInstallation {
 	python: string;
 	packages?: string;
@@ -40,9 +51,30 @@ interface VersionInstallation {
 export class SWEBenchAgent {
 	private readonly MAX_CONTEXT_LENGTH = 16000;
 	private readonly PROMPT_STYLE = 'style-3';
+	private readonly MAX_ATTEMPTS = 6;
+	private readonly MODELS = ['gpt-4o', 'openrouter/anthropic/claude-3-opus'];
 
 	@func()
 	async runInference(task: SWEInstance): Promise<string> {
+		let bestResult: any = null;
+
+		for (let attempt = 0; attempt < this.MAX_ATTEMPTS; attempt++) {
+			const model = this.MODELS[attempt % this.MODELS.length];
+			const result = await this.attemptSolution(task, model);
+
+			if (result.isPlausible) {
+				return JSON.stringify(result);
+			}
+
+			if (!bestResult || this.isBetterResult(result, bestResult)) {
+				bestResult = result;
+			}
+		}
+
+		return JSON.stringify(bestResult);
+	}
+
+	private async attemptSolution(task: SWEInstance, model: string): Promise<any> {
 		// Setup
 		const repo = task.repo;
 		const path = await new GitHub().cloneProject(repo, task.environment_setup_commit);
@@ -60,8 +92,11 @@ export class SWEBenchAgent {
 		// Prepare edit requirements
 		const editRequirements = await this.prepareEditRequirements(task, readmeFiles, relevantFiles);
 
-		await new CodeEditingAgent().runCodeEditWorkflow(editRequirements);
-		const modelPatch: string = ''; // TODO diff between HEAD and task.base_commit/environment_setup_commit
+		const codeEditingAgent = new CodeEditingAgent();
+		codeEditingAgent.setModel(model);
+		const editResult = await codeEditingAgent.runCodeEditWorkflow(editRequirements);
+
+		const modelPatch = await this.generatePatch(task.base_commit);
 
 		// Extract minimal patch
 		const minimalPatch = this.extractMinimalPatch(modelPatch);
@@ -78,50 +113,72 @@ export class SWEBenchAgent {
 			model_patch: modelPatch,
 			minimal_patch: minimalPatch,
 			test_results: testResults,
+			model: model,
+			isPlausible: editResult.success && testResults.passed,
+			editOutcome: editResult.success,
+			lintOutcome: editResult.lintSuccess,
+			testOutcome: testResults.passed,
 		};
 
-		return JSON.stringify(output);
+		return output;
+	}
+
+	private isBetterResult(result: any, bestResult: any): boolean {
+		const score = (r: any) => (r.editOutcome ? 1 : 0) + (r.lintOutcome ? 1 : 0) + (r.testOutcome ? 1 : 0);
+		return score(result) > score(bestResult);
 	}
 
 	private async setupEnvironment(task: SWEInstance): Promise<void> {
 		const installInstructions = this.getInstallInstructions(task.repo, task.version);
 		const envName = task.repo.split('/')[1];
 
-		// Create conda environment
-		await execCommand(`conda create -n ${envName} python=${installInstructions.python} -y`);
+		// Use Docker instead of conda
+		const dockerImage = this.getDockerImage(task);
+		await execCommand(`docker pull ${dockerImage}`);
 
-		// Activate conda environment
-		await execCommand(`conda activate ${envName}`);
+		// Run Docker container
+		await execCommand(`docker run -d --name ${envName} ${dockerImage}`);
 
 		// Install packages
 		if (installInstructions.packages) {
 			if (installInstructions.packages === 'requirements.txt') {
 				const reqContent = await this.getRequirements(task);
-				await getFileSystem().writeFile('requirements.txt', reqContent);
-				await execCommand('pip install -r requirements.txt');
+				await execCommand(`docker exec ${envName} bash -c "echo '${reqContent}' > requirements.txt && pip install -r requirements.txt"`);
 			} else if (installInstructions.packages === 'environment.yml') {
 				const envContent = await this.getEnvironmentYml(task);
-				await getFileSystem().writeFile('environment.yml', envContent);
-				await execCommand('conda env update -f environment.yml');
+				await execCommand(`docker exec ${envName} bash -c "echo '${envContent}' > environment.yml && conda env update -f environment.yml"`);
 			} else {
-				await execCommand(`conda install -y ${installInstructions.packages}`);
+				await execCommand(`docker exec ${envName} conda install -y ${installInstructions.packages}`);
 			}
 		}
 
 		// Install additional pip packages
 		if (installInstructions.pip_packages) {
-			await execCommand(`pip install ${installInstructions.pip_packages}`);
+			await execCommand(`docker exec ${envName} pip install ${installInstructions.pip_packages}`);
 		}
 
 		// Run pre-install commands
 		if (installInstructions.pre_install) {
 			for (const cmd of installInstructions.pre_install) {
-				await execCommand(cmd);
+				await execCommand(`docker exec ${envName} ${cmd}`);
 			}
 		}
 
 		// Run install command
-		await execCommand(installInstructions.install);
+		await execCommand(`docker exec ${envName} ${installInstructions.install}`);
+	}
+
+	private getDockerImage(task: SWEInstance): string {
+		const repoName = task.repo.replace('/', '_');
+		const namespace = 'aorwall';
+		const imagePrefix = 'swe-bench';
+
+		const specifications = this.getVersionSpecifications(task.repo, task.version);
+		if (specifications.instance_image) {
+			return `${namespace}/${imagePrefix}-${repoName}-instance:${task.instance_id}`;
+		} else {
+			return `${namespace}/${imagePrefix}-${repoName}-testbed:${task.version}`;
+		}
 	}
 
 	private getInstallInstructions(repo: string, version: string): VersionInstallation {
@@ -208,24 +265,30 @@ export class SWEBenchAgent {
 		return modelPatch;
 	}
 
-	private async runTests(task: SWEInstance): Promise<string> {
+	private async runTests(task: SWEInstance): Promise<TestResult> {
 		const testFramework = this.getTestFramework(task.repo);
 		const failToPass = JSON.parse(task.FAIL_TO_PASS);
 		const passToPass = JSON.parse(task.PASS_TO_PASS);
+		const envName = task.repo.split('/')[1];
 
 		let results = '';
+		let allPassed = true;
 
 		for (const test of failToPass) {
-			const result = await execCommand(`${testFramework} ${test}`);
-			results += `FAIL_TO_PASS ${test}: ${result.exitCode === 0 ? 'PASS' : 'FAIL'}\n`;
+			const result = await execCommand(`docker exec ${envName} ${testFramework} ${test}`);
+			const passed = result.exitCode === 0;
+			results += `FAIL_TO_PASS ${test}: ${passed ? 'PASS' : 'FAIL'}\n`;
+			allPassed = allPassed && passed;
 		}
 
 		for (const test of passToPass) {
-			const result = await execCommand(`${testFramework} ${test}`);
-			results += `PASS_TO_PASS ${test}: ${result.exitCode === 0 ? 'PASS' : 'FAIL'}\n`;
+			const result = await execCommand(`docker exec ${envName} ${testFramework} ${test}`);
+			const passed = result.exitCode === 0;
+			results += `PASS_TO_PASS ${test}: ${passed ? 'PASS' : 'FAIL'}\n`;
+			allPassed = allPassed && passed;
 		}
 
-		return results;
+		return { passed: allPassed, output: results };
 	}
 
 	private getTestFramework(repo: string): string {
@@ -234,3 +297,7 @@ export class SWEBenchAgent {
 		return 'pytest --no-header -rA --tb=no -p no:cacheprovider';
 	}
 }
+	private async generatePatch(baseCommit: string): Promise<string> {
+		const result = await execCommand(`git diff ${baseCommit} HEAD`);
+		return result.stdout;
+	}
