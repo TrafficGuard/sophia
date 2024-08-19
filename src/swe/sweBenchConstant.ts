@@ -64,6 +64,45 @@ export const MAP_VERSION_TO_INSTALL_SKLEARN: Record<string, VersionInstallation>
     };
 })();
 
+export const MAP_VERSION_TO_INSTALL_FLASK: Record<string, VersionInstallation> = {
+    "2.0": {
+        python: "3.9",
+        packages: "requirements.txt",
+        install: "pip install -e .",
+        pip_packages: [
+            "Werkzeug==2.3.7",
+            "Jinja2==3.0.1",
+            "itsdangerous==2.1.2",
+            "click==8.0.1",
+            "MarkupSafe==2.1.3",
+        ],
+    },
+    "2.1": {
+        python: "3.10",
+        packages: "requirements.txt",
+        install: "pip install -e .",
+        pip_packages: [
+            "click==8.1.3",
+            "itsdangerous==2.1.2",
+            "Jinja2==3.1.2",
+            "MarkupSafe==2.1.1",
+            "Werkzeug==2.3.7",
+        ],
+    },
+    ...Object.fromEntries(["2.2", "2.3"].map(k => [k, {
+        python: "3.11",
+        packages: "requirements.txt",
+        install: "pip install -e .",
+        pip_packages: [
+            "click==8.1.3",
+            "itsdangerous==2.1.2",
+            "Jinja2==3.1.2",
+            "MarkupSafe==2.1.1",
+            "Werkzeug==2.3.7",
+        ],
+    }])),
+};
+
 
 
 export const TEST_PYTEST = "pytest --no-header -rA --tb=no -p no:cacheprovider";
