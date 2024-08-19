@@ -223,6 +223,26 @@ export class SWEBenchAgent {
 				},
 				// Add more versions as needed
 			},
+			'scikit-learn/scikit-learn': {
+				'0.20': {
+					instance_image: true,
+					python: '3.6',
+					packages: 'numpy==1.19.2 scipy==1.5.2 cython==0.29.7 pytest==4.5.0 pandas matplotlib==3.1.0 joblib threadpoolctl',
+					install: 'pip install -v --no-build-isolation -e .',
+					arch_specific_packages: {
+						aarch64: 'gxx_linux-aarch64 gcc_linux-aarch64 make',
+					},
+				},
+				// Add more versions as needed
+			},
+			'django/django': {
+				'1.7': {
+					python: '3.5',
+					packages: 'requirements.txt',
+					install: 'python -m pip install -e .',
+				},
+				// Add more versions as needed
+			},
 			// Add more repositories as needed
 		};
 
