@@ -203,7 +203,12 @@ export const MAP_VERSION_TO_INSTALL_SEABORN: Record<string, VersionInstallation>
     }])),
 };
 
-
+export const MAP_VERSION_TO_INSTALL_PYTEST: Record<string, VersionInstallation> = {
+    ...Object.fromEntries(['4.4','4.5','4.6','5.0','5.1','5.2','5.3','5.4','6.0','6.2','6.3','7.0','7.1','7.2','7.4','8.0'].map(k => [k, {
+        python: "3.9",
+        install: "pip install -e ."
+    }])),
+};
 
 export const TEST_PYTEST = "pytest --no-header -rA --tb=no -p no:cacheprovider";
 export const TEST_PYTEST_SKIP_NO_HEADER = "pytest -rA --tb=no -p no:cacheprovider";
