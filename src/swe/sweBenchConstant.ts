@@ -513,6 +513,10 @@ MAP_VERSION_TO_INSTALL_PYLINT["3.0"] = {
     pip_packages: ["astroid==3.0.0a6", "pytest"],
 };
 
+export const MAP_VERSION_TO_INSTALL_XARRAY = {}
+export const MAP_VERSION_TO_INSTALL_SQLFLUFF = {}
+export const MAP_VERSION_TO_INSTALL_PYVISTA = {}
+
 export const TEST_PYTEST = "pytest --no-header -rA --tb=no -p no:cacheprovider";
 export const TEST_PYTEST_SKIP_NO_HEADER = "pytest -rA --tb=no -p no:cacheprovider";
 
