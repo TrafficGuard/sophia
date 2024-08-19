@@ -364,7 +364,84 @@ export const MAP_VERSION_TO_INSTALL_MATPLOTLIB: Record<string, VersionInstallati
 };
 
 
-export const MAP_VERSION_TO_INSTALL_SPHINX = {}
+import { VersionInstallation } from './types';
+
+const SPHINX_BASE_CONFIG: VersionInstallation = {
+    python: "3.9",
+    pip_packages: ["tox"],
+    install: "pip install -e .[test]",
+    pre_install: ["sed -i 's/pytest/pytest -rA/' tox.ini"],
+    arch_specific_packages: {
+        aarch64: "gxx_linux-aarch64 gcc_linux-aarch64 make",
+        x86_64: "gxx_linux-64 gcc_linux-64 make",
+    }
+};
+
+const SPHINX_VERSIONS_1_5_TO_2_4 = ["1.5", "1.6", "1.7", "1.8", "2.0", "2.1", "2.2", "2.3", "2.4"];
+const SPHINX_VERSIONS_3_0_TO_4_4 = ["3.0", "3.1", "3.2", "3.3", "3.4", "3.5", "4.0", "4.1", "4.2", "4.3", "4.4"];
+const SPHINX_VERSIONS_4_5_TO_7_2 = ["4.5", "5.0", "5.1", "5.2", "5.3", "6.0", "6.2", "7.0", "7.1", "7.2"];
+
+const SPHINX_ADDITIONAL_PRE_INSTALL = [
+    "sed -i 's/Jinja2>=2.3/Jinja2<3.0/' setup.py",
+    "sed -i 's/sphinxcontrib-applehelp/sphinxcontrib-applehelp<=1.0.7/' setup.py",
+    "sed -i 's/sphinxcontrib-devhelp/sphinxcontrib-devhelp<=1.0.5/' setup.py",
+    "sed -i 's/sphinxcontrib-qthelp/sphinxcontrib-qthelp<=1.0.6/' setup.py",
+    "sed -i 's/alabaster>=0.7,<0.8/alabaster>=0.7,<0.7.12/' setup.py",
+    'sed -i "s/\'packaging\',/\'packaging\', \'markupsafe<=2.0.1\',/" setup.py',
+];
+
+const SPHINX_ADDITIONAL_PRE_INSTALL_4_2_TO_4_4 = [
+    "sed -i 's/sphinxcontrib-htmlhelp>=2.0.0/sphinxcontrib-htmlhelp>=2.0.0,<=2.0.4/' setup.py",
+    "sed -i 's/sphinxcontrib-serializinghtml>=1.1.5/sphinxcontrib-serializinghtml>=1.1.5,<=1.1.9/' setup.py",
+];
+
+const SPHINX_ADDITIONAL_PRE_INSTALL_4_1 = [
+    "grep -q 'sphinxcontrib-htmlhelp>=2.0.0' setup.py && " +
+    "sed -i 's/sphinxcontrib-htmlhelp>=2.0.0/sphinxcontrib-htmlhelp>=2.0.0,<=2.0.4/' setup.py || " +
+    "sed -i 's/sphinxcontrib-htmlhelp/sphinxcontrib-htmlhelp<=2.0.4/' setup.py",
+    "grep -q 'sphinxcontrib-serializinghtml>=1.1.5' setup.py && " +
+    "sed -i 's/sphinxcontrib-serializinghtml>=1.1.5/sphinxcontrib-serializinghtml>=1.1.5,<=1.1.9/' setup.py || " +
+    "sed -i 's/sphinxcontrib-serializinghtml/sphinxcontrib-serializinghtml<=1.1.9/' setup.py"
+];
+
+const SPHINX_ADDITIONAL_PRE_INSTALL_OTHERS = [
+    "sed -i 's/sphinxcontrib-htmlhelp/sphinxcontrib-htmlhelp<=2.0.4/' setup.py",
+    "sed -i 's/sphinxcontrib-serializinghtml/sphinxcontrib-serializinghtml<=1.1.9/' setup.py",
+];
+
+export const MAP_VERSION_TO_INSTALL_SPHINX: Record<string, VersionInstallation> = {};
+
+[...SPHINX_VERSIONS_1_5_TO_2_4, ...SPHINX_VERSIONS_3_0_TO_4_4, ...SPHINX_VERSIONS_4_5_TO_7_2].forEach(version => {
+    MAP_VERSION_TO_INSTALL_SPHINX[version] = { ...SPHINX_BASE_CONFIG };
+});
+
+SPHINX_VERSIONS_3_0_TO_4_4.forEach(version => {
+    MAP_VERSION_TO_INSTALL_SPHINX[version].pre_install = [
+        ...(MAP_VERSION_TO_INSTALL_SPHINX[version].pre_install || []),
+        ...SPHINX_ADDITIONAL_PRE_INSTALL
+    ];
+
+    if (["4.2", "4.3", "4.4"].includes(version)) {
+        MAP_VERSION_TO_INSTALL_SPHINX[version].pre_install = [
+            ...(MAP_VERSION_TO_INSTALL_SPHINX[version].pre_install || []),
+            ...SPHINX_ADDITIONAL_PRE_INSTALL_4_2_TO_4_4
+        ];
+    } else if (version === "4.1") {
+        MAP_VERSION_TO_INSTALL_SPHINX[version].pre_install = [
+            ...(MAP_VERSION_TO_INSTALL_SPHINX[version].pre_install || []),
+            ...SPHINX_ADDITIONAL_PRE_INSTALL_4_1
+        ];
+    } else {
+        MAP_VERSION_TO_INSTALL_SPHINX[version].pre_install = [
+            ...(MAP_VERSION_TO_INSTALL_SPHINX[version].pre_install || []),
+            ...SPHINX_ADDITIONAL_PRE_INSTALL_OTHERS
+        ];
+    }
+});
+
+Object.values(MAP_VERSION_TO_INSTALL_SPHINX).forEach(spec => {
+    spec.pre_test = spec.pre_install;
+});
 
 
 export const TEST_PYTEST = "pytest --no-header -rA --tb=no -p no:cacheprovider";
