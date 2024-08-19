@@ -617,6 +617,10 @@ if (MAP_VERSION_TO_INSTALL_ASTROID['3.0']) {
     MAP_VERSION_TO_INSTALL_ASTROID['3.0'].pip_packages?.push("typing-extensions==4.8.0");
 }
 
+export const MAP_VERSION_TO_INSTALL_MARSHMALLOW = {}
+export const MAP_VERSION_TO_INSTALL_PVLIB = {}
+export const MAP_VERSION_TO_INSTALL_PYDICOM = {}
+
 export const TEST_PYTEST = "pytest --no-header -rA --tb=no -p no:cacheprovider";
 export const TEST_PYTEST_SKIP_NO_HEADER = "pytest -rA --tb=no -p no:cacheprovider";
 
