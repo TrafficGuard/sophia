@@ -226,6 +226,41 @@ MAP_VERSION_TO_INSTALL_PYTEST["4.5"] = {
     ]
 };
 
+MAP_VERSION_TO_INSTALL_PYTEST["4.6"] = {
+    ...MAP_VERSION_TO_INSTALL_PYTEST["4.6"],
+    pip_packages: [
+        "atomicwrites==1.4.1", "attrs==23.1.0", "more-itertools==10.1.0", "importlib-metadata==1.6.0",
+        "packaging==23.1", "pluggy==0.13.1", "py==1.11.0", "six==1.16.0", "wcwidth==0.2.6"
+    ]
+};
+
+["5.0", "5.1", "5.2"].forEach(k => {
+    MAP_VERSION_TO_INSTALL_PYTEST[k] = {
+        ...MAP_VERSION_TO_INSTALL_PYTEST[k],
+        pip_packages: [
+            "atomicwrites==1.4.1", "attrs==23.1.0", "more-itertools==10.1.0",
+            "packaging==23.1", "pluggy==0.13.1", "py==1.11.0", "wcwidth==0.2.6"
+        ]
+    };
+});
+
+MAP_VERSION_TO_INSTALL_PYTEST["5.3"] = {
+    ...MAP_VERSION_TO_INSTALL_PYTEST["5.3"],
+    pip_packages: [
+        "attrs==23.1.0", "more-itertools==10.1.0", "packaging==23.1",
+        "pluggy==0.13.1", "py==1.11.0", "wcwidth==0.2.6"
+    ]
+};
+
+MAP_VERSION_TO_INSTALL_PYTEST["5.4"] = {
+    ...MAP_VERSION_TO_INSTALL_PYTEST["5.4"],
+    pip_packages: [
+        "py==1.11.0", "packaging==23.1", "attrs==23.1.0",
+        "more-itertools==10.1.0", "pluggy==0.13.1", "wcwidth==0.2.6"
+    ],
+    pre_test: ["pip install -e ."]
+};
+
 export const TEST_PYTEST = "pytest --no-header -rA --tb=no -p no:cacheprovider";
 export const TEST_PYTEST_SKIP_NO_HEADER = "pytest -rA --tb=no -p no:cacheprovider";
 
