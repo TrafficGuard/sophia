@@ -281,9 +281,35 @@ export class SWEBenchAgent {
 	}
 
 	private extractMinimalPatch(modelPatch: string): string {
-		// This should implement the logic to extract the minimal patch from the model's output
-		// For simplicity, we'll just return the model patch as is
-		return modelPatch;
+		const lines = modelPatch.split('\n');
+		const minimalPatchLines: string[] = [];
+		let inHunk = false;
+		let hunkHeader = '';
+
+		for (const line of lines) {
+			if (line.startsWith('diff --git') || line.startsWith('index ') || line.startsWith('---') || line.startsWith('+++')) {
+				minimalPatchLines.push(line);
+			} else if (line.startsWith('@@')) {
+				inHunk = true;
+				hunkHeader = line;
+				minimalPatchLines.push(line);
+			} else if (inHunk) {
+				if (line.startsWith('+') || line.startsWith('-')) {
+					minimalPatchLines.push(line);
+				} else if (line.trim() === '') {
+					// Keep empty lines within hunks
+					minimalPatchLines.push(line);
+				} else {
+					// End of the current hunk
+					inHunk = false;
+					if (minimalPatchLines[minimalPatchLines.length - 1] !== hunkHeader) {
+						minimalPatchLines.push('');  // Add an empty line between hunks
+					}
+				}
+			}
+		}
+
+		return minimalPatchLines.join('\n');
 	}
 
 	private async runTests(task: SWEInstance): Promise<TestResult> {
