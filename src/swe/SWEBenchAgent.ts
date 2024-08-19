@@ -95,6 +95,7 @@ export class SWEBenchAgent {
 		const codeEditingAgent = new CodeEditingAgent();
 
 		const editResult = await codeEditingAgent.runCodeEditWorkflow(editRequirements);
+		const { success, lintSuccess } = editResult;
 
 		const modelPatch = await this.generatePatch(task.base_commit);
 
@@ -114,9 +115,9 @@ export class SWEBenchAgent {
 			minimal_patch: minimalPatch,
 			test_results: testResults,
 			model: model,
-			isPlausible: editResult.success && testResults.passed,
-			editOutcome: editResult.success,
-			lintOutcome: editResult.lintSuccess,
+			isPlausible: success && testResults.passed,
+			editOutcome: success,
+			lintOutcome: lintSuccess,
 			testOutcome: testResults.passed,
 		};
 
@@ -173,8 +174,8 @@ export class SWEBenchAgent {
 		const namespace = 'aorwall';
 		const imagePrefix = 'swe-bench';
 
-		const specifications = this.getVersionSpecifications(task.repo, task.version);
-		if (specifications.instance_image) {
+		const installInstructions = this.getInstallInstructions(task.repo, task.version);
+		if (installInstructions.instance_image) {
 			return `${namespace}/${imagePrefix}-${repoName}-instance:${task.instance_id}`;
 		} else {
 			return `${namespace}/${imagePrefix}-${repoName}-testbed:${task.version}`;
