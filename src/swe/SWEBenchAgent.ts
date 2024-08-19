@@ -41,6 +41,7 @@ interface VersionInstallation {
 	install: string;
 	pip_packages?: string;
 	pre_install?: string[];
+	instance_image?: boolean;
 }
 
 /**
@@ -95,7 +96,8 @@ export class SWEBenchAgent {
 		const codeEditingAgent = new CodeEditingAgent();
 
 		const editResult = await codeEditingAgent.runCodeEditWorkflow(editRequirements);
-		const { success, lintSuccess } = editResult;
+		const success = editResult?.success ?? false;
+		const lintSuccess = editResult?.lintSuccess ?? false;
 
 		const modelPatch = await this.generatePatch(task.base_commit);
 
@@ -175,7 +177,7 @@ export class SWEBenchAgent {
 		const imagePrefix = 'swe-bench';
 
 		const installInstructions = this.getInstallInstructions(task.repo, task.version);
-		if (installInstructions.instance_image) {
+		if (installInstructions.instance_image ?? false) {
 			return `${namespace}/${imagePrefix}-${repoName}-instance:${task.instance_id}`;
 		} else {
 			return `${namespace}/${imagePrefix}-${repoName}-testbed:${task.version}`;
