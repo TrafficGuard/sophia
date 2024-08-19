@@ -513,9 +513,56 @@ MAP_VERSION_TO_INSTALL_PYLINT["3.0"] = {
     pip_packages: ["astroid==3.0.0a6", "pytest"],
 };
 
-export const MAP_VERSION_TO_INSTALL_XARRAY = {}
-export const MAP_VERSION_TO_INSTALL_SQLFLUFF = {}
-export const MAP_VERSION_TO_INSTALL_PYVISTA = {}
+export const MAP_VERSION_TO_INSTALL_XARRAY: Record<string, VersionInstallation> = {
+    ...Object.fromEntries(
+        ["0.12", "0.18", "0.19", "0.20", "2022.03", "2022.06", "2022.09"].map(k => [k, {
+            python: "3.10",
+            packages: "environment.yml",
+            install: "pip install -e .",
+            pip_packages: [
+                "numpy==1.25.2",
+                "packaging==23.1",
+                "pandas==1.5.3",
+                "pytest==8.1.1",
+                "python-dateutil==2.8.2",
+                "pytz==2023.3",
+                "six==1.16.0",
+            ],
+            no_use_env: true,
+        }])
+    ),
+};
+
+export const MAP_VERSION_TO_INSTALL_SQLFLUFF: Record<string, VersionInstallation> = {
+    ...Object.fromEntries(
+        ['0.10', '0.11', '0.12', '0.13', '0.4', '0.6', '0.8', '0.9',
+         '1.1', '1.2', '1.3', '1.4', '2.0', '2.1', '2.2'].map(k => [k, {
+            python: "3.9",
+            packages: "requirements.txt",
+            install: "pip install -e .",
+        }])
+    ),
+};
+
+export const MAP_VERSION_TO_INSTALL_PYVISTA: Record<string, VersionInstallation> = {
+    ...Object.fromEntries(
+        ['0.20', '0.21', '0.22', '0.23'].map(k => [k, {
+            python: "3.9",
+            install: "pip install -e .",
+            pip_packages: ["pytest"],
+        }])
+    ),
+    ...Object.fromEntries(
+        ['0.24', '0.25', '0.26', '0.27', '0.28', '0.29', '0.30', '0.31',
+         '0.32', '0.33', '0.34', '0.35', '0.36', '0.37', '0.38', '0.39',
+         '0.40', '0.41', '0.42', '0.43'].map(k => [k, {
+            python: "3.9",
+            packages: "requirements.txt",
+            install: "pip install -e .",
+            pip_packages: ["pytest"],
+        }])
+    ),
+};
 
 export const TEST_PYTEST = "pytest --no-header -rA --tb=no -p no:cacheprovider";
 export const TEST_PYTEST_SKIP_NO_HEADER = "pytest -rA --tb=no -p no:cacheprovider";
