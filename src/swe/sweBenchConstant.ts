@@ -32,67 +32,21 @@ export const PYENV_REPOS: Set<string> = new Set([
     "scikit-learn/scikit-learn"
 ]);
 
-export const MAP_VERSION_TO_INSTALL: Record<string, Record<string, VersionInstallation>> = {
-    'astropy/astropy': {
-        // ... (copy all entries from MAP_VERSION_TO_INSTALL_ASTROPY)
-    },
-    'django/django': {
-        // ... (copy all entries from MAP_VERSION_TO_INSTALL_DJANGO)
-    },
-    'matplotlib/matplotlib': {
-        // ... (copy all entries from MAP_VERSION_TO_INSTALL_MATPLOTLIB)
-    },
-    'marshmallow-code/marshmallow': {
-        // ... (copy all entries from MAP_VERSION_TO_INSTALL_MARSHMALLOW)
-    },
-    'mwaskom/seaborn': {
-        // ... (copy all entries from MAP_VERSION_TO_INSTALL_SEABORN)
-    },
-    'pallets/flask': {
-        // ... (copy all entries from MAP_VERSION_TO_INSTALL_FLASK)
-    },
-    'psf/requests': {
-        // ... (copy all entries from MAP_VERSION_TO_INSTALL_REQUESTS)
-    },
-    'pvlib/pvlib-python': {
-        // ... (copy all entries from MAP_VERSION_TO_INSTALL_PVLIB)
-    },
-    'pydata/xarray': {
-        // ... (copy all entries from MAP_VERSION_TO_INSTALL_XARRAY)
-    },
-    'pydicom/pydicom': {
-        // ... (copy all entries from MAP_VERSION_TO_INSTALL_PYDICOM)
-    },
-    'pylint-dev/astroid': {
-        // ... (copy all entries from MAP_VERSION_TO_INSTALL_ASTROID)
-    },
-    'pylint-dev/pylint': {
-        // ... (copy all entries from MAP_VERSION_TO_INSTALL_PYLINT)
-    },
-    'pytest-dev/pytest': {
-        // ... (copy all entries from MAP_VERSION_TO_INSTALL_PYTEST)
-    },
-    'pyvista/pyvista': {
-        // ... (copy all entries from MAP_VERSION_TO_INSTALL_PYVISTA)
-    },
-    'scikit-learn/scikit-learn': {
-        // ... (copy all entries from MAP_VERSION_TO_INSTALL_SKLEARN)
-    },
-    'sphinx-doc/sphinx': {
-        // ... (copy all entries from MAP_VERSION_TO_INSTALL_SPHINX)
-    },
-    'sqlfluff/sqlfluff': {
-        // ... (copy all entries from MAP_VERSION_TO_INSTALL_SQLFLUFF)
-    },
-    'swe-bench/humaneval': {
-        // ... (copy all entries from MAP_VERSION_TO_INSTALL_HUMANEVAL)
-    },
-    'sympy/sympy': {
-        // ... (copy all entries from MAP_VERSION_TO_INSTALL_SYMPY)
-    },
-};
 
-export const MAP_REPO_TO_INSTALL: Record<string, any> = {};
+const MAP_VERSION_TO_INSTALL_SKLEARN: Record<string, VersionInstallation> = ["0.20", "0.21", "0.22"].reduce((acc, version) => {
+    acc[version] = {
+        instance_image: true,
+        python: "3.6",
+        packages: "numpy==1.19.2 scipy==1.5.2 cython==0.29.7 pytest==4.5.0 pandas matplotlib==3.1.0 joblib threadpoolctl",
+        install: "pip install -v --no-build-isolation -e .",
+        arch_specific_packages: {
+            aarch64: "gxx_linux-aarch64 gcc_linux-aarch64 make",
+        },
+    };
+    return acc;
+}, {});
+
+
 
 export const TEST_PYTEST = "pytest --no-header -rA --tb=no -p no:cacheprovider";
 export const TEST_PYTEST_SKIP_NO_HEADER = "pytest -rA --tb=no -p no:cacheprovider";
