@@ -56,8 +56,8 @@ export class FireworksLLM extends BaseLLM {
 				userPrompt,
 				systemPrompt,
 				llmId: this.getId(),
-				agentId: agentContext().agentId,
-				callStack: agentContext().callStack.join(' > '),
+				agentId: agentContext()?.agentId,
+				callStack: agentContext()?.callStack.join(' > '),
 			});
 			const requestTime = Date.now();
 

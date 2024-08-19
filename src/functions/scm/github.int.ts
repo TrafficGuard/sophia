@@ -24,7 +24,7 @@ describe('GitHub Integration Tests', () => {
 			expect(projects).to.be.an('array');
 			expect(projects.length).to.be.greaterThan(0);
 			expect(projects[0]).to.have.property('name');
-			expect(projects[0]).to.have.property('full_name');
+			expect(projects[0]).to.have.property('namespace');
 		});
 
 		it('should throw an error for invalid organization', async () => {
@@ -51,7 +51,7 @@ describe('GitHub Integration Tests', () => {
 			expect(projects.length).to.be.greaterThan(0);
 			// console.log(projects[0]);
 			const firstProject = projects[0];
-			const clonePath = await github.cloneProject(`${firstProject.name}`, 'main');
+			const clonePath = await github.cloneProject(`${firstProject.namespace}/${firstProject.name}`, 'main');
 			expect(clonePath).to.be.a('string');
 			expect(existsSync(clonePath)).to.be.true;
 		});

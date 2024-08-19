@@ -97,7 +97,9 @@ export class GitHub implements SourceControlManagement {
 			const result = await execCommand(command, { workingDirectory: path });
 			failOnError(`Failed to clone ${projectPathWithOrg}`, result);
 		}
-		agentContext().memory[`GitHub_project_${org}_${project}_FileSystem_directory`] = path;
+		const agent = agentContext();
+		if (agent) agentContext().memory[`GitHub_project_${org}_${project}_FileSystem_directory`] = path;
+
 		return path;
 	}
 
@@ -216,7 +218,7 @@ function convertGitHubToGitProject(repo: GitHubRepository): GitProject {
 	return {
 		id: repo.id,
 		name: repo.name,
-		namespace: repo.full_name,
+		namespace: repo.full_name.split('/')[0],
 		description: repo.description,
 		defaultBranch: repo.default_branch,
 		visibility: repo.private ? 'private' : 'public',
