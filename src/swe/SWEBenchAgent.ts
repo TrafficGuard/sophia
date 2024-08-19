@@ -93,7 +93,7 @@ export class SWEBenchAgent {
 		const editRequirements = await this.prepareEditRequirements(task, readmeFiles, relevantFiles);
 
 		const codeEditingAgent = new CodeEditingAgent();
-		codeEditingAgent.setModel(model);
+
 		const editResult = await codeEditingAgent.runCodeEditWorkflow(editRequirements);
 
 		const modelPatch = await this.generatePatch(task.base_commit);
