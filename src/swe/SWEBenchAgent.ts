@@ -45,6 +45,9 @@ interface VersionInstallation {
 	pip_packages?: string;
 	pre_install?: string[];
 	instance_image?: boolean;
+	arch_specific_packages?: {
+		aarch64: string
+	}
 }
 
 /**
