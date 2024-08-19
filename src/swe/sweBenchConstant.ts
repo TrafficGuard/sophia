@@ -33,8 +33,8 @@ export const PYENV_REPOS: Set<string> = new Set([
 ]);
 
 
-const MAP_VERSION_TO_INSTALL_SKLEARN: Record<string, VersionInstallation> = ["0.20", "0.21", "0.22"].reduce((acc, version) => {
-    acc[version] = {
+export const MAP_VERSION_TO_INSTALL_SKLEARN: Record<string, VersionInstallation> = (() => {
+    const baseConfig = {
         instance_image: true,
         python: "3.6",
         packages: "numpy==1.19.2 scipy==1.5.2 cython==0.29.7 pytest==4.5.0 pandas matplotlib==3.1.0 joblib threadpoolctl",
@@ -43,8 +43,26 @@ const MAP_VERSION_TO_INSTALL_SKLEARN: Record<string, VersionInstallation> = ["0.
             aarch64: "gxx_linux-aarch64 gcc_linux-aarch64 make",
         },
     };
-    return acc;
-}, {});
+
+    const newConfig = {
+        instance_image: true,
+        python: "3.9",
+        pre_install: ["pip install setuptools wheel"],
+        packages: "numpy==1.26.4 scipy==1.13.0 cython==3.0.10 pytest==8.2.0 pandas==2.2.2 matplotlib==3.8.4 joblib==1.4.2 threadpoolctl==3.5.0",
+        install: "pip install -v --no-use-pep517 --no-build-isolation -e .",
+        arch_specific_packages: {
+            aarch64: "gxx_linux-aarch64 gcc_linux-aarch64 make",
+        },
+    };
+
+    return {
+        "0.20": baseConfig,
+        "0.21": baseConfig,
+        "0.22": baseConfig,
+        "1.3": newConfig,
+        "1.4": newConfig,
+    };
+})();
 
 
 
