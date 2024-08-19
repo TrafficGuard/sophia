@@ -465,8 +465,53 @@ export const MAP_VERSION_TO_INSTALL_ASTROPY: Record<string, VersionInstallation>
     return Object.fromEntries(versions.map(version => [version, baseConfig]));
 })();
 
-export const MAP_VERSION_TO_INSTALL_SYMPY = {}
-export const MAP_VERSION_TO_INSTALL_PYLINT = {}
+export const MAP_VERSION_TO_INSTALL_SYMPY: Record<string, VersionInstallation> = {
+    ...Object.fromEntries(
+        ["1.10", "1.11", "1.12", "1.2", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9"].map(k => [k, {
+            python: "3.9",
+            packages: "mpmath flake8",
+            pip_packages: ["mpmath==1.3.0", "flake8-comprehensions"],
+            install: "pip install -e .",
+        }])
+    ),
+    ...Object.fromEntries(
+        ["0.7", "1.0", "1.1"].map(k => [k, {
+            python: "3.7",
+            packages: "mpmath flake8",
+            pip_packages: ["mpmath==1.3.0", "flake8-comprehensions"],
+            install: "pip install -e .",
+        }])
+    ),
+    "1.13": {
+        python: "3.9",
+        packages: "requirements.txt",
+        install: "pip install -e .",
+        pip_packages: ["mpmath==1.3.0"],
+    },
+};
+
+export const MAP_VERSION_TO_INSTALL_PYLINT: Record<string, VersionInstallation> = {
+    ...Object.fromEntries(
+        ["2.10", "2.11", "2.13", "2.14", "2.15", "2.16", "2.17", "2.8", "2.9", "3.0"].map(k => [k, {
+            python: "3.9",
+            packages: "requirements.txt",
+            install: "pip install -e .",
+            pip_packages: ["pytest"],
+        }])
+    ),
+};
+
+MAP_VERSION_TO_INSTALL_PYLINT["2.15"].pre_test = ["pip install -e ."];
+
+MAP_VERSION_TO_INSTALL_PYLINT["2.13"] = {
+    ...MAP_VERSION_TO_INSTALL_PYLINT["2.13"],
+    pip_packages: ["toml", "pytest"],
+};
+
+MAP_VERSION_TO_INSTALL_PYLINT["3.0"] = {
+    ...MAP_VERSION_TO_INSTALL_PYLINT["3.0"],
+    pip_packages: ["astroid==3.0.0a6", "pytest"],
+};
 
 export const TEST_PYTEST = "pytest --no-header -rA --tb=no -p no:cacheprovider";
 export const TEST_PYTEST_SKIP_NO_HEADER = "pytest -rA --tb=no -p no:cacheprovider";
