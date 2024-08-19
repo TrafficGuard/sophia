@@ -203,8 +203,34 @@ export class SWEBenchAgent {
 	}
 
 	private getInstallInstructions(repo: string, version: string): VersionInstallation {
-		// This would be a large mapping similar to MAP_VERSION_TO_INSTALL in the Python implementation
-		// For brevity, we'll just return a default value here
+		// This is a large mapping similar to MAP_VERSION_TO_INSTALL in the Python implementation
+		const MAP_VERSION_TO_INSTALL: Record<string, Record<string, VersionInstallation>> = {
+			'huggingface/transformers': {
+				'4.18.0': {
+					python: '3.7',
+					packages: 'torch torchvision torchaudio',
+					install: 'pip install -e .',
+					pip_packages: 'datasets',
+				},
+				// Add more versions as needed
+			},
+			'pytorch/pytorch': {
+				'1.11.0': {
+					python: '3.7',
+					packages: 'numpy ninja pyyaml setuptools cmake cffi typing_extensions future six requests dataclasses',
+					install: 'pip install -e .',
+					pre_install: ['pip install --upgrade pip'],
+				},
+				// Add more versions as needed
+			},
+			// Add more repositories as needed
+		};
+
+		if (MAP_VERSION_TO_INSTALL[repo] && MAP_VERSION_TO_INSTALL[repo][version]) {
+			return MAP_VERSION_TO_INSTALL[repo][version];
+		}
+
+		// Default value if not found in the mapping
 		return {
 			python: '3.9',
 			packages: 'requirements.txt',
