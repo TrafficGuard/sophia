@@ -564,7 +564,58 @@ export const MAP_VERSION_TO_INSTALL_PYVISTA: Record<string, VersionInstallation>
     ),
 };
 
-export const MAP_VERSION_TO_INSTALL_ASTROID = {}
+export const MAP_VERSION_TO_INSTALL_ASTROID: Record<string, VersionInstallation> = {
+    ...Object.fromEntries(
+        ['2.10', '2.12', '2.13', '2.14', '2.15', '2.5', '2.6', '2.7', '2.9', '3.0'].map(k => [k, {
+            python: "3.9",
+            install: "pip install -e .",
+            pip_packages: ["pytest"],
+        }])
+    )
+};
+
+// Add additional pip packages for specific versions
+['2.5', '2.6'].forEach(version => {
+    if (MAP_VERSION_TO_INSTALL_ASTROID[version]) {
+        MAP_VERSION_TO_INSTALL_ASTROID[version].pip_packages?.push(
+            "lazy_object_proxy==1.9.0",
+            "wrapt==1.12.1"
+        );
+    }
+});
+
+['2.9', '2.10'].forEach(version => {
+    if (MAP_VERSION_TO_INSTALL_ASTROID[version]) {
+        MAP_VERSION_TO_INSTALL_ASTROID[version].pip_packages?.push(
+            "lazy_object_proxy==1.9.0",
+            "wrapt==1.13.3",
+            "typing-extensions==4.8.0",
+            "setuptools==68.0.0"
+        );
+    }
+});
+
+['2.12', '2.13', '2.14', '2.15'].forEach(version => {
+    if (MAP_VERSION_TO_INSTALL_ASTROID[version]) {
+        MAP_VERSION_TO_INSTALL_ASTROID[version].pip_packages?.push(
+            "lazy_object_proxy==1.9.0",
+            "wrapt==1.15.0",
+            "typing-extensions==4.8.0"
+        );
+    }
+});
+
+if (MAP_VERSION_TO_INSTALL_ASTROID['2.7']) {
+    MAP_VERSION_TO_INSTALL_ASTROID['2.7'].pip_packages?.push(
+        "lazy_object_proxy==1.9.0",
+        "wrapt==1.12.1",
+        "typing-extensions==4.8.0"
+    );
+}
+
+if (MAP_VERSION_TO_INSTALL_ASTROID['3.0']) {
+    MAP_VERSION_TO_INSTALL_ASTROID['3.0'].pip_packages?.push("typing-extensions==4.8.0");
+}
 
 export const TEST_PYTEST = "pytest --no-header -rA --tb=no -p no:cacheprovider";
 export const TEST_PYTEST_SKIP_NO_HEADER = "pytest -rA --tb=no -p no:cacheprovider";
