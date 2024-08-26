@@ -62,8 +62,8 @@ export async function execCmd(command: string, cwd = ''): Promise<ExecResults> {
 				exitCode: result.error ? 1 : 0,
 			});
 			span.setStatus({ code: result.error ? SpanStatusCode.ERROR : SpanStatusCode.OK });
-			return result;
 		}
+		return result;
 	});
 }
 
@@ -90,6 +90,7 @@ export function failOnError(userMessage: string, execResult: ExecResult): void {
 export interface ExecCmdOptions {
 	workingDirectory?: string;
 	envVars?: Record<string, string>;
+	throwOnError?: boolean;
 }
 
 // TODO stream the output and watch for cmdsubst> which would indicate a malformed command
@@ -98,7 +99,7 @@ export async function execCommand(command: string, opts?: ExecCmdOptions): Promi
 	return withSpan('execCommand', async (span) => {
 		const shell = os.platform() === 'darwin' ? '/bin/zsh' : '/bin/bash';
 
-		const env = opts?.envVars ? { ...process.env, ...opts.envVars } : undefined;
+		const env = opts?.envVars ? { ...process.env, ...opts.envVars } : process.env;
 		const options: ExecOptions = { cwd: opts?.workingDirectory ?? getFileSystem().getWorkingDirectory(), shell, env };
 		try {
 			logger.info(`${options.cwd} % ${command}`);
@@ -125,6 +126,11 @@ export async function execCommand(command: string, opts?: ExecCmdOptions): Promi
 			span.recordException(error);
 			span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
 			logger.error(error, `Error executing ${command}`);
+			if (opts?.throwOnError) {
+				const e: any = new Error(`Error running ${command}. ${error.stdout} ${error.stderr}`);
+				e.code = error.code;
+				throw e;
+			}
 			return { stdout: error.stdout, stderr: error.stderr, exitCode: error.code };
 		}
 	});
@@ -134,7 +140,7 @@ export async function spawnCommand(command: string, workingDirectory?: string): 
 	return withSpan('spawnCommand', async (span) => {
 		const shell = os.platform() === 'darwin' ? '/bin/zsh' : '/bin/bash';
 		const cwd = workingDirectory ?? getFileSystem().getWorkingDirectory();
-		const options: SpawnOptionsWithoutStdio = { cwd, shell };
+		const options: SpawnOptionsWithoutStdio = { cwd, shell, env: process.env };
 		try {
 			logger.info(`${options.cwd} % ${command}`);
 			const { stdout, stderr, code } = await spawnAsync(command, options);
