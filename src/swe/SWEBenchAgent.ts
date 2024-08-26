@@ -1,6 +1,5 @@
 import { getFileSystem } from '#agent/agentContext';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
-import { func, funcClass } from '#functionSchema/functionDecorators';
 import { GitHub } from '#functions/scm/github';
 import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { countTokens } from '#llm/tokens';
@@ -9,12 +8,12 @@ import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { PythonTools } from '#swe/lang/python/pythonTools';
 import { ProjectInfo } from '#swe/projectDetection';
 import { selectFilesToEdit } from '#swe/selectFilesToEdit';
-import { ExecResult, execCommand } from '#utils/exec';
-import {MAP_VERSION_TO_INSTALL, VersionInstallation} from "#swe/sweBenchConstant";
+import { MAP_REPO_TO_TEST_FRAMEWORK, MAP_VERSION_TO_INSTALL, VersionInstallation } from '#swe/sweBenchConstant';
+import { execCommand } from '#utils/exec';
 
 export interface SWEInstance {
 	instance_id: string;
-	text: string;
+	// text: string;
 	repo: string;
 	base_commit: string;
 	problem_statement: string;
@@ -39,20 +38,18 @@ interface TestResult {
 	output: string;
 }
 
-
-
 /**
  * Workflow for completing requirements. This will look up the appropriate project in source control, clone, make the changes and create a pull/merge request.
  * Assumes the SCM is set on the workflow context
  */
-@funcClass(__filename)
+// @funcClass(__filename)
 export class SWEBenchAgent {
 	private readonly MAX_CONTEXT_LENGTH = 16000;
 	private readonly PROMPT_STYLE = 'style-3';
-	private readonly MAX_ATTEMPTS = 6;
-	private readonly MODELS = ['gpt-4o', 'openrouter/anthropic/claude-3-opus'];
+	private readonly MAX_ATTEMPTS = 1; // 6
+	// private readonly MODELS = ['gpt-4o', 'openrouter/anthropic/claude-3-opus'];
 
-	@func()
+	// @func()
 	async runInference(task: SWEInstance): Promise<string> {
 		let bestResult: any = null;
 
@@ -85,7 +82,7 @@ export class SWEBenchAgent {
 			async (agent) => {
 				// Setup
 				const repo = task.repo;
-				const path = await new GitHub().cloneProject(repo, task.environment_setup_commit);
+				const path = await new GitHub().cloneProject(repo, task.base_commit);
 				getFileSystem().setWorkingDirectory(path);
 
 				// Environment setup
@@ -145,60 +142,46 @@ export class SWEBenchAgent {
 	}
 
 	private async setupEnvironment(task: SWEInstance): Promise<void> {
-		const installInstructions = this.getInstallInstructions(task.repo, task.version);
+		const installInstructions: VersionInstallation = this.getInstallInstructions(task.repo, task.version);
 		const envName = task.repo.split('/')[1];
 
-		// Use Docker instead of conda
-		const dockerImage = this.getDockerImage(task);
-		await execCommand(`docker pull ${dockerImage}`);
+		logger.info('Install instructions');
+		logger.info(installInstructions);
 
-		// Run Docker container
-		await execCommand(`docker run -d --name ${envName} ${dockerImage}`);
+		await execCommand(`echo '${installInstructions.python}' > .python-version`, { throwOnError: true });
+		const pv = await execCommand('python --version');
+		logger.info(pv.stdout);
+
+		// Run pre-install commands
+		if (installInstructions.pre_install) {
+			for (const cmd of installInstructions.pre_install) {
+				await execCommand(cmd);
+			}
+		}
 
 		// Install packages
 		if (installInstructions.packages) {
 			if (installInstructions.packages === 'requirements.txt') {
 				const reqContent = await this.getRequirements(task);
-				await execCommand(`docker exec ${envName} bash -c "echo '${reqContent}' > requirements.txt && pip install -r requirements.txt"`);
+				await execCommand(`echo '${reqContent}' > requirements.txt && pip install -r requirements.txt`, { throwOnError: true });
 			} else if (installInstructions.packages === 'environment.yml') {
 				const envContent = await this.getEnvironmentYml(task);
-				await execCommand(`docker exec ${envName} bash -c "echo '${envContent}' > environment.yml && conda env update -f environment.yml"`);
+				await execCommand(`echo '${envContent}' > environment.yml && conda env update -f environment.yml`, { throwOnError: true });
 			} else {
-				await execCommand(`docker exec ${envName} conda install -y ${installInstructions.packages}`);
+				await execCommand(`conda install -y ${installInstructions.packages}`, { throwOnError: true });
 			}
 		}
 
 		// Install additional pip packages
-		if (installInstructions.pip_packages) {
-			await execCommand(`docker exec ${envName} pip install ${installInstructions.pip_packages}`);
-		}
-
-		// Run pre-install commands
-		if (installInstructions.pre_install) {
-			for (const cmd of installInstructions.pre_install) {
-				await execCommand(`docker exec ${envName} ${cmd}`);
-			}
-		}
+		const pipPackages = installInstructions.pip_packages?.join(' ') ?? '';
+		await execCommand(`pip install aider ${pipPackages}`);
 
 		// Run install command
-		await execCommand(`docker exec ${envName} ${installInstructions.install}`);
-	}
-
-	private getDockerImage(task: SWEInstance): string {
-		const repoName = task.repo.replace('/', '_');
-		const namespace = 'aorwall';
-		const imagePrefix = 'swe-bench';
-
-		const installInstructions = this.getInstallInstructions(task.repo, task.version);
-		if (installInstructions.instance_image ?? false) {
-			return `${namespace}/${imagePrefix}-${repoName}-instance:${task.instance_id}`;
-		}
-		return `${namespace}/${imagePrefix}-${repoName}-testbed:${task.version}`;
+		await execCommand(installInstructions.install);
 	}
 
 	private getInstallInstructions(repo: string, version: string): VersionInstallation {
-
-		if (MAP_VERSION_TO_INSTALL[repo] && MAP_VERSION_TO_INSTALL[repo][version]) {
+		if (MAP_VERSION_TO_INSTALL[repo]?.[version]) {
 			return MAP_VERSION_TO_INSTALL[repo][version];
 		}
 
@@ -218,22 +201,23 @@ export class SWEBenchAgent {
 		try {
 			requirements = await fs.readFile('requirements.txt');
 		} catch (error) {
-			console.warn('requirements.txt not found');
+			logger.warn('requirements.txt not found');
 		}
 
 		// Check for setup.py
 		if (!requirements) {
 			try {
 				const setupPy = await fs.readFile('setup.py');
+				logger.info('setup.py found');
 				const installRequiresMatch = setupPy.match(/install_requires\s*=\s*\[([\s\S]*?)\]/);
 				if (installRequiresMatch) {
 					requirements = installRequiresMatch[1]
 						.split(',')
-						.map(req => req.trim().replace(/['"]/g, ''))
+						.map((req) => req.trim().replace(/['"]/g, ''))
 						.join('\n');
 				}
 			} catch (error) {
-				console.warn('setup.py not found or does not contain install_requires');
+				logger.warn('setup.py not found or does not contain install_requires');
 			}
 		}
 
@@ -241,16 +225,17 @@ export class SWEBenchAgent {
 		if (!requirements) {
 			try {
 				const pyprojectToml = await fs.readFile('pyproject.toml');
+				logger.info('pyproject.toml found');
 				const dependenciesMatch = pyprojectToml.match(/\[tool\.poetry\.dependencies\]([\s\S]*?)(\[|$)/);
 				if (dependenciesMatch) {
 					requirements = dependenciesMatch[1]
 						.split('\n')
-						.filter(line => line.includes('='))
-						.map(line => line.split('=')[0].trim())
+						.filter((line) => line.includes('='))
+						.map((line) => line.split('=')[0].trim())
 						.join('\n');
 				}
 			} catch (error) {
-				console.warn('pyproject.toml not found or does not contain dependencies');
+				logger.warn('pyproject.toml not found or does not contain dependencies');
 			}
 		}
 
@@ -265,14 +250,14 @@ export class SWEBenchAgent {
 		try {
 			envYml = await fs.readFile('environment.yml');
 		} catch (error) {
-			console.warn('environment.yml not found');
+			logger.warn('environment.yml not found');
 		}
 
 		// If environment.yml doesn't exist, create one based on the installation instructions
 		if (!envYml) {
 			const installInstructions = this.getInstallInstructions(task.repo, task.version);
 			envYml = 'name: swe-bench\n';
-			envYml += `channels:\n  - defaults\n  - conda-forge\n`;
+			envYml += 'channels:\n  - defaults\n  - conda-forge\n';
 			envYml += `dependencies:\n  - python=${installInstructions.python}\n`;
 
 			if (installInstructions.packages) {
@@ -285,7 +270,7 @@ export class SWEBenchAgent {
 			}
 
 			if (installInstructions.pip_packages) {
-				envYml += `  - pip\n  - pip:\n`;
+				envYml += '  - pip\n  - pip:\n';
 				for (const pkg of installInstructions.pip_packages) {
 					envYml += `    - ${pkg}\n`;
 				}
@@ -341,7 +326,6 @@ export class SWEBenchAgent {
 				return `Fix this issue:\n\n${problemStatement}\n\nPropose changes.`;
 			case 'style-2':
 				return `Problem statement: ${problemStatement}\n\nPlease provide a patch to resolve this issue.`;
-			case 'style-3':
 			default:
 				return `Below is a real GitHub issue from a popular GitHub repository.
 The issue was filed some time ago.
@@ -379,7 +363,7 @@ ${problemStatement}`;
 					// End of the current hunk
 					inHunk = false;
 					if (minimalPatchLines[minimalPatchLines.length - 1] !== hunkHeader) {
-						minimalPatchLines.push('');  // Add an empty line between hunks
+						minimalPatchLines.push(''); // Add an empty line between hunks
 					}
 				}
 			}
@@ -415,9 +399,12 @@ ${problemStatement}`;
 	}
 
 	private getTestFramework(repo: string): string {
-		// This would be a mapping similar to MAP_REPO_TO_TEST_FRAMEWORK in the Python implementation
-		// For simplicity, we'll just return a default value
-		return 'pytest --no-header -rA --tb=no -p no:cacheprovider';
+		let testFramework = MAP_REPO_TO_TEST_FRAMEWORK[repo];
+		if (!testFramework) {
+			logger.warn(`No test framework configured for ${repo}`);
+			testFramework = 'pytest --no-header -rA --tb=no -p no:cacheprovider';
+		}
+		return testFramework;
 	}
 
 	private async generatePatch(baseCommit: string): Promise<string> {
