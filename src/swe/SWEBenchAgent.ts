@@ -82,16 +82,16 @@ export class SWEBenchAgent {
 			async (agent) => {
 				// Setup
 				const repo = task.repo;
-				logger.info(`Cloning ${repo}`)
+				logger.info(`Cloning ${repo}`);
 				const path = await new GitHub().cloneProject(repo, task.base_commit);
 				getFileSystem().setWorkingDirectory(path);
 
 				// Environment setup
-				logger.info(`Environment setup`)
+				logger.info('Environment setup');
 				await this.setupEnvironment(task);
 
 				// Get README files
-				logger.info(`Get README files`)
+				logger.info('Get README files');
 				const readmeFiles = await this.getReadmeFiles();
 
 				// Get relevant file contents

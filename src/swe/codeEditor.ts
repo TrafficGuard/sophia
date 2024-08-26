@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync } from 'fs';
+import { execSync } from 'node:child_process';
 import fs, { readFile, unlinkSync } from 'node:fs';
 import path, { join } from 'path';
 import { promisify } from 'util';
@@ -80,8 +81,8 @@ export class CodeEditor {
 		}
 
 		// --map-tokens=2048
-
-		const cmd = `aider --no-check-update --yes ${modelArg} --llm-history-file="${llmHistoryFile}" --message-file=${messageFilePath} ${filesToEdit
+		// Use the Python from the Nous .python-version as it will have aider installed
+		const cmd = `${getPythonPath()} -m aider --no-check-update --yes ${modelArg} --llm-history-file="${llmHistoryFile}" --message-file=${messageFilePath} ${filesToEdit
 			.map((file) => `"${file}"`)
 			.join(' ')}`;
 
@@ -129,4 +130,12 @@ export class CodeEditor {
 			.map((line) => line.replace(/^ASSISTANT\s/, ''))
 			.join('\n');
 	}
+}
+
+function getPythonPath() {
+	// Read the Nous .python-version file
+	const pythonVersionFile = path.join(process.cwd(), '.python-version');
+	const pythonVersion = fs.readFileSync(pythonVersionFile, 'utf8').trim();
+	// Use pyenv to find the path of the specified Python version
+	return execSync(`pyenv prefix ${pythonVersion}`, { encoding: 'utf8' }).trim();
 }
