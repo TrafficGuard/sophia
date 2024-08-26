@@ -132,7 +132,7 @@ export class CodeEditor {
 	}
 }
 
-function getPythonPath() {
+export function getPythonPath() {
 	// Read the Nous .python-version file
 	const pythonVersionFile = path.join(process.cwd(), '.python-version');
 	const pythonVersion = fs.readFileSync(pythonVersionFile, 'utf8').trim();
