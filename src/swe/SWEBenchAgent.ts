@@ -385,14 +385,14 @@ ${problemStatement}`;
 		let allPassed = true;
 
 		for (const test of failToPass) {
-			const result = await execCommand(`docker exec ${envName} ${testFramework} ${test}`);
+			const result = await execCommand(`${testFramework} ${test}`);
 			const passed = result.exitCode === 0;
 			results += `FAIL_TO_PASS ${test}: ${passed ? 'PASS' : 'FAIL'}\n`;
 			allPassed = allPassed && passed;
 		}
 
 		for (const test of passToPass) {
-			const result = await execCommand(`docker exec ${envName} ${testFramework} ${test}`);
+			const result = await execCommand(`${testFramework} ${test}`);
 			const passed = result.exitCode === 0;
 			results += `PASS_TO_PASS ${test}: ${passed ? 'PASS' : 'FAIL'}\n`;
 			allPassed = allPassed && passed;
