@@ -137,5 +137,5 @@ export function getPythonPath() {
 	const pythonVersionFile = path.join(process.cwd(), '.python-version');
 	const pythonVersion = fs.readFileSync(pythonVersionFile, 'utf8').trim();
 	// Use pyenv to find the path of the specified Python version
-	return execSync(`pyenv prefix ${pythonVersion}`, { encoding: 'utf8' }).trim();
+	return execSync(`pyenv prefix ${pythonVersion}/bin/python`, { encoding: 'utf8' }).trim();
 }
