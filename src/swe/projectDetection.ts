@@ -185,7 +185,7 @@ Explain your reasoning, then output a Markdown JSON block, with the JSON formatt
 		languageTools: getLanguageTools(projectDetection.language),
 	};
 	logger.info(projectInfo, 'ProjectInfo detected');
-	await getFileSystem().writeFile('projectInfo.json', JSON.stringify(projectInfo, null, 2));
+	await getFileSystem().writeFile('projectInfo.json', JSON.stringify([projectInfo], null, 2));
 	return [projectInfo];
 }
 
