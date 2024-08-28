@@ -1,9 +1,9 @@
 import { getFileSystem } from '#agent/agentContext';
 import { funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
+import { getPythonPath } from '#swe/codeEditor';
 import { execCmd, execCommand } from '#utils/exec';
 import { LanguageTools } from '../languageTools';
-import {getPythonPath} from "#swe/codeEditor";
 
 @funcClass(__filename)
 export class PythonTools implements LanguageTools {

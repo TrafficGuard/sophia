@@ -28,7 +28,7 @@ async function main() {
 
 	await new SWEBenchAgent().runInference(instance);
 
-	if (2 * 3 === 6) return;
+	if (!process.env.ASDF) return;
 	// let args = process.argv.toSpliced(2);
 	//
 	// args = args.filter(arg => !arg.startsWith('-'))
