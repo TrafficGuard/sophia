@@ -3,7 +3,7 @@ import { AnthropicVertex } from '@anthropic-ai/vertex-sdk';
 import { AgentLLMs, addCost, agentContext } from '#agent/agentContext';
 import { BaseLLM } from '../base-llm';
 import { MaxTokensError } from '../errors';
-import { GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../llm';
+import { GenerateTextOptions, LLM, LlmMessage, combinePrompts, logTextGeneration } from '../llm';
 import Message = Anthropic.Message;
 import { LlmCall } from '#llm/llmCallService/llmCall';
 import { CallerId } from '#llm/llmCallService/llmCallService';
@@ -106,6 +106,128 @@ class AnthropicVertexLLM extends BaseLLM {
 			const maxOutputTokens = 4096;
 
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
+			span.setAttributes({
+				userPrompt,
+				inputChars: combinedPrompt.length,
+				model: this.model,
+				service: this.service,
+				caller: agentContext().callStack.at(-1) ?? '',
+			});
+			if (opts?.id) span.setAttribute('id', opts.id);
+
+			const llmCallSave: Promise<LlmCall> = appContext().llmCallService.saveRequest({
+				userPrompt,
+				systemPrompt,
+				llmId: this.getId(),
+				agentId: agentContext().agentId,
+				callStack: agentContext().callStack.join(' > '),
+			});
+			const requestTime = Date.now();
+
+			let message: Message;
+			try {
+				message = await this.api().messages.create({
+					system: systemPrompt ? [{ type: 'text', text: systemPrompt }] : undefined,
+					messages: [
+						{
+							role: 'user',
+							content: userPrompt,
+						},
+					],
+					model: this.model,
+					max_tokens: maxOutputTokens,
+					stop_sequences: opts?.stopSequences,
+				});
+			} catch (e) {
+				if (this.isRetryableError(e)) {
+					throw new RetryableError(e);
+				}
+				throw e;
+			}
+
+			// This started happening randomly!
+			if (typeof message === 'string') {
+				message = JSON.parse(message);
+			}
+
+			const errorMessage = message as any;
+			if (errorMessage.type === 'error') {
+				throw new Error(`${errorMessage.error.type} ${errorMessage.error.message}`);
+			}
+
+			if (!message.content.length) throw new Error(`Response Message did not have any content: ${JSON.stringify(message)}`);
+
+			if (message.content[0].type !== 'text') throw new Error(`Message content type was not text. Was ${message.content[0].type}`);
+
+			const responseText = (message.content[0] as TextBlock).text;
+
+			const finishTime = Date.now();
+			const timeToFirstToken = finishTime - requestTime;
+
+			const llmCall: LlmCall = await llmCallSave;
+
+			// TODO
+			const inputTokens = message.usage.input_tokens;
+			const outputTokens = message.usage.output_tokens;
+
+			const inputCost = this.calculateInputCost(combinedPrompt);
+			const outputCost = this.calculateOutputCost(responseText);
+			const cost = inputCost + outputCost;
+			addCost(cost);
+
+			llmCall.responseText = responseText;
+			llmCall.timeToFirstToken = timeToFirstToken;
+			llmCall.totalTime = finishTime - requestTime;
+			llmCall.cost = cost;
+			llmCall.inputTokens = inputTokens;
+			llmCall.outputTokens = outputTokens;
+
+			span.setAttributes({
+				inputTokens,
+				outputTokens,
+				response: responseText,
+				inputCost: inputCost.toFixed(4),
+				outputCost: outputCost.toFixed(4),
+				cost: cost.toFixed(4),
+				outputChars: responseText.length,
+				callStack: agentContext().callStack.join(' > '),
+			});
+
+			try {
+				await appContext().llmCallService.saveResponse(llmCall);
+			} catch (e) {
+				// queue to save
+				logger.error(e);
+			}
+
+			if (message.stop_reason === 'max_tokens') {
+				// TODO we can replay with request with the current response appended so the LLM can complete it
+				logger.error('= RESPONSE exceeded max tokens ===============================');
+				logger.debug(responseText);
+				throw new MaxTokensError(maxOutputTokens, responseText);
+			}
+			return responseText;
+		});
+	}
+
+	// Error when
+	// {"error":{"code":400,"message":"Project `1234567890` is not allowed to use Publisher Model `projects/project-id/locations/us-central1/publishers/anthropic/models/claude-3-haiku@20240307`","status":"FAILED_PRECONDITION"}}
+	@cacheRetry({ backOffMs: 5000 })
+	// @logTextGeneration
+	async generateText2(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string> {
+		return await withActiveSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
+			const maxOutputTokens = 4096;
+
+			let systemPrompt: string | undefined;
+			if (messages[0].role === 'system') {
+				systemPrompt = messages[0].text;
+				span.setAttribute('systemPrompt', systemPrompt);
+				messages = messages.slice(1);
+			}
+
+			const userPrompt = messages.map((msg) => msg.text).join('\n');
+			const combinedPrompt = combinePrompts(userPrompt, systemPrompt);
+
 			span.setAttributes({
 				userPrompt,
 				inputChars: combinedPrompt.length,

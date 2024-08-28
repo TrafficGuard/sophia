@@ -7,7 +7,7 @@ import { SourceControlManagement } from '#functions/scm/sourceControlManagement'
 import { logger } from '#o11y/logger';
 import { functionConfig } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
-import { checkExecResult, execCmd, execCommand, failOnError } from '#utils/exec';
+import { checkExecResult, execCmd, execCommand, failOnError, runShellCommand, spawnCommand } from '#utils/exec';
 import { GitProject } from './gitProject';
 
 type RequestType = typeof request;
@@ -86,21 +86,38 @@ export class GitHub implements SourceControlManagement {
 			// If we're resuming an agent which has already created the branch but not pushed
 			// then it won't exist remotely, so this will return a non-zero code
 			if (branchOrCommit) {
-				// TODO
-			}
+				// Fetch all branches and commits
+				await execCommand(`git -C ${path} fetch --all`, { workingDirectory: path });
 
-			const result = await execCommand(`git -C ${path} pull`, { workingDirectory: path });
-			// checkExecResult(result, `Failed to pull ${path}`);
+				// Checkout to the branch or commit
+				const result = await execCommand(`git -C ${path} checkout ${branchOrCommit}`, { workingDirectory: path });
+				failOnError(`Failed to checkout ${branchOrCommit} in ${path}`, result);
+
+				// if (this.checkIfBranch(branchOrCommit)) {
+				// 	const pullResult = await execCommand(`git pull`);
+				// 	failOnError(`Failed to pull ${path} after checking out ${branchOrCommit}`, pullResult);
+				// }
+			}
 		} else {
 			logger.info(`Cloning project: ${org}/${project} to ${path}`);
-			const command = `git clone https://oauth2:${this.config().token}@github.com/${projectPathWithOrg}.git ${path}`;
-			const result = await execCommand(command, { workingDirectory: path });
+			const command = `git clone 'https://oauth2:${this.config().token}@github.com/${projectPathWithOrg}.git' ${path}`;
+			const result = await spawnCommand(command);
+			// if(result.error) throw result.error
 			failOnError(`Failed to clone ${projectPathWithOrg}`, result);
+
+			const checkoutResult = await execCommand(`git -C ${path} checkout ${branchOrCommit}`, { workingDirectory: path });
+			failOnError(`Failed to checkout ${branchOrCommit} in ${path}`, checkoutResult);
 		}
 		const agent = agentContext();
 		if (agent) agentContext().memory[`GitHub_project_${org}_${project}_FileSystem_directory`] = path;
 
 		return path;
+	}
+
+	async checkIfBranch(ref: string): Promise<boolean> {
+		const result = await execCommand(`git show-ref refs/heads/${ref}`);
+		if (result.exitCode) return false;
+		return result.stdout.trim().length > 0;
 	}
 
 	@func()

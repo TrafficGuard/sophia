@@ -13,7 +13,7 @@ export function parseProcessArgs(): CliOptions {
 	const scriptPath = process.argv[1];
 	let scriptName = scriptPath.split(path.sep).at(-1);
 	scriptName = scriptName.substring(0, scriptName.length - 3);
-	return parseUserCliArgs(scriptName, process.argv.slice(2));
+	return parseUserCliArgs(scriptName, process.argv.toSpliced(2));
 }
 
 export function parseUserCliArgs(scriptName: string, args: string[]): CliOptions {
