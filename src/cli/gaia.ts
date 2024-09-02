@@ -5,7 +5,7 @@ import { AgentLLMs } from '#agent/agentContext';
 import { AGENT_COMPLETED_PARAM_NAME } from '#agent/agentFunctions';
 import { startAgent, startAgentAndWait } from '#agent/agentRunner';
 import { FileSystem } from '#functions/storage/filesystem';
-import { UtilFunctions } from '#functions/util';
+import { LlmTools } from '#functions/util';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
 import { LlmCall } from '#llm/llmCallService/llmCall';
@@ -101,7 +101,7 @@ async function answerGaiaQuestion(task: GaiaQuestion): Promise<GaiaResult> {
 				budget,
 				count: 100,
 			},
-			functions: [PublicWeb, Perplexity, FileSystem, UtilFunctions],
+			functions: [PublicWeb, Perplexity, FileSystem, LlmTools],
 		});
 
 		const agent = await appContext().agentStateService.load(agentId);
@@ -138,7 +138,7 @@ async function main() {
 		llms = ClaudeLLMs();
 	}
 
-	const args = process.argv.toSpliced(2);
+	const args = process.argv.splice(2);
 	const questions = JSON.parse(readFileSync(tasksFile).toString()) as GaiaQuestion[];
 	if (args.length === 0) {
 		logger.info('Running entire Gaia benchmark...');

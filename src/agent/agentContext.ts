@@ -55,6 +55,17 @@ export type AgentRunningState =
 	| 'child_agents'
 	| 'timeout';
 
+export type AgentType = 'xml' | 'python' | 'cachingPython';
+
+export interface Message {
+	role: 'user' | 'assistant';
+	text: string;
+}
+
+export function isExecuting(agent: AgentContext): boolean {
+	return agent.state !== 'completed' && agent.state !== 'feedback' && agent.state !== 'hil' && agent.state !== 'error';
+}
+
 /**
  * The state of an agent.
  */
@@ -92,10 +103,18 @@ export interface AgentContext {
 	/** Time of the last database write of the state */
 	lastUpdate: number;
 
+	metadata: Record<string, any>;
+
+	// ChatBot properties ----------------
+
+	messages: Message[];
+	/** Messages sent by users while the agent is still processing the last message */
+	pendingMessages: Message[];
+
 	// Autonomous agent specific properties --------------------
 
 	/** The type of autonomous agent function calling.*/
-	type: 'xml' | 'python';
+	type: AgentType;
 	/** The number of completed iterations of the agent control loop */
 	iterations: number;
 	/** The function calls the agent is about to call (xml only) */
@@ -176,6 +195,7 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		agentId: config.resumeAgentId || randomUUID(),
 		executionId: randomUUID(),
 		traceId: '',
+		metadata: config.metadata ?? {},
 		name: config.agentName,
 		type: config.type ?? 'python',
 		user: config.user ?? currentUser(),
@@ -184,6 +204,8 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		state: 'agent',
 		iterations: 0,
 		functionCallHistory: [],
+		messages: [],
+		pendingMessages: [],
 		callStack: [],
 		notes: [],
 		hilBudget,
@@ -223,7 +245,7 @@ export function serializeContext(context: AgentContext): Record<string, any> {
 			serialized[key] = context[key].toJSON();
 		}
 		// Handle Maps (must only contain primitive/simple object values)
-		else if (key === 'memory') {
+		else if (key === 'memory' || key === 'metadata') {
 			serialized[key] = context[key];
 		} else if (key === 'llms') {
 			serialized[key] = {
@@ -259,6 +281,7 @@ export async function deserializeAgentContext(serialized: Record<string, any>): 
 	resetFileSystemFunction(context as AgentContext); // TODO add a test for this
 
 	context.memory = serialized.memory;
+	context.metadata = serialized.metadata;
 	context.llms = deserializeLLMs(serialized.llms);
 
 	const user = currentUser();

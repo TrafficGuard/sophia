@@ -1,4 +1,8 @@
-export type ToolType = 'filestore' | 'notification' | 'scm';
+export type ToolType =
+	| 'filestore' // blob store, locally or S3, Cloud Storage etc
+	| 'notification' // Sends notification the agent supervisor
+	| 'scm' // Source Control Management, GitHub, GitLab
+	| 'chat'; // For a chatbot to reply to a conversation
 
 /**
  * @param object function class instance

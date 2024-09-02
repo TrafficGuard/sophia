@@ -133,6 +133,7 @@ As you progress through the task, you may need to:
 3. Manage memory:
    Call Agent_addMemory to store key information (e.g., identifiers, summaries) required for future steps or function calls.
    Call Agent_deleteMemory to delete entries no longer required for future steps or completing the user request.
+   Complex analysis of data can be performed in subsequent iterations if necessary.
 
 4. Seek clarification:
    Call Agent_requestFeedback when facing uncertainty or needing additional information to proceed.
@@ -140,7 +141,7 @@ As you progress through the task, you may need to:
 ## Important Considerations
 - Information retention: After updating the plan, you won't have access to complete function results, so include all necessary information in the plan or memory.
 - Continuous application of reasoning: Apply relevant reasoning techniques at each step of the process.
-
+- Step-by-step processing: Avoid trying to complete complex tasks in a single step. Instead, focus on retrieving necessary data and returning it for further analysis in subsequent steps.
 
 # Example request/response
 
@@ -271,6 +272,7 @@ Provide a concise details of the most probable next steps of the plan (i.e. func
 Then applying logic reasoning, taking into account all of the provided context, explain which are the most appropriate choice(s).
 List the possible functions from the <functions> section which are relevant to complete the next step, along with the parameter descriptions.
 Select the function(s) to best complete the next step. You may call more than one function. Call the Agent.requestFeedback if more details/decisions are required, or Agent.completed if the request is complete.
+Otherwise return any values to analyse further.
 -->
 </next_step_details>
 
@@ -290,8 +292,9 @@ Select the function(s) to best complete the next step. You may call more than on
 # When calling Agent_completed or Agent_requestFeedback you must directly return its result. (Ensure any required information has already been stored to memory)
 # This script may be running on repositories where the source code files are TypeScript, Java, Terraform, PHP, C#, C++, Ruby etc. Do not assume Python files.
 # The files projectInfo.json and CONVENTIONS.md may possibly exists to tell you more about a code project.
-# You can directly analyze contents in memory. If you need to analyze unstructured data you can return it to view in the next step.
+# You can directly analyze contents in memory. If you need to analyze unstructured data then include it to a return Dict value to view in the next step.
 # All maths must be done in Python code
+# Do NOT assume anything about the structure of the results from functions. Return values that require further analysis
 # Example:
 # Check if the desired content is in memory from a previous step. Result: (None found/Found ...)
 # Get the two lists asked for in the next step details
@@ -301,9 +304,7 @@ print("list1.length " + len(list1))
 # list1 is unchanged so do not re-save to memory
 result2: List[str] = await FunctionClass2_returnStringList()
 print("result2.length " + len(result2))
-# The user task wanted the combined list of both values
-# We have the information so we can now complete the task with it
-note: str = "The combined results are: " + json.dumps(result1 + list1)
-return await Agent_complete(note)
+# Do not assume the structure/styles values, return the values for further analysis
+return { list1: list1, list2: list2}
 </python-code>
 </response>

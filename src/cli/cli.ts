@@ -13,7 +13,7 @@ export function parseProcessArgs(): CliOptions {
 	const scriptPath = process.argv[1];
 	let scriptName = scriptPath.split(path.sep).at(-1);
 	scriptName = scriptName.substring(0, scriptName.length - 3);
-	return parseUserCliArgs(scriptName, process.argv.toSpliced(2));
+	return parseUserCliArgs(scriptName, process.argv.splice(2));
 }
 
 export function parseUserCliArgs(scriptName: string, args: string[]): CliOptions {
@@ -28,10 +28,14 @@ export function parseUserCliArgs(scriptName: string, args: string[]): CliOptions
 	}
 	let initialPrompt = args.slice(i).join(' ');
 
+	logger.info(initialPrompt);
+
 	// If not prompt provided then load from file
 	if (!initialPrompt.trim()) {
 		if (existsSync(`src/cli/${scriptName}-in`)) initialPrompt = readFileSync(`src/cli/${scriptName}-in`, 'utf-8');
 	}
+
+	logger.info(initialPrompt);
 
 	const resumeAgentId = resumeLastRun ? getLastRunAgentId(scriptName) : undefined;
 

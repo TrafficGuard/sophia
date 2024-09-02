@@ -1,3 +1,4 @@
+import { LlmMessage } from '#llm/llm';
 import { CallerId } from '#llm/llmCallService/llmCallService';
 
 export interface LlmRequest {
@@ -5,8 +6,12 @@ export interface LlmRequest {
 	id: string;
 	/** From the GenerateTextOptions.id field */
 	description?: string;
+	/** Legacy simple prompting */
 	systemPrompt?: string;
+	/** Legacy simple prompting */
 	userPrompt: string;
+
+	messages?: LlmMessage[];
 	/** Populated when called by an agent */
 	agentId?: string;
 	/** Populated when called by a user through the UI */
@@ -29,6 +34,10 @@ export interface LlmCall extends LlmRequest {
 	cost?: number;
 	inputTokens?: number;
 	outputTokens?: number;
+	/** Anthropic context cache stats */
+	cacheCreationInputTokens?: number;
+	/** Anthropic context cache stats */
+	cacheReadInputTokens?: number;
 }
 
 export type CreateLlmRequest = Omit<LlmRequest, 'id' | 'requestTime'>;

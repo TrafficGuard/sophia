@@ -2,9 +2,9 @@ import { llms } from '#agent/agentContext';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 
 @funcClass(__filename)
-export class UtilFunctions {
+export class LlmTools {
 	/**
-	 * Uses a large language model to make changes to the input content by applying the provided natural language instruction
+	 * Uses a large language model to transform the input content by applying the provided natural language instruction
 	 * @param text the input text
 	 * @param descriptionOfChanges a description of the changes/processing to apply to the text
 	 * @returns the processed text

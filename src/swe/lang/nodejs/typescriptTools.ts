@@ -13,10 +13,11 @@ export class TypescriptTools implements LanguageTools {
 	/**
 	 * Runs the command `npm run <script>`
 	 * @param script the script in the package.json file to run
+	 * @param args Arguments to add to the `npm run <script>` command
 	 * @reutrn the stdout and stderr
 	 */
 	@func()
-	async runNpmScript(script: string): Promise<string> {
+	async runNpmScript(script: string, args: string[] = []): Promise<string> {
 		const packageJson = JSON.parse(readFileSync('package.json').toString());
 		if (!packageJson.scripts[script]) throw new Error(`Npm script ${script} doesn't exist in package.json`);
 		const result = await runShellCommand(`npm run ${script}`);

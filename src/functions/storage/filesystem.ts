@@ -11,7 +11,7 @@ import { func, funcClass } from '#functionSchema/functionDecorators';
 import { parseArrayParameterValue } from '#functionSchema/functionUtils';
 import { Git } from '#functions/scm/git';
 import { VersionControlSystem } from '#functions/scm/versionControlSystem';
-import { UtilFunctions } from '#functions/util';
+import { LlmTools } from '#functions/util';
 import { logger } from '#o11y/logger';
 import { spawnCommand } from '#utils/exec';
 import { CDATA_END, CDATA_START } from '#utils/xml-utils';
@@ -411,7 +411,7 @@ export class FileSystem {
 	@func()
 	async editFileContents(filePath: string, descriptionOfChanges: string): Promise<void> {
 		const contents = await this.readFile(filePath);
-		const updatedContent = await new UtilFunctions().processText(contents, descriptionOfChanges);
+		const updatedContent = await new LlmTools().processText(contents, descriptionOfChanges);
 		await this.writeFile(filePath, updatedContent);
 	}
 

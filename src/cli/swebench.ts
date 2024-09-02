@@ -8,7 +8,7 @@ import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { shutdownTrace } from '#fastify/trace-init/trace-init';
 import { GitLab } from '#functions/scm/gitlab';
 import { FileSystem } from '#functions/storage/filesystem';
-import { UtilFunctions } from '#functions/util';
+import { LlmTools } from '#functions/util';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
 import { LlmCall } from '#llm/llmCallService/llmCall';

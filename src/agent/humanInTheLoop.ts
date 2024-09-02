@@ -1,6 +1,6 @@
 import readline from 'readline';
 import { AgentContext } from '#agent/agentContext';
-import { Slack } from '#functions/slack';
+import { Slack } from '#modules/slack/slack';
 import { logger } from '#o11y/logger';
 /**
  * Adding a human in the loop, so it doesn't consume all of your budget

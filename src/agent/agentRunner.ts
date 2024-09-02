@@ -1,7 +1,7 @@
-import { Agent } from 'node:http';
 import { LlmFunctions } from '#agent/LlmFunctions';
-import { AgentContext, AgentLLMs, createContext, llms } from '#agent/agentContext';
+import { AgentContext, AgentLLMs, AgentType, createContext, llms } from '#agent/agentContext';
 import { AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
+import { runCachingPythonAgent } from '#agent/cachingPythonAgentRunner';
 import { runPythonAgent } from '#agent/pythonAgentRunner';
 import { runXmlAgent } from '#agent/xmlAgentRunner';
 import { FUNC_SEP } from '#functionSchema/functions';
@@ -25,7 +25,7 @@ export interface RunAgentConfig {
 	/** The name of this agent */
 	agentName: string;
 	/** The type of autonomous agent function calling. Defaults to python/dynamic */
-	type?: 'xml' | 'python';
+	type?: AgentType;
 	/** The function classes the agent has available to call */
 	functions: LlmFunctions | Array<new () => any>;
 	/** The user prompt */
@@ -40,6 +40,8 @@ export interface RunAgentConfig {
 	resumeAgentId?: string;
 	/** The base path of the context FileSystem. Defaults to the process working directory */
 	fileSystemPath?: string;
+	/** Additional details for the agent */
+	metadata?: Record<string, any>;
 }
 
 /**
@@ -63,6 +65,9 @@ async function runAgent(agent: AgentContext): Promise<AgentExecution> {
 			break;
 		case 'python':
 			execution = await runPythonAgent(agent);
+			break;
+		case 'cachingPython':
+			execution = await runCachingPythonAgent(agent);
 			break;
 		default:
 			throw new Error(`Invalid agent type ${agent.type}`);

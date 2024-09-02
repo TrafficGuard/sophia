@@ -70,7 +70,7 @@ export function assistant(text: string): LlmMessage {
 }
 
 export interface LLM {
-	generateText2(messages: LlmMessage[]): Promise<string>;
+	generateText2(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string>;
 
 	/* Generates a response that is expected to be in JSON format, and returns the object */
 	generateJson2<T>(messages: LlmMessage[], opts?: GenerateJsonOptions): Promise<T>;

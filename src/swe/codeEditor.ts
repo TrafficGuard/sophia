@@ -7,6 +7,7 @@ import { addCost, agentContext, getFileSystem } from '#agent/agentContext';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { LLM } from '#llm/llm';
 import { Anthropic, Claude3_5_Sonnet } from '#llm/models/anthropic';
+import { Claude3_5_Sonnet_Vertex } from '#llm/models/anthropic-vertex';
 import { DeepseekLLM, deepseekCoder } from '#llm/models/deepseek';
 import { GPT4o } from '#llm/models/openai';
 import { logger } from '#o11y/logger';
@@ -45,7 +46,12 @@ export class CodeEditor {
 
 		let llm: LLM;
 
-		if (anthropicKey) {
+		if (process.env.GCLOUD_PROJECT && process.env.GCLOUD_CLAUDE_REGION) {
+			llm = Claude3_5_Sonnet_Vertex();
+			modelArg = `--model vertex_ai/${llm.getModel()}`;
+			span.setAttribute('model', 'sonnet');
+			env = { VERTEXAI_PROJECT: process.env.GCLOUD_PROJECT, VERTEXAI_LOCATION: process.env.GCLOUD_CLAUDE_REGION };
+		} else if (anthropicKey) {
 			modelArg = '--sonnet';
 			env = { ANTHROPIC_API_KEY: anthropicKey };
 			span.setAttribute('model', 'sonnet');
@@ -62,7 +68,9 @@ export class CodeEditor {
 			span.setAttribute('model', 'openai');
 			llm = GPT4o();
 		} else {
-			throw new Error('Aider code editing requires a key for Anthropic, Deepseek or OpenAI');
+			throw new Error(
+				'Aider code editing requires either GCLOUD_PROJECT and GCLOUD_CLAUDE_REGION env vars set or else a key for Anthropic, Deepseek or OpenAI',
+			);
 		}
 
 		// User a folder in Nous process directory, not the FileSystem working directory
@@ -80,9 +88,10 @@ export class CodeEditor {
 			throw error;
 		}
 
+		// Due to limitations in the provider APIs, caching statistics and costs are not available when streaming responses.
 		// --map-tokens=2048
 		// Use the Python from the Nous .python-version as it will have aider installed
-		const cmd = `${getPythonPath()} -m aider --no-check-update --yes ${modelArg} --llm-history-file="${llmHistoryFile}" --message-file=${messageFilePath} ${filesToEdit
+		const cmd = `${getPythonPath()} -m aider --no-check-update --no-stream --yes ${modelArg} --llm-history-file="${llmHistoryFile}" --message-file=${messageFilePath} ${filesToEdit
 			.map((file) => `"${file}"`)
 			.join(' ')}`;
 

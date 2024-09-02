@@ -27,6 +27,7 @@
       "#model/*": ["./src/model/*"],
       "#o11y/*": ["./src/o11y/*"],
       "#services/*": ["./src/services/*"],
+      "#modules/*": ["./src/modules/*"],
       "#swe/*": ["./src/swe/*"],
       "#user/*": ["./src/user/*"],
       "#utils/*": ["./src/utils/*"]

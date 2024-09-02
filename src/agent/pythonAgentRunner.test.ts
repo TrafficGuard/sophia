@@ -12,7 +12,7 @@ import {
 	startAgent,
 	startAgentAndWait,
 } from '#agent/agentRunner';
-import { PY_AGENT_SPAN, convertTypeScriptToPython } from '#agent/pythonAgentRunner';
+import { convertTypeScriptToPython } from '#agent/pythonAgentUtils';
 import { TEST_FUNC_NOOP, TEST_FUNC_SKY_COLOUR, TEST_FUNC_SUM, TEST_FUNC_THROW_ERROR, THROW_ERROR_TEXT, TestFunctions } from '#functions/testFunctions';
 import { MockLLM, mockLLM, mockLLMs } from '#llm/models/mock-llm';
 import { logger } from '#o11y/logger';

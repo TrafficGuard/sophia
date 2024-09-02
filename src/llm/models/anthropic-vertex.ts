@@ -215,7 +215,7 @@ class AnthropicVertexLLM extends BaseLLM {
 	@cacheRetry({ backOffMs: 5000 })
 	// @logTextGeneration
 	async generateText2(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string> {
-		return await withActiveSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
+		return await withActiveSpan(`generateText2 ${opts?.id ?? ''}`, async (span) => {
 			const maxOutputTokens = 4096;
 
 			let systemPrompt: string | undefined;
