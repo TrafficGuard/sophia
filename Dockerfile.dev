@@ -37,7 +37,7 @@ WORKDIR $homedir
 # Switch to non-root user
 USER $user
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 # In the frontend package.jsson the `ng serve` needs the arg --host 0.0.0.0 for it to be available from the host machine
 EXPOSE 4200

@@ -31,8 +31,8 @@ RUN mkdir .nous
 # Generate the function schemas
 RUN npm run functionSchemas
 
-ENV NODE_ENV production
-ENV PORT 8080
+ENV NODE_ENV=production
+ENV PORT=8080
 EXPOSE 8080
 CMD [ "npm", "run", "start" ]
 
