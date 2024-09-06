@@ -1,5 +1,6 @@
 import { LlmFunctions } from '#agent/LlmFunctions';
-import { AgentContext, AgentLLMs, AgentType, createContext, llms } from '#agent/agentContext';
+import { createContext, llms } from '#agent/agentContextLocalStorage';
+import { AgentCompleted, AgentContext, AgentLLMs, AgentType } from '#agent/agentContextTypes';
 import { AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
 import { runCachingPythonAgent } from '#agent/cachingPythonAgentRunner';
 import { runPythonAgent } from '#agent/pythonAgentRunner';
@@ -28,6 +29,8 @@ export interface RunAgentConfig {
 	type?: AgentType;
 	/** The function classes the agent has available to call */
 	functions: LlmFunctions | Array<new () => any>;
+	/** Handler for when the agent finishes executing. Defaults to console output */
+	completedHandler?: AgentCompleted;
 	/** The user prompt */
 	initialPrompt: string;
 	/** The agent system prompt */
@@ -65,9 +68,6 @@ async function runAgent(agent: AgentContext): Promise<AgentExecution> {
 			break;
 		case 'python':
 			execution = await runPythonAgent(agent);
-			break;
-		case 'cachingPython':
-			execution = await runCachingPythonAgent(agent);
 			break;
 		default:
 			throw new Error(`Invalid agent type ${agent.type}`);
@@ -197,25 +197,6 @@ export async function summariseLongFunctionOutput(functionCall: FunctionCall, re
 	const prompt = `<function_name>${functionCall.function_name}</function_name>\n<output>\n${result}\n</output>\n
 	For the above function call summarise the output into a paragraph that captures key details about the output content, which might include identifiers, content summary, content structure and examples. Only responsd with the summary`;
 	return await llms().easy.generateText(prompt, null, { id: 'summariseLongFunctionOutput' });
-}
-
-export function notificationMessage(agent: AgentContext): string {
-	switch (agent.state) {
-		case 'error':
-			return `Agent error.\nName:${agent.name}\nError: ${agent.error}`;
-		case 'hil':
-			return `Agent has reached Human-in-the-loop threshold.\nName: ${agent.name}`;
-		case 'feedback':
-			return `Agent has requested feedback.\nName: ${agent.name}\n:Question: ${getLastFunctionCallArg(agent)}`;
-		case 'completed':
-			return `Agent has completed.\nName: ${agent.name}\nNote: ${getLastFunctionCallArg(agent)}`;
-		default:
-	}
-}
-
-function getLastFunctionCallArg(agent: AgentContext) {
-	const result: FunctionCallResult = agent.functionCallHistory.slice(-1)[0];
-	return Object.values(result.parameters)[0];
 }
 
 /**

@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { addCost, agentContext } from '#agent/agentContext';
+import { addCost, agentContext } from '#agent/agentContextLocalStorage';
 import { LlmCall } from '#llm/llmCallService/llmCall';
 import { CallerId } from '#llm/llmCallService/llmCallService';
 import { withSpan } from '#o11y/trace';
@@ -37,7 +37,7 @@ export class TogetherLLM extends BaseLLM {
 	client(): OpenAI {
 		if (!this._client) {
 			this._client = new OpenAI({
-				apiKey: currentUser().llmConfig.togetheraiKey ?? envVar('TOGETHERAI_KEY'),
+				apiKey: currentUser().llmConfig.togetheraiKey || envVar('TOGETHERAI_KEY'),
 				baseURL: 'https://api.together.xyz/v1',
 			});
 		}

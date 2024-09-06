@@ -9,7 +9,7 @@ import {
 	ProjectSchema,
 } from '@gitbeaker/rest';
 import { micromatch } from 'micromatch';
-import { agentContext, getFileSystem, llms } from '#agent/agentContext';
+import { agentContext, getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
@@ -113,7 +113,7 @@ export class GitLab implements SourceControlManagement {
 	// }
 
 	/**
-	 * @returns the details of all the projects available (name, description, git URL etc)
+	 * @returns the details of all the projects available
 	 */
 	@func()
 	async getProjects(): Promise<GitProject[]> {

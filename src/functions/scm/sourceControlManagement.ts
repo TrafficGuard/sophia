@@ -1,5 +1,5 @@
 import { functionRegistry } from 'src/functionRegistry';
-import { agentContext } from '#agent/agentContext';
+import { agentContext } from '#agent/agentContextLocalStorage';
 import { GitProject } from './gitProject';
 
 /**

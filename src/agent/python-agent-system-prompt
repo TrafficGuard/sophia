@@ -292,17 +292,21 @@ Otherwise return any values to analyse further.
 # When calling Agent_completed or Agent_requestFeedback you must directly return its result. (Ensure any required information has already been stored to memory)
 # This script may be running on repositories where the source code files are TypeScript, Java, Terraform, PHP, C#, C++, Ruby etc. Do not assume Python files.
 # The files projectInfo.json and CONVENTIONS.md may possibly exists to tell you more about a code project.
-# You can directly analyze contents in memory. If you need to analyze unstructured data then include it to a return Dict value to view in the next step.
+# You can directly analyze and return text/data/contents from <memory> and <script-result> tags. If you need to analyze unstructured data then include it to a return Dict value to view in the next step.
 # All maths must be done in Python code
+# If calling `json.dumps` it must also be passed the arg cls=JsProxyEncoder. i.e. json.dumps(data, cls=JsProxyEncoder)
+# Output in a comment what you know with complete confidence about a value returned from a function
 # Do NOT assume anything about the structure of the results from functions. Return values that require further analysis
 # Example:
 # Check if the desired content is in memory from a previous step. Result: (None found/Found ...)
 # Get the two lists asked for in the next step details
 list1str: str = await Agent_getMemory("list1-json")
+# We can see from the memory contents that it is a JSON array string
 list1: List[str] = json.loads(list1str)
 print("list1.length " + len(list1))
 # list1 is unchanged so do not re-save to memory
 result2: List[str] = await FunctionClass2_returnStringList()
+# The strings in result2 are of an unknown format
 print("result2.length " + len(result2))
 # Do not assume the structure/styles values, return the values for further analysis
 return { list1: list1, list2: list2}

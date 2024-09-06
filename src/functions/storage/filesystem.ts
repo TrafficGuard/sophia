@@ -6,7 +6,7 @@ import { promisify } from 'util';
 import fsPromises from 'fs/promises';
 import ignore, { Ignore } from 'ignore';
 import Pino from 'pino';
-import { agentContext } from '#agent/agentContext';
+import { agentContext } from '#agent/agentContextLocalStorage';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { parseArrayParameterValue } from '#functionSchema/functionUtils';
 import { Git } from '#functions/scm/git';

@@ -1,7 +1,3 @@
-import { JiraConfig } from '#functions/jira';
-import { GitHubConfig } from '#functions/scm/github';
-import { GitLabConfig } from '#functions/scm/gitlab';
-
 export interface LLMServicesConfig {
 	vertexProjectId?: string;
 	vertexRegion?: string;
@@ -12,6 +8,7 @@ export interface LLMServicesConfig {
 	togetheraiKey?: string;
 	deepseekKey?: string;
 	fireworksKey?: string;
+	cerebrasKey?: string;
 }
 
 export interface User {
@@ -24,20 +21,6 @@ export interface User {
 
 	llmConfig: LLMServicesConfig;
 
-	// gitlabConfig: GitLabConfig;
-	// githubConfig: GitHubConfig;
-	// jiraConfig: JiraConfig;
-	//
-	// perplexityKey: string;
 	/** Configuration for the function callable integrations */
 	functionConfig: Record<string, Record<string, any>>;
-
-	// googleCustomSearchEngineId: string;
-	// googleCustomSearchKey: string;
-	// serpApiKey: string;
-
-	// vertexProjectId: string;
-	// vertexRegion: string;
-	// anthropicVertexProjectId: string;
-	// cloudMlRegion: string;
 }

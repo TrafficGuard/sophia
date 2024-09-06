@@ -1,4 +1,4 @@
-import { llms } from '#agent/agentContext';
+import { llms } from '#agent/agentContextLocalStorage';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 
 export const TEST_FUNC_THROW_ERROR = 'TestFunctions_throwError';

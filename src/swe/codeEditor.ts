@@ -3,7 +3,7 @@ import { execSync } from 'node:child_process';
 import fs, { readFile, unlinkSync } from 'node:fs';
 import path, { join } from 'path';
 import { promisify } from 'util';
-import { addCost, agentContext, getFileSystem } from '#agent/agentContext';
+import { addCost, agentContext, getFileSystem } from '#agent/agentContextLocalStorage';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { LLM } from '#llm/llm';
 import { Anthropic, Claude3_5_Sonnet } from '#llm/models/anthropic';

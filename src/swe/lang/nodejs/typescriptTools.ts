@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'path';
-import { getFileSystem } from '#agent/agentContext';
+import { getFileSystem } from '#agent/agentContextLocalStorage';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 import { ExecResult, execCommand, failOnError, runShellCommand } from '#utils/exec';

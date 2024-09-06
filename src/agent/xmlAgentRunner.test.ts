@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { appContext, initInMemoryApplicationContext } from 'src/app';
 import { LlmFunctions } from '#agent/LlmFunctions';
+import { AgentContext, AgentLLMs } from '#agent/agentContextTypes';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK, REQUEST_FEEDBACK_PARAM_NAME } from '#agent/agentFunctions';
 import {
 	RunAgentConfig,
@@ -18,7 +19,7 @@ import { MockLLM } from '#llm/models/mock-llm';
 import { setTracer } from '#o11y/trace';
 import { User } from '#user/user';
 import { sleep } from '#utils/async-utils';
-import { AgentContext, AgentLLMs, agentContextStorage } from './agentContext';
+import { agentContextStorage } from './agentContextLocalStorage';
 
 const REQUEST_FEEDBACK_VALUE = 'question is...';
 const REQUEST_FEEDBACK_FUNCTION_CALL = `<plan>Requesting feedback</plan>\n<function_calls><function_call><function_name>${AGENT_REQUEST_FEEDBACK}</function_name><parameters><${REQUEST_FEEDBACK_PARAM_NAME}>${REQUEST_FEEDBACK_VALUE}</${REQUEST_FEEDBACK_PARAM_NAME}></parameters></function_call></function_calls>`;

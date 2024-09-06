@@ -1,7 +1,7 @@
 import { App, SayFn } from '@slack/bolt';
 import { StringIndexed } from '@slack/bolt/dist/types/helpers';
-import { LlmFunctions } from '#agent/LlmFunctions';
-import { AgentContext, AgentRunningState, isExecuting } from '#agent/agentContext';
+import { getLastFunctionCallArg } from '#agent/agentCompletion';
+import { AgentCompleted, AgentContext, isExecuting } from '#agent/agentContextTypes';
 import { AGENT_COMPLETED_PARAM_NAME, REQUEST_FEEDBACK_PARAM_NAME } from '#agent/agentFunctions';
 import { resumeCompleted, startAgent } from '#agent/agentRunner';
 import { GoogleCloud } from '#functions/cloud/google-cloud';
@@ -15,21 +15,50 @@ import { appContext } from '../../app';
 import { ChatBotService } from '../../chatBot/chatBotService';
 
 let slackApp: App<StringIndexed> | undefined;
+
 /**
  * Slack implementation of ChatBotService
+ * Only one Slack workspace can be configured in the application as the Slack App is shared between all instances of this class.
  */
-export class SlackChatBotService implements ChatBotService {
+export class SlackChatBotService implements ChatBotService, AgentCompleted {
+	threadId(agent: AgentContext): string {
+		return agent.agentId.replace('Slack-', '');
+	}
+
+	agentCompletedHandlerId(): string {
+		return 'console';
+	}
+
+	notifyCompleted(agent: AgentContext): Promise<void> {
+		let message = '';
+		switch (agent.state) {
+			case 'error':
+				message = `Sorry, I'm having unexpected difficulties providing a response to your request`;
+				break;
+			case 'hil':
+				message = `Apologies, I've been unable to produce a response with the resources I've been allocated to spend on the request`;
+				break;
+			case 'feedback':
+				message = getLastFunctionCallArg(agent);
+				break;
+			case 'completed':
+				message = getLastFunctionCallArg(agent);
+				break;
+			default:
+				message = `Sorry, I'm unable to provide a response to your request`;
+		}
+		return this.sendMessage(agent, message);
+	}
+
 	/**
 	 * Sends a message to the chat thread the agent is a chatbot for.
 	 * @param agent
 	 * @param message
 	 */
 	async sendMessage(agent: AgentContext, message: string): Promise<void> {
-		if (!slackApp) {
-			throw new Error('Slack app is not initialized. Call initSlack() first.');
-		}
+		if (!slackApp) throw new Error('Slack app is not initialized. Call initSlack() first.');
 
-		const threadId = agent.agentId.replace('Slack-', '');
+		const threadId = this.threadId(agent);
 
 		try {
 			const result = await slackApp.client.chat.postMessage({
@@ -115,8 +144,10 @@ export class SlackChatBotService implements ChatBotService {
 						llms: ClaudeVertexLLMs(),
 						functions: [GitLab, GoogleCloud, Perplexity, LlmTools],
 						agentName: `Slack-${threadId}`,
-						systemPrompt: 'You are an AI support agent called Sophia. You are responding to support requests on the company Slack account',
+						systemPrompt:
+							'You are an AI support agent called Sophia.  You are responding to support requests on the company Slack account. Respond in a helpful, concise manner. If you encounter an error responding to the request do not provide details of the error to the user, only respond with "Sorry, I\'m having difficulties providing a response to your request"',
 						metadata: { channel: event.channel },
+						completedHandler: this,
 					});
 					await agentExec.execution;
 					const agent: AgentContext = await appContext().agentStateService.load(agentExec.agentId);
@@ -154,8 +185,7 @@ export class SlackChatBotService implements ChatBotService {
 
 		slackApp.event('app_mention', async ({ event, say }) => {
 			console.log('app_mention received');
-			// logger.info(event)
-			// logger.info(say)
+			// TODO if not in a channel we are subscribed to, then get the thread messages and reply to it
 		});
 
 		await slackApp.start();

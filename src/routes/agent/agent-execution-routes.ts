@@ -1,6 +1,6 @@
 import { Type } from '@sinclair/typebox';
 import { LlmFunctions } from '#agent/LlmFunctions';
-import { AgentContext } from '#agent/agentContext';
+import { AgentContext } from '#agent/agentContextTypes';
 import { cancelAgent, provideFeedback, resumeCompleted, resumeError, resumeHil } from '#agent/agentRunner';
 import { runXmlAgent } from '#agent/xmlAgentRunner';
 import { send, sendBadRequest } from '#fastify/index';

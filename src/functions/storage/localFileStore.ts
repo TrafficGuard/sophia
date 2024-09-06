@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { agentContext } from '#agent/agentContext';
+import { agentContext } from '#agent/agentContextLocalStorage';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { FileMetadata, FileStore } from '#functions/storage/filestore';
 import { ToolType } from '#functions/toolType';

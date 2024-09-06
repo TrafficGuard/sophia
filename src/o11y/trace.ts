@@ -2,7 +2,7 @@
 import { Span, SpanContext, Tracer } from '@opentelemetry/api';
 import opentelemetry from '@opentelemetry/api';
 import { AsyncLocalStorage } from 'async_hooks';
-import { AgentContext } from '#agent/agentContext';
+import { AgentContext } from '#agent/agentContextTypes';
 import { logger } from '#o11y/logger';
 import { SugaredTracer, wrapTracer } from './trace/SugaredTracer';
 

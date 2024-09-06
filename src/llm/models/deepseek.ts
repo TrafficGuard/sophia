@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { addCost, agentContext } from '#agent/agentContext';
+import { addCost, agentContext } from '#agent/agentContextLocalStorage';
 import { LlmCall } from '#llm/llmCallService/llmCall';
 import { CallerId } from '#llm/llmCallService/llmCallService';
 import { withSpan } from '#o11y/trace';
@@ -52,7 +52,7 @@ export class DeepseekLLM extends BaseLLM {
 			this._client = axios.create({
 				baseURL: 'https://api.deepseek.com',
 				headers: {
-					Authorization: `Bearer ${currentUser().llmConfig.deepseekKey ?? envVar('DEEPSEEK_API_KEY')}`,
+					Authorization: `Bearer ${currentUser().llmConfig.deepseekKey || envVar('DEEPSEEK_API_KEY')}`,
 				},
 			});
 		}

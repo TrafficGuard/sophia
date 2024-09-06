@@ -1,4 +1,4 @@
-import { agentContext, getFileSystem } from '#agent/agentContext';
+import { agentContext, getFileSystem } from '#agent/agentContextLocalStorage';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { PublicWeb } from '#functions/web/web';
 import { logger } from '#o11y/logger';

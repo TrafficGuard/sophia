@@ -43,8 +43,9 @@
   "author": "daniel.campagnoli@trafficguard.ai",
   "license": "ISC",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.26.1",
-    "@anthropic-ai/vertex-sdk": "^0.4.0",
+    "@anthropic-ai/sdk": "^0.27.1",
+    "@anthropic-ai/vertex-sdk": "^0.4.1",
+    "@cerebras/cerebras_cloud_sdk": "^1.0.1",
     "@cliqz/adblocker-puppeteer": "^1.30.0",
     "@duckduckgo/autoconsent": "^10.11.0",
     "@fastify/cors": "^9.0.1",

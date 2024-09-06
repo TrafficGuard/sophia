@@ -1,7 +1,7 @@
 import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
 
 import { writeFileSync } from 'node:fs';
-import { agentContextStorage, createContext } from '#agent/agentContext';
+import { agentContextStorage, createContext } from '#agent/agentContextLocalStorage';
 import { PublicWeb } from '#functions/web/web';
 import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 

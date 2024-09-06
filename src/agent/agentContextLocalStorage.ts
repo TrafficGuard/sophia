@@ -1,137 +1,15 @@
 import { randomUUID } from 'crypto';
 import { AsyncLocalStorage } from 'async_hooks';
 import { LlmFunctions } from '#agent/LlmFunctions';
+import { ConsoleCompletedHandler } from '#agent/agentCompletion';
+import { AgentContext, AgentLLMs } from '#agent/agentContextTypes';
 import { RunAgentConfig } from '#agent/agentRunner';
+import { getCompletedHandler } from '#agent/completionHandlerRegistry';
 import { FileSystem } from '#functions/storage/filesystem';
-import { FunctionCall, FunctionCallResult, LLM } from '#llm/llm';
 import { deserializeLLMs } from '#llm/llmFactory';
 import { logger } from '#o11y/logger';
-import { User } from '#user/user';
 import { currentUser } from '#user/userService/userContext';
 import { appContext } from '../app';
-
-/**
- * The difficulty of a LLM generative task. Used to select an appropriate model for the cost vs capability.
- * easy   Haiku/GPT4-mini
- * medium Sonnet
- * hard   Opus
- * xhard  Ensemble (multi-gen with voting/merging of best answer)
- *
- */
-export type TaskLevel = 'easy' | 'medium' | 'hard' | 'xhard';
-
-/**
- * The LLMs for each Task Level
- */
-export type AgentLLMs = Record<TaskLevel, LLM>;
-
-/**
- * agent - waiting for the agent LLM call(s) to generate control loop update
- * functions - waiting for the planned function call(s) to complete
- * error - the agent control loop has errored
- * hil - deprecated for humanInLoop_agent and humanInLoop_tool
- * hitl_threshold - If the agent has reached budget or iteration thresholds. At this point the agent is not executing any LLM/function calls.
- * hitl_tool - When a function has request HITL in the function calling part of the control loop
- * hitl_feedback - the agent has requested human feedback for a decision. At this point the agent is not executing any LLM/function calls.
- * hil - deprecated version of hitl_feedback
- * feedback - deprecated version of hitl_feedback
- * child_agents - waiting for child agents to complete
- * completed - the agent has called the completed function.
- * shutdown - if the agent has been instructed by the system to pause (e.g. for server shutdown)
- * timeout - for chat agents when there hasn't been a user input for a configured amount of time
- */
-export type AgentRunningState =
-	| 'workflow'
-	| 'agent'
-	| 'functions'
-	| 'error'
-	| 'hil'
-	| 'hitl_threshold'
-	| 'hitl_tool'
-	| 'feedback'
-	| 'hitl_feedback'
-	| 'completed'
-	| 'shutdown'
-	| 'child_agents'
-	| 'timeout';
-
-export type AgentType = 'xml' | 'python' | 'cachingPython';
-
-export interface Message {
-	role: 'user' | 'assistant';
-	text: string;
-}
-
-export function isExecuting(agent: AgentContext): boolean {
-	return agent.state !== 'completed' && agent.state !== 'feedback' && agent.state !== 'hil' && agent.state !== 'error';
-}
-
-/**
- * The state of an agent.
- */
-export interface AgentContext {
-	/** Primary Key - Agent instance id. Allocated when the agent is first starts */
-	agentId: string;
-	/** Id of the running execution. This changes after the agent restarts due to an error, pausing, human in loop,  etc */
-	executionId: string;
-	/** Current OpenTelemetry traceId */
-	traceId: string;
-	/** Display name */
-	name: string;
-	/** Not used yet */
-	parentAgentId?: string;
-	/** The user who created the agent */
-	user: User;
-	/** The current state of the agent */
-	state: AgentRunningState;
-	/** Tracks what functions/spans we've called into */
-	callStack: string[];
-	/** Error message & stack */
-	error?: string;
-	/** Budget spend in $USD until a human-in-the-loop is required */
-	hilBudget;
-	/** Total cost of running this agent */
-	cost: number;
-	/** Budget remaining until human intervention is required */
-	budgetRemaining: number;
-	/** Pre-configured LLMs by task difficulty level for the agent. Specific LLMs can always be instantiated if required. */
-	llms: AgentLLMs;
-	/** Working filesystem */
-	fileSystem?: FileSystem | null;
-	/** Memory persisted over the agent's executions */
-	memory: Record<string, string>;
-	/** Time of the last database write of the state */
-	lastUpdate: number;
-
-	metadata: Record<string, any>;
-
-	// ChatBot properties ----------------
-
-	messages: Message[];
-	/** Messages sent by users while the agent is still processing the last message */
-	pendingMessages: Message[];
-
-	// Autonomous agent specific properties --------------------
-
-	/** The type of autonomous agent function calling.*/
-	type: AgentType;
-	/** The number of completed iterations of the agent control loop */
-	iterations: number;
-	/** The function calls the agent is about to call (xml only) */
-	invoking: FunctionCall[];
-	/** Additional notes that tool functions can add to the response to the agent */
-	notes: string[];
-	/** The initial user prompt */
-	userPrompt: string;
-	/** The prompt the agent execution started/resumed with */
-	inputPrompt: string;
-	/** Completed function calls with success/error output */
-	functionCallHistory: FunctionCallResult[];
-	/** How many iterations of the autonomous agent control loop to require human input to continue */
-	hilCount;
-	/** The functions available to the agent */
-	functions: LlmFunctions;
-}
 
 export const agentContextStorage = new AsyncLocalStorage<AgentContext>();
 
@@ -215,6 +93,7 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		llms: config.llms,
 		fileSystem,
 		functions: Array.isArray(config.functions) ? new LlmFunctions(...config.functions) : config.functions,
+		completedHandler: config.completedHandler ?? new ConsoleCompletedHandler(),
 		memory: {},
 		invoking: [],
 		lastUpdate: Date.now(),
@@ -226,7 +105,7 @@ export function createContext(config: RunAgentConfig): AgentContext {
 export function serializeContext(context: AgentContext): Record<string, any> {
 	const serialized = {};
 
-	for (const key of Object.keys(context)) {
+	for (const key of Object.keys(context) as Array<keyof AgentContext>) {
 		if (context[key] === undefined) {
 			// do nothing
 		} else if (context[key] === null) {
@@ -256,6 +135,8 @@ export function serializeContext(context: AgentContext): Record<string, any> {
 			};
 		} else if (key === 'user') {
 			serialized[key] = context.user.id;
+		} else if (key === 'completedHandler') {
+			context.completedHandler.agentCompletedHandlerId();
 		}
 		// otherwise throw error
 		else {
@@ -265,7 +146,7 @@ export function serializeContext(context: AgentContext): Record<string, any> {
 	return serialized;
 }
 
-export async function deserializeAgentContext(serialized: Record<string, any>): Promise<AgentContext> {
+export async function deserializeAgentContext(serialized: Record<keyof AgentContext, any>): Promise<AgentContext> {
 	const context: Partial<AgentContext> = {};
 
 	for (const key of Object.keys(serialized)) {
@@ -276,7 +157,7 @@ export async function deserializeAgentContext(serialized: Record<string, any>): 
 	}
 
 	context.fileSystem = new FileSystem().fromJSON(serialized.fileSystem);
-	context.functions = new LlmFunctions().fromJSON(serialized.functions ?? serialized.toolbox); // toolbox for backward compat
+	context.functions = new LlmFunctions().fromJSON(serialized.functions ?? (serialized as any).toolbox); // toolbox for backward compat
 
 	resetFileSystemFunction(context as AgentContext); // TODO add a test for this
 
@@ -287,6 +168,8 @@ export async function deserializeAgentContext(serialized: Record<string, any>): 
 	const user = currentUser();
 	if (serialized.user === user.id) context.user = user;
 	else context.user = await appContext().userService.getUser(serialized.user);
+
+	context.completedHandler = getCompletedHandler(serialized.completedHandler);
 
 	// backwards compatability
 	if (!context.type) context.type = 'xml';

@@ -1,7 +1,7 @@
 import { DocumentSnapshot, Firestore } from '@google-cloud/firestore';
 import { LlmFunctions } from '#agent/LlmFunctions';
-import { AgentContext, AgentRunningState } from '#agent/agentContext';
-import { deserializeAgentContext, serializeContext } from '#agent/agentContext';
+import { deserializeAgentContext, serializeContext } from '#agent/agentContextLocalStorage';
+import { AgentContext, AgentRunningState } from '#agent/agentContextTypes';
 import { functionFactory } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
@@ -43,7 +43,7 @@ export class FirestoreAgentStateService implements AgentStateService {
 		return deserializeAgentContext({
 			...data,
 			agentId,
-		});
+		} as Record<keyof AgentContext, any>);
 	}
 
 	@span()

@@ -1,19 +1,20 @@
 import { readFileSync } from 'fs';
 import { Span, SpanStatusCode } from '@opentelemetry/api';
 import { PyodideInterface, loadPyodide } from 'pyodide';
+import { runAgentCompleteHandler } from '#agent/agentCompletion';
+import { AgentContext } from '#agent/agentContextTypes';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK, AGENT_SAVE_MEMORY_CONTENT_PARAM_NAME } from '#agent/agentFunctions';
 import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, buildToolStatePrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
-import { AgentExecution, formatFunctionError, formatFunctionResult, notificationMessage } from '#agent/agentRunner';
+import { AgentExecution, formatFunctionError, formatFunctionResult } from '#agent/agentRunner';
 import { agentHumanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
 import { convertJsonToPythonDeclaration, extractPythonCode } from '#agent/pythonAgentUtils';
 import { getServiceName } from '#fastify/trace-init/trace-init';
-import { FUNC_SEP, FunctionParameter, FunctionSchema, getAllFunctionSchemas } from '#functionSchema/functions';
+import { FUNC_SEP, FunctionSchema, getAllFunctionSchemas } from '#functionSchema/functions';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
-import { envVar } from '#utils/env-var';
 import { errorToString } from '#utils/errors';
 import { appContext } from '../app';
-import { AgentContext, agentContext, agentContextStorage, llms } from './agentContext';
+import { agentContextStorage, llms } from './agentContextLocalStorage';
 
 const stopSequences = ['</response>'];
 
@@ -27,10 +28,12 @@ let pyodide: PyodideInterface;
  * will be treated in some ways like a stack.
  *
  * Message stack:
- * system - system prompt
- * system - function definitions
- * user - user request
- * assistant - memory
+ * system prompt
+ * function definitions
+ * user request
+ * -- cache
+ * memory
+ * -- cache
  * user - function call history
  * assistant - response
  * -----------------------
@@ -46,7 +49,7 @@ export async function runCachingPythonAgent(agent: AgentContext): Promise<AgentE
 	if (!pyodide) pyodide = await loadPyodide();
 
 	// Hot reload (TODO only when not deployed)
-	const pythonSystemPrompt = readFileSync('src/agent/caching-python-agent-system-prompt').toString();
+	const systemPrompt = readFileSync('src/agent/caching-python-agent-system-prompt').toString();
 
 	const agentStateService = appContext().agentStateService;
 	agent.state = 'agent';
@@ -56,7 +59,7 @@ export async function runCachingPythonAgent(agent: AgentContext): Promise<AgentE
 	const agentLLM = llms().hard;
 
 	const userRequestXml = `<user_request>\n${agent.userPrompt}\n</user_request>`;
-	let currentPrompt = agent.inputPrompt;
+	const currentPrompt = agent.inputPrompt;
 	// logger.info(`userRequestXml ${userRequestXml}`)
 	logger.info(`currentPrompt ${currentPrompt}`);
 
@@ -94,15 +97,13 @@ export async function runCachingPythonAgent(agent: AgentContext): Promise<AgentE
 		while (shouldContinue) {
 			shouldContinue = await withActiveSpan(DYNAMIC_AGENT_SPAN, async (span) => {
 				agent.callStack = [];
-				// Might need to reload the agent for dynamic updating of the tools
-				const functionsXml = convertJsonToPythonDeclaration(getAllFunctionSchemas(agent.functions.getFunctionInstances()));
-				const systemPromptWithFunctions = updateFunctionSchemas(pythonSystemPrompt, functionsXml);
 
 				let completed = false;
 				let requestFeedback = false;
 				const anyFunctionCallErrors = false;
 				let controlError = false;
 				try {
+					// Human in the loop checks ------------------------
 					if (hilCount && countSinceHil === hilCount) {
 						await agentHumanInTheLoop(`Agent control loop has performed ${hilCount} iterations`);
 						countSinceHil = 0;
@@ -117,8 +118,24 @@ export async function runCachingPythonAgent(agent: AgentContext): Promise<AgentE
 						agent.budgetRemaining = agent.hilBudget;
 					}
 
-					const toolStatePrompt = await buildToolStatePrompt();
+					// Main control loop action ------------------------
 
+					// Agent state ----------------
+
+					// Function definitions. May need to reload the agent for dynamic updating of the tools
+					const functionsXml = convertJsonToPythonDeclaration(getAllFunctionSchemas(agent.functions.getFunctionInstances()));
+					const systemPromptWithFunctions = updateFunctionSchemas(systemPrompt, functionsXml);
+
+					agent.messages[0] = { role: 'system', text: systemPromptWithFunctions, cache: 'ephemeral' };
+
+					// User request. The functions and user request are unlikely to change, so we will use a cache marker
+					agent.messages[1] = { role: 'user', text: userRequestXml, cache: 'ephemeral' };
+
+					// Memory output
+					agent.messages[2] = { role: 'assistant', text: `This is my current memory items:\n${buildMemoryPrompt()}`, cache: 'ephemeral' };
+
+					// Function history and tool state
+					const toolStatePrompt = await buildToolStatePrompt();
 					// If the last function was requestFeedback then we'll remove it from function history add it as function results
 					let historyToIndex = agent.functionCallHistory.length ? agent.functionCallHistory.length - 1 : 0;
 					let requestFeedbackCallResult = '';
@@ -128,19 +145,47 @@ export async function runCachingPythonAgent(agent: AgentContext): Promise<AgentE
 					}
 					const oldFunctionCallHistory = buildFunctionCallHistoryPrompt('history', 10000, 0, historyToIndex);
 
-					const isNewAgent = agent.iterations === 0 && agent.functionCallHistory.length === 0;
-					// For the initial prompt we create the empty memory, functional calls and default tool state content. Subsequent iterations already have it
-					const initialPrompt = isNewAgent
-						? oldFunctionCallHistory + buildMemoryPrompt() + toolStatePrompt + currentPrompt
-						: currentPrompt + requestFeedbackCallResult;
+					agent.messages[3] = { role: 'user', text: `State your recent function call history${toolStatePrompt ? ' and functions/tool state.' : ''}` };
+					agent.messages[4] = { role: 'assistant', text: `${oldFunctionCallHistory}\n${toolStatePrompt}` };
 
-					const agentPlanResponse: string = await agentLLM.generateText(initialPrompt, systemPromptWithFunctions, {
+					const isNewAgent = agent.iterations === 0 && agent.functionCallHistory.length === 0;
+					// // For the initial prompt we create the empty memory, functional calls and default tool state content. Subsequent iterations already have it
+					// const initialPrompt = isNewAgent
+					// 	? oldFunctionCallHistory + buildMemoryPrompt() + toolStatePrompt + currentPrompt
+					// 	: currentPrompt + requestFeedbackCallResult;
+
+					// Planning ----------------
+
+					agent.messages[5] = {
+						role: 'user',
+						text: 'Generate a <planning-response> response as per the system instructions provided given the user request, available functions, memory items and recent function call history',
+					};
+					agent.messages[6] = { role: 'assistant', text: '<planning-response>' };
+					agent.messages.length = 7; // If we've restarted remove any extra messages
+					const agentPlanResponse: string = `<planning-response>\n${await agentLLM.generateText2(agent.messages, {
 						id: 'dynamicAgentPlan',
 						stopSequences,
-						temperature: 0.5,
-					});
+						temperature: 0.6,
+					})}`;
+					agent.messages[6] = { role: 'assistant', text: agentPlanResponse };
 
-					const llmPythonCode = extractPythonCode(agentPlanResponse);
+					// Code gen for function calling -----------
+
+					agent.messages[7] = {
+						role: 'user',
+						text: 'Generate a coding response as per the system instructions provided given the user request, memory items, recent function call history and plan',
+					};
+					agent.messages[8] = { role: 'assistant', text: '<python-code>' };
+					const agentCodeResponse: string = `<python-code>\n${await agentLLM.generateText2(agent.messages, {
+						id: 'dynamicAgentCode',
+						stopSequences,
+						temperature: 0.7,
+					})}`;
+					console.log(agentCodeResponse);
+					agent.messages[8] = { role: 'assistant', text: agentCodeResponse };
+					const llmPythonCode = extractPythonCode(agentCodeResponse);
+
+					// Function calling ----------------
 
 					agent.state = 'functions';
 					await agentStateService.save(agent);
@@ -150,7 +195,7 @@ export async function runCachingPythonAgent(agent: AgentContext): Promise<AgentE
 					let pythonScriptResult: any;
 					let pythonScript = '';
 
-					const functionInstances = agent.functions.getFunctionInstanceMap();
+					const functionInstances: Record<string, object> = agent.functions.getFunctionInstanceMap();
 					const schemas: FunctionSchema[] = getAllFunctionSchemas(Object.values(functionInstances));
 					const jsGlobals = {};
 					for (const schema of schemas) {
@@ -209,28 +254,35 @@ export async function runCachingPythonAgent(agent: AgentContext): Promise<AgentE
 					const allowedImports = ['json', 're', 'math', 'datetime'];
 					// Add the imports from the allowed packages being used in the script
 					pythonScript = allowedImports
-						.filter((pkg) => llmPythonCode.includes(`${pkg}.`))
+						.filter((pkg) => llmPythonCode.includes(`${pkg}.`) || pkg === 'json') // always need json for JsProxyEncoder
 						.map((pkg) => `import ${pkg}\n`)
 						.join();
 					logger.info(`Allowed imports: ${pythonScript}`);
 					pythonScript += `
 from typing import Any, List, Dict, Tuple, Optional, Union
+from pyodide.ffi import JsProxy
 
+class JsProxyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, JsProxy):
+            return obj.to_py()
+        # Let the base class default method raise the TypeError
+        return super().default(obj)
+        
 async def main():
 ${llmPythonCode
 	.split('\n')
 	.map((line) => `    ${line}`)
 	.join('\n')}
 
-str(await main())`.trim();
+main()`.trim();
 
 					try {
 						try {
 							// Initial execution attempt
 							const result = await pyodide.runPythonAsync(pythonScript, { globals });
 							pythonScriptResult = result?.toJs ? result.toJs() : result;
-							pythonScriptResult = pythonScriptResult?.toString ? pythonScriptResult.toString() : pythonScriptResult;
-							logger.info(pythonScriptResult, 'Script result');
+							pythonScriptResult = JSON.stringify(pythonScriptResult);
 							if (result?.destroy) result.destroy();
 						} catch (e) {
 							// Attempt to fix Syntax/indentation errors and retry
@@ -244,11 +296,10 @@ str(await main())`.trim();
 							// Re-try execution of fixed syntax/indentation error
 							const result = await pyodide.runPythonAsync(pythonScript, { globals });
 							pythonScriptResult = result?.toJs ? result.toJs() : result;
-							pythonScriptResult = pythonScriptResult?.toString ? pythonScriptResult.toString() : pythonScriptResult;
-
+							pythonScriptResult = JSON.stringify(pythonScriptResult);
 							if (result?.destroy) result.destroy();
-							logger.info(pythonScriptResult, 'Script result');
 						}
+						logger.info(pythonScriptResult, 'Script result');
 
 						const lastFunctionCall = agent.functionCallHistory[agent.functionCallHistory.length - 1];
 
@@ -269,16 +320,14 @@ str(await main())`.trim();
 						functionErrorCount++;
 					}
 					// Function invocations are complete
-					// span.setAttribute('functionCalls', pythonCode.map((functionCall) => functionCall.function_name).join(', '));
 
-					// The agent should store important values in memory
-					// functionResults
-
-					// This section is duplicated in the provideFeedback function
-					agent.invoking = [];
 					const currentFunctionCallHistory = buildFunctionCallHistoryPrompt('results', 10000, currentFunctionHistorySize);
+					// TODO output any saved memory items
+					agent.messages[9] = {
+						role: 'user',
+						text: `<script-result>${pythonScriptResult}</script-result>\nReview the results of the scripts and make any observations about the output/errors, then provide an updated planning response.`,
+					};
 
-					currentPrompt = `${oldFunctionCallHistory}${buildMemoryPrompt()}${toolStatePrompt}\n${userRequestXml}\n${agentPlanResponse}\n${currentFunctionCallHistory}\n<python-result>${pythonScriptResult}</python-result>\nReview the results of the scripts and make any observations about the output/errors, then proceed with the response.`;
 					currentFunctionHistorySize = agent.functionCallHistory.length;
 				} catch (e) {
 					span.setStatus({ code: SpanStatusCode.ERROR, message: e.toString() });
@@ -297,17 +346,7 @@ str(await main())`.trim();
 			});
 		}
 
-		// Send notification message
-		const uiUrl = envVar('UI_URL');
-		let message = notificationMessage(agent);
-		message += `\n${uiUrl}/agent/${agent.agentId}`;
-		logger.info(message);
-
-		try {
-			await notifySupervisor(agent, message);
-		} catch (e) {
-			logger.warn(e`Failed to send supervisor notification message ${message}`);
-		}
+		await runAgentCompleteHandler(agent);
 	});
 	return { agentId: agent.agentId, execution };
 }

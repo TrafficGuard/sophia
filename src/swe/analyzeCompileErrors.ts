@@ -1,4 +1,4 @@
-import { getFileSystem, llms } from '#agent/agentContext';
+import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 
 export interface CompileErrorAnalysis {
 	compilerOutput: string;

@@ -1,6 +1,3 @@
-import { logger } from '#o11y/logger';
-import { BaseLLM } from './base-llm';
-
 // https://github.com/AgentOps-AI/tokencost/blob/main/tokencost/model_prices.json
 
 export interface GenerateTextOptions {
@@ -37,14 +34,14 @@ export interface LlmMessage {
 	role: 'system' | 'user' | 'assistant';
 	text: string;
 	/** Set the cache_control flag with Claude models */
-	cache: boolean;
+	cache?: 'ephemeral';
 }
 
 export function system(text: string, cache = false): LlmMessage {
 	return {
 		role: 'system',
 		text: text,
-		cache,
+		cache: cache ? 'ephemeral' : undefined,
 	};
 }
 
@@ -52,7 +49,7 @@ export function user(text: string, cache = false): LlmMessage {
 	return {
 		role: 'user',
 		text: text,
-		cache,
+		cache: cache ? 'ephemeral' : undefined,
 	};
 }
 
@@ -65,7 +62,6 @@ export function assistant(text: string): LlmMessage {
 	return {
 		role: 'assistant',
 		text: text,
-		cache: false,
 	};
 }
 
@@ -172,13 +168,14 @@ export function combinePrompts(userPrompt: string, systemPrompt?: string): strin
  * @returns
  */
 export function logTextGeneration(originalMethod: any, context: ClassMethodDecoratorContext): any {
-	return async function replacementMethod(this: BaseLLM, ...args: any[]) {
+	return async function replacementMethod(this: any, ...args: any[]) {
 		// system prompt
 		// if (args.length > 1 && args[1]) {
 		// 	logger.info(`= SYSTEM PROMPT ===================================================\n${args[1]}`);
 		// }
-		// logger.info(`= USER PROMPT =================================================================\n${args[0]}`);
-		//
+		console.log();
+		console.log(`= USER PROMPT =================================================================\n${args[0]}`);
+		console.log(args[0]);
 		// const start = Date.now();
 		const result = await originalMethod.call(this, ...args);
 		// logger.info(`= RESPONSE ${this.model} ==========================================================\n${JSON.stringify(result)}`);
@@ -190,7 +187,7 @@ export function logTextGeneration(originalMethod: any, context: ClassMethodDecor
 
 export function logDuration(originalMethod: any, context: ClassMethodDecoratorContext): any {
 	const functionName = String(context.name);
-	return async function replacementMethod(this: BaseLLM, ...args: any[]) {
+	return async function replacementMethod(this: any, ...args: any[]) {
 		const start = Date.now();
 		const result = await originalMethod.call(this, ...args);
 		console.log(`${functionName} took ${Date.now() - start}ms`);

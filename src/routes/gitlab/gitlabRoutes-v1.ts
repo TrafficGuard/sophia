@@ -1,5 +1,6 @@
 import { Type } from '@sinclair/typebox';
-import { AgentContext, agentContextStorage, createContext } from '#agent/agentContext';
+import { agentContextStorage, createContext } from '#agent/agentContextLocalStorage';
+import { AgentContext } from '#agent/agentContextTypes';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { send, sendSuccess } from '#fastify/index';
 import { GitLab } from '#functions/scm/gitlab';

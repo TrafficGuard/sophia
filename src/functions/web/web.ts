@@ -2,7 +2,7 @@ import path from 'path';
 import { PuppeteerBlocker } from '@cliqz/adblocker-puppeteer';
 import { Readability } from '@mozilla/readability';
 import { JSDOM } from 'jsdom';
-import { agentContextStorage, getFileSystem, llms } from '#agent/agentContext';
+import { agentContextStorage, getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { execCommand } from '#utils/exec';
 import { cacheRetry } from '../../cache/cacheRetry';
 const { getJson } = require('serpapi');

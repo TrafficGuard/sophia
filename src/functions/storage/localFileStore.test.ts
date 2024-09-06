@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { expect } from 'chai';
 
-import { agentContextStorage } from '#agent/agentContext';
+import { agentContextStorage } from '#agent/agentContextLocalStorage';
 import { LocalFileStore } from './localFileStore';
 
 function setupMockAgentContext(agentId: string) {

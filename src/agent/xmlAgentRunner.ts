@@ -1,8 +1,10 @@
 import { readFileSync } from 'fs';
 import { Span, SpanStatusCode } from '@opentelemetry/api';
+import { ConsoleCompletedHandler, runAgentCompleteHandler, stateNotificationMessage } from '#agent/agentCompletion';
+import { AgentContext } from '#agent/agentContextTypes';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
 import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, buildToolStatePrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
-import { AgentExecution, formatFunctionError, formatFunctionResult, notificationMessage, summariseLongFunctionOutput } from '#agent/agentRunner';
+import { AgentExecution, formatFunctionError, formatFunctionResult, summariseLongFunctionOutput } from '#agent/agentRunner';
 import { agentHumanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
 import { getServiceName } from '#fastify/trace-init/trace-init';
 import { FunctionSchema, getAllFunctionSchemas } from '#functionSchema/functions';
@@ -12,7 +14,7 @@ import { withActiveSpan } from '#o11y/trace';
 import { envVar } from '#utils/env-var';
 import { errorToString } from '#utils/errors';
 import { appContext } from '../app';
-import { AgentContext, agentContext, agentContextStorage, llms } from './agentContext';
+import { agentContext, agentContextStorage, llms } from './agentContextLocalStorage';
 
 export const XML_AGENT_SPAN = 'XmlAgent';
 
@@ -219,16 +221,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<AgentExecution> 
 			});
 		}
 
-		// Send notification message
-		const uiUrl = envVar('UI_URL');
-		let message = notificationMessage(agent);
-		message += `\n${uiUrl}/agent/${agent.agentId}`;
-		logger.info(message);
-		try {
-			await notifySupervisor(agent, message);
-		} catch (e) {
-			logger.warn(e`Failed to send supervisor notification message ${message}`);
-		}
+		await runAgentCompleteHandler(agent);
 	});
 	return { agentId: agent.agentId, execution };
 }

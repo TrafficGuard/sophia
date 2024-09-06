@@ -1,5 +1,5 @@
 import path from 'path';
-import { agentContext, getFileSystem, llms } from '#agent/agentContext';
+import { agentContext, getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { FileSystem } from '#functions/storage/filesystem';
 import { Perplexity } from '#functions/web/perplexity';

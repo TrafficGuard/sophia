@@ -1,7 +1,7 @@
 import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
 
 import { promises as fs, readFileSync } from 'fs';
-import { AgentLLMs } from '#agent/agentContext';
+import { AgentLLMs } from '#agent/agentContextTypes';
 import { AGENT_COMPLETED_PARAM_NAME } from '#agent/agentFunctions';
 import { RunAgentConfig, startAgent, startAgentAndWait } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';

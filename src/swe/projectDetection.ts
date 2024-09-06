@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'fs';
 import path, { join } from 'path';
-import { getFileSystem, llms } from '#agent/agentContext';
+import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { logger } from '#o11y/logger';
 import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
 import { PhpTools } from '#swe/lang/php/phpTools';

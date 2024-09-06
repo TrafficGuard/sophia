@@ -1,6 +1,6 @@
 import { promises as fs } from 'node:fs';
 import { basename, dirname, join } from 'path';
-import { getFileSystem, llms } from '#agent/agentContext';
+import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { logger } from '#o11y/logger';
 
 /** Summary documentation for a file/folder */

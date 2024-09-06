@@ -1,6 +1,7 @@
 import { GenerativeModel, HarmBlockThreshold, HarmCategory, SafetySetting, VertexAI } from '@google-cloud/vertexai';
 import axios from 'axios';
-import { AgentLLMs, addCost, agentContext } from '#agent/agentContext';
+import { addCost, agentContext } from '#agent/agentContextLocalStorage';
+import { AgentLLMs } from '#agent/agentContextTypes';
 import { LlmCall } from '#llm/llmCallService/llmCall';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';

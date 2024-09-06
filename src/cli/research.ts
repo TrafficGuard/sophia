@@ -2,7 +2,7 @@ import '#fastify/trace-init/trace-init'; // leave an empty line next so this doe
 
 import { readFileSync } from 'fs';
 
-import { AgentLLMs } from '#agent/agentContext';
+import { AgentLLMs } from '#agent/agentContextTypes';
 import { startAgent, startAgentAndWait } from '#agent/agentRunner';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';

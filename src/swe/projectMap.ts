@@ -1,4 +1,4 @@
-import { getFileSystem } from '#agent/agentContext';
+import { getFileSystem } from '#agent/agentContextLocalStorage';
 import { countTokens } from '#llm/tokens';
 import { logger } from '#o11y/logger';
 import { Summary } from '#swe/documentationBuilder';

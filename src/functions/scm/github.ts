@@ -1,7 +1,7 @@
 import { existsSync } from 'fs';
 import path, { join } from 'path';
 import { request } from '@octokit/request';
-import { agentContext, getFileSystem } from '#agent/agentContext';
+import { agentContext, getFileSystem } from '#agent/agentContextLocalStorage';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { SourceControlManagement } from '#functions/scm/sourceControlManagement';
 import { logger } from '#o11y/logger';

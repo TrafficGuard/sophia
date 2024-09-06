@@ -1,6 +1,6 @@
 import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
 
-import { AgentLLMs } from '#agent/agentContext';
+import { AgentLLMs } from '#agent/agentContextTypes';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { shutdownTrace } from '#fastify/trace-init/trace-init';

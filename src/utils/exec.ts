@@ -5,7 +5,7 @@ import os from 'os';
 import path from 'path';
 import { promisify } from 'util';
 import { SpanStatusCode } from '@opentelemetry/api';
-import { getFileSystem } from '#agent/agentContext';
+import { getFileSystem } from '#agent/agentContextLocalStorage';
 import { logger } from '#o11y/logger';
 import { withSpan } from '#o11y/trace';
 

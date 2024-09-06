@@ -1,8 +1,10 @@
 import axios, { AxiosResponse } from 'axios';
-import { logger } from '#o11y/logger';
-
+import { completedNotificationMessage } from '#agent/agentCompletion';
+import { AgentCompleted, AgentContext } from '#agent/agentContextTypes';
 import { func, funcClass } from '#functionSchema/functionDecorators';
-import { currentUser, functionConfig } from '#user/userService/userContext';
+import { GetToolType, ToolType } from '#functions/toolType';
+import { logger } from '#o11y/logger';
+import { functionConfig } from '#user/userService/userContext';
 
 export interface SlackConfig {
 	token: string;
@@ -11,7 +13,20 @@ export interface SlackConfig {
 }
 
 @funcClass(__filename)
-export class Slack {
+export class Slack implements GetToolType, AgentCompleted {
+	getToolType(): ToolType {
+		return 'notification';
+	}
+
+	async notifyCompleted(agentContext: AgentContext): Promise<void> {
+		const message = completedNotificationMessage(agentContext);
+		await this.sendMessage(message);
+	}
+
+	agentCompletedHandlerId(): string {
+		return 'slack-webhook';
+	}
+
 	/**
 	 * Sends a message to the supervisor
 	 * @param message the message text

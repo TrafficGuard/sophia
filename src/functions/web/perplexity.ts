@@ -1,7 +1,7 @@
 import { logger } from '#o11y/logger';
 
 import OpenAI from 'openai';
-import { addCost, agentContext, llms } from '#agent/agentContext';
+import { addCost, agentContext, llms } from '#agent/agentContextLocalStorage';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { functionConfig } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';

@@ -1,4 +1,4 @@
-import { AgentLLMs } from '#agent/agentContext';
+import { AgentLLMs } from '#agent/agentContextTypes';
 import { LLM } from '#llm/llm';
 import { anthropicLLMRegistry } from '#llm/models/anthropic';
 import { anthropicVertexLLMRegistry } from '#llm/models/anthropic-vertex';

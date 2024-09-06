@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { expect } from 'chai';
-import { AgentContext } from '#agent/agentContext';
+import { AgentContext } from '#agent/agentContextTypes';
 import { AgentStateService } from '#agent/agentStateService/agentStateService';
 import { FirestoreAgentStateService } from '#agent/agentStateService/firestoreAgentStateService';
 

@@ -1,19 +1,20 @@
 import { readFileSync } from 'fs';
 import { Span, SpanStatusCode } from '@opentelemetry/api';
 import { PyodideInterface, loadPyodide } from 'pyodide';
+import { runAgentCompleteHandler } from '#agent/agentCompletion';
+import { AgentContext } from '#agent/agentContextTypes';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK, AGENT_SAVE_MEMORY_CONTENT_PARAM_NAME } from '#agent/agentFunctions';
 import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, buildToolStatePrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
-import { AgentExecution, formatFunctionError, formatFunctionResult, notificationMessage } from '#agent/agentRunner';
-import { agentHumanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
+import { AgentExecution, formatFunctionError, formatFunctionResult } from '#agent/agentRunner';
+import { agentHumanInTheLoop } from '#agent/humanInTheLoop';
 import { convertJsonToPythonDeclaration, extractPythonCode } from '#agent/pythonAgentUtils';
 import { getServiceName } from '#fastify/trace-init/trace-init';
-import { FUNC_SEP, FunctionParameter, FunctionSchema, getAllFunctionSchemas } from '#functionSchema/functions';
+import { FUNC_SEP, FunctionSchema, getAllFunctionSchemas } from '#functionSchema/functions';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
-import { envVar } from '#utils/env-var';
 import { errorToString } from '#utils/errors';
 import { appContext } from '../app';
-import { AgentContext, agentContext, agentContextStorage, llms } from './agentContext';
+import { agentContextStorage, llms } from './agentContextLocalStorage';
 
 const stopSequences = ['</response>'];
 
@@ -129,7 +130,7 @@ export async function runPythonAgent(agent: AgentContext): Promise<AgentExecutio
 					let pythonScriptResult: any;
 					let pythonScript = '';
 
-					const functionInstances = agent.functions.getFunctionInstanceMap();
+					const functionInstances: Record<string, object> = agent.functions.getFunctionInstanceMap();
 					const schemas: FunctionSchema[] = getAllFunctionSchemas(Object.values(functionInstances));
 					const jsGlobals = {};
 					for (const schema of schemas) {
@@ -188,12 +189,20 @@ export async function runPythonAgent(agent: AgentContext): Promise<AgentExecutio
 					const allowedImports = ['json', 're', 'math', 'datetime'];
 					// Add the imports from the allowed packages being used in the script
 					pythonScript = allowedImports
-						.filter((pkg) => llmPythonCode.includes(`${pkg}.`))
+						.filter((pkg) => llmPythonCode.includes(`${pkg}.`) || pkg === 'json') // always need json for JsProxyEncoder
 						.map((pkg) => `import ${pkg}\n`)
 						.join();
 					logger.info(`Allowed imports: ${pythonScript}`);
 					pythonScript += `
 from typing import Any, List, Dict, Tuple, Optional, Union
+from pyodide.ffi import JsProxy
+
+class JsProxyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, JsProxy):
+            return obj.to_py()
+        # Let the base class default method raise the TypeError
+        return super().default(obj)
 
 async def main():
 ${llmPythonCode
@@ -201,15 +210,14 @@ ${llmPythonCode
 	.map((line) => `    ${line}`)
 	.join('\n')}
 
-str(await main())`.trim();
+main()`.trim();
 
 					try {
 						try {
 							// Initial execution attempt
 							const result = await pyodide.runPythonAsync(pythonScript, { globals });
 							pythonScriptResult = result?.toJs ? result.toJs() : result;
-							pythonScriptResult = pythonScriptResult?.toString ? pythonScriptResult.toString() : pythonScriptResult;
-							logger.info(pythonScriptResult, 'Script result');
+							pythonScriptResult = JSON.stringify(pythonScriptResult);
 							if (result?.destroy) result.destroy();
 						} catch (e) {
 							// Attempt to fix Syntax/indentation errors and retry
@@ -223,11 +231,10 @@ str(await main())`.trim();
 							// Re-try execution of fixed syntax/indentation error
 							const result = await pyodide.runPythonAsync(pythonScript, { globals });
 							pythonScriptResult = result?.toJs ? result.toJs() : result;
-							pythonScriptResult = pythonScriptResult?.toString ? pythonScriptResult.toString() : pythonScriptResult;
-
+							pythonScriptResult = JSON.stringify(pythonScriptResult);
 							if (result?.destroy) result.destroy();
-							logger.info(pythonScriptResult, 'Script result');
 						}
+						logger.info(pythonScriptResult, 'Script result');
 
 						const lastFunctionCall = agent.functionCallHistory[agent.functionCallHistory.length - 1];
 
@@ -257,7 +264,7 @@ str(await main())`.trim();
 					agent.invoking = [];
 					const currentFunctionCallHistory = buildFunctionCallHistoryPrompt('results', 10000, currentFunctionHistorySize);
 
-					currentPrompt = `${oldFunctionCallHistory}${buildMemoryPrompt()}${toolStatePrompt}\n${userRequestXml}\n${agentPlanResponse}\n${currentFunctionCallHistory}\n<python-result>${pythonScriptResult}</python-result>\nReview the results of the scripts and make any observations about the output/errors, then proceed with the response.`;
+					currentPrompt = `${oldFunctionCallHistory}${buildMemoryPrompt()}${toolStatePrompt}\n${userRequestXml}\n${agentPlanResponse}\n${currentFunctionCallHistory}\n<script-result>${pythonScriptResult}</script-result>\nReview the results of the scripts and make any observations about the output/errors, then proceed with the response.`;
 					currentFunctionHistorySize = agent.functionCallHistory.length;
 				} catch (e) {
 					span.setStatus({ code: SpanStatusCode.ERROR, message: e.toString() });
@@ -276,17 +283,7 @@ str(await main())`.trim();
 			});
 		}
 
-		// Send notification message
-		const uiUrl = envVar('UI_URL');
-		let message = notificationMessage(agent);
-		message += `\n${uiUrl}/agent/${agent.agentId}`;
-		logger.info(message);
-
-		try {
-			await notifySupervisor(agent, message);
-		} catch (e) {
-			logger.warn(e`Failed to send supervisor notification message ${message}`);
-		}
+		await runAgentCompleteHandler(agent);
 	});
 	return { agentId: agent.agentId, execution };
 }

@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from 'async_hooks';
-import { agentContext } from '#agent/agentContext';
+import { agentContext } from '#agent/agentContextLocalStorage';
 import { User } from '#user/user';
 import { appContext } from '../../app';
 

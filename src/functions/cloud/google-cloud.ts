@@ -1,4 +1,4 @@
-import { agentContext } from '#agent/agentContext';
+import { agentContext } from '#agent/agentContextLocalStorage';
 import { waitForConsoleInput } from '#agent/humanInTheLoop';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { execCommand, failOnError } from '#utils/exec';

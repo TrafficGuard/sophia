@@ -1,7 +1,8 @@
 import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
 
 import { readFileSync } from 'fs';
-import { AgentLLMs, agentContext, llms } from '#agent/agentContext';
+import { agentContext, llms } from '#agent/agentContextLocalStorage';
+import { AgentLLMs } from '#agent/agentContextTypes';
 import { Agent } from '#agent/agentFunctions';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';

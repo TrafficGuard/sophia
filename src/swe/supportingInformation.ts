@@ -1,4 +1,4 @@
-import { getFileSystem } from '#agent/agentContext';
+import { getFileSystem } from '#agent/agentContextLocalStorage';
 import { ProjectInfo } from '#swe/projectDetection';
 
 export async function supportingInformation(projectInfo: ProjectInfo): Promise<string> {

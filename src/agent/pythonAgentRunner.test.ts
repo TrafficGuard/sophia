@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { appContext, initInMemoryApplicationContext } from 'src/app';
 import { LlmFunctions } from '#agent/LlmFunctions';
+import { AgentContext, AgentLLMs } from '#agent/agentContextTypes';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK, AGENT_SAVE_MEMORY, REQUEST_FEEDBACK_PARAM_NAME } from '#agent/agentFunctions';
 import {
 	RunAgentConfig,
@@ -19,7 +20,7 @@ import { logger } from '#o11y/logger';
 import { setTracer } from '#o11y/trace';
 import { User } from '#user/user';
 import { sleep } from '#utils/async-utils';
-import { AgentContext, AgentLLMs, agentContextStorage } from './agentContext';
+import { agentContextStorage } from './agentContextLocalStorage';
 
 const PY_AGENT_COMPLETED = (note: string) => `await ${AGENT_COMPLETED_NAME}("${note}")`;
 const PY_AGENT_REQUEST_FEEDBACK = (feedback: string) => `await ${AGENT_REQUEST_FEEDBACK}("${feedback}")`;

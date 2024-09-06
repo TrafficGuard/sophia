@@ -1,7 +1,8 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { LlmFunctions } from '#agent/LlmFunctions';
-import { AgentContext, createContext, deserializeAgentContext, serializeContext } from '#agent/agentContext';
+import { createContext, deserializeAgentContext, serializeContext } from '#agent/agentContextLocalStorage';
+import { AgentContext } from '#agent/agentContextTypes';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { FileSystem } from '#functions/storage/filesystem';
 import { LlmTools } from '#functions/util';

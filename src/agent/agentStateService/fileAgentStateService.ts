@@ -1,7 +1,8 @@
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs';
 import { unlinkSync } from 'node:fs';
 import { LlmFunctions } from '#agent/LlmFunctions';
-import { AgentContext, AgentRunningState, deserializeAgentContext, serializeContext } from '#agent/agentContext';
+import { deserializeAgentContext, serializeContext } from '#agent/agentContextLocalStorage';
+import { AgentContext, AgentRunningState } from '#agent/agentContextTypes';
 import { AgentStateService } from '#agent/agentStateService/agentStateService';
 import { functionFactory } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';

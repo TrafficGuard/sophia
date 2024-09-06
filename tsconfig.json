@@ -16,6 +16,7 @@
     "isolatedDeclarations": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "importHelpers": true,
     "moduleResolution": "node16",
     "baseUrl": "./",
     "paths": {

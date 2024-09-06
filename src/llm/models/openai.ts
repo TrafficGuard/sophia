@@ -1,5 +1,5 @@
 import { OpenAI as OpenAISDK } from 'openai';
-import { addCost, agentContext } from '#agent/agentContext';
+import { addCost, agentContext } from '#agent/agentContextLocalStorage';
 import { LlmCall } from '#llm/llmCallService/llmCall';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
@@ -62,7 +62,7 @@ export class OpenAI extends BaseLLM {
 	private sdk(): OpenAISDK {
 		if (!this.openAISDK) {
 			this.openAISDK = new OpenAISDK({
-				apiKey: currentUser().llmConfig.openaiKey ?? envVar('OPENAI_API_KEY'),
+				apiKey: currentUser().llmConfig.openaiKey || envVar('OPENAI_API_KEY'),
 			});
 		}
 		return this.openAISDK;

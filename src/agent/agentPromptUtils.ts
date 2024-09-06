@@ -1,4 +1,4 @@
-import { agentContext, getFileSystem } from '#agent/agentContext';
+import { agentContext, getFileSystem } from '#agent/agentContextLocalStorage';
 import { FileMetadata, FileStore } from '#functions/storage/filestore';
 import { FileSystem } from '#functions/storage/filesystem';
 import { FunctionCallResult } from '#llm/llm';

@@ -1,4 +1,4 @@
-import { addNote, agentContext, getFileSystem } from '#agent/agentContext';
+import { addNote, agentContext, getFileSystem } from '#agent/agentContextLocalStorage';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { GitProject } from '#functions/scm/gitProject';
 import { GitLabProject } from '#functions/scm/gitlab';

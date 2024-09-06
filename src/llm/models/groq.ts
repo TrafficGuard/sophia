@@ -1,15 +1,15 @@
 import Groq from 'groq-sdk';
-import { AgentLLMs, agentContext } from '#agent/agentContext';
-import { addCost } from '#agent/agentContext';
+import { agentContext } from '#agent/agentContextLocalStorage';
+import { addCost } from '#agent/agentContextLocalStorage';
+import { AgentLLMs } from '#agent/agentContextTypes';
 import { LlmCall } from '#llm/llmCallService/llmCall';
-import { CallerId } from '#llm/llmCallService/llmCallService';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
 import { appContext } from '../../app';
 import { RetryableError } from '../../cache/cacheRetry';
 import { BaseLLM } from '../base-llm';
-import { GenerateTextOptions, LLM, combinePrompts, logDuration } from '../llm';
+import { GenerateTextOptions, LLM, combinePrompts } from '../llm';
 import { MultiLLM } from '../multi-llm';
 
 export const GROQ_SERVICE = 'groq';
@@ -98,13 +98,12 @@ export class GroqLLM extends BaseLLM {
 	groq(): Groq {
 		if (!this._groq) {
 			this._groq = new Groq({
-				apiKey: currentUser().llmConfig.groqKey ?? envVar('GROQ_API_KEY'),
+				apiKey: currentUser().llmConfig.groqKey || envVar('GROQ_API_KEY'),
 			});
 		}
 		return this._groq;
 	}
 
-	@logDuration
 	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
 		return withActiveSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);

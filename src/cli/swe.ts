@@ -2,7 +2,7 @@ import '#fastify/trace-init/trace-init'; // leave an empty line next so this doe
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { AgentContext, AgentLLMs } from '#agent/agentContext';
+import { AgentContext, AgentLLMs } from '#agent/agentContextTypes';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { GitLab } from '#functions/scm/gitlab';

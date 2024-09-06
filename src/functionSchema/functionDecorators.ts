@@ -1,5 +1,5 @@
 import { Span } from '@opentelemetry/api';
-import { agentContext } from '#agent/agentContext';
+import { agentContext } from '#agent/agentContextLocalStorage';
 import { logger } from '#o11y/logger';
 import { getTracer, setFunctionSpanAttributes, withActiveSpan } from '#o11y/trace';
 import { functionSchemaParser } from './functionSchemaParser';

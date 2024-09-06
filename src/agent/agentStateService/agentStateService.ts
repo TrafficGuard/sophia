@@ -1,4 +1,4 @@
-import { AgentContext, AgentRunningState } from '#agent/agentContext';
+import { AgentContext, AgentRunningState } from '#agent/agentContextTypes';
 
 export interface AgentStateService {
 	save(state: AgentContext): Promise<void>;

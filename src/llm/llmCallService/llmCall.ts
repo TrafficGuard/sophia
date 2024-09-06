@@ -9,7 +9,7 @@ export interface LlmRequest {
 	/** Legacy simple prompting */
 	systemPrompt?: string;
 	/** Legacy simple prompting */
-	userPrompt: string;
+	userPrompt?: string;
 
 	messages?: LlmMessage[];
 	/** Populated when called by an agent */
