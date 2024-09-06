@@ -11,8 +11,8 @@ RUN curl -sL https://deb.nodesource.com/setup_20.x -o nodesource_setup.sh
 RUN chmod +x ./nodesource_setup.sh && ./nodesource_setup.sh
 RUN apt install -y nodejs
 
-ENV user     nous
-ENV homedir  /home/nous/
+ENV user=nous
+ENV homedir=/home/nous/
 
 RUN useradd --create-home -g users nous
 WORKDIR $homedir

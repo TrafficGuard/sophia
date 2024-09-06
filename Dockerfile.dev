@@ -13,8 +13,8 @@ RUN npm install -g pm2
 
 RUN pip install aider-chat
 
-ENV user     nous
-ENV homedir  /home/nous/
+ENV user=nous
+ENV homedir=/home/nous/
 RUN useradd --create-home -g users nous
 WORKDIR $homedir
 
