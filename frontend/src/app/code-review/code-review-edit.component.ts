@@ -61,12 +61,12 @@ export class CodeReviewEditComponent implements OnInit {
       (response) => {
         const data = response.data;
         this.editForm.patchValue(data);
-        
+
         // Clear existing examples
         while (this.examples.length !== 0) {
           this.examples.removeAt(0);
         }
-        
+
         // Add examples from the loaded data
         if (data.examples && Array.isArray(data.examples)) {
           data.examples.forEach((example: any) => {
@@ -78,7 +78,7 @@ export class CodeReviewEditComponent implements OnInit {
             );
           });
         }
-        
+
         this.isLoading = false;
       },
       (error) => {

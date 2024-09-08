@@ -92,7 +92,7 @@ export class RunAgentComponent implements OnInit {
     this.http
       .get<{ data: LLM[] }>(`${environment.serverUrl}/llms/list`)
       .pipe(
-        map(response => {
+        map((response) => {
           console.log(response);
           return response.data;
         })

@@ -65,11 +65,7 @@
             <mat-form-field appearance="fill" class="full-width">
               <mat-label>Tags</mat-label>
               <mat-chip-list #tagChipList>
-                <mat-chip
-                  *ngFor="let tag of editForm.get('tags')?.value"
-                  [removable]="true"
-                  (removed)="removeTag(tag)"
-                >
+                <mat-chip *ngFor="let tag of editForm.get('tags')?.value" [removable]="true" (removed)="removeTag(tag)">
                   {{ tag }}
                   <mat-icon matChipRemove>cancel</mat-icon>
                 </mat-chip>

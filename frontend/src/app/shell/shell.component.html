@@ -45,6 +45,10 @@
             <span translate>New Agent</span>
           </a>
           <mat-divider></mat-divider>
+          <a mat-list-item routerLink="/chat" routerLinkActive="active" (click)="isMobile && sidenav.close()">
+            <span translate>Chat</span>
+          </a>
+          <mat-divider></mat-divider>
           <a mat-list-item routerLink="/code-reviews" routerLinkActive="active" (click)="isMobile && sidenav.close()">
             <span translate>Code Reviews</span>
           </a>

@@ -1,0 +1,10 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Chat </mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <ng-container *ngIf="!isLoading"> </ng-container>
+
+    <mat-spinner *ngIf="isLoading"></mat-spinner>
+  </mat-card-content>
+</mat-card>

@@ -15,6 +15,7 @@ const routes: Routes = [
   Shell.childRoutes([
     { path: 'profile', loadChildren: () => import('./profile/profile.module').then((m) => m.ProfileModule) },
   ]),
+  Shell.childRoutes([{ path: 'chat', loadChildren: () => import('./chat/chat.module').then((m) => m.ChatModule) }]),
   Shell.childRoutes([
     {
       path: 'code-reviews',
