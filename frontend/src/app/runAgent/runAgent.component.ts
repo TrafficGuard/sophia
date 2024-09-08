@@ -13,6 +13,12 @@ interface StartAgentResponse {
   };
 }
 
+interface LLM {
+  id: string;
+  name: string;
+  isConfigured: boolean;
+}
+
 @Component({
   selector: 'app-run-agent',
   templateUrl: './runAgent.component.html',
@@ -20,7 +26,7 @@ interface StartAgentResponse {
 })
 export class RunAgentComponent implements OnInit {
   functions: string[] = [];
-  llms: Array<{ id: string; name: string }> = [];
+  llms: LLM[] = [];
   runAgentForm: FormGroup;
   isSubmitting: boolean = false;
 
@@ -84,11 +90,11 @@ export class RunAgentComponent implements OnInit {
         });
       });
     this.http
-      .get<{ data: Array<{ id: string; name: string }> }>(`${environment.serverUrl}/llms/list`)
+      .get<{ data: LLM[] }>(`${environment.serverUrl}/llms/list`)
       .pipe(
-        map((response) => {
+        map(response => {
           console.log(response);
-          return response.data as Array<{ id: string; name: string }>;
+          return response.data;
         })
       )
       .subscribe((llms) => {

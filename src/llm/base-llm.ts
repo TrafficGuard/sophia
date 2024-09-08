@@ -83,4 +83,9 @@ export abstract class BaseLLM implements LLM {
 	generateText2(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string> {
 		throw new Error('NotImplemented');
 	}
+
+	isConfigured(): boolean {
+		// Default implementation, should be overridden by specific LLM implementations
+		return true;
+	}
 }

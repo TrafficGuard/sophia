@@ -44,6 +44,10 @@ export class TogetherLLM extends BaseLLM {
 		return this._client;
 	}
 
+	isConfigured(): boolean {
+		return Boolean(currentUser().llmConfig.togetheraiKey || process.env.TOGETHERAI_KEY);
+	}
+
 	constructor(
 		displayName: string,
 		model: string,

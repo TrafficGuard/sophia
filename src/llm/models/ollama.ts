@@ -2,7 +2,6 @@ import axios from 'axios';
 import { agentContext } from '#agent/agentContextLocalStorage';
 import { AgentLLMs } from '#agent/agentContextTypes';
 import { LlmCall } from '#llm/llmCallService/llmCall';
-import { CallerId } from '#llm/llmCallService/llmCallService';
 import { withActiveSpan } from '#o11y/trace';
 import { appContext } from '../../app';
 import { BaseLLM } from '../base-llm';
@@ -20,6 +19,14 @@ export class OllamaLLM extends BaseLLM {
 			() => 0,
 			() => 0,
 		);
+	}
+
+	isConfigured(): boolean {
+		return Boolean(process.env.OLLAMA_API_URL);
+	}
+
+	private getOllamaApiUrl(): string {
+		return process.env.OLLAMA_API_URL;
 	}
 
 	@logTextGeneration
@@ -45,7 +52,7 @@ export class OllamaLLM extends BaseLLM {
 			});
 			const requestTime = Date.now();
 
-			const url = `${process.env.OLLAMA_API_URL || 'http://localhost:11434'}/api/generate`;
+			const url = `${this.getOllamaApiUrl()}/api/generate`;
 
 			const response = await axios.post(url, {
 				model: this.model,

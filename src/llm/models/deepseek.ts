@@ -59,6 +59,10 @@ export class DeepseekLLM extends BaseLLM {
 		return this._client;
 	}
 
+	isConfigured(): boolean {
+		return Boolean(currentUser().llmConfig.deepseekKey || process.env.DEEPSEEK_API_KEY);
+	}
+
 	constructor(
 		displayName: string,
 		model: string,

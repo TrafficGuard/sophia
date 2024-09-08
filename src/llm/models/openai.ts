@@ -68,6 +68,10 @@ export class OpenAI extends BaseLLM {
 		return this.openAISDK;
 	}
 
+	isConfigured(): boolean {
+		return Boolean(currentUser().llmConfig.openaiKey || process.env.OPENAI_API_KEY);
+	}
+
 	async generateImage(description: string): Promise<string> {
 		const response = await this.sdk().images.generate({
 			model: 'dall-e-3',

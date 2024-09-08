@@ -29,6 +29,10 @@ export class FireworksLLM extends BaseLLM {
 		return this._client;
 	}
 
+	isConfigured(): boolean {
+		return Boolean(currentUser().llmConfig.fireworksKey || process.env.FIREWORKS_KEY);
+	}
+
 	constructor(
 		displayName: string,
 		model: string,

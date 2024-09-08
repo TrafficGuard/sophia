@@ -104,6 +104,10 @@ export class GroqLLM extends BaseLLM {
 		return this._groq;
 	}
 
+	isConfigured(): boolean {
+		return Boolean(currentUser().llmConfig.groqKey || process.env.GROQ_API_KEY);
+	}
+
 	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
 		return withActiveSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);

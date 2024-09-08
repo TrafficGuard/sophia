@@ -123,6 +123,12 @@ export interface LLM {
 	 * @returns the number of tokens in the text for this LLM
 	 */
 	countTokens(text: string): Promise<number>;
+
+	/**
+	 * Checks if all necessary configuration variables are set for this LLM.
+	 * @returns true if the LLM is properly configured, false otherwise.
+	 */
+	isConfigured(): boolean;
 }
 
 /**
