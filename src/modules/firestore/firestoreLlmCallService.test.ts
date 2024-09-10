@@ -3,9 +3,9 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { logger } from '#o11y/logger';
 
-import { FirestoreLlmCallService } from '#llm/llmCallService/firestoreLlmCallService';
 import { CreateLlmRequest, LlmCall } from '#llm/llmCallService/llmCall';
 import { LlmCallService } from '#llm/llmCallService/llmCallService';
+import { FirestoreLlmCallService } from '#modules/firestore/firestoreLlmCallService';
 
 const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST;
 

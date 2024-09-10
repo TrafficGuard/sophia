@@ -2,10 +2,10 @@ import { DocumentSnapshot, Firestore } from '@google-cloud/firestore';
 import { LlmCall } from '#llm/llmCallService/llmCall';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
+import { User } from '#user/user';
 import { isSingleUser } from '#user/userService/userContext';
+import { UserService } from '#user/userService/userService';
 import { envVar } from '#utils/env-var';
-import { User } from '../user';
-import { UserService } from './userService';
 
 /*** Google Firestore implementation of UserService*/
 export class FirestoreUserService implements UserService {

@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
+import { DEFAULT_HEALTHCHECK } from '#fastify/fastifyApp';
 import { sendBadRequest } from './responses';
-import {DEFAULT_HEALTHCHECK} from "#fastify/fastifyApp";
 
 export interface RouteInterface {
 	method: string | string[];

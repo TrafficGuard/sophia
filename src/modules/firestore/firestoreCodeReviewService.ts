@@ -2,7 +2,6 @@ import { DocumentSnapshot, Firestore } from '@google-cloud/firestore';
 import { logger } from '#o11y/logger';
 import { CodeReviewConfig } from '#swe/codeReview/codeReviewModel';
 import { CodeReviewService } from '#swe/codeReview/codeReviewService';
-import { envVar } from '#utils/env-var';
 import { firestoreDb } from '../../firestore';
 
 export class FirestoreCodeReviewService implements CodeReviewService {

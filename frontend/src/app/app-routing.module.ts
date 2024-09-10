@@ -16,6 +16,12 @@ const routes: Routes = [
     { path: 'profile', loadChildren: () => import('./profile/profile.module').then((m) => m.ProfileModule) },
   ]),
   Shell.childRoutes([{ path: 'chat', loadChildren: () => import('./chat/chat.module').then((m) => m.ChatModule) }]),
+
+  Shell.childRoutes([{ path: 'chats', loadChildren: () => import('./chat/chat.module').then((m) => m.ChatModule) }]),
+  Shell.childRoutes([
+    { path: 'chats/:id', loadChildren: () => import('./chat/chat.module').then((m) => m.ChatModule) },
+  ]),
+
   Shell.childRoutes([
     {
       path: 'code-reviews',

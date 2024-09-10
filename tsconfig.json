@@ -21,7 +21,9 @@
     "baseUrl": "./",
     "paths": {
       "#agent/*": ["./src/agent/*"],
+      "#chat/*": ["./src/chat/*"],
       "#fastify/*": ["./src/fastify/*"],
+      "#firestore*": ["./src/modules/firestore*"],
       "#functionSchema/*": ["./src/functionSchema/*"],
       "#functions/*": ["./src/functions/*"],
       "#llm/*": ["./src/llm/*"],
@@ -29,6 +31,7 @@
       "#o11y/*": ["./src/o11y/*"],
       "#services/*": ["./src/services/*"],
       "#modules/*": ["./src/modules/*"],
+      "#slack/*": ["./src/modules/slack/*"],
       "#swe/*": ["./src/swe/*"],
       "#user/*": ["./src/user/*"],
       "#utils/*": ["./src/utils/*"]

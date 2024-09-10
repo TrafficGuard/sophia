@@ -1,11 +1,11 @@
 import { fail } from 'node:assert';
 import axios from 'axios';
 import { assert, expect } from 'chai';
-import { FirestoreLlmCallService } from '#llm/llmCallService/firestoreLlmCallService';
+import { FirestoreLlmCallService } from '#modules/firestore/firestoreLlmCallService';
 import { logger } from '#o11y/logger';
-import { User } from '../user';
+import { User } from '#user/user';
+import { InMemoryUserService } from '#user/userService/inMemoryUserService';
 import { FirestoreUserService } from './firestoreUserService';
-import { InMemoryUserService } from './inMemoryUserService';
 
 const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST;
 

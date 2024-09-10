@@ -2,11 +2,11 @@ import { DocumentSnapshot, Firestore } from '@google-cloud/firestore';
 import { LlmFunctions } from '#agent/LlmFunctions';
 import { deserializeAgentContext, serializeContext } from '#agent/agentContextLocalStorage';
 import { AgentContext, AgentRunningState } from '#agent/agentContextTypes';
+import { AgentStateService } from '#agent/agentStateService/agentStateService';
 import { functionFactory } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
 import { firestoreDb } from '../../firestore';
-import { AgentStateService } from './agentStateService';
 
 /**
  * Google Firestore implementation of AgentStateService

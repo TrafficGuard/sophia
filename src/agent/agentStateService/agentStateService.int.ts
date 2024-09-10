@@ -2,7 +2,7 @@ import fs from 'fs';
 import { expect } from 'chai';
 import { AgentContext } from '#agent/agentContextTypes';
 import { AgentStateService } from '#agent/agentStateService/agentStateService';
-import { FirestoreAgentStateService } from '#agent/agentStateService/firestoreAgentStateService';
+import { FirestoreAgentStateService } from '#modules/firestore/firestoreAgentStateService';
 
 describe('AgentStateService Integration Tests', () => {
 	let service: AgentStateService;
