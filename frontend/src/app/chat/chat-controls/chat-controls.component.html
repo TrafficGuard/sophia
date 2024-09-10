@@ -1,31 +1,18 @@
-<mat-card
-  [formGroup]="chatForm"
-  style="width: 100%; min-height: 125px; margin-bottom: 8px"
->
+<mat-card [formGroup]="chatForm" style="width: 100%; min-height: 125px; margin-bottom: 8px">
   <mat-card-content>
     <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="center center">
       <!-- TODO: Better layout of form controls -->
       <mat-form-field fxFlex="calc(100%-56px-56px-16px-16px-8px-8px)">
-        <textarea
-          matInput
-          placeholder="Message"
-          formControlName="message"
-          (keydown.enter)="submit()"
-        ></textarea>
+        <textarea matInput placeholder="Message" formControlName="message" (keydown.enter)="submit()"></textarea>
       </mat-form-field>
 
-      <button
-        mat-fab
-        color="primary"
-        (click)="submit()"
-        [disabled]="!chatForm.get('message')?.value"
-      >
+      <button mat-fab color="primary" (click)="submit()" [disabled]="!chatForm.get('message')?.value">
         <mat-icon>send</mat-icon>
       </button>
 
       <input
         #fileInput
-        style="display: none;"
+        style="display: none"
         id="input-file-id"
         multiple
         type="file"
@@ -41,7 +28,7 @@
 
     <mat-chip-list
       #chipList
-      style="width: 100%; margin-bottom: 8px;"
+      style="width: 100%; margin-bottom: 8px"
       fxLayout="row"
       fxLayoutGap="8px"
       fxLayoutAlign="start center"

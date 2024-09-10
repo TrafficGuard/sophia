@@ -6,7 +6,7 @@ import * as moment from 'moment';
 @Component({
   selector: 'app-chat-message',
   templateUrl: './chat-message.component.html',
-  styleUrls: ['./chat-message.component.scss']
+  styleUrls: ['./chat-message.component.scss'],
 })
 export class ChatMessageComponent implements OnInit {
   @Input() msg: Message = {} as Message;
@@ -24,7 +24,7 @@ export class ChatMessageComponent implements OnInit {
     // }
     //
     // return msg.createdAt.format('l');
-    return ''
+    return '';
   }
 
   getUserName(user: User | undefined): string | null {
@@ -39,7 +39,7 @@ export class ChatMessageComponent implements OnInit {
       return null;
     }
     // return msg.createdAt.format('LT');
-    return ''
+    return '';
   }
 
   isPredecessorSameAuthor(): boolean {

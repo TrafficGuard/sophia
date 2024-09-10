@@ -3,12 +3,12 @@ import { Component, Input, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { debounceTime, filter, throttleTime } from 'rxjs/operators';
 // import {FirebaseAttachmentService} from "@app/chat/services/firebase/firebase-attachment.service";
-import {FirebaseChatService} from "@app/chat/services/firebase/firebase-chat.service";
+import { FirebaseChatService } from '@app/chat/services/firebase/firebase-chat.service';
 
 @Component({
   selector: 'app-chat-controls',
   templateUrl: './chat-controls.component.html',
-  styleUrls: ['./chat-controls.component.scss']
+  styleUrls: ['./chat-controls.component.scss'],
 })
 export class ChatControlsComponent implements OnInit {
   @Input() chatId: string = '';
@@ -30,19 +30,19 @@ export class ChatControlsComponent implements OnInit {
 
     this.messageControl.valueChanges
       .pipe(
-        filter(data => data !== ''),
+        filter((data) => data !== ''),
         throttleTime(1400)
       )
-      .subscribe(data => {
+      .subscribe((data) => {
         // this.chatService.sendIsTyping(this.chatId).then();
       });
 
     this.messageControl.valueChanges
       .pipe(
-        filter(data => data !== ''),
+        filter((data) => data !== ''),
         debounceTime(1500)
       )
-      .subscribe(data => {
+      .subscribe((data) => {
         // this.chatService.deleteIsTyping(this.chatId).then();
       });
   }
@@ -75,7 +75,7 @@ export class ChatControlsComponent implements OnInit {
 
   getAttachments(): File[] {
     // return this.attachmentService.getFiles();
-    return []
+    return [];
   }
 
   hasAttachments() {

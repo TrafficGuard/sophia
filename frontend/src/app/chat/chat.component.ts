@@ -24,9 +24,8 @@ export class ChatComponent implements OnInit {
 
   constructor(
     public chatService: FirebaseChatService,
-    private route: ActivatedRoute
-  ) // public auth: FirebaseAuthService
-  {}
+    private route: ActivatedRoute // public auth: FirebaseAuthService
+  ) {}
 
   ngOnInit() {
     const chatId: string | null = this.route.snapshot.paramMap.get('id');

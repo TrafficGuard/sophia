@@ -12,29 +12,25 @@ export class ApiChatService extends ChatBaseService {
     super();
   }
 
-  create(): Promise<boolean> {
+  async create(): Promise<boolean> {
+    return false;
+  }
+
+  async deleteIsTyping(chatId: string): Promise<void> {
     return undefined;
   }
 
-  deleteIsTyping(chatId: string): Promise<void> {
-    return undefined;
-  }
-
-  deleteMessage(chat: Chat, msg: Message): Promise<void> {
+  async deleteMessage(chat: Chat, msg: Message): Promise<void> {
     return undefined;
   }
 
   getHistory(chatId: string): Observable<any> {
-    return undefined;
+    return new Observable<any>();
   }
 
-  sendIsTyping(chatId: string): Promise<void> {
-    return undefined;
-  }
+  async sendIsTyping(chatId: string): Promise<void> {}
 
-  sendMessage(chatId: string, content: string): Promise<void> {
-    return undefined;
-  }
+  async sendMessage(chatId: string, content: string): Promise<void> {}
 
   buildChat(source: Observable<any>) {}
 }

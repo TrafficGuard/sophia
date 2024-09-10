@@ -1,4 +1,4 @@
-<div style="display: flex; flex-direction: column;">
+<div style="display: flex; flex-direction: column">
   <mat-chip
     style="width: fit-content; align-self: center; margin: 8px"
     *ngIf="isPreviousMessageFromOtherDay()"
@@ -8,7 +8,7 @@
     >{{ getDateDivider(msg) }}</mat-chip
   >
   <mat-card
-    style="box-shadow: none; background-color: transparent;"
+    style="box-shadow: none; background-color: transparent"
     [ngStyle]="{
       'align-self': msg.uid !== user.uid ? 'flex-end' : 'flex-start',
       'padding-top': !(isPredecessorSameAuthor() && isTemporalClose()) ? '16px' : '0px',
@@ -31,19 +31,16 @@
       />
       <mat-card-title
         *ngIf="!(isPredecessorSameAuthor() && isTemporalClose())"
-        style="font-size: 16px; margin-bottom: 6px;"
+        style="font-size: 16px; margin-bottom: 6px"
       >
         {{ getUserName(msg.user) }}
       </mat-card-title>
     </mat-card-header>
-    <mat-card-content
-      style="display: inline-flex; flex-direction: column; width: 100%;"
-    >
+    <mat-card-content style="display: inline-flex; flex-direction: column; width: 100%">
       <!-- Message content-->
       <mat-card
         [ngStyle]="{
-          'background-color':
-            msg.uid !== user.uid ? 'lightslategrey' : '#536DFE',
+          'background-color': msg.uid !== user.uid ? 'lightslategrey' : '#536DFE',
           color: msg.uid !== user.uid ? 'white' : 'white',
           'align-self': msg.uid !== user.uid ? 'flex-end' : 'flex-start',
           'text-align': msg.uid !== user.uid ? 'end' : 'start',
@@ -55,10 +52,10 @@
           padding: '16px 12px 12px 12px'
         }"
       >
-        <div style="top: 2px;position: absolute;right: 4px; font-size: 12px; opacity: 0.6">
+        <div style="top: 2px; position: absolute; right: 4px; font-size: 12px; opacity: 0.6">
           {{ getCreatedDate(msg) }}
         </div>
-        <span style="overflow-wrap: break-word;">{{ msg.content }}</span>
+        <span style="overflow-wrap: break-word">{{ msg.content }}</span>
       </mat-card>
 
       <button
