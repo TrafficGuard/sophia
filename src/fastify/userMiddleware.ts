@@ -1,3 +1,4 @@
+import { DEFAULT_HEALTHCHECK } from '#fastify/fastifyApp';
 import { logger } from '#o11y/logger';
 import { runWithUser } from '#user/userService/userContext';
 import { appContext } from '../app';
@@ -12,8 +13,8 @@ export function singleUserMiddleware(req: any, _res, next: () => void): void {
 }
 
 export function googleIapMiddleware(req: any, _res, next: () => void) {
-	logger.info(req.raw.url);
-	if (req.raw.url.startsWith('/webhooks/')) {
+	// It would be nicer if the health-check was earlier in the chain. Maybe when nextauthjs integration is done.
+	if (req.raw.url.startsWith('/webhooks/' || req.raw.url === DEFAULT_HEALTHCHECK)) {
 		next();
 		return;
 	}
