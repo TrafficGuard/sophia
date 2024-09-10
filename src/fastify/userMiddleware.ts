@@ -14,7 +14,7 @@ export function singleUserMiddleware(req: any, _res, next: () => void): void {
 
 export function googleIapMiddleware(req: any, _res, next: () => void) {
 	// It would be nicer if the health-check was earlier in the chain. Maybe when nextauthjs integration is done.
-	if (req.raw.url.startsWith('/webhooks/' || req.raw.url === DEFAULT_HEALTHCHECK)) {
+	if (req.raw.url.startsWith('/webhooks/') || req.raw.url === DEFAULT_HEALTHCHECK) {
 		next();
 		return;
 	}
