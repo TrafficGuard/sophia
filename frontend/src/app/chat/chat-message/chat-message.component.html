@@ -1,0 +1,91 @@
+<div style="display: flex; flex-direction: column;">
+  <mat-chip
+    style="width: fit-content; align-self: center; margin: 8px"
+    *ngIf="isPreviousMessageFromOtherDay()"
+    color="accent"
+    selected
+    removable="false"
+    >{{ getDateDivider(msg) }}</mat-chip
+  >
+  <mat-card
+    style="box-shadow: none; background-color: transparent;"
+    [ngStyle]="{
+      'align-self': msg.uid !== user.uid ? 'flex-end' : 'flex-start',
+      'padding-top': !(isPredecessorSameAuthor() && isTemporalClose()) ? '16px' : '0px',
+      'padding-bottom': !(isPredecessorSameAuthor() && isTemporalClose()) ? '16px' : '0px'
+    }"
+  >
+    <!-- Message Header -->
+    <mat-card-header
+      [ngStyle]="{
+        'justify-content': 'flex-start',
+        'margin-bottom': '8px',
+        'flex-direction': msg.uid !== user.uid ? 'row-reverse' : 'row'
+      }"
+    >
+      <img
+        *ngIf="!(isPredecessorSameAuthor() && isTemporalClose())"
+        mat-card-avatar
+        [src]="msg.user.photoUrl || 'assets/account.png'"
+        width="50px"
+      />
+      <mat-card-title
+        *ngIf="!(isPredecessorSameAuthor() && isTemporalClose())"
+        style="font-size: 16px; margin-bottom: 6px;"
+      >
+        {{ getUserName(msg.user) }}
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content
+      style="display: inline-flex; flex-direction: column; width: 100%;"
+    >
+      <!-- Message content-->
+      <mat-card
+        [ngStyle]="{
+          'background-color':
+            msg.uid !== user.uid ? 'lightslategrey' : '#536DFE',
+          color: msg.uid !== user.uid ? 'white' : 'white',
+          'align-self': msg.uid !== user.uid ? 'flex-end' : 'flex-start',
+          'text-align': msg.uid !== user.uid ? 'end' : 'start',
+          'border-top-right-radius': msg.uid !== user.uid ? '0px' : '4px',
+          'border-top-left-radius': msg.uid === user.uid ? '0px' : '4px',
+          'min-width': '150px',
+          'max-width': '100%',
+          'margin-bottom': '8px',
+          padding: '16px 12px 12px 12px'
+        }"
+      >
+        <div style="top: 2px;position: absolute;right: 4px; font-size: 12px; opacity: 0.6">
+          {{ getCreatedDate(msg) }}
+        </div>
+        <span style="overflow-wrap: break-word;">{{ msg.content }}</span>
+      </mat-card>
+
+      <button
+        *ngIf="allowsReply"
+        [ngStyle]="{
+          'align-self': msg.uid !== user.uid ? 'flex-end' : 'flex-start',
+          'margin-bottom': '8px',
+          'font-size': '10px',
+          'line-height': '18px'
+        }"
+        mat-stroked-button
+      >
+        REPLY
+      </button>
+
+      <!-- Attached files -->
+      <mat-chip-list
+        [ngStyle]="{
+          display: 'flex',
+          'justify-content': msg.uid !== user.uid ? 'flex-end' : 'flex-start'
+        }"
+      >
+        <mat-chip *ngFor="let attachment of msg.attachments">
+          <mat-icon>insert_drive_file</mat-icon>
+          {{ attachment.name }}
+        </mat-chip>
+      </mat-chip-list>
+    </mat-card-content>
+  </mat-card>
+</div>
