@@ -1,6 +1,6 @@
 # Code Review
 
-Nous has the ability to review merge requests on GitLab with configured code review guidelines.
+Sophia has the ability to review merge requests on GitLab with configured code review guidelines.
 
 Some situations where you may want to use LLMs for reviewing code styles are:
 - When a linting rule isn't yet available.
@@ -75,5 +75,5 @@ Webhooks can be configured at the project or group level, so if you have multipl
 that you wanted to be reviewed, then you will need to configure a webhook for each one.
 
 Follow the [GitLab Webhook documentation](https://gitlab.synrgy.mobi/groups/devops/-/hooks) and for the
-webhook URL enter `https://<your-nous-domain>/gitlab/v1/webhook`
+webhook URL enter `https://<your-sophia-domain>/gitlab/v1/webhook`
 

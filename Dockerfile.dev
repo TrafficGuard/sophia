@@ -13,9 +13,9 @@ RUN npm install -g pm2
 
 RUN pip install aider-chat
 
-ENV user=nous
-ENV homedir=/home/nous/
-RUN useradd --create-home -g users nous
+ENV user=sophia
+ENV homedir=/home/sophia/
+RUN useradd --create-home -g users sophia
 WORKDIR $homedir
 
 RUN mkdir ".husky"

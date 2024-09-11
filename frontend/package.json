@@ -1,5 +1,5 @@
 {
-  "name": "nous-ng",
+  "name": "sophia-ng",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -12,10 +12,10 @@
     "lint:ci": "ng lint && npm run prettier:check",
     "stylelint": "stylelint \"src/**/*.scss\"",
     "test": "npm run write:env -s && ng test",
-    "test:ci": "npm run write:env -s && npm run lint:ci -s && ng run nous-ng:test:ci",
+    "test:ci": "npm run write:env -s && npm run lint:ci -s && ng run sophia-ng:test:ci",
     "e2e": "npm run write:env -s && ng e2e",
-    "cypress:open": "npm run write:env -s && ng run nous-ng:cypress-open",
-    "cypress:run": "npm run write:env -s && ng run nous-ng:cypress-run",
+    "cypress:open": "npm run write:env -s && ng run sophia-ng:cypress-open",
+    "cypress:run": "npm run write:env -s && ng run sophia-ng:cypress-run",
     "translations:extract": "ngx-translate-extract --input ./src --output ./src/translations/template.json --format=json --clean --sort",
     "docs": "hads ./docs -o",
     "write:env": "ngx-scripts env npm_package_version SERVER_URL GCLOUD_PROJECT FIRESTORE_DATABASE AUTH",

@@ -1,24 +1,24 @@
 <a id="banner"></a>
 <p align="center">
-  <img src="https://public.trafficguard.ai/nous/banner.png" alt="nous logo"/>
+  <img src="https://public.trafficguard.ai/sophia/banner.png" alt="nous logo"/>
 </p>
 <p align="center">
   <em>The open-source TypeScript platform for autonomous AI agents and LLM based workflows </em>
 </p>
-<em><b>Nous</b></em> (Greek: νοῦς) is a term from classical philosophy often associated with intellect or intelligence, represents the human mind's capacity to comprehend truth and reality.
+The Ancient Greek word <em><b>sophía (σοφία)</b></em> is the abstract noun of σοφός (sophós), which variously translates to "clever, skillful, intelligent, wise"
 
 ## Documentation site
-[Home](https://nous.trafficguard.ai/) |  [Setup](https://nous.trafficguard.ai/setup/) | [Observability](https://nous.trafficguard.ai/observability/) | [Function calling](https://nous.trafficguard.ai/functions/) | 
-[Autonomous AI Agent](https://nous.trafficguard.ai/xml-agent/) | [AI Software Engineer](https://nous.trafficguard.ai/software-engineer/) | [AI Code reviews](https://nous.trafficguard.ai/code-review/) |
-[Tools/Integrations](https://nous.trafficguard.ai/integrations/) | [Roadmap](https://nous.trafficguard.ai/roadmap/)
+[Home](https://sophia.dev/) |  [Setup](https://sophia.dev/setup/) | [Observability](https://sophia.dev/observability/) | [Function calling](https://sophia.dev/functions/) | 
+[Autonomous AI Agent](https://sophia.dev/xml-agent/) | [AI Software Engineer](https://sophia.dev/software-engineer/) | [AI Code reviews](https://sophia.dev/code-review/) |
+[Tools/Integrations](https://sophia.dev/integrations/) | [Roadmap](https://sophia.dev/roadmap/)
 
 ---
 
-[The Nous Story](#the-nous-story) | [Features](#features) | [UI Examples](#ui-examples) | [Code examples](#code-examples) | [Contributing](#contributing)
+[The Sophia Story](#the-sophia-story) | [Features](#features) | [UI Examples](#ui-examples) | [Code examples](#code-examples) | [Contributing](#contributing)
 
-## The Nous Story
+## The Sophia Story
 
-Nous started from a simple goal: to harness AI's potential to enhance real-world productivity, born in DevOps and Platform Engineering space. We envisioned a tool that could:
+Sophia started from a simple goal: to harness AI's potential to enhance real-world productivity, born in DevOps and Platform Engineering space. We envisioned a tool that could:
 
 - Automate various processes and support requests, and triage build failures.
 - Review code for compliance with standards and best practices.
@@ -30,7 +30,7 @@ Our SaaS on GCP comprises projects developed in TypeScript, Python, GoogleSQL, P
 With open source projects typically Python/GitHub focused, and the vendor AI tools being focused in their silos, 
 we saw a need for TypeScript based tooling which can work across our entire tech stack, and understand the overall architecture.
 
-Through its evolution we've designed nous as a flexible platform for the TypeScript community to expand and support the use cases and integrations of your choice.
+Through its evolution we've designed sophia as a flexible platform for the TypeScript community to expand and support the use cases and integrations of your choice.
 
 Our design choice of Firestore for the initial database implementation, with Cloud Run, provides a scale-to-zero solution with zero-cost using the free tier.
 With the intention to support uses cases such as your own custom personal assistant, always available via mobile.
@@ -82,7 +82,7 @@ Key features include:
 
 ### New Agent
 
-![New Agent UI](https://public.trafficguard.ai/nous/start.png)
+![New Agent UI](https://public.trafficguard.ai/sophia/start.png)
 
 ### Sample trace
 
@@ -106,11 +106,11 @@ Key features include:
 
 ## Code Examples
 
-### Nous vs LangChain
+### Sophia vs LangChain
 
-Nous doesn't use LangChain, for [many reasons](https://www.octomind.dev/blog/why-we-no-longer-use-langchain-for-building-our-ai-agents) that [you](https://www.google.com/search?q=langchain+site%3Anews.ycombinator.com) can [read online](https://www.google.com/search?q=langchain+sucks+site%3Areddit.com)
+Sophia doesn't use LangChain, for [many reasons](https://www.octomind.dev/blog/why-we-no-longer-use-langchain-for-building-our-ai-agents) that [you](https://www.google.com/search?q=langchain+site%3Anews.ycombinator.com) can [read online](https://www.google.com/search?q=langchain+sucks+site%3Areddit.com)
 
-Let's compare the LangChain document example for Multiple Chains to the equivalent Nous implementation.
+Let's compare the LangChain document example for Multiple Chains to the equivalent Sophia implementation.
 
 #### LangChain
 ```typescript
@@ -148,7 +148,7 @@ const result = await combinedChain.invoke({
 console.log(result);
 ```
 
-#### Nous
+#### Sophia
 ```typescript
 import { llms } from '#agent/context'
 import { anthropicLLMs } from '#llms/anthropic'
@@ -164,7 +164,7 @@ runAgentWorkflow({ llms: anthropicLLMs() }, async () => {
 });
 ```
 
-The Nous code also has the advantage of static typing with the prompt arguments, enabling you to refactor with ease.
+The Sophia code also has the advantage of static typing with the prompt arguments, enabling you to refactor with ease.
 Using simple control flow allows easy debugging with breakpoints/logging.
 
 To run a fully autonomous agent:
@@ -177,9 +177,6 @@ startAgent({
   llms,
 });
 ```
-
-The Nous code also has the advantage of static typing with the prompt arguments, enabling you to refactor with ease.
-Using simple control flow allows easy debugging with breakpoints/logging.
 
 ### Automated LLM function schemas
 

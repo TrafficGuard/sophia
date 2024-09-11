@@ -1,4 +1,4 @@
-# nous-ng
+# sophia-ng
 
 This project was generated with [ngX-Rocket](https://github.com/ngx-rocket/generator-ngx-rocket/)
 version 11.0.0

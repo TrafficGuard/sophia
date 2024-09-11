@@ -1,4 +1,4 @@
-# nous-ng
+# sophia-ng
 
 Welcome to the project documentation!
 

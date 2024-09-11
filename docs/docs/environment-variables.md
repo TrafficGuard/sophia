@@ -78,7 +78,7 @@ This document provides comprehensive details about the environment variables uti
 **TRACE_SERVICE_NAME**
 
 - **Description**: The name of the service for tracing purposes.
-- **Default Value**: `nous`
+- **Default Value**: `sophia`
 
 **TRACE_AUTO_INSTRUMENT**
 

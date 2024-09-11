@@ -5,10 +5,10 @@ AI offers coding capabilities across a spectrum of use cases, from smart IDE aut
 1. IDE inline code suggestions
 2. IDE context aware chat
 3. [Aider](https://aider.chat/) pair-programming
-4. Nous Code Editing agent
-5. Nous Software Engineer agent
+4. Sophia Code Editing agent
+5. Sophia Software Engineer agent
 
-The Nous agents build upon the fantastic project [Aider](https://aider.chat/), providing additional layers above it for more autonomous use cases.  
+The Sophia agents build upon the fantastic project [Aider](https://aider.chat/), providing additional layers above it for more autonomous use cases.  
 
 
 ## Code Editing Agent
@@ -31,7 +31,7 @@ The [Code Editor Agent](https://github.com/TrafficGuard/nous/blob/main/src/swe/c
 
 ### FileSystem
 
-The agent context has a FileSystem, which defaults to the Nous project directory. If you want to use the code editing agent
+The agent context has a FileSystem, which defaults to the Sophia project directory. If you want to use the code editing agent
 on another local repo then set the `RunAgentConfig.fileSystemPath` property, or alternatively set the NOUS_FS environment variable to the repository path.
 
 ### Project Info
@@ -46,7 +46,7 @@ If the agent makes a mistake in the detection then manually edit the projectInfo
 
 At TrafficGuard we have projects in Terraform HCL, JavaScript/TypeScript, PHP and Python.
  
-Nous aims to be a flexible platform, and one example is the language specific tooling. The project detection also detects which language a project uses.
+Sophia aims to be a flexible platform, and one example is the language specific tooling. The project detection also detects which language a project uses.
 
 The initial `LanguageTools` interface has the `generateProjectMap` and `installPackage` methods.
 
