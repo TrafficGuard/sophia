@@ -1,6 +1,6 @@
 # Autonomous AI Agents
 
-Nous provides two autonomous agents which work to complete the request via a control loop which iteratively (re-)plans and calls the functions available to the agent.
+Sophia provides two autonomous agents which work to complete the request via a control loop which iteratively (re-)plans and calls the functions available to the agent.
 
 At a high level they share the same internal state, agent memory, human-in-the loop, functional calling history etc. 
 

@@ -73,7 +73,7 @@ export class CodeEditor {
 			);
 		}
 
-		// User a folder in Nous process directory, not the FileSystem working directory
+		// User a folder in Sophia process directory, not the FileSystem working directory
 		// as we want all the 'system' files in one place.
 		const llmHistoryFolder = join(process.cwd(), '.nous/aider/llm-history');
 		await promisify(fs.mkdir)(llmHistoryFolder, { recursive: true });
@@ -90,7 +90,7 @@ export class CodeEditor {
 
 		// Due to limitations in the provider APIs, caching statistics and costs are not available when streaming responses.
 		// --map-tokens=2048
-		// Use the Python from the Nous .python-version as it will have aider installed
+		// Use the Python from the Sophia .python-version as it will have aider installed
 		const cmd = `${getPythonPath()} -m aider --no-check-update --no-stream --yes ${modelArg} --llm-history-file="${llmHistoryFile}" --message-file=${messageFilePath} ${filesToEdit
 			.map((file) => `"${file}"`)
 			.join(' ')}`;
@@ -142,7 +142,7 @@ export class CodeEditor {
 }
 
 export function getPythonPath() {
-	// Read the Nous .python-version file
+	// Read the Sophia .python-version file
 	const pythonVersionFile = path.join(process.cwd(), '.python-version');
 	const pythonVersion = fs.readFileSync(pythonVersionFile, 'utf8').trim();
 	// Use pyenv to find the path of the specified Python version

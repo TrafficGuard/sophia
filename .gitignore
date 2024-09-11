@@ -15,7 +15,7 @@ temp/
 .ignore
 .cache
 .venv/
-.nous/
+.sophia/
 src/cli/*-in
 src/cli/*-out
 tg/

@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "nous-ng": {
+    "sophia-ng": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -70,10 +70,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "nous-ng:build:production"
+              "browserTarget": "sophia-ng:build:production"
             },
             "development": {
-              "browserTarget": "nous-ng:build:development"
+              "browserTarget": "sophia-ng:build:development"
             },
             "ci": {
               "progress": false
@@ -84,7 +84,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "nous-ng:build"
+            "browserTarget": "sophia-ng:build"
           }
         },
         "test": {
@@ -110,11 +110,11 @@
         "cypress-run": {
           "builder": "@cypress/schematic:cypress",
           "options": {
-            "devServerTarget": "nous-ng:serve"
+            "devServerTarget": "sophia-ng:serve"
           },
           "configurations": {
             "production": {
-              "devServerTarget": "nous-ng:serve:production"
+              "devServerTarget": "sophia-ng:serve:production"
             }
           }
         },
@@ -128,18 +128,18 @@
         "e2e": {
           "builder": "@cypress/schematic:cypress",
           "options": {
-            "devServerTarget": "nous-ng:serve"
+            "devServerTarget": "sophia-ng:serve"
           },
           "configurations": {
             "production": {
-              "devServerTarget": "nous-ng:serve:production"
+              "devServerTarget": "sophia-ng:serve:production"
             }
           }
         }
       }
     }
   },
-  "defaultProject": "nous-ng",
+  "defaultProject": "sophia-ng",
   "cli": {
     "analytics": false
   }

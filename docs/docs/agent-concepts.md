@@ -4,7 +4,7 @@
 
 ### 1. Autonomous agents
 
-Nous comes with two fully autonomous agents (XML and Python/dynamic), which applying reasoning to break down
+Sophia comes with two fully autonomous agents (XML and Python/dynamic), which applying reasoning to break down
 a user request into a plan to be completed by the available function calls.
 
 ### 2. Workflow agents

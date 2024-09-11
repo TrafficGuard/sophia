@@ -11,10 +11,10 @@ RUN curl -sL https://deb.nodesource.com/setup_20.x -o nodesource_setup.sh
 RUN chmod +x ./nodesource_setup.sh && ./nodesource_setup.sh
 RUN apt install -y nodejs
 
-ENV user=nous
-ENV homedir=/home/nous/
+ENV user=sophia
+ENV homedir=/home/sophia/
 
-RUN useradd --create-home -g users nous
+RUN useradd --create-home -g users sophia
 WORKDIR $homedir
 
 RUN mkdir ".husky"
@@ -27,7 +27,7 @@ COPY . .
 
 USER $user
 
-RUN mkdir .nous
+RUN mkdir .sophia
 # Generate the function schemas
 RUN npm run functionSchemas
 
@@ -35,4 +35,3 @@ ENV NODE_ENV=production
 ENV PORT=8080
 EXPOSE 8080
 CMD [ "npm", "run", "start" ]
-

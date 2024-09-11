@@ -24,7 +24,7 @@ Any TypeScript file which is used as an application entry point should being wit
 Tracing is implemented with OpenTelemetry. The environment variables which configure tracing are:
 ```
 TRACE_AGENT_ENABLED=true
-TRACE_SERVICE_NAME=nous
+TRACE_SERVICE_NAME=sophia
 TRACE_AUTO_INSTRUMENT=true
 TRACE_SAMPLE_RATE=1
 ```

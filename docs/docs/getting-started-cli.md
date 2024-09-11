@@ -21,7 +21,7 @@ npm run agent research the latest news about large language models and write a r
 
 Without arguments the prompt is read from `src/cli/code-in` otherwise it uses the provided arguments for the prompt.
 
-This is a useful for editing the nous codebase. You could run a command like:
+This is a useful for editing the sophia codebase. You could run a command like:
 
 ```bash
 npm run code In the anthropic vertex class update the pricing for claude 3.5 sonnet to be 3 dollars per million input tokens and 15 dollars per million output tokens

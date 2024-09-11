@@ -1,7 +1,7 @@
 # docker compose up --build
 services:
   node:
-    container_name: nous-dev
+    container_name: sophia-dev
     restart: always
     ports:
       - 4200:4200
@@ -10,11 +10,11 @@ services:
       context: ./
       dockerfile: Dockerfile.dev
     volumes:
-      - ~/.config/gcloud:/home/nous/.config/gcloud # Comment out if not using Google Cloud
-      - .:/home/nous
+      - ~/.config/gcloud:/home/sophia/.config/gcloud # Comment out if not using Google Cloud
+      - .:/home/sophia
       # Install node_modules into the container for cross-platform compatability
-      - /home/nous/node_modules
-      - /home/nous/frontend/node_modules
+      - /home/sophia/node_modules
+      - /home/sophia/frontend/node_modules
 #    environment:
 #      GIT_DISCOVERY_ACROSS_FILESYSTEM: 1
 #      - var=value

@@ -1,21 +1,21 @@
 <a id="banner"></a>
 <p align="center">
-  <img src="https://public.trafficguard.ai/nous/banner.png" alt="nous logo"/>
+  <img src="https://public.trafficguard.ai/sophia/banner.png" alt="nous logo"/>
 </p>
 <p align="center">
   <em>The open-source TypeScript platform for autonomous AI agents and LLM based workflows</em>
 </p>
-<em><b>Nous</b></em> (Greek: νοῦς) is a term from classical philosophy often associated with intellect or intelligence, represents the human mind's capacity to comprehend truth and reality.
+The Ancient Greek word <em><b>sophía (σοφία)</b></em> is the abstract noun of σοφός (sophós), which variously translates to "clever, skillful, intelligent, wise"
 
-## The Nous Story
+## The Sophia Story
 
-Nous started from a simple goal: to harness AI's potential to enhance real-world productivity, born in DevOps and Platform Engineering space. We envisioned a tool that could:
+Sophia started from a simple goal: to harness AI's potential to enhance real-world productivity, born in DevOps and Platform Engineering space. We envisioned a tool that could:
 
 - Automate various processes and support requests, and triage build failures.
 - Review code for compliance with standards and best practices.
 - Assist with large refactorings, and more.
 
-At TrafficGuard we process billions of events a month for our global clients, [increasing their Ad spend ROI](https://www.trafficguard.ai/case-studies?ref=nous) from bots and other invalid traffic. 
+At TrafficGuard we process billions of events a month for our global clients, [increasing their Ad spend ROI](https://www.trafficguard.ai/case-studies?ref=sophia) from bots and other invalid traffic. 
 Our platform on Google Cloud comprises projects developed in TypeScript, Python, GoogleSQL, PHP and Terraform, deployed from GitLab.
 
 With open source projects typically Python/GitHub focused, and the vendor AI tools being focused in their silos, 
@@ -42,7 +42,7 @@ Some of the key features include:
 - Function callable integrations:
     - Filesystem, Jira, Slack, Perplexity, Gitlab and more
 - Supports multiple LLMs/Services:
-    - OpenAI, Anthropic (native & Vertex), Gemini, Groq, Fireworks, Together.ai, DeepSeek, Ollama
+    - OpenAI, Anthropic (native & Vertex), Gemini, Groq, Fireworks, Together.ai, DeepSeek, Ollama, Cerebras
 - CLI and Web interface
 - Human-in-the-loop for:
     - Budget control
@@ -96,11 +96,11 @@ Some of the key features include:
 
 ## Code Examples
 
-### Nous vs LangChain
+### Sophia vs LangChain
 
-Nous doesn't use LangChain, for [many reasons](https://www.octomind.dev/blog/why-we-no-longer-use-langchain-for-building-our-ai-agents) that [you](https://www.google.com/search?q=langchain+site%3Anews.ycombinator.com) can [read online](https://www.google.com/search?q=langchain+sucks+site%3Areddit.com)
+Sophia doesn't use LangChain, for [many reasons](https://www.octomind.dev/blog/why-we-no-longer-use-langchain-for-building-our-ai-agents) that [you](https://www.google.com/search?q=langchain+site%3Anews.ycombinator.com) can [read online](https://www.google.com/search?q=langchain+sucks+site%3Areddit.com)
 
-Let's compare the LangChain document example for Multiple Chains to the equivalent Nous implementation.
+Let's compare the LangChain document example for Multiple Chains to the equivalent Sophia implementation.
 
 #### LangChain
 ```typescript
@@ -138,7 +138,7 @@ const result = await combinedChain.invoke({
 console.log(result);
 ```
 
-#### Nous
+#### Sophia
 ```typescript
 import { llms } from '#agent/context'
 import { anthropicLLMs } from '#llms/anthropic'
@@ -154,7 +154,7 @@ runAgentWorkflow({ llms: anthropicLLMs() }, async () => {
 });
 ```
 
-The Nous code also has the advantage of static typing with the prompt arguments, enabling you to refactor with ease.
+The Sophia code also has the advantage of static typing with the prompt arguments, enabling you to refactor with ease.
 Using simple control flow allows easy debugging with breakpoints/logging.
 
 To run a fully autonomous agent:
@@ -195,5 +195,3 @@ export class Jira {
 ## Contributing 
 
 We warmly welcome contributions to the project through [issues](https://github.com/TrafficGuard/nous/issues), [pull requests](https://github.com/TrafficGuard/nous/pulls)  or [discussions](https://github.com/TrafficGuard/nous/discussions)
-
-Reach out to us as nous@trafficguard.ai if you'd like support to ramp up as a contributor.

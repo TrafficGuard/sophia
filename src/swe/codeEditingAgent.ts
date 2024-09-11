@@ -167,13 +167,13 @@ export class CodeEditingAgent {
 
 					if (compileErrorSummaries.length) {
 						compileFixRequirements += '<compile-error-history>\n';
-						for (const summary of compileErrorSummaries) compileFixRequirements += '<compile-error-summary>${summary}</compile-error-summary>\n';
+						for (const summary of compileErrorSummaries) compileFixRequirements += `<compile-error-summary>${summary}</compile-error-summary>\n`;
 						compileFixRequirements += '</compile-error-history>\n';
 					}
 					compileFixRequirements += compileErrorSearchResults.map((result) => `<research>${result}</research>\n`).join();
-					compileFixRequirements += `<compilerr-errors>${compileErrorAnalysis.compilerOutput}</compilerr-errors>\n\n`;
+					compileFixRequirements += `<compiler-errors>${compileErrorAnalysis.compilerOutput}</compiler-errors>\n\n`;
 					if (compiledCommitSha) {
-						compileFixRequirements += `<diff>${await git.getDiff(compiledCommitSha)}</diff>\n`;
+						compileFixRequirements += `<diff>\n${await git.getDiff(compiledCommitSha)}</diff>\n`;
 						compileFixRequirements +=
 							'The above diff has introduced compile errors. With the analysis of the compiler errors, first focus on analysing the diff for any obvious syntax and type errors and then analyse the files you are allowed to edit.\n';
 					} else {
