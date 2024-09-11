@@ -4,6 +4,7 @@ import { agentContext } from '#agent/agentContextLocalStorage';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { FileMetadata, FileStore } from '#functions/storage/filestore';
 import { ToolType } from '#functions/toolType';
+import { systemDir } from '../../appVars';
 
 /**
  * FileStore implementation that stores files on the local file system.
@@ -14,7 +15,7 @@ export class LocalFileStore implements FileStore {
 	basePath: string;
 
 	constructor() {
-		this.basePath = path.join(process.cwd(), '.nous', 'filestore');
+		this.basePath = path.join(systemDir(), 'filestore');
 		// this.basePath = path.join(process.cwd(), 'public');
 	}
 

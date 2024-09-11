@@ -28,6 +28,7 @@ const fs = {
 import fg from 'fast-glob';
 import { glob } from 'glob-gitignore';
 import { getActiveSpan } from '#o11y/trace';
+import { SOPHIA_FS } from '../../appVars';
 const globAsync = promisify(glob);
 
 type FileFilter = (filename: string) => boolean;
@@ -59,7 +60,7 @@ export class FileSystem {
 		this.basePath ??= process.cwd();
 		const args = process.argv.slice(2); // Remove the first two elements (node and script path)
 		const fsArg = args.find((arg) => arg.startsWith('--fs='));
-		const fsEnvVar = process.env.NOUS_FS;
+		const fsEnvVar = process.env[SOPHIA_FS];
 		if (fsArg) {
 			const fsPath = fsArg.slice(4); // Extract the value after '-fs='
 			if (existsSync(fsPath)) {
@@ -71,7 +72,7 @@ export class FileSystem {
 			if (existsSync(fsEnvVar)) {
 				this.basePath = fsEnvVar;
 			} else {
-				logger.error(`Invalid NOUS_FS env var. ${fsEnvVar} does not exist`);
+				logger.error(`Invalid ${SOPHIA_FS} env var. ${fsEnvVar} does not exist`);
 			}
 		}
 		this.workingDirectory = this.basePath;

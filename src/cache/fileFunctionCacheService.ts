@@ -3,9 +3,10 @@ import { existsSync, writeFileSync } from 'fs';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { logger } from '#o11y/logger';
+import { systemDir } from '../appVars';
 import { CacheScope, FunctionCacheService } from './functionCacheService';
 
-const DEFAULT_PATH = '.nous/functions';
+const DEFAULT_PATH = `${systemDir()}/functions`;
 
 /**
  * Temporary file based cache. Need to get a database cache working, ideally with implementation in Postgres and Datastore initially

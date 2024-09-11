@@ -14,6 +14,7 @@ import { logger } from '#o11y/logger';
 import { getActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { execCommand } from '#utils/exec';
+import { systemDir } from '../appVars';
 
 @funcClass(__filename)
 export class CodeEditor {
@@ -73,9 +74,9 @@ export class CodeEditor {
 			);
 		}
 
-		// User a folder in Sophia process directory, not the FileSystem working directory
+		// Use the Sophia system directory, not the FileSystem working directory
 		// as we want all the 'system' files in one place.
-		const llmHistoryFolder = join(process.cwd(), '.nous/aider/llm-history');
+		const llmHistoryFolder = join(systemDir(), 'aider/llm-history');
 		await promisify(fs.mkdir)(llmHistoryFolder, { recursive: true });
 		const llmHistoryFile = `${llmHistoryFolder}/${agentContext().agentId}-${Date.now()}`;
 

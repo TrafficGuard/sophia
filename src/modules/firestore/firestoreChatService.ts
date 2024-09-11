@@ -39,18 +39,14 @@ export class FirestoreChatService implements ChatService {
 	}
 
 	@span()
-	async saveChat(chatId: string, messages: LlmMessage[]): Promise<Chat> {
+	async saveChat(chat: Chat): Promise<Chat> {
 		try {
-			const docRef = this.db.doc(`Chats/${chatId}`);
-			const chat: Chat = {
-				id: chatId,
-				messages,
-			};
+			const docRef = this.db.doc(`Chats/${chat.id}`);
 
 			await docRef.set(chat, { merge: true });
 			return chat;
 		} catch (error) {
-			logger.error(error, `Error saving chat ${chatId}`);
+			logger.error(error, `Error saving chat ${chat.id}`);
 			throw error;
 		}
 	}

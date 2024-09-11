@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs';
 import { existsSync } from 'node:fs';
 import { logger } from '#o11y/logger';
+import { sophiaDirName } from '../../appVars';
 import { User } from '../user';
 import { UserService } from './userService';
 
@@ -10,7 +11,7 @@ const SINGLE_USER_ID = 'user';
  * Only supports single user mode
  */
 export class FileUserService implements UserService {
-	private readonly usersDirectory = './.nous/users';
+	private readonly usersDirectory = `./${sophiaDirName}/users`;
 	singleUser: User | undefined;
 
 	constructor() {

@@ -1,3 +1,4 @@
+#
 <a id="banner"></a>
 <p align="center">
   <img src="https://public.trafficguard.ai/sophia/banner.png" alt="nous logo"/>
@@ -5,9 +6,12 @@
 <p align="center">
   <em>The open-source TypeScript platform for autonomous AI agents and LLM based workflows</em>
 </p>
-The Ancient Greek word <em><b>sophía (σοφία)</b></em> is the abstract noun of σοφός (sophós), which variously translates to "clever, skillful, intelligent, wise"
+<p align="center">
 
+</p>
 ## The Sophia Story
+
+The Ancient Greek word <em><b>sophía (σοφία)</b></em> variously translates to "clever, skillful, intelligent, wise"
 
 Sophia started from a simple goal: to harness AI's potential to enhance real-world productivity, born in DevOps and Platform Engineering space. We envisioned a tool that could:
 

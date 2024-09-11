@@ -4,6 +4,7 @@ import { logger } from '#o11y/logger';
 import { Summary } from '#swe/documentationBuilder';
 import { ProjectInfo } from '#swe/projectDetection';
 import { errorToString } from '#utils/errors';
+import { sophiaDirName } from '../appVars';
 
 interface ProjectMap {
 	text: string;
@@ -66,7 +67,7 @@ async function generateFileSystemTreeWithSummaries(summaries: Map<string, Summar
 export async function loadBuildDocsSummaries(): Promise<Map<string, Summary>> {
 	const summaries = new Map<string, Summary>();
 	const fileSystem = getFileSystem();
-	const docsDir = '.nous/docs';
+	const docsDir = `${sophiaDirName}/docs`;
 	logger.info(`Load summaries from ${docsDir}`);
 
 	try {

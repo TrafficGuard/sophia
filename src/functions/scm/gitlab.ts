@@ -19,6 +19,7 @@ import { allSettledAndFulFilled } from '#utils/async-utils';
 import { envVar } from '#utils/env-var';
 import { execCommand, failOnError, shellEscape } from '#utils/exec';
 import { appContext } from '../../app';
+import { systemDir } from '../../appVars';
 import { cacheRetry } from '../../cache/cacheRetry';
 import { LlmTools } from '../util';
 import { GitProject } from './gitProject';
@@ -178,7 +179,7 @@ export class GitLab implements SourceControlManagement {
 	@func()
 	async cloneProject(projectPathWithNamespace: string): Promise<string> {
 		if (!projectPathWithNamespace) throw new Error('Parameter "projectPathWithNamespace" must be truthy');
-		const path = join(getFileSystem().basePath, '.nous', 'gitlab', projectPathWithNamespace);
+		const path = join(systemDir(), 'gitlab', projectPathWithNamespace);
 
 		// If the project already exists pull updates
 		if (existsSync(path) && existsSync(join(path, '.git'))) {

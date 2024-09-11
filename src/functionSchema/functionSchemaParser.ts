@@ -4,12 +4,13 @@ import path from 'path';
 import { promisify } from 'util';
 import { ClassDeclaration, Decorator, JSDoc, JSDocTag, MethodDeclaration, ParameterDeclaration, Project } from 'ts-morph';
 import { logger } from '#o11y/logger';
+import { systemDir } from '../appVars';
 import { FUNC_DECORATOR_NAME } from './functionDecorators';
 import { FunctionParameter, FunctionSchema } from './functions';
 
 const writeFileAsync = promisify(writeFile);
 
-const CACHED_BASE_PATH = '.nous/functions/';
+const CACHED_BASE_PATH = `${systemDir()}/functions/`;
 
 /**
  * Parses a source file which is expected to have a class with the @funClass decorator.

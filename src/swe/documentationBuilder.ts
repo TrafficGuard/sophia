@@ -2,6 +2,7 @@ import { promises as fs } from 'node:fs';
 import { basename, dirname, join } from 'path';
 import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { logger } from '#o11y/logger';
+import { sophiaDirName } from '../appVars';
 
 /** Summary documentation for a file/folder */
 export interface Summary {
@@ -16,7 +17,7 @@ export interface Summary {
 /**
  * This auto-generates documentation for a project/repository, to assist with searching in the repository.
  * This should generally be run in the root folder of a project/repository.
- * The documentation summaries are saved in a parallel directory structure under the .nous/docs folder
+ * The documentation summaries are saved in a parallel directory structure under the .sophia/docs folder
  */
 export async function buildDocs(): Promise<void> {
 	// In the first pass we generate the summaries for the individual files
@@ -61,9 +62,9 @@ Respond ONLY with JSON in the format of this example
 				)) as Summary;
 				doc.path = file;
 				logger.info(doc);
-				// Save the documentation summary files in a parallel directory structure under the .nous/docs folder
-				await fs.mkdir(join(cwd, '.nous', 'docs', dirname(file)), { recursive: true });
-				await fs.writeFile(join(cwd, '.nous', 'docs', `${file}.json`), JSON.stringify(doc, null, 2));
+				// Save the documentation summary files in a parallel directory structure under the .sophia/docs folder
+				await fs.mkdir(join(cwd, sophiaDirName, 'docs', dirname(file)), { recursive: true });
+				await fs.writeFile(join(cwd, sophiaDirName, 'docs', `${file}.json`), JSON.stringify(doc, null, 2));
 			} catch (e) {
 				logger.error(e, `Failed to write documentation for file ${file}`);
 			}
@@ -126,7 +127,7 @@ async function getFileSummaries(folder: string): Promise<Summary[]> {
 	const summaries: Summary[] = [];
 
 	for (const file of files) {
-		const summaryPath = join('.nous', 'docs', folder, `${file}.json`);
+		const summaryPath = join(sophiaDirName, 'docs', folder, `${file}.json`);
 		logger.info(`File summary path ${summaryPath}`);
 		try {
 			const summaryContent = await fs.readFile(summaryPath, 'utf-8');
@@ -146,7 +147,7 @@ async function getSubFolderSummaries(folder: string): Promise<Summary[]> {
 
 	for (const subFolder of subFolders) {
 		const folderName = subFolder.split('/').pop();
-		const summaryPath = join('.nous', 'docs', subFolder, `_${folderName}.json`);
+		const summaryPath = join('.sophia', 'docs', subFolder, `_${folderName}.json`);
 		logger.info(`Folder summary path ${summaryPath}`);
 		try {
 			const summaryContent = await fs.readFile(summaryPath, 'utf-8');
@@ -182,13 +183,13 @@ async function generateSummaryUsingLLM(llm: any, combinedSummary: string): Promi
 }
 
 /**
- * Saves the summaries about a folder to <cwd>/.nous/docs/folder/_folder.json
+ * Saves the summaries about a folder to <cwd>/.sophia/docs/folder/_folder.json
  * @param folder
  * @param summary
  */
 async function saveFolderSummary(folder: string, summary: Summary): Promise<void> {
 	const folderName = basename(folder);
-	const summaryPath = join('.nous', 'docs', folder, `_${folderName}.json`);
+	const summaryPath = join('.sophia', 'docs', folder, `_${folderName}.json`);
 	await fs.mkdir(dirname(summaryPath), { recursive: true });
 	await fs.writeFile(summaryPath, JSON.stringify(summary, null, 2));
 }
@@ -224,7 +225,7 @@ async function getAllFolderSummaries(rootDir: string): Promise<Summary[]> {
 
 	for (const folder of folders) {
 		const folderName = folder.split('/').pop();
-		const summaryPath = join(rootDir, '.nous', 'docs', folder, `_${folderName}.json`);
+		const summaryPath = join(rootDir, '.sophia', 'docs', folder, `_${folderName}.json`);
 		try {
 			const summaryContent = await fs.readFile(summaryPath, 'utf-8');
 			summaries.push(JSON.parse(summaryContent));
@@ -253,6 +254,6 @@ async function generateDetailedSummaryUsingLLM(llm: any, combinedSummary: string
 }
 
 async function saveTopLevelSummary(rootDir: string, summary: string): Promise<void> {
-	const summaryPath = join(rootDir, '.nous', 'docs', '_summary');
+	const summaryPath = join(rootDir, sophiaDirName, 'docs', '_summary');
 	await fs.writeFile(summaryPath, JSON.stringify(summary, null, 2));
 }
