@@ -47,20 +47,17 @@
           'background-color': msg.role !== 'user' ? 'lightslategrey' : '#536DFE',
           color: msg.role !== 'user' ? 'white' : 'white',
           'align-self': msg.role !== 'user' ? 'flex-end' : 'flex-start',
-          'text-align': msg.role !== 'user' ? 'end' : 'start',
+          'text-align': 'left',
           'border-top-right-radius': msg.role !== 'user' ? '0px' : '4px',
           'border-top-left-radius': msg.role !== 'user' ? '0px' : '4px',
           'min-width': '150px',
           'max-width': '100%',
           'margin-bottom': '8px',
+          'margin-right': msg.role === 'user' ? '10em' : '0',
+          'margin-left': msg.role !== 'user' ? '10em' : '0',
           padding: '16px 12px 12px 12px'
         }"
       >
-        <!--
-        <div style="top: 2px; position: absolute; right: 4px; font-size: 12px; opacity: 0.6">
-          {{ getCreatedDate(msg) }}
-        </div>
-        -->
         <span style="overflow-wrap: break-word">{{ msg.text }}</span>
       </mat-card>
 
