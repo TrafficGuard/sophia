@@ -26,20 +26,19 @@ export class ChatMessageComponent implements OnInit {
     return '';
   }
 
-  // getUserName(user: User | undefined): string | null {
-  //   if (!user) {
-  //     return null;
-  //   }
-  //   return user.displayName;
-  // }
+  getUserName(user: User | undefined): string | null {
+    if (!user) {
+      return null;
+    }
+    return user.displayName;
+  }
 
-  // getCreatedDate(msg: LlmMessage): string | null {
-  //   if (!msg.createdAt) {
-  //     return null;
-  //   }
-  //   // return msg.createdAt.format('LT');
-  //   return '';
-  // }
+  getCreatedDate(msg: LlmMessage): string | null {
+    if (!msg.createdAt) {
+      return null;
+    }
+    return new Date(msg.createdAt).toLocaleTimeString();
+  }
 
   isPredecessorSameAuthor(): boolean {
     return false;

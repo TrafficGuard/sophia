@@ -5,8 +5,7 @@
     color="accent"
     selected
     removable="false"
-  >{{ getDateDivider(msg) }}</mat-chip
-  >
+  >{{ getDateDivider(msg) }}</mat-chip>
   <mat-card
     style="box-shadow: none; background-color: transparent"
     [ngStyle]="{
@@ -23,38 +22,29 @@
         'flex-direction': msg.role !== 'user' ? 'row-reverse' : 'row'
       }"
     >
-      <!--
-      <img
-        *ngIf="!(isPredecessorSameAuthor() && isTemporalClose())"
-        mat-card-avatar
-        [src]="msg.user.photoUrl || 'assets/account.png'"
-        width="50px"
-      />
-      -->
       <mat-card-title
         *ngIf="!(isPredecessorSameAuthor() && isTemporalClose())"
         style="font-size: 16px; margin-bottom: 6px"
       >
-        <!--
         {{ getUserName(msg.user) }}
-        -->
       </mat-card-title>
+      <mat-card-subtitle>{{ getCreatedDate(msg) }}</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content style="display: inline-flex; flex-direction: column; width: 100%">
       <!-- Message content-->
       <mat-card
+        class="message-bubble"
+        [ngClass]="{'user-message': msg.role === 'user', 'assistant-message': msg.role !== 'user'}"
         [ngStyle]="{
           'background-color': msg.role !== 'user' ? 'lightslategrey' : '#536DFE',
-          color: msg.role !== 'user' ? 'white' : 'white',
+          color: 'white',
           'align-self': msg.role !== 'user' ? 'flex-end' : 'flex-start',
-          'text-align': 'left',
+          'text-align': msg.role === 'user' ? 'right' : 'left',
           'border-top-right-radius': msg.role !== 'user' ? '0px' : '4px',
           'border-top-left-radius': msg.role !== 'user' ? '0px' : '4px',
           'min-width': '150px',
           'max-width': '100%',
           'margin-bottom': '8px',
-          'margin-right': msg.role === 'user' ? '10em' : '0',
-          'margin-left': msg.role !== 'user' ? '10em' : '0',
           padding: '16px 12px 12px 12px'
         }"
       >
