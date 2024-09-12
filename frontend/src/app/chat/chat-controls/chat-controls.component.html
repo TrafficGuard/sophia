@@ -1,13 +1,13 @@
 <mat-card [formGroup]="chatForm" style="width: 100%; min-height: 125px; margin-bottom: 8px">
   <mat-card-content>
     <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="center center">
-      <!-- TODO: Better layout of form controls -->
       <mat-form-field fxFlex="calc(100%-56px-56px-16px-16px-8px-8px)">
-        <textarea matInput placeholder="Message" formControlName="message" (keydown.enter)="submit()"></textarea>
+        <textarea matInput placeholder="Message" formControlName="message" (keydown.enter)="$event.preventDefault(); submit()"></textarea>
       </mat-form-field>
 
-      <button mat-fab color="primary" (click)="submit()" [disabled]="!chatForm.get('message')?.value">
-        <mat-icon>send</mat-icon>
+      <button mat-fab color="primary" (click)="submit()" [disabled]="!chatForm.get('message')?.value || isSending">
+        <mat-icon *ngIf="!isSending">send</mat-icon>
+        <mat-spinner *ngIf="isSending" diameter="24"></mat-spinner>
       </button>
 
       <input
@@ -24,34 +24,30 @@
       </button>
     </div>
 
-    <h6 *ngIf="hasAttachments()">Attachments:</h6>
-
-    <mat-chip-list
-      #chipList
-      style="width: 100%; margin-bottom: 8px"
-      fxLayout="row"
-      fxLayoutGap="8px"
-      fxLayoutAlign="start center"
-      matTooltip="These files will be uploaded as a attachment for the message above."
-      matTooltipPosition="below"
-    >
-      <mat-chip
-        *ngFor="let attachment of getAttachments(); let i = index"
-        selected
-        removable
-        (removed)="deleteAttachment(attachment)"
-        color="primary"
+    <!-- Attachment section left as a placeholder for future implementation -->
+    <ng-container *ngIf="hasAttachments()">
+      <h6>Attachments:</h6>
+      <mat-chip-list
+        #chipList
+        style="width: 100%; margin-bottom: 8px"
+        fxLayout="row"
+        fxLayoutGap="8px"
+        fxLayoutAlign="start center"
+        matTooltip="These files will be uploaded as attachments for the message above."
+        matTooltipPosition="below"
       >
-        <mat-icon>insert_drive_file</mat-icon>
-        {{ attachment.name }}
-        <mat-icon matChipRemove *ngIf="true">cancel</mat-icon>
-      </mat-chip>
-    </mat-chip-list>
-
-    <mat-progress-bar
-      *ngIf="getAttachments().length > 0"
-      mode="determinate"
-      value="getUploadPercentage(i) | async"
-    ></mat-progress-bar>
+        <mat-chip
+          *ngFor="let attachment of getAttachments(); let i = index"
+          selected
+          removable
+          (removed)="deleteAttachment(attachment)"
+          color="primary"
+        >
+          <mat-icon>insert_drive_file</mat-icon>
+          {{ attachment.name }}
+          <mat-icon matChipRemove *ngIf="true">cancel</mat-icon>
+        </mat-chip>
+      </mat-chip-list>
+    </ng-container>
   </mat-card-content>
 </mat-card>

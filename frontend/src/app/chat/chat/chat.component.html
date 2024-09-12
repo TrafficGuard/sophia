@@ -1,6 +1,5 @@
 <ng-container *ngIf="chat$ | async as chat">
   <ng-container *ngIf="true">
-    <!-- auth.user$ | async as user -->
     <!-- Chat container-->
     <div fxLayout="column" fxLayoutAlign="center center" style="width: 50%; min-width: 600px; height: 100%">
       <!-- Header -->
@@ -23,15 +22,11 @@
           ></app-chat-message>
         </ng-container>
 
-        <!-- "is typing" Indicator
-        <app-typing-indicator
-          [user]="user"
-          [typing]="chat.typing"
-        ></app-typing-indicator>-->
+        <!-- "is typing" Indicator can be added here if needed -->
       </div>
 
       <!-- Send form and other controls -->
-      <app-chat-controls style="width: 100%" [chatId]="chat.id"></app-chat-controls>
+      <app-chat-controls style="width: 100%" [chatId]="chat.id" (messageSent)="onMessageSent($event)"></app-chat-controls>
     </div>
   </ng-container>
 </ng-container>
