@@ -1,7 +1,10 @@
+import { randomUUID } from 'crypto';
 import { Type } from '@sinclair/typebox';
 import { Chat, ChatList } from '#chat/chatTypes.ts';
 import { send, sendBadRequest } from '#fastify/index';
 import { getLLM } from '#llm/llmFactory.ts';
+import { Claude3_5_Sonnet_Vertex } from '#llm/models/anthropic-vertex.ts';
+import { currentUser } from '#user/userService/userContext.ts';
 import { AppFastifyInstance } from '../../app';
 
 const basePath = '/api';
@@ -40,16 +43,30 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
 		async (req, reply) => {
 			const { chatId } = req.params; // Extract 'chatId' from path parameters
 			const { text, llmId, cache } = req.body;
-			const chat: Chat = await fastify.chatService.loadChat(chatId);
 
-			const llm = getLLM(llmId);
+			const isNew = chatId === 'new';
+			const chat: Chat = isNew
+				? { id: randomUUID(), messages: [], title: '', updatedAt: Date.now(), userId: currentUser().id, visibility: 'private', parentId: undefined }
+				: await fastify.chatService.loadChat(chatId);
 
+			// const llm = getLLM(llmId)
+			const llm = getLLM(Claude3_5_Sonnet_Vertex().getId());
 			if (!llm.isConfigured()) return sendBadRequest(reply, 'LLM is not configured');
+
+			const titlePromise: Promise<string> | undefined = isNew
+				? llm.generateText(
+						text,
+						'The following message is the first message in a new chat conversation. Your task is to create a short title for the conversation. Respond only with the title, nothing else',
+				  )
+				: undefined;
 
 			chat.messages.push({ role: 'user', text: text }); //, cache: cache ? 'ephemeral' : undefined // remove any previous cache marker
 
 			const response = await llm.generateText2(chat.messages);
 			chat.messages.push({ role: 'assistant', text: response });
+
+			if (titlePromise) chat.title = await titlePromise;
+
 			await fastify.chatService.saveChat(chat);
 
 			send(reply, 200, chat);

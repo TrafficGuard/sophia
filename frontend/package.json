@@ -41,7 +41,9 @@
     "@ngx-translate/core": "^14.0.0",
     "date-fns": "^2.29.2",
     "lodash": "^4.17.20",
+    "marked": "^12.0.2",
     "material-design-icons-iconfont": "^6.1.0",
+    "ngx-markdown": "^14.0.1",
     "rxjs": "^7.5.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.11.4"

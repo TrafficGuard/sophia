@@ -1,54 +1,34 @@
 <div style="display: flex; flex-direction: column">
-  <mat-chip
-    style="width: fit-content; align-self: center; margin: 8px"
-    *ngIf="isPreviousMessageFromOtherDay()"
-    color="accent"
-    selected
-    removable="false"
-  >{{ getDateDivider(msg) }}</mat-chip>
   <mat-card
     style="box-shadow: none; background-color: transparent"
     [ngStyle]="{
       'align-self': msg.role !== 'user' ? 'flex-end' : 'flex-start',
-      'padding-top': '16px',
-      'padding-bottom': '16px'
+      'padding': '5px'
     }"
   >
-    <!-- Message Header -->
-    <mat-card-header
-      [ngStyle]="{
-        'justify-content': 'flex-start',
-        'margin-bottom': '8px',
-        'flex-direction': msg.role !== 'user' ? 'row-reverse' : 'row'
-      }"
-    >
-      <mat-card-title
-        *ngIf="!(isPredecessorSameAuthor() && isTemporalClose())"
-        style="font-size: 16px; margin-bottom: 6px"
-      >
-        {{ getUserName(msg.role) }}
-      </mat-card-title>
-      <mat-card-subtitle>{{ getCreatedDate(msg) }}</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content style="display: inline-flex; flex-direction: column; width: 100%">
+    <mat-card-content style="display: inline-flex; flex-direction: column; width: 90%; min-width: 300px">
       <!-- Message content-->
       <mat-card
         class="message-bubble"
         [ngClass]="{'user-message': msg.role === 'user', 'assistant-message': msg.role !== 'user'}"
         [ngStyle]="{
-          'background-color': msg.role !== 'user' ? 'lightslategrey' : '#536DFE',
-          color: 'white',
+          'background-color': msg.role !== 'user' ? 'rgb(226, 228, 220)' : 'rgb(246, 248, 250)',
+          color: 'rgb(31, 35, 40)',
           'align-self': msg.role !== 'user' ? 'flex-end' : 'flex-start',
-          'text-align': msg.role === 'user' ? 'right' : 'left',
-          'border-top-right-radius': msg.role !== 'user' ? '0px' : '4px',
-          'border-top-left-radius': msg.role !== 'user' ? '0px' : '4px',
+          'text-align': 'left',
           'min-width': '150px',
           'max-width': '100%',
+          'width': '100%',
           'margin-bottom': '8px',
-          padding: '16px 12px 12px 12px'
+          padding: '0px 12px 0px 12px'
         }"
       >
-        <span style="overflow-wrap: break-word">{{ msg.text }}</span>
+
+        <span style="overflow-wrap: break-word">
+          <markdown
+            [data]="msg.text">
+          </markdown>
+        </span>
       </mat-card>
 
       <button

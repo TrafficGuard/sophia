@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { Firestore } from '@google-cloud/firestore';
 import { Chat, ChatPreview, ChatService } from '#chat/chatTypes';
 import { logger } from '#o11y/logger';
@@ -31,7 +32,7 @@ export class FirestoreChatService implements ChatService {
 				id: chatId,
 				userId: data.userId,
 				title: data.title,
-				lastUpdated: data.lastUpdated,
+				updatedAt: data.lastUpdated,
 				visibility: data.visibility,
 				parentId: data.parentId,
 				messages: data.messages,
@@ -48,6 +49,14 @@ export class FirestoreChatService implements ChatService {
 
 	@span()
 	async saveChat(chat: Chat): Promise<Chat> {
+		if (!chat.title) throw new Error('chat title is required');
+		if (!chat.userId) chat.userId = randomUUID();
+		if (chat.userId !== currentUser().id) throw new Error('chat userId is invalid');
+
+		if (!chat.id) chat.id = randomUUID();
+		if (!chat.visibility) chat.visibility = 'private';
+		chat.updatedAt = Date.now();
+
 		try {
 			const docRef = this.db.doc(`Chats/${chat.id}`);
 
@@ -63,10 +72,11 @@ export class FirestoreChatService implements ChatService {
 	async listChats(startAfterId?: string, limit = 50): Promise<{ chats: ChatPreview[]; hasMore: boolean }> {
 		try {
 			const userId = currentUser().id;
+			logger.info(`list ${limit} chats for ${userId} ${startAfterId ? `after ${startAfterId}` : ''}`);
 			let query = this.db
 				.collection('Chats')
 				.where('userId', '==', userId)
-				.orderBy('createdAt', 'desc')
+				.orderBy('updatedAt', 'desc')
 				.limit(limit + 1);
 
 			if (startAfterId) {
@@ -78,25 +88,24 @@ export class FirestoreChatService implements ChatService {
 
 			const querySnapshot = await query.get();
 
-			const chats: Omit<Chat, 'messages'>[] = [];
+			const chats: ChatPreview[] = [];
 			let hasMore = false;
 
-			querySnapshot.forEach((doc) => {
+			for (const doc of querySnapshot.docs) {
 				if (chats.length < limit) {
 					const data = doc.data();
 					chats.push({
 						id: doc.id,
 						userId: data.userId,
 						title: data.title,
-						lastUpdated: data.lastUpdated,
+						updatedAt: data.updatedAt,
 						visibility: data.visibility,
 						parentId: data.parentId,
 					});
 				} else {
 					hasMore = true;
 				}
-			});
-
+			}
 			return { chats, hasMore };
 		} catch (error) {
 			logger.error(error, 'Error listing chats');

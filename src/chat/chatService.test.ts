@@ -16,7 +16,7 @@ export function runChatServiceTests(createService: () => ChatService) {
 				{ role: 'user', text: 'Hello' },
 				{ role: 'assistant', text: 'Hi there! How can I help you?' },
 			],
-			lastUpdated: Date.now(),
+			updatedAt: Date.now(),
 			userId: 'user-id',
 			visibility: 'private',
 			title: 'test',
@@ -42,7 +42,7 @@ export function runChatServiceTests(createService: () => ChatService) {
 			title: 'test',
 			visibility: 'private',
 			messages: [],
-			lastUpdated: Date.now(),
+			updatedAt: Date.now(),
 			parentId: undefined,
 		};
 
@@ -60,7 +60,7 @@ export function runChatServiceTests(createService: () => ChatService) {
 			visibility: 'private',
 			title: 'test',
 			messages: [{ role: 'user', text: 'Parent message' }],
-			lastUpdated: Date.now(),
+			updatedAt: Date.now(),
 			parentId: undefined,
 		};
 
@@ -70,7 +70,7 @@ export function runChatServiceTests(createService: () => ChatService) {
 			visibility: 'private',
 			parentId: parentChat.id,
 			title: 'test',
-			lastUpdated: Date.now(),
+			updatedAt: Date.now(),
 			messages: [{ role: 'assistant', text: 'Child message' }],
 		};
 
@@ -84,9 +84,9 @@ export function runChatServiceTests(createService: () => ChatService) {
 	describe.skip('listChats', () => {
 		it('should list chats with pagination', async () => {
 			const chats: Chat[] = [
-				{ id: 'chat1', userId: 'user1', title: 'Chat 1', visibility: 'private', messages: [], parentId: undefined, lastUpdated: Date.now() },
-				{ id: 'chat2', userId: 'user1', title: 'Chat 2', visibility: 'private', messages: [], parentId: undefined, lastUpdated: Date.now() },
-				{ id: 'chat3', userId: 'user1', title: 'Chat 3', visibility: 'private', messages: [], parentId: undefined, lastUpdated: Date.now() },
+				{ id: 'chat1', userId: 'user1', title: 'Chat 1', visibility: 'private', messages: [], parentId: undefined, updatedAt: Date.now() },
+				{ id: 'chat2', userId: 'user1', title: 'Chat 2', visibility: 'private', messages: [], parentId: undefined, updatedAt: Date.now() },
+				{ id: 'chat3', userId: 'user1', title: 'Chat 3', visibility: 'private', messages: [], parentId: undefined, updatedAt: Date.now() },
 			];
 
 			for (const chat of chats) {

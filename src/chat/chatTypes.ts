@@ -5,7 +5,7 @@ export interface Chat {
 	userId: string;
 	visibility: 'private' | 'public';
 	title: string;
-	lastUpdated: number;
+	updatedAt: number;
 	/** When a chat is branched from the original thread by deleting/updating messages etc */
 	parentId: undefined | string;
 	messages: LlmMessage[];
