@@ -2,8 +2,6 @@ import { Component, OnInit, Input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {Observable, of} from 'rxjs';
 import {map} from 'rxjs/operators';
-
-
 import {Chat, LlmMessage} from '@app/chat/model/chat';
 import {ApiChatService} from "@app/chat/services/api/api-chat.service";
 
@@ -31,32 +29,12 @@ export class ChatComponent implements OnInit {
     const chatId: string | null = this.route.snapshot.paramMap.get('id');
     if (!chatId || chatId === 'new') {
       this.messages = []
-      this.chat$ = of({id: '', lastUpdated: 0, messages: [], title: '', userId: '', parentId: undefined, visibility: 'private'})
+      this.chat$ = of({id: 'new', lastUpdated: 0, messages: [], title: '', userId: '', parentId: undefined, visibility: 'private'})
       console.log('new chat!')
     } else {
       this.chat$ = this.chatService.getChat(chatId).pipe(map(data => data.data))
-      // const source = this.chatService.getHistory(chatId);
-      // this.chat$ = this.chatService.buildChat(source).pipe(
-      //   tap(res => this.integrateNewMessages(res)),
-      //   tap(() => this.scrollBottom())
-      // );
     }
   }
-
-  private integrateNewMessages(chat: Chat) {
-    // const newMessages = chat.messages.filter(
-    //   (newMessage: Message) => !this.messages.some((message: Message) => this.isSameMessage(message, newMessage))
-    // );
-    // newMessages.forEach((msg) => this.messages.push(msg));
-  }
-
-  // private isSameMessage(message: Message, newMessage: Message): boolean {
-  //   return (
-  //     message.content === newMessage.content &&
-  //     message.uid === newMessage.uid &&
-  //     message.createdAt === newMessage.createdAt
-  //   );
-  // }
 
   trackByCreated(index: number, msg: LlmMessage) {
     return msg.index;

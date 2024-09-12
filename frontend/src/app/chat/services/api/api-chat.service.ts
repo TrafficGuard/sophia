@@ -32,8 +32,7 @@ export class ApiChatService  { // extends ChatBaseService
     return this.http.get<Data<Chat>>(`/chat/${chatId}`);
   }
 
-
   sendMessage(chatId: string, content: string, llmId: string): Observable<string> {
-    return this.http.post<string>(`/chat/${chatId}`, {text: content, llmId});
+    return this.http.post<string>(`/chat/${chatId}/send`, {text: content, llmId});
   }
 }

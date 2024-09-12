@@ -53,6 +53,7 @@ export class ChatControlsComponent implements OnInit {
       return alert('Please enter a message.');
     }
 
+    // TODO emit the sent message and reply to the parent
     this.chatService.sendMessage(this.chatId, msg, 'llmIdPlaceholder').subscribe(
           (res: any) => console.log(res),
           (err: any) => console.log(err)
