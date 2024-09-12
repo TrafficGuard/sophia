@@ -1,3 +1,16 @@
 img {
   border-radius: 50%;
 }
+
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+app-chat-controls {
+  position: sticky;
+  bottom: 0;
+  background-color: #fff; // Adjust as needed
+  padding: 1rem 0;
+}

@@ -3,6 +3,7 @@ import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { debounceTime, filter, throttleTime } from 'rxjs/operators';
 import { ApiChatService } from "@app/chat/services/api/api-chat.service";
+import {LlmMessage} from "@app/chat/model/chat";
 
 @Component({
   selector: 'app-chat-controls',
@@ -11,7 +12,7 @@ import { ApiChatService } from "@app/chat/services/api/api-chat.service";
 })
 export class ChatControlsComponent implements OnInit {
   @Input() chatId: string = '';
-  @Output() messageSent = new EventEmitter<any>();
+  @Output() messageSent = new EventEmitter<LlmMessage[]>();
 
   messageControl: FormControl;
   chatForm: FormGroup;
@@ -55,12 +56,12 @@ export class ChatControlsComponent implements OnInit {
 
     this.isSending = true;
     this.chatService.sendMessage(this.chatId, msg, 'llmIdPlaceholder').subscribe(
-      (res: any) => {
-        console.log(res);
+      (data: any) => {
+        console.log(data.data);
         this.isSending = false;
         this.messageControl.reset();
         this.scrollBottom();
-        this.messageSent.emit(res);
+        this.messageSent.emit([{role: 'user', text: msg, index: -1}, {role: 'assistant', text: data.data, index: -1}]);
       },
       (err: any) => {
         console.error('Error sending message:', err);

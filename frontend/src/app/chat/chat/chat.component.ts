@@ -18,15 +18,13 @@ export class ChatComponent implements OnInit {
 
   chat$: BehaviorSubject<Chat> = new BehaviorSubject<Chat>({
     id: 'new',
-    lastUpdated: 0,
+    updatedAt: 0,
     messages: [],
     title: '',
     userId: '',
     parentId: undefined,
     visibility: 'private'
   });
-
-  messages: LlmMessage[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -36,14 +34,12 @@ export class ChatComponent implements OnInit {
   ngOnInit() {
     const chatId: string | null = this.route.snapshot.paramMap.get('id');
     if (!chatId || chatId === 'new') {
-      this.messages = [];
       console.log('new chat!');
     } else {
       this.chatService.getChat(chatId).pipe(
-        map(data => data.data)
-      ).subscribe(chat => {
+        map((data: any) => data.data)
+      ).subscribe((chat: Chat) => {
         this.chat$.next(chat);
-        this.messages = chat.messages;
       });
     }
   }
@@ -52,22 +48,30 @@ export class ChatComponent implements OnInit {
     return msg.index;
   }
 
-  onMessageSent(message: any) {
+  onMessageSent(messages: LlmMessage[]) {
+    console.log(messages)
+    console.log(messages[0])
+    console.log(messages[1])
     const currentChat = this.chat$.value;
-    currentChat.messages.push(message);
+    messages[0].index = currentChat.messages.length
+    messages[1].index = currentChat.messages.length + 1
+    currentChat.messages.push(messages[0]);
+    currentChat.messages.push(messages[1]);
+    // this.messages.push(messages[0]);
+    // this.messages.push(messages[1]);
     this.chat$.next(currentChat);
-    this.messages = currentChat.messages;
+    // this.messages = currentChat.messages;
     this.scrollBottom();
 
     // Refresh the chat from the server
-    if (currentChat.id !== 'new') {
-      this.chatService.getChat(currentChat.id).pipe(
-        map(data => data.data)
-      ).subscribe(updatedChat => {
-        this.chat$.next(updatedChat);
-        this.messages = updatedChat.messages;
-      });
-    }
+    // if (currentChat.id !== 'new') {
+    //   this.chatService.getChat(currentChat.id).pipe(
+    //     map((data: any) => data.data)
+    //   ).subscribe((updatedChat: Chat) => {
+    //     this.chat$.next(updatedChat);
+    //     this.messages = updatedChat.messages;
+    //   });
+    // }
   }
 
   private scrollBottom() {
