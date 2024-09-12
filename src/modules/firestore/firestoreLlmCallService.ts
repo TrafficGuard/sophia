@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import { DocumentSnapshot, Firestore } from '@google-cloud/firestore';
 import { CreateLlmRequest, LlmCall, LlmRequest } from '#llm/llmCallService/llmCall';
 import { LlmCallService } from '#llm/llmCallService/llmCallService';
-import { firestoreDb } from '../../firestore';
+import { firestoreDb } from './firestore';
 
 // TODO add composite index LlmCall	agentId Ascending requestTime Descending __name__ Descending
 /**

@@ -1,13 +1,11 @@
 import { AgentStateService } from '#agent/agentStateService/agentStateService';
 import { FileAgentStateService } from '#agent/agentStateService/fileAgentStateService';
 import { InMemoryAgentStateService } from '#agent/agentStateService/inMemoryAgentStateService';
+import { ChatService } from '#chat/chatTypes';
 import { RouteDefinition } from '#fastify/fastifyApp';
+import { firestoreApplicationContext } from '#firestore/firestoreApplicationContext';
 import { InMemoryLlmCallService } from '#llm/llmCallService/inMemoryLlmCallService';
 import { LlmCallService } from '#llm/llmCallService/llmCallService';
-import { FirestoreAgentStateService } from '#modules/firestore/firestoreAgentStateService';
-import { FirestoreCodeReviewService } from '#modules/firestore/firestoreCodeReviewService';
-import { FirestoreLlmCallService } from '#modules/firestore/firestoreLlmCallService';
-import { FirestoreUserService } from '#modules/firestore/firestoreUserService';
 import { logger } from '#o11y/logger';
 import { CodeReviewService } from '#swe/codeReview/codeReviewService';
 import { InMemoryCodeReviewService } from '#swe/codeReview/memoryCodeReviewService';
@@ -15,13 +13,13 @@ import { FileUserService } from '#user/userService/fileUserService';
 import { InMemoryUserService } from '#user/userService/inMemoryUserService';
 import { UserService } from '#user/userService/userService';
 import { FileFunctionCacheService } from './cache/fileFunctionCacheService';
-import { FirestoreCacheService } from './cache/firestoreFunctionCacheService';
 import { FunctionCacheService } from './cache/functionCacheService';
 import { TypeBoxFastifyInstance, initFastify } from './fastify';
 import { functionRegistry } from './functionRegistry';
 import { agentDetailsRoutes } from './routes/agent/agent-details-routes';
 import { agentExecutionRoutes } from './routes/agent/agent-execution-routes';
 import { agentStartRoute } from './routes/agent/agent-start-route';
+import { chatRoutes } from './routes/chat/chat-routes.ts';
 import { gitlabRoutesV1 } from './routes/gitlab/gitlabRoutes-v1';
 import { llmCallRoutes } from './routes/llms/llm-call-routes';
 import { llmRoutes } from './routes/llms/llm-routes';
@@ -31,6 +29,7 @@ import { codeReviewRoutes } from './routes/scm/codeReviewRoutes';
 export interface ApplicationContext {
 	agentStateService: AgentStateService;
 	userService: UserService;
+	chatService: ChatService;
 	llmCallService: LlmCallService;
 	functionCacheService: FunctionCacheService;
 	codeReviewService: CodeReviewService;
@@ -81,6 +80,7 @@ export async function initServer(): Promise<void> {
 				llmRoutes as RouteDefinition,
 				llmCallRoutes as RouteDefinition,
 				codeReviewRoutes as RouteDefinition,
+				chatRoutes as RouteDefinition,
 				// Add your routes below this line
 			],
 			instanceDecorators: applicationContext, // This makes all properties on the ApplicationContext interface available on the fastify instance in the routes
@@ -93,13 +93,15 @@ export async function initServer(): Promise<void> {
 
 export async function initFirestoreApplicationContext(): Promise<ApplicationContext> {
 	logger.info('Initializing Firestore persistence');
-	applicationContext = {
-		agentStateService: new FirestoreAgentStateService(),
-		userService: new FirestoreUserService(),
-		llmCallService: new FirestoreLlmCallService(),
-		functionCacheService: new FirestoreCacheService(),
-		codeReviewService: new FirestoreCodeReviewService(),
-	};
+	// const firestoreModule = await import("./modules/firestore/firestoreApplicationContext.ts")
+	// applicationContext = firestoreModule.firestoreApplicationContext()
+
+	// const dynamicImport = new Function('specifier', 'return import(specifier)');
+	// const firestoreModule = await dynamicImport('./modules/firestore/firestoreApplicationContext.cjs');
+	// applicationContext = firestoreModule.firestoreApplicationContext();
+
+	applicationContext = firestoreApplicationContext();
+
 	await applicationContext.userService.ensureSingleUser();
 	return applicationContext;
 }
@@ -109,6 +111,7 @@ export async function initFileApplicationContext(): Promise<ApplicationContext> 
 	applicationContext = {
 		agentStateService: new FileAgentStateService(),
 		userService: new FileUserService(),
+		chatService: {} as ChatService, // TODO implement
 		llmCallService: new InMemoryLlmCallService(),
 		functionCacheService: new FileFunctionCacheService(),
 		codeReviewService: new InMemoryCodeReviewService(),
@@ -121,6 +124,7 @@ export function initInMemoryApplicationContext(): ApplicationContext {
 	applicationContext = {
 		agentStateService: new InMemoryAgentStateService(),
 		userService: new InMemoryUserService(),
+		chatService: {} as ChatService, // TODO implement
 		llmCallService: new InMemoryLlmCallService(),
 		functionCacheService: new FileFunctionCacheService(),
 		codeReviewService: new InMemoryCodeReviewService(),

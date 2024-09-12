@@ -1,7 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Message } from '../model/message';
-import { User } from '../model/user';
 import * as moment from 'moment';
+import {LlmMessage} from "@app/chat/model/chat";
 
 @Component({
   selector: 'app-chat-message',
@@ -9,16 +8,16 @@ import * as moment from 'moment';
   styleUrls: ['./chat-message.component.scss'],
 })
 export class ChatMessageComponent implements OnInit {
-  @Input() msg: Message = {} as Message;
-  @Input() predecessor: Message | null = null;
-  @Input() user: User = {} as User;
+  @Input() msg: LlmMessage = {} as LlmMessage;
+  @Input() predecessor: LlmMessage | null = null;
+  // @Input() user: User = {} as User;
   @Input() allowsReply = false;
 
   constructor() {}
 
   ngOnInit() {}
 
-  getDateDivider(msg: Message | undefined): string {
+  getDateDivider(msg: LlmMessage | undefined): string {
     // if (!msg.createdAt) {
     //   return null;
     // }
@@ -27,26 +26,27 @@ export class ChatMessageComponent implements OnInit {
     return '';
   }
 
-  getUserName(user: User | undefined): string | null {
-    if (!user) {
-      return null;
-    }
-    return user.displayName;
-  }
+  // getUserName(user: User | undefined): string | null {
+  //   if (!user) {
+  //     return null;
+  //   }
+  //   return user.displayName;
+  // }
 
-  getCreatedDate(msg: Message): string | null {
-    if (!msg.createdAt) {
-      return null;
-    }
-    // return msg.createdAt.format('LT');
-    return '';
-  }
+  // getCreatedDate(msg: LlmMessage): string | null {
+  //   if (!msg.createdAt) {
+  //     return null;
+  //   }
+  //   // return msg.createdAt.format('LT');
+  //   return '';
+  // }
 
   isPredecessorSameAuthor(): boolean {
-    if (!this.predecessor) {
-      return false;
-    }
-    return this.predecessor.uid === this.msg?.uid;
+    return false;
+    // if (!this.predecessor) {
+    //   return false;
+    // }
+    // return this.predecessor.uid === this.msg?.uid;
   }
 
   isTemporalClose(): boolean {

@@ -2,8 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { debounceTime, filter, throttleTime } from 'rxjs/operators';
-// import {FirebaseAttachmentService} from "@app/chat/services/firebase/firebase-attachment.service";
-import { FirebaseChatService } from '@app/chat/services/firebase/firebase-chat.service';
+import {ApiChatService} from "@app/chat/services/api/api-chat.service";
 
 @Component({
   selector: 'app-chat-controls',
@@ -18,7 +17,8 @@ export class ChatControlsComponent implements OnInit {
 
   constructor(
     // private attachmentService: FirebaseAttachmentService,
-    private chatService: FirebaseChatService,
+    // private chatService: FirebaseChatService,
+    private chatService: ApiChatService,
     private fb: FormBuilder
   ) {
     this.messageControl = new FormControl();
@@ -52,7 +52,11 @@ export class ChatControlsComponent implements OnInit {
     if (!msg) {
       return alert('Please enter a message.');
     }
-    this.chatService.sendMessage(this.chatId, msg).then();
+
+    this.chatService.sendMessage(this.chatId, msg, 'llmIdPlaceholder').subscribe(
+          (res: any) => console.log(res),
+          (err: any) => console.log(err)
+      );
     // this.attachmentService.uploadAttachments().subscribe(
     //     (res: any) => console.log(res),
     //     (err: any) => console.log(err)

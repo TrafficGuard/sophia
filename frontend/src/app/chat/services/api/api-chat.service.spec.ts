@@ -7,6 +7,6 @@ describe('ApiChatService', () => {
 
   it('should be created', () => {
     const service: ApiChatService = TestBed.get(ApiChatService);
-    expect(service).toBeTruthy();
+    expect(service).not.to.be.undefined;
   });
 });
