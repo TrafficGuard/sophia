@@ -1,6 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import * as moment from 'moment';
-import {LlmMessage} from "@app/chat/model/chat";
+import { LlmMessage, User } from "@app/chat/model/chat";
 
 @Component({
   selector: 'app-chat-message',
@@ -10,7 +9,6 @@ import {LlmMessage} from "@app/chat/model/chat";
 export class ChatMessageComponent implements OnInit {
   @Input() msg: LlmMessage = {} as LlmMessage;
   @Input() predecessor: LlmMessage | null = null;
-  // @Input() user: User = {} as User;
   @Input() allowsReply = false;
 
   constructor() {}
@@ -18,19 +16,23 @@ export class ChatMessageComponent implements OnInit {
   ngOnInit() {}
 
   getDateDivider(msg: LlmMessage | undefined): string {
-    // if (!msg.createdAt) {
-    //   return null;
-    // }
-    //
-    // return msg.createdAt.format('l');
-    return '';
+    if (!msg || !msg.createdAt) {
+      return '';
+    }
+    return new Date(msg.createdAt).toLocaleDateString();
   }
 
-  getUserName(user: User | undefined): string | null {
-    if (!user) {
-      return null;
+  getUserName(role: 'system' | 'user' | 'assistant'): string {
+    switch (role) {
+      case 'user':
+        return 'You';
+      case 'assistant':
+        return 'Assistant';
+      case 'system':
+        return 'System';
+      default:
+        return 'Unknown';
     }
-    return user.displayName;
   }
 
   getCreatedDate(msg: LlmMessage): string | null {
@@ -41,32 +43,26 @@ export class ChatMessageComponent implements OnInit {
   }
 
   isPredecessorSameAuthor(): boolean {
-    return false;
-    // if (!this.predecessor) {
-    //   return false;
-    // }
-    // return this.predecessor.uid === this.msg?.uid;
+    if (!this.predecessor) {
+      return false;
+    }
+    return this.predecessor.role === this.msg.role;
   }
 
   isTemporalClose(): boolean {
-    if (!this.predecessor) {
-      return true;
+    if (!this.predecessor || !this.msg.createdAt || !this.predecessor.createdAt) {
+      return false;
     }
-
-    // const duration = moment.duration(
-    //   this.msg?.createdAt.diff(this.predecessor.createdAt)
-    // );
-    // return duration.asMinutes() <= 1;
-    return false;
+    const timeDiff = Math.abs(this.msg.createdAt - this.predecessor.createdAt);
+    return timeDiff <= 60000; // 1 minute in milliseconds
   }
 
   isPreviousMessageFromOtherDay() {
-    if (!this.predecessor) {
+    if (!this.predecessor || !this.msg.createdAt || !this.predecessor.createdAt) {
       return true;
     }
-    // const prevDate = this.predecessor.createdAt.day();
-    // const date = this.msg.createdAt.day();
-    // return prevDate !== date;
-    return false;
+    const prevDate = new Date(this.predecessor.createdAt).toDateString();
+    const currentDate = new Date(this.msg.createdAt).toDateString();
+    return prevDate !== currentDate;
   }
 }

@@ -5,7 +5,12 @@ export interface LlmMessage {
   text: string;
   /** Set the cache_control flag with Claude models */
   cache?: 'ephemeral';
-  index: number
+  index: number;
+  createdAt?: number;
+}
+
+export interface User {
+  displayName: string;
 }
 
 export interface Chat {

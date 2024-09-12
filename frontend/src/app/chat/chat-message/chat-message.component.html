@@ -26,7 +26,7 @@
         *ngIf="!(isPredecessorSameAuthor() && isTemporalClose())"
         style="font-size: 16px; margin-bottom: 6px"
       >
-        {{ getUserName(msg.user) }}
+        {{ getUserName(msg.role) }}
       </mat-card-title>
       <mat-card-subtitle>{{ getCreatedDate(msg) }}</mat-card-subtitle>
     </mat-card-header>
