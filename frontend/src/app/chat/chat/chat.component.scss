@@ -1,5 +1,9 @@
-img {
-  border-radius: 50%;
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 50%;
+  min-width: 600px;
 }
 
 .messages-container {
@@ -11,6 +15,6 @@ img {
 app-chat-controls {
   position: sticky;
   bottom: 0;
-  background-color: #fff; // Adjust as needed
+  background-color: #fff;
   padding: 1rem 0;
 }
