@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { Chat, ChatService } from '#chat/chatTypes';
+import { SINGLE_USER_ID } from '#user/userService/inMemoryUserService.ts';
 
 export function runChatServiceTests(createService: () => ChatService) {
 	let service: ChatService;
@@ -17,7 +18,7 @@ export function runChatServiceTests(createService: () => ChatService) {
 				{ role: 'assistant', text: 'Hi there! How can I help you?' },
 			],
 			updatedAt: Date.now(),
-			userId: 'user-id',
+			userId: SINGLE_USER_ID,
 			visibility: 'private',
 			title: 'test',
 			parentId: undefined,
@@ -30,6 +31,8 @@ export function runChatServiceTests(createService: () => ChatService) {
 		const loadedChat = await service.loadChat(sampleChat.id);
 
 		// Verify that the loaded chat matches the saved chat
+		console.log(loadedChat);
+		console.log(savedChat);
 		expect(loadedChat).to.deep.equal(savedChat);
 		expect(loadedChat).to.deep.equal(sampleChat);
 	});
@@ -38,7 +41,7 @@ export function runChatServiceTests(createService: () => ChatService) {
 		const emptyChatId = 'empty-chat-id';
 		const emptyChat: Chat = {
 			id: emptyChatId,
-			userId: 'user-id',
+			userId: SINGLE_USER_ID,
 			title: 'test',
 			visibility: 'private',
 			messages: [],
@@ -56,7 +59,7 @@ export function runChatServiceTests(createService: () => ChatService) {
 	it('should handle a chat with parentId', async () => {
 		const parentChat: Chat = {
 			id: 'parent-chat-id',
-			userId: 'user-id',
+			userId: SINGLE_USER_ID,
 			visibility: 'private',
 			title: 'test',
 			messages: [{ role: 'user', text: 'Parent message' }],
@@ -66,7 +69,7 @@ export function runChatServiceTests(createService: () => ChatService) {
 
 		const childChat: Chat = {
 			id: 'child-chat-id',
-			userId: 'user-id',
+			userId: SINGLE_USER_ID,
 			visibility: 'private',
 			parentId: parentChat.id,
 			title: 'test',

@@ -32,7 +32,7 @@ export class FirestoreChatService implements ChatService {
 				id: chatId,
 				userId: data.userId,
 				title: data.title,
-				updatedAt: data.lastUpdated,
+				updatedAt: data.updatedAt,
 				visibility: data.visibility,
 				parentId: data.parentId,
 				messages: data.messages,
