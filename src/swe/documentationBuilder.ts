@@ -144,7 +144,8 @@ export async function buildFolderDocs(): Promise<void> {
 
 			filesAndSubFoldersCombinedSummary = combineFileAndSubFoldersSummaries(fileSummaries, subFolderSummaries);
 
-			const folderSummary: Summary = await generateFolderSummary(easyLlm, filesAndSubFoldersCombinedSummary);
+			const parentSummaries = await getParentSummaries(folderPath);
+			const folderSummary: Summary = await generateFolderSummary(easyLlm, filesAndSubFoldersCombinedSummary, parentSummaries);
 			folderSummary.path = folderPath;
 			await saveFolderSummary(folderPath, folderSummary);
 		} catch (e) {
@@ -219,21 +220,37 @@ function combineFileAndSubFoldersSummaries(fileSummaries: Summary[], subFolderSu
 	return allSummaries.map((summary) => `${summary.path}\n${summary.paragraph}`).join('\n\n');
 }
 
-async function generateFolderSummary(llm: any, combinedSummary: string): Promise<Summary> {
-	const prompt = `
-    <summaries>
-    ${combinedSummary}
-    </summaries>
-    Generate two summaries for the following folder based on the summaries of its contents 
+async function generateFolderSummary(llm: any, combinedSummary: string, parentSummaries: Summary[] = []): Promise<Summary> {
+	let parentSummary = '';
+	if (parentSummaries.length) {
+		parentSummary = '<parent-summaries>\n';
+		for (const summary of parentSummaries) {
+			parentSummary += `<parent-summary path="${summary.path}">\n${summary.paragraph}\n</parent-summary>\n`;
+		}
+		parentSummary += '</parent-summaries>\n';
+	}
 
-    Don't start the summaries with "This folder contains..." instead use more concise language like "Contains XYZ and does abc..."
+	const prompt = `${parentSummary}
+<summaries>
+${combinedSummary}
+</summaries>
+The task will be to generate two summaries for the folder based on the summaries of its contents and parent summaries (if available).
 
-    Respond only with JSON in the format of this example:
-    {
-      "sentence": "One sentence summary of the folder",
-      "paragraph": "Contains XYZ. Two paragraph summary of the folder. Contains details on the folder's purpose and main components. Quite a few sentences long."
-    }
-  `;
+Given the contents of the folder, first provide a comprehensive list of questions that someone might ask about the codebase that would include something in this folder.
+
+Your summaries should include details which would help with identifying the folder as being relevant to the questions.
+
+Next you will need to output the summary object. The first summary will be one sentence long. The second summary will be one paragraph long. Include key identifiers like exported classes, interfaces, etc.
+Assume that the parent summaries will always be available when the folder summary is read, so don't include any duplicate details from the parent summaries.
+
+Don't start the summaries with "This folder contains..." instead use more concise language like "Contains XYZ and does abc..."
+
+Respond only with JSON in the format of this example:
+{
+  "sentence": "One sentence summary of the folder",
+  "paragraph": "Contains XYZ. One paragraph summary of the folder. Contains details on the folder's purpose and main components. Quite a few sentences long."
+}
+`;
 
 	return await llm.generateJson(prompt);
 }
@@ -312,4 +329,23 @@ async function generateDetailedSummaryUsingLLM(llm: any, combinedSummary: string
 async function saveTopLevelSummary(rootDir: string, summary: string): Promise<void> {
 	const summaryPath = join(rootDir, sophiaDirName, 'docs', '_summary');
 	await fs.writeFile(summaryPath, JSON.stringify(summary, null, 2));
+}
+async function getParentSummaries(folderPath: string): Promise<Summary[]> {
+	const parentSummaries: Summary[] = [];
+	let currentPath = dirname(folderPath);
+
+	while (currentPath !== '.') {
+		const folderName = basename(currentPath);
+		const summaryPath = join('.sophia', 'docs', currentPath, `_${folderName}.json`);
+		try {
+			const summaryContent = await fs.readFile(summaryPath, 'utf-8');
+			parentSummaries.unshift(JSON.parse(summaryContent));
+		} catch (e) {
+			// If we can't read a summary, we've reached the top of the summarized hierarchy
+			break;
+		}
+		currentPath = dirname(currentPath);
+	}
+
+	return parentSummaries;
 }
