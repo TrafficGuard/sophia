@@ -1,0 +1,29 @@
+.message-bubble {
+  /* Common styles for all message bubbles */
+  border-radius: 8px;
+  padding: 8px 12px;
+  max-width: 70%;
+  word-wrap: break-word;
+}
+
+.user-message {
+  /* Styles specific to user messages */
+  margin-left: auto;
+  margin-right: 10%;
+}
+
+.assistant-message {
+  /* Styles specific to assistant messages */
+  margin-right: auto;
+  margin-left: 10%;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 600px) {
+  .user-message,
+  .assistant-message {
+    max-width: 85%;
+    margin-left: 5%;
+    margin-right: 5%;
+  }
+}

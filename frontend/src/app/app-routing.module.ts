@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule, PreloadAllModules } from '@angular/router';
 import { Shell } from '@app/shell/shell.service';
-import { CodeReviewListComponent } from './code-review/code-review-list.component';
 
 const routes: Routes = [
   Shell.childRoutes([{ path: 'about', loadChildren: () => import('./about/about.module').then((m) => m.AboutModule) }]),
@@ -16,11 +15,6 @@ const routes: Routes = [
     { path: 'profile', loadChildren: () => import('./profile/profile.module').then((m) => m.ProfileModule) },
   ]),
   Shell.childRoutes([{ path: 'chat', loadChildren: () => import('./chat/chat.module').then((m) => m.ChatModule) }]),
-
-  Shell.childRoutes([{ path: 'chats', loadChildren: () => import('./chat/chat.module').then((m) => m.ChatModule) }]),
-  Shell.childRoutes([
-    { path: 'chats/:id', loadChildren: () => import('./chat/chat.module').then((m) => m.ChatModule) },
-  ]),
 
   Shell.childRoutes([
     {

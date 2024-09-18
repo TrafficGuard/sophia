@@ -45,7 +45,7 @@ export function addNote(note: string): void {
  * @return the filesystem on the current agent context
  */
 export function getFileSystem(): FileSystem {
-	if (!agentContextStorage.getStore() && process.env.TEST === 'true') return new FileSystem();
+	if (!agentContextStorage.getStore()) return new FileSystem();
 	const filesystem = agentContextStorage.getStore()?.fileSystem;
 	if (!filesystem) throw new Error('No file system available on the agent context');
 	return filesystem;

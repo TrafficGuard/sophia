@@ -1,7 +1,7 @@
 import { User } from '../user';
 import { UserService } from './userService';
 
-const SINGLE_USER_ID = 'user';
+export const SINGLE_USER_ID = 'user';
 
 const singleUser: User = {
 	enabled: false,

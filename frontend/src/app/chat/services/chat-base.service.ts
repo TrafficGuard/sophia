@@ -1,4 +1,3 @@
-import { Message } from '../model/message';
 import { Chat } from '../model/chat';
 import { Observable } from 'rxjs';
 import { ServicesConfig } from './services-config';
@@ -11,7 +10,7 @@ export abstract class ChatBaseService {
     }
   }
 
-  abstract getHistory(chatId: string): Observable<any>;
+  abstract getChat(chatId: string): Observable<any>;
 
   // abstract create(): Promise<boolean>;
   //

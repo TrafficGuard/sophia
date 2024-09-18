@@ -1,9 +1,9 @@
-import { Component, Input, OnInit } from '@angular/core';
-
-import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { debounceTime, filter, throttleTime } from 'rxjs/operators';
-// import {FirebaseAttachmentService} from "@app/chat/services/firebase/firebase-attachment.service";
-import { FirebaseChatService } from '@app/chat/services/firebase/firebase-chat.service';
+import { ApiChatService } from '@app/chat/services/api/api-chat.service';
+import { LlmService } from '@app/shared/services/llm.service';
+import { LlmMessage } from '@app/chat/model/chat';
 
 @Component({
   selector: 'app-chat-controls',
@@ -12,74 +12,101 @@ import { FirebaseChatService } from '@app/chat/services/firebase/firebase-chat.s
 })
 export class ChatControlsComponent implements OnInit {
   @Input() chatId: string = '';
+  @Output() messageSent = new EventEmitter<LlmMessage[]>();
 
-  messageControl: FormControl;
   chatForm: FormGroup;
+  isSending: boolean = false;
+  llms: any[] = [];
 
-  constructor(
-    // private attachmentService: FirebaseAttachmentService,
-    private chatService: FirebaseChatService,
-    private fb: FormBuilder
-  ) {
-    this.messageControl = new FormControl();
-    this.chatForm = this.fb.group({ message: this.messageControl });
+  constructor(private chatService: ApiChatService, private llmService: LlmService, private fb: FormBuilder) {
+    this.chatForm = this.fb.group({
+      message: [''],
+      selectedLlm: [''],
+    });
   }
 
   ngOnInit() {
     this.scrollBottom();
+    this.fetchLlms();
 
-    this.messageControl.valueChanges
-      .pipe(
-        filter((data) => data !== ''),
+    this.chatForm
+      .get('message')
+      ?.valueChanges.pipe(
+        filter((data: string) => data !== ''),
         throttleTime(1400)
       )
-      .subscribe((data) => {
-        // this.chatService.sendIsTyping(this.chatId).then();
+      .subscribe(() => {
+        // Implement typing indicator if needed
       });
 
-    this.messageControl.valueChanges
-      .pipe(
-        filter((data) => data !== ''),
+    this.chatForm
+      .get('message')
+      ?.valueChanges.pipe(
+        filter((data: string) => data !== ''),
         debounceTime(1500)
       )
-      .subscribe((data) => {
-        // this.chatService.deleteIsTyping(this.chatId).then();
+      .subscribe(() => {
+        // Implement typing indicator removal if needed
       });
   }
 
+  private fetchLlms(): void {
+    this.llmService.getLlms().subscribe({
+      next: (llms) => {
+        this.llms = llms;
+        if (this.llms.length > 0) {
+          this.chatForm.get('selectedLlm')?.setValue(this.llms[0].id);
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching LLMs:', error);
+        // Consider showing a user-friendly error message here
+      },
+    });
+  }
+
   submit(): void {
-    const msg = this.messageControl.value;
+    const msg = this.chatForm.get('message')?.value;
+    const selectedLlmId = this.chatForm.get('selectedLlm')?.value;
+
     if (!msg) {
       return alert('Please enter a message.');
     }
-    this.chatService.sendMessage(this.chatId, msg).then();
-    // this.attachmentService.uploadAttachments().subscribe(
-    //     (res: any) => console.log(res),
-    //     (err: any) => console.log(err)
-    // );
-    this.messageControl.reset();
-    this.scrollBottom();
+    if (!selectedLlmId) {
+      return alert('Please select an LLM.');
+    }
+
+    this.isSending = true;
+    this.chatService.sendMessage(this.chatId, msg, selectedLlmId).subscribe({
+      next: (data: string) => {
+        console.log(data);
+        this.isSending = false;
+        this.chatForm.get('message')?.reset();
+        this.scrollBottom();
+        this.messageSent.emit([
+          { role: 'user', text: msg, index: -1 },
+          { role: 'assistant', text: data, index: -1, llmId: selectedLlmId },
+        ]);
+      },
+      error: (err: Error) => {
+        console.error('Error sending message:', err);
+        this.isSending = false;
+        alert('Failed to send message. Please try again.');
+      },
+    });
   }
 
   private scrollBottom(): void {
     setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 500);
   }
 
-  setSelectedFiles(event: any): void {
-    // this.attachmentService.setSelectedFiles(event);
-  }
-
-  deleteAttachment(file: any): void {
-    // return this.attachmentService.deleteFile(file);
-  }
-
+  // Attachment methods left as placeholders for future implementation
+  setSelectedFiles(event: Event): void {}
+  deleteAttachment(file: File): void {}
   getAttachments(): File[] {
-    // return this.attachmentService.getFiles();
     return [];
   }
-
-  hasAttachments() {
-    // return this.attachmentService.getFiles().length > 0;
-    false;
+  hasAttachments(): boolean {
+    return false;
   }
 }

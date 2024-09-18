@@ -10,6 +10,7 @@ import { ollamaLLMRegistry } from '#llm/models/ollama';
 import { openAiLLMRegistry } from '#llm/models/openai';
 import { togetherLLMRegistry } from '#llm/models/together';
 import { vertexLLMRegistry } from '#llm/models/vertexai';
+import { blueberryLLMRegistry } from '#llm/multi-agent/blueberry.ts';
 import { MultiLLM } from '#llm/multi-llm';
 import { logger } from '#o11y/logger';
 
@@ -23,6 +24,7 @@ export const LLM_FACTORY: Record<string, () => LLM> = {
 	...vertexLLMRegistry(),
 	...deepseekLLMRegistry(),
 	...ollamaLLMRegistry(),
+	...blueberryLLMRegistry(),
 	...{ 'mock:mock': () => mockLLM },
 };
 

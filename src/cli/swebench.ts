@@ -14,7 +14,7 @@ import { PublicWeb } from '#functions/web/web';
 import { LlmCall } from '#llm/llmCallService/llmCall';
 import { ClaudeLLMs } from '#llm/models/anthropic';
 import { Claude3_5_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
-import { groqLlama3_70B } from '#llm/models/groq';
+import { groqLlama3_1_70B } from '#llm/models/groq';
 import { Gemini_1_5_Flash } from '#llm/models/vertexai';
 import { logger } from '#o11y/logger';
 import { SWEBenchAgent, SWEInstance } from '#swe/SWEBenchAgent';

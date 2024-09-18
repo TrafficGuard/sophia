@@ -1,0 +1,9 @@
+/* Styles for CodeReviewListComponent */
+[matListItemIcon] {
+  display: flex;
+  gap: 4px; /* Reduce the gap between buttons */
+}
+
+button[mat-icon-button] {
+  padding: 0; /* Remove default padding */
+}

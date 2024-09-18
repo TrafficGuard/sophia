@@ -15,15 +15,39 @@ export function openAiLLMRegistry(): Record<string, () => LLM> {
 	return {
 		'openai:gpt-4o': () => openaiLLmFromModel('gpt-4o'),
 		'openai:gpt-4o-mini': () => openaiLLmFromModel('gpt-4o-mini'),
+		'openai:o1-preview': () => openaiLLmFromModel('o1-preview'),
+		'openai:o1-mini': () => openaiLLmFromModel('o1-mini'),
 	};
 }
 
-type Model = 'gpt-4o' | 'gpt-4o-mini';
+type Model = 'gpt-4o' | 'gpt-4o-mini' | 'o1-preview' | 'o1-mini';
 
 export function openaiLLmFromModel(model: string): LLM {
 	if (model.startsWith('gpt-4o-mini')) return GPT4oMini();
 	if (model.startsWith('gpt-4o')) return GPT4o();
+	if (model.startsWith('o1-preview')) return openAIo1();
+	if (model.startsWith('o1-mini')) return openAIo1mini();
 	throw new Error(`Unsupported ${OPENAI_SERVICE} model: ${model}`);
+}
+
+export function openAIo1() {
+	return new OpenAI(
+		'OpenAI o1',
+		'o1-preview',
+		128_000,
+		(input: string) => (input.length * 15) / 1_000_000,
+		(output: string) => (output.length * 60) / (1_000_000 * 4),
+	);
+}
+
+export function openAIo1mini() {
+	return new OpenAI(
+		'OpenAI o1-mini',
+		'o1-mini',
+		128_000,
+		(input: string) => (input.length * 3) / 1_000_000,
+		(output: string) => (output.length * 12) / (1_000_000 * 4),
+	);
 }
 
 export function GPT4o() {
@@ -85,7 +109,6 @@ export class OpenAI extends BaseLLM {
 		return imageUrl;
 	}
 
-	@logTextGeneration
 	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
 		return withActiveSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);

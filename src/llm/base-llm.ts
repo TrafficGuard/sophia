@@ -37,7 +37,7 @@ export abstract class BaseLLM implements LLM {
 		return extractJsonResult(response);
 	}
 
-	abstract generateText(prompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string>;
+	abstract generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string>;
 
 	getMaxInputTokens(): number {
 		return this.maxInputTokens;

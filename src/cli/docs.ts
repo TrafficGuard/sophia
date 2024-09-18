@@ -7,9 +7,9 @@ import { shutdownTrace } from '#fastify/trace-init/trace-init';
 import { ClaudeLLMs } from '#llm/models/anthropic';
 import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { Gemini_1_5_Flash } from '#llm/models/vertexai';
-import { buildDocs } from '#swe/documentationBuilder';
+import { buildSummaryDocs } from '#swe/documentationBuilder.ts';
 import { detectProjectInfo } from '#swe/projectDetection';
-import { generateProjectMaps } from '#swe/projectMap';
+import { generateRepositoryMaps } from '#swe/repositoryMap.ts';
 import { initFirestoreApplicationContext } from '../app';
 import { parseProcessArgs, saveAgentId } from './cli';
 
@@ -36,10 +36,17 @@ async function main() {
 		},
 	};
 
+	const maps = await generateRepositoryMaps(await detectProjectInfo());
+
+	console.log(`languageProjectMap ${maps.languageProjectMap.tokens}`);
+	console.log(`fileSystemTree ${maps.fileSystemTree.tokens}`);
+	console.log(`folderSystemTreeWithSummaries ${maps.folderSystemTreeWithSummaries.tokens}`);
+	console.log(`fileSystemTreeWithSummaries ${maps.fileSystemTreeWithSummaries.tokens}`);
+
+	if (console.log) return;
+
 	const agentId = await runAgentWorkflow(config, async () => {
-		// await buildDocs()
-		await generateProjectMaps((await detectProjectInfo())[0]);
-		if (console.log) return;
+		await buildSummaryDocs();
 	});
 
 	if (agentId) {

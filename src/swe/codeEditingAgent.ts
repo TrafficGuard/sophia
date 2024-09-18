@@ -6,6 +6,7 @@ import { Perplexity } from '#functions/web/perplexity';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
 import { CompileErrorAnalysis, CompileErrorAnalysisDetails, analyzeCompileErrors } from '#swe/analyzeCompileErrors';
+import { getRepositoryOverview, getTopLevelSummary } from '#swe/documentationBuilder.ts';
 import { reviewChanges } from '#swe/reviewChanges';
 import { supportingInformation } from '#swe/supportingInformation';
 import { execCommand, runShellCommand } from '#utils/exec';
@@ -71,10 +72,14 @@ export class CodeEditingAgent {
 		logger.info(initialSelectedFiles, `Initial selected files (${initialSelectedFiles.length})`);
 
 		// Perform a first pass on the files to generate an implementation specification
-		const implementationDetailsPrompt = `${await fs.readFilesAsXml(initialSelectedFiles)}
+
+		const repositoryOverview: string = await getRepositoryOverview();
+		const installedPackages: string = await projectInfo.languageTools.getInstalledPackages();
+
+		const implementationDetailsPrompt = `${repositoryOverview}${installedPackages}${await fs.readFilesAsXml(initialSelectedFiles)}
 		<requirements>${requirements}</requirements>
-		You are a senior software engineer. Your task is to review the provided user requirements against the code provided and produce an implementation design specification to give to a developer to implement the changes in the provided files.
-		Do not provide any details of verification commands etc as the CI/CD build will run integration tests. Only detail the changes required in the files for the pull request.
+		You are a senior software engineer. Your task is to review the provided user requirements against the code provided and produce a detailed, comprehensive implementation design specification to give to a developer to implement the changes in the provided files.
+		Do not provide any details of verification commands etc as the CI/CD build will run integration tests. Only detail the changes required to the files for the pull request.
 		Check if any of the requirements have already been correctly implemented in the code as to not duplicate work.
 		Look at the existing style of the code when producing the requirements.
 		`;
