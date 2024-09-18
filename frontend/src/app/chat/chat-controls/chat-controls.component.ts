@@ -14,15 +14,15 @@ export class ChatControlsComponent implements OnInit {
   @Input() chatId: string = '';
   @Output() messageSent = new EventEmitter<LlmMessage[]>();
 
-  messageControl: FormControl;
   chatForm: FormGroup;
   isSending: boolean = false;
   llms: { id: string; name: string; isConfigured: boolean }[] = [];
-  selectedLlmId: string = '';
 
   constructor(private chatService: ApiChatService, private fb: FormBuilder) {
-    this.messageControl = new FormControl();
-    this.chatForm = this.fb.group({ message: this.messageControl });
+    this.chatForm = this.fb.group({
+      message: [''],
+      selectedLlm: ['']
+    });
   }
 
   ngOnInit() {
@@ -49,46 +49,47 @@ export class ChatControlsComponent implements OnInit {
   }
 
   private fetchLlms(): void {
-    this.chatService.getLlmList().subscribe(
-      (data) => {
+    this.chatService.getLlmList().subscribe({
+      next: (data) => {
         this.llms = data.data;
-        if (this.llms.length > 0) {
-          this.selectedLlmId = this.llms[0].id;
-        }
+        this.selectedLlmId = this.llms.length > 0 ? this.llms[0].id : '';
       },
-      (error) => {
+      error: (error) => {
         console.error('Error fetching LLMs:', error);
+        // Consider showing a user-friendly error message here
       }
-    );
+    });
   }
 
   submit(): void {
-    const msg = this.messageControl.value;
+    const msg = this.chatForm.get('message')?.value;
+    const selectedLlmId = this.chatForm.get('selectedLlm')?.value;
+
     if (!msg) {
       return alert('Please enter a message.');
     }
-    if (!this.selectedLlmId) {
+    if (!selectedLlmId) {
       return alert('Please select an LLM.');
     }
 
     this.isSending = true;
-    this.chatService.sendMessage(this.chatId, msg, this.selectedLlmId).subscribe(
-      (data: any) => {
+    this.chatService.sendMessage(this.chatId, msg, selectedLlmId).subscribe({
+      next: (data: any) => {
         console.log(data.data);
         this.isSending = false;
-        this.messageControl.reset();
+        this.chatForm.get('message')?.reset();
         this.scrollBottom();
         this.messageSent.emit([
           { role: 'user', text: msg, index: -1 },
           { role: 'assistant', text: data.data, index: -1 },
         ]);
       },
-      (err: any) => {
+      error: (err: any) => {
         console.error('Error sending message:', err);
         this.isSending = false;
         alert('Failed to send message. Please try again.');
       }
-    );
+    });
   }
 
   private scrollBottom(): void {

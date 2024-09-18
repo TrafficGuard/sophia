@@ -11,7 +11,7 @@
       </mat-form-field>
 
       <mat-form-field fxFlex="120px">
-        <mat-select [(value)]="selectedLlmId">
+        <mat-select formControlName="selectedLlm" aria-label="Select LLM">
           <mat-option *ngFor="let llm of llms" [value]="llm.id">
             {{ llm.name }}
           </mat-option>
