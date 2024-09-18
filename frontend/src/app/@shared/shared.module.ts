@@ -6,7 +6,7 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 import { MaterialModule } from '@app/material.module';
 import { LoaderComponent } from './loader/loader.component';
-import { LlmService } from './services/llm.service';
+import { LlmService } from '@app/shared/services/llm.service';
 
 @NgModule({
   imports: [FlexLayoutModule, MaterialModule, TranslateModule, CommonModule, ReactiveFormsModule, FormsModule],
