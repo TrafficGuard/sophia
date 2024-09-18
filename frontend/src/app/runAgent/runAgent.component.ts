@@ -85,7 +85,7 @@ export class RunAgentComponent implements OnInit {
           (this.runAgentForm as FormGroup).addControl('function' + index, new FormControl(false));
         });
       });
-    
+
     this.llmService.getLlms().subscribe({
       next: (llms) => {
         this.llms = llms;
@@ -93,9 +93,9 @@ export class RunAgentComponent implements OnInit {
       error: (error) => {
         console.error('Error fetching LLMs:', error);
         this.snackBar.open('Failed to load LLMs', 'Close', { duration: 3000 });
-      }
+      },
     });
-    
+
     this.loadUserProfile();
   }
 

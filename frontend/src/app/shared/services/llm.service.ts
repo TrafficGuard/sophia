@@ -11,7 +11,7 @@ export interface LLM {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class LlmService {
   private llmsSubject = new BehaviorSubject<LLM[]>([]);
@@ -22,7 +22,7 @@ export class LlmService {
   getLlms(): Observable<LLM[]> {
     if (!this.llmsLoaded) {
       return this.fetchLlms().pipe(
-        tap(llms => {
+        tap((llms) => {
           this.llmsSubject.next(llms);
           this.llmsLoaded = true;
         }),
@@ -33,12 +33,11 @@ export class LlmService {
   }
 
   private fetchLlms(): Observable<LLM[]> {
-    return this.http.get<{ data: LLM[] }>(`${environment.serverUrl}/llms/list`)
-      .pipe(
-        map(response => response.data),
-        retry(3),
-        catchError(this.handleError)
-      );
+    return this.http.get<{ data: LLM[] }>(`${environment.serverUrl}/llms/list`).pipe(
+      map((response) => response.data),
+      retry(3),
+      catchError(this.handleError)
+    );
   }
 
   private handleError(error: HttpErrorResponse) {

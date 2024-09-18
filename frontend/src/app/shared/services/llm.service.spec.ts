@@ -3,6 +3,8 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { LlmService, LLM } from './llm.service';
 import { environment } from '@env/environment';
 
+const LLM_LIST_API_URL = `${environment.serverUrl}/llms/list`;
+
 describe('LlmService', () => {
   let service: LlmService;
   let httpMock: HttpTestingController;
@@ -10,7 +12,7 @@ describe('LlmService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [LlmService]
+      providers: [LlmService],
     });
     service = TestBed.inject(LlmService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -27,31 +29,29 @@ describe('LlmService', () => {
   it('should fetch LLMs from the server', () => {
     const mockLlms: LLM[] = [
       { id: 'llm1', name: 'LLM 1', isConfigured: true },
-      { id: 'llm2', name: 'LLM 2', isConfigured: false }
+      { id: 'llm2', name: 'LLM 2', isConfigured: false },
     ];
 
-    service.getLlms().subscribe(llms => {
+    service.getLlms().subscribe((llms) => {
       expect(llms).toEqual(mockLlms);
     });
 
-    const req = httpMock.expectOne(`${environment.serverUrl}/api/llms/list`);
+    const req = httpMock.expectOne(LLM_LIST_API_URL);
     expect(req.request.method).toBe('GET');
     req.flush({ data: mockLlms });
   });
 
   it('should cache LLMs after the first request', () => {
-    const mockLlms: LLM[] = [
-      { id: 'llm1', name: 'LLM 1', isConfigured: true }
-    ];
+    const mockLlms: LLM[] = [{ id: 'llm1', name: 'LLM 1', isConfigured: true }];
 
     service.getLlms().subscribe();
-    httpMock.expectOne(`${environment.serverUrl}/api/llms/list`).flush({ data: mockLlms });
+    httpMock.expectOne(LLM_LIST_API_URL).flush({ data: mockLlms });
 
-    service.getLlms().subscribe(llms => {
+    service.getLlms().subscribe((llms) => {
       expect(llms).toEqual(mockLlms);
     });
 
-    httpMock.expectNone(`${environment.serverUrl}/api/llms/list`);
+    httpMock.expectNone(LLM_LIST_API_URL);
   });
 
   it('should handle errors when fetching LLMs', () => {
@@ -59,10 +59,10 @@ describe('LlmService', () => {
       next: () => fail('should have failed with the 404 error'),
       error: (error) => {
         expect(error.message).toContain('Error Code: 404');
-      }
+      },
     });
 
-    const req = httpMock.expectOne(`${environment.serverUrl}/api/llms/list`);
+    const req = httpMock.expectOne(LLM_LIST_API_URL);
     req.flush('Not Found', { status: 404, statusText: 'Not Found' });
   });
 });

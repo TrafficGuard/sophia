@@ -18,14 +18,10 @@ export class ChatControlsComponent implements OnInit {
   isSending: boolean = false;
   llms: any[] = [];
 
-  constructor(
-    private chatService: ApiChatService,
-    private llmService: LlmService,
-    private fb: FormBuilder
-  ) {
+  constructor(private chatService: ApiChatService, private llmService: LlmService, private fb: FormBuilder) {
     this.chatForm = this.fb.group({
       message: [''],
-      selectedLlm: ['']
+      selectedLlm: [''],
     });
   }
 
@@ -33,8 +29,9 @@ export class ChatControlsComponent implements OnInit {
     this.scrollBottom();
     this.fetchLlms();
 
-    this.chatForm.get('message')?.valueChanges
-      .pipe(
+    this.chatForm
+      .get('message')
+      ?.valueChanges.pipe(
         filter((data: string) => data !== ''),
         throttleTime(1400)
       )
@@ -42,8 +39,9 @@ export class ChatControlsComponent implements OnInit {
         // Implement typing indicator if needed
       });
 
-    this.chatForm.get('message')?.valueChanges
-      .pipe(
+    this.chatForm
+      .get('message')
+      ?.valueChanges.pipe(
         filter((data: string) => data !== ''),
         debounceTime(1500)
       )
@@ -63,7 +61,7 @@ export class ChatControlsComponent implements OnInit {
       error: (error) => {
         console.error('Error fetching LLMs:', error);
         // Consider showing a user-friendly error message here
-      }
+      },
     });
   }
 
@@ -94,7 +92,7 @@ export class ChatControlsComponent implements OnInit {
         console.error('Error sending message:', err);
         this.isSending = false;
         alert('Failed to send message. Please try again.');
-      }
+      },
     });
   }
 

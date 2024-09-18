@@ -50,16 +50,11 @@ export class ChatComponent implements OnInit, OnDestroy {
           error: (error) => {
             console.error('Error loading chat:', error);
             // Handle error (e.g., show error message to user)
-          }
+          },
         });
     }
 
-    this.scrollEvent$
-      .pipe(
-        debounceTime(200),
-        takeUntil(this.destroy$)
-      )
-      .subscribe(() => this.checkScrollPosition());
+    this.scrollEvent$.pipe(debounceTime(200), takeUntil(this.destroy$)).subscribe(() => this.checkScrollPosition());
   }
 
   ngOnDestroy() {

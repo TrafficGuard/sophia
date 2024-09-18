@@ -34,5 +34,4 @@ export class ApiChatService {
   sendMessage(chatId: string, content: string, llmId: string): Observable<string> {
     return this.http.post<string>(`/chat/${chatId}/send`, { text: content, llmId });
   }
-
 }

@@ -10,7 +10,7 @@ export interface LLM {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class LlmService {
   private apiUrl = `${environment.serverUrl}/api/llms`;
