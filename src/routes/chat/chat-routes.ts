@@ -46,7 +46,16 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
 
 			const isNew = chatId === 'new';
 			const chat: Chat = isNew
-				? { id: randomUUID(), messages: [], title: '', updatedAt: Date.now(), userId: currentUser().id, visibility: 'private', parentId: undefined }
+				? {
+						id: randomUUID(),
+						messages: [],
+						title: '',
+						updatedAt: Date.now(),
+						userId: currentUser().id,
+						visibility: 'private',
+						parentId: undefined,
+						rootId: undefined,
+				  }
 				: await fastify.chatService.loadChat(chatId);
 
 			// const llm = getLLM(llmId)

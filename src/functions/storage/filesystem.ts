@@ -1,9 +1,8 @@
-import { readFileSync } from 'fs';
-import { access, existsSync, lstat, lstatSync, mkdir, readFile, readdir, stat, writeFileSync } from 'node:fs';
+import { access, existsSync, lstat, mkdir, readFile, readdir, stat, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import path, { join } from 'path';
 import { promisify } from 'util';
-import fsPromises from 'fs/promises';
+import { glob } from 'glob-gitignore';
 import ignore, { Ignore } from 'ignore';
 import Pino from 'pino';
 import { agentContext } from '#agent/agentContextLocalStorage';
@@ -13,9 +12,11 @@ import { Git } from '#functions/scm/git';
 import { VersionControlSystem } from '#functions/scm/versionControlSystem';
 import { LlmTools } from '#functions/util';
 import { logger } from '#o11y/logger';
+import { getActiveSpan } from '#o11y/trace';
 import { spawnCommand } from '#utils/exec';
-import { CDATA_END, CDATA_START } from '#utils/xml-utils';
-import { needsCDATA } from '#utils/xml-utils';
+import { CDATA_END, CDATA_START, needsCDATA } from '#utils/xml-utils';
+import { SOPHIA_FS } from '../../appVars';
+
 const fs = {
 	readFile: promisify(readFile),
 	stat: promisify(stat),
@@ -25,10 +26,6 @@ const fs = {
 	lstat: promisify(lstat),
 };
 
-import fg from 'fast-glob';
-import { glob } from 'glob-gitignore';
-import { getActiveSpan } from '#o11y/trace';
-import { SOPHIA_FS } from '../../appVars';
 const globAsync = promisify(glob);
 
 type FileFilter = (filename: string) => boolean;
@@ -109,8 +106,7 @@ export class FileSystem {
 	 * If the dir starts with / it will first be checked as an absolute directory, then as relative path to the working directory.
 	 * @param dir the new working directory
 	 */
-	@func()
-	setWorkingDirectory(dir: string): void {
+	@func() setWorkingDirectory(dir: string): void {
 		if (!dir) throw new Error('dir must be provided');
 		let relativeDir = dir;
 		// Check absolute directory path
@@ -242,7 +238,7 @@ export class FileSystem {
 		return files.map((file) => path.relative(this.workingDirectory, file));
 	}
 
-	private async listFilesRecurse(
+	async listFilesRecurse(
 		rootPath: string,
 		dirPath: string,
 		parentIg: Ignore,
@@ -391,6 +387,17 @@ export class FileSystem {
 	}
 
 	/**
+	 * Writes to a file. If the file path already exists an Error will be thrown. This will create any parent directories required,
+	 * @param filePath The file path (either full filesystem path or relative to current working directory)
+	 * @param contents The contents to write to the file
+	 */
+	@func()
+	async writeNewFile(filePath: string, contents: string): Promise<void> {
+		if (await this.fileExists(filePath)) throw new Error(`File ${filePath} already exists. Cannot overwrite`);
+		await this.writeFile(filePath, contents);
+	}
+
+	/**
 	 * Writes to a file. If the file exists it will overwrite the contents. This will create any parent directories required,
 	 * @param filePath The file path (either full filesystem path or relative to current working directory)
 	 * @param contents The contents to write to the file
@@ -416,7 +423,7 @@ export class FileSystem {
 		await this.writeFile(filePath, updatedContent);
 	}
 
-	private async loadGitignoreRules(startPath: string): Promise<Ignore> {
+	async loadGitignoreRules(startPath: string): Promise<Ignore> {
 		const ig = ignore();
 		let currentPath = startPath;
 

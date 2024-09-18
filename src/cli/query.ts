@@ -5,11 +5,13 @@ import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { shutdownTrace } from '#fastify/trace-init/trace-init';
 import { ClaudeLLMs } from '#llm/models/anthropic';
-import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
+import { Claude3_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
+import { cerebrasLlama3_70b } from '#llm/models/cerebras.ts';
+import { deepseekChat } from '#llm/models/deepseek.ts';
+import { groqLlama3_1_70B } from '#llm/models/groq.ts';
+import { GPT4oMini, openAIo1, openAIo1mini } from '#llm/models/openai.ts';
 import { Gemini_1_5_Flash } from '#llm/models/vertexai';
-import { buildSummaryDocs } from '#swe/documentationBuilder.ts';
-import { detectProjectInfo } from '#swe/projectDetection';
-import { generateRepositoryMaps } from '#swe/repositoryMap.ts';
+import { codebaseQuery } from '#swe/codebaseQuery.ts';
 import { initFirestoreApplicationContext } from '../app';
 import { parseProcessArgs, saveAgentId } from './cli';
 
@@ -19,14 +21,18 @@ async function main() {
 		await initFirestoreApplicationContext();
 		agentLlms = ClaudeVertexLLMs();
 	}
-	agentLlms.easy = Gemini_1_5_Flash();
+	// agentLlms.easy = Gemini_1_5_Flash();
+	// agentLlms.medium = groqLlama3_1_70B();
+	agentLlms.medium = deepseekChat();
+	agentLlms.medium = openAIo1mini();
+	agentLlms.medium = GPT4oMini();
 
 	const { initialPrompt, resumeAgentId } = parseProcessArgs();
 
 	console.log(`Prompt: ${initialPrompt}`);
 
 	const config: RunAgentConfig = {
-		agentName: 'docs',
+		agentName: `Query: ${initialPrompt}`,
 		llms: agentLlms,
 		functions: [], //FileSystem,
 		initialPrompt,
@@ -36,21 +42,13 @@ async function main() {
 		},
 	};
 
-	const maps = await generateRepositoryMaps(await detectProjectInfo());
-
-	console.log(`languageProjectMap ${maps.languageProjectMap.tokens}`);
-	console.log(`fileSystemTree ${maps.fileSystemTree.tokens}`);
-	console.log(`folderSystemTreeWithSummaries ${maps.folderSystemTreeWithSummaries.tokens}`);
-	console.log(`fileSystemTreeWithSummaries ${maps.fileSystemTreeWithSummaries.tokens}`);
-
-	if (console.log) return;
-
 	const agentId = await runAgentWorkflow(config, async () => {
-		await buildSummaryDocs();
+		const response = await codebaseQuery(initialPrompt);
+		console.log(response);
 	});
 
 	if (agentId) {
-		saveAgentId('docs', agentId);
+		saveAgentId('query', agentId);
 	}
 
 	await shutdownTrace();

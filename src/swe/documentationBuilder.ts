@@ -1,9 +1,8 @@
-import { promises as fs } from 'node:fs';
+import { promises as fs, readFile } from 'node:fs';
 import { basename, dirname, join } from 'path';
 import { getFileSystem, llms } from '#agent/agentContextLocalStorage.ts';
 import { logger } from '#o11y/logger.ts';
 import { sophiaDirName } from '../appVars.ts';
-
 
 /**
  * This module build summary documentation for a project/repository, to assist with searching in the repository.
@@ -15,7 +14,6 @@ import { sophiaDirName } from '../appVars.ts';
  *
  * It's advisable to manually create the top level summary before running this.
  */
-
 
 /** Summary documentation for a file/folder */
 export interface Summary {
@@ -41,7 +39,6 @@ export async function buildSummaryDocs(fileFilter: (path: string) => boolean = (
 	await generateTopLevelSummary();
 }
 
-
 // Utils -----------------------------------------------------------
 
 function getSummaryFileName(filePath: string): string {
@@ -49,7 +46,6 @@ function getSummaryFileName(filePath: string): string {
 	const dirPath = dirname(filePath);
 	return join(sophiaDirName, 'docs', dirPath, `${fileName}.json`);
 }
-
 
 // -----------------------------------------------------------------------------
 //   File-level summaries
@@ -63,50 +59,63 @@ export async function buildFileDocs(fileFilter: (path: string) => boolean): Prom
 
 	console.log(files);
 
-	const docGenOperations = files
-		.filter(fileFilter)
-		.map((file) => async () => {
-			const parentSummaries: Summary[] = []
+	const docGenOperations = files.filter(fileFilter).map((file) => async () => {
+		const parentSummaries: Summary[] = [];
 
-			logger.info(file);
-			const fileContents = await fs.readFile(file);
-			try {
-				let parentSummary = ''
-				if(parentSummaries.length){
-					parentSummary = '<parent-summaries>'
-					for(const summary of parentSummaries) {
-						parentSummary += `<parent-summary path="${summary.path}">\n${summary.paragraph}\n</parent-summary>}\n`
-					}
+		logger.info(file);
+		const fileContents = await fs.readFile(file);
+		try {
+			let parentSummary = '';
+			if (parentSummaries.length) {
+				parentSummary = '<parent-summaries>';
+				for (const summary of parentSummaries) {
+					parentSummary += `<parent-summary path="${summary.path}">\n${summary.paragraph}\n</parent-summary>}\n`;
 				}
-				const doc = (await easyLlm.generateJson(`${parentSummary}
+			}
+
+			const prompt = `
+Analyze the following file contents and parent summaries (if available):
+
+${parentSummary}
 <file_contents>
 ${fileContents}
 </file_contents>
-The taks will be to generate two summaries for the file contents which will be used as an index for an LLM to search for relevant files.
 
-Given the contents of the file, first provide a comprehensive list of questions that someone might ask about the codebase that would include something in this file.
+Task: Generate concise and informative summaries for this file to be used as an index for searching the codebase.
 
-Your summaries should include details which would help with identifying the file as being relevant to the questions.
+1. Key Questions:
+   List 3-5 specific questions that this file's contents would help answer.
 
-Next you will need to output the summary object. The first summary will be one sentence long. The second summary will be one paragraph long. Include key identifiers like exported class, interface etc.
-Assume that the parent summaries will always be available when the file summary is read, so don't include any duplicate details from the parent summaries.
-Respond  with JSON in the format of this example
-{ 
-"sentence": "One sentence summary",
-"paragraph": "A single paragraph. Contains details on interesting implementation details and identifiers. Quite a few sentences long"
-}
-`.trim(),
-				)) as Summary;
-				doc.path = file;
-				logger.info(doc);
-				// Save the documentation summary files in a parallel directory structure under the .sophia/docs folder
-				await fs.mkdir(join(cwd, sophiaDirName, 'docs', dirname(file)), { recursive: true });
-				await fs.writeFile(join(cwd, sophiaDirName, 'docs', `${file}.json`), JSON.stringify(doc, null, 2));
-			} catch (e) {
-				logger.error(e, `Failed to write documentation for file ${file}`);
-			}
-		});
+2. File Summary:
+   Provide two summaries in JSON format:
+   a) A one-sentence overview capturing the file's main purpose.
+   b) A paragraph-length description highlighting:
+      - Main functions, classes, or interfaces exported
+      - Key algorithms or data structures implemented
+      - Important dependencies or relationships with other parts of the codebase
+      - Unique or noteworthy aspects of the implementation
+      This should be proportional to the length of the file. About one sentence of summary for every 100 lines of the file_contents.
+
+Note: Avoid duplicating information from parent summaries. Focus on what's unique to this file.
+
+Respond with JSON in this format:
+{
+  "sentence": "Concise one-sentence summary",
+  "paragraph": "Detailed paragraph summary with key points and identifiers"
+}`;
+
+			const doc = (await easyLlm.generateJson(prompt)) as Summary;
+			doc.path = file;
+			logger.info(doc);
+			// Save the documentation summary files in a parallel directory structure under the .sophia/docs folder
+			await fs.mkdir(join(cwd, sophiaDirName, 'docs', dirname(file)), { recursive: true });
+			await fs.writeFile(join(cwd, sophiaDirName, 'docs', `${file}.json`), JSON.stringify(doc, null, 2));
+		} catch (e) {
+			logger.error(e, `Failed to write documentation for file ${file}`);
+		}
+	});
 	const all: Promise<any>[] = [];
+	// Need a way to run in parallel, but then wait and re-try if hitting quotas
 	for (const op of docGenOperations) {
 		await op();
 		// all.push(op())
@@ -162,7 +171,6 @@ export async function buildFolderDocs(): Promise<void> {
 function sortFoldersByDepth(folders: string[]): string[] {
 	return folders.sort((a, b) => b.split('/').length - a.split('/').length);
 }
-
 
 async function getFileSummaries(folderPath: string): Promise<Summary[]> {
 	const fileSystem = getFileSystem();
@@ -227,29 +235,41 @@ async function generateFolderSummary(llm: any, combinedSummary: string, parentSu
 		for (const summary of parentSummaries) {
 			parentSummary += `<parent-summary path="${summary.path}">\n${summary.paragraph}\n</parent-summary>\n`;
 		}
-		parentSummary += '</parent-summaries>\n';
+		parentSummary += '</parent-summaries>\n\n';
 	}
 
-	const prompt = `${parentSummary}
+	const prompt = `
+Analyze the following summaries of files and subfolders within this directory:
+
+${parentSummary}
 <summaries>
 ${combinedSummary}
 </summaries>
-The task will be to generate two summaries for the folder based on the summaries of its contents and parent summaries (if available).
 
-Given the contents of the folder, first provide a comprehensive list of questions that someone might ask about the codebase that would include something in this folder.
+Task: Generate a cohesive summary for this folder that captures its role in the larger project.
 
-Your summaries should include details which would help with identifying the folder as being relevant to the questions.
+1. Key Topics:
+   List 3-5 main topics or functionalities this folder addresses.
 
-Next you will need to output the summary object. The first summary will be one sentence long. The second summary will be one paragraph long. Include key identifiers like exported classes, interfaces, etc.
-Assume that the parent summaries will always be available when the folder summary is read, so don't include any duplicate details from the parent summaries.
+2. Folder Summary:
+   Provide two summaries in JSON format:
+   a) A one-sentence overview of the folder's purpose and contents.
+   b) A paragraph-length description highlighting:
+      - The folder's role in the project architecture
+      - Main components or modules contained
+      - Key functionalities implemented in this folder
+      - Relationships with other parts of the codebase
+      - Any patterns or principles evident in the folder's organization
 
-Don't start the summaries with "This folder contains..." instead use more concise language like "Contains XYZ and does abc..."
+Note: Focus on the folder's unique contributions. Avoid repeating information from parent summaries.
 
-Respond only with JSON in the format of this example:
+Respond with JSON in this format:
+<json>
 {
-  "sentence": "One sentence summary of the folder",
-  "paragraph": "Contains XYZ. One paragraph summary of the folder. Contains details on the folder's purpose and main components. Quite a few sentences long."
+  "sentence": "Concise one-sentence folder summary",
+  "paragraph": "Detailed paragraph summarizing the folder's contents and significance"
 }
+</json>
 `;
 
 	return await llm.generateJson(prompt);
@@ -273,17 +293,16 @@ async function saveFolderSummary(folder: string, summary: Summary): Promise<void
 
 export async function generateTopLevelSummary(): Promise<string> {
 	const fileSystem = getFileSystem();
-	const easyLlm = llms().easy;
 	const cwd = fileSystem.getWorkingDirectory();
 
 	// Get all folder-level summaries
 	const folderSummaries = await getAllFolderSummaries(cwd);
 
 	// Combine all folder summaries
-	const combinedSummary = folderSummaries.map((summary) => `${summary.path}:\n${summary.sentence}\n${summary.paragraph}`).join('\n\n');
+	const combinedSummary = folderSummaries.map((summary) => `${summary.path}:\n${summary.paragraph}`).join('\n\n');
 
 	// Generate the top-level summary using LLM
-	const topLevelSummary = await generateDetailedSummaryUsingLLM(easyLlm, combinedSummary);
+	const topLevelSummary = await llms().easy.generateText(generateDetailedSummaryPrompt(combinedSummary));
 
 	// Save the top-level summary
 	await saveTopLevelSummary(cwd, topLevelSummary);
@@ -310,27 +329,54 @@ async function getAllFolderSummaries(rootDir: string): Promise<Summary[]> {
 	return summaries;
 }
 
-async function generateDetailedSummaryUsingLLM(llm: any, combinedSummary: string): Promise<string> {
-	const prompt = `
-    Generate a comprehensive, top-level summary in Markdown format of the entire project based on the following folder summaries:
-    ${combinedSummary}
+function generateDetailedSummaryPrompt(combinedSummary: string): string {
+	return `Based on the following folder summaries, create a comprehensive overview of the entire project:
 
-    Your summary should include:
-    1. An overview of the project's purpose and main components
-    2. Key features and functionalities
-    3. The project's structure and organization
-    4. Important technologies, frameworks, or libraries used
-    5. Any notable or common design patterns or architectural decisions
-  `;
+${combinedSummary}
 
-	return await llm.generateText(prompt);
+Generate a detailed Markdown summary that includes:
+
+1. Project Overview:
+   - The project's primary purpose and goals
+
+2. Architecture and Structure:
+   - High-level architecture of the project
+   - Key directories and their roles
+   - Main modules or components and their interactions
+
+3. Core Functionalities:
+   - List and briefly describe the main features with their location in the project
+
+4. Technologies and Patterns:
+   - Primary programming languages used
+   - Key frameworks, libraries, or tools
+   - Notable design patterns or architectural decisions
+
+Ensure the summary is well-structured, using appropriate Markdown formatting for readability.
+Include folder path names and file paths where applicable to help readers navigate through the project.
+`;
 }
 
 async function saveTopLevelSummary(rootDir: string, summary: string): Promise<void> {
 	const summaryPath = join(rootDir, sophiaDirName, 'docs', '_summary');
 	await fs.writeFile(summaryPath, JSON.stringify(summary, null, 2));
 }
+
+export async function getTopLevelSummary(): Promise<string> {
+	try {
+		return (await fs.readFile(join(sophiaDirName, 'docs', '_summary'))).toString();
+	} catch (e) {
+		return '';
+	}
+}
+
+export async function getRepositoryOverview(): Promise<string> {
+	const repositoryOverview: string = await getTopLevelSummary();
+	return repositoryOverview ? '<repository-overview>\n${topLevelSummary}\n</repository-overview>\n' : '';
+}
+
 async function getParentSummaries(folderPath: string): Promise<Summary[]> {
+	// TODO should walk up to the git root folder
 	const parentSummaries: Summary[] = [];
 	let currentPath = dirname(folderPath);
 

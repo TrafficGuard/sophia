@@ -35,6 +35,7 @@ export class FirestoreChatService implements ChatService {
 				updatedAt: data.updatedAt,
 				visibility: data.visibility,
 				parentId: data.parentId,
+				rootId: data.rootId,
 				messages: data.messages,
 			};
 			if (chat.visibility !== 'private' && chat.userId !== currentUser().id) {
@@ -101,6 +102,7 @@ export class FirestoreChatService implements ChatService {
 						updatedAt: data.updatedAt,
 						visibility: data.visibility,
 						parentId: data.parentId,
+						rootId: data.rootId,
 					});
 				} else {
 					hasMore = true;

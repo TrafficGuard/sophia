@@ -1,13 +1,13 @@
 import { expect } from 'chai';
-import sinon from 'sinon';
 import { Chat, ChatService } from '#chat/chatTypes';
 import { SINGLE_USER_ID } from '#user/userService/inMemoryUserService.ts';
 
-export function runChatServiceTests(createService: () => ChatService) {
+export function runChatServiceTests(createService: () => ChatService, beforeEachHook: () => Promise<void> | void = () => {}) {
 	let service: ChatService;
 
-	beforeEach(() => {
+	beforeEach(async () => {
 		service = createService();
+		await beforeEachHook();
 	});
 
 	it('should save and load a chat', async () => {
@@ -22,6 +22,7 @@ export function runChatServiceTests(createService: () => ChatService) {
 			visibility: 'private',
 			title: 'test',
 			parentId: undefined,
+			rootId: undefined,
 		};
 
 		// Save the chat
@@ -31,8 +32,6 @@ export function runChatServiceTests(createService: () => ChatService) {
 		const loadedChat = await service.loadChat(sampleChat.id);
 
 		// Verify that the loaded chat matches the saved chat
-		console.log(loadedChat);
-		console.log(savedChat);
 		expect(loadedChat).to.deep.equal(savedChat);
 		expect(loadedChat).to.deep.equal(sampleChat);
 	});
@@ -47,6 +46,7 @@ export function runChatServiceTests(createService: () => ChatService) {
 			messages: [],
 			updatedAt: Date.now(),
 			parentId: undefined,
+			rootId: undefined,
 		};
 
 		const savedChat = await service.saveChat(emptyChat);
@@ -65,6 +65,7 @@ export function runChatServiceTests(createService: () => ChatService) {
 			messages: [{ role: 'user', text: 'Parent message' }],
 			updatedAt: Date.now(),
 			parentId: undefined,
+			rootId: undefined,
 		};
 
 		const childChat: Chat = {
@@ -72,6 +73,7 @@ export function runChatServiceTests(createService: () => ChatService) {
 			userId: SINGLE_USER_ID,
 			visibility: 'private',
 			parentId: parentChat.id,
+			rootId: parentChat.id,
 			title: 'test',
 			updatedAt: Date.now(),
 			messages: [{ role: 'assistant', text: 'Child message' }],
@@ -84,25 +86,56 @@ export function runChatServiceTests(createService: () => ChatService) {
 		expect(loadedChildChat).to.deep.equal(childChat);
 	});
 
-	describe.skip('listChats', () => {
+	describe('listChats', () => {
 		it('should list chats with pagination', async () => {
 			const chats: Chat[] = [
-				{ id: 'chat1', userId: 'user1', title: 'Chat 1', visibility: 'private', messages: [], parentId: undefined, updatedAt: Date.now() },
-				{ id: 'chat2', userId: 'user1', title: 'Chat 2', visibility: 'private', messages: [], parentId: undefined, updatedAt: Date.now() },
-				{ id: 'chat3', userId: 'user1', title: 'Chat 3', visibility: 'private', messages: [], parentId: undefined, updatedAt: Date.now() },
+				{
+					id: 'chat1',
+					userId: SINGLE_USER_ID,
+					title: 'Chat 1',
+					visibility: 'private',
+					messages: [],
+					parentId: undefined,
+					rootId: undefined,
+					updatedAt: Date.now(),
+				},
+				{
+					id: 'chat2',
+					userId: SINGLE_USER_ID,
+					title: 'Chat 2',
+					visibility: 'private',
+					messages: [],
+					parentId: undefined,
+					rootId: undefined,
+					updatedAt: Date.now(),
+				},
+				{
+					id: 'chat3',
+					userId: SINGLE_USER_ID,
+					title: 'Chat 3',
+					visibility: 'private',
+					messages: [],
+					parentId: undefined,
+					rootId: undefined,
+					updatedAt: Date.now(),
+				},
 			];
 
 			for (const chat of chats) {
 				await service.saveChat(chat);
 			}
 
-			const result1 = await service.listChats();
-			expect(result1.chats).to.have.lengthOf(2);
-			expect(result1.hasMore).to.be.true;
+			const listAllResult = await service.listChats();
+			expect(listAllResult.chats).to.have.lengthOf(3);
+			expect(listAllResult.hasMore).to.be.false;
 
-			const result2 = await service.listChats();
-			expect(result2.chats).to.have.lengthOf(1);
-			expect(result2.hasMore).to.be.false;
+			const limitResult = await service.listChats('aaa', 2);
+			expect(limitResult.chats).to.have.lengthOf(2);
+			expect(limitResult.hasMore).to.be.true;
+
+			const pagedResult = await service.listChats('chat2', 2);
+			expect(pagedResult.chats).to.have.lengthOf(1);
+			expect(pagedResult.hasMore).to.be.false;
 		});
 
 		it('should return an empty array when no chats are available', async () => {

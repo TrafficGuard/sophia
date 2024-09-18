@@ -14,7 +14,7 @@ import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { errorToString } from '#utils/errors';
 import { appContext } from '../app';
-import { agentContextStorage, llms } from './agentContextLocalStorage';
+import { agentContext, agentContextStorage, llms } from './agentContextLocalStorage';
 
 const stopSequences = ['</response>'];
 
@@ -52,6 +52,8 @@ export async function runPythonAgent(agent: AgentContext): Promise<AgentExecutio
 	}
 
 	let countSinceHil = 0;
+	let costSinceHil = 0;
+	let previousCost = 0;
 
 	await agentStateService.save(agent);
 
@@ -84,17 +86,23 @@ export async function runPythonAgent(agent: AgentContext): Promise<AgentExecutio
 				let controlError = false;
 				try {
 					if (hilCount && countSinceHil === hilCount) {
+						agent.state = 'hil';
+						await agentStateService.save(agent);
 						await agentHumanInTheLoop(`Agent control loop has performed ${hilCount} iterations`);
+						agent.state = 'agent';
+						await agentStateService.save(agent);
 						countSinceHil = 0;
 					}
 					countSinceHil++;
 
-					logger.debug(`Budget remaining $${agent.budgetRemaining.toFixed(2)}. Total cost $${agentContextStorage.getStore().cost.toFixed(2)}`);
-					if (hilBudget && agent.budgetRemaining <= 0) {
-						// HITL happens once budget is exceeded, which may be more than the allocated budget
-						const increase = agent.hilBudget - agent.budgetRemaining;
-						await agentHumanInTheLoop(`Agent cost has increased by USD\$${increase.toFixed(2)}. Increase budget by $${agent.hilBudget}`);
-						agent.budgetRemaining = agent.hilBudget;
+					const newCosts = agentContext().cost - previousCost;
+					if (newCosts) logger.debug(`New costs $${newCosts.toFixed(2)}`);
+					previousCost = agentContext().cost;
+					costSinceHil += newCosts;
+					logger.debug(`Spent $${costSinceHil.toFixed(2)} since last input. Total cost $${agentContextStorage.getStore().cost.toFixed(2)}`);
+					if (hilBudget && costSinceHil > hilBudget) {
+						await agentHumanInTheLoop(`Agent cost has increased by USD\$${costSinceHil.toFixed(2)}`);
+						costSinceHil = 0;
 					}
 
 					const toolStatePrompt = await buildToolStatePrompt();
@@ -121,6 +129,11 @@ export async function runPythonAgent(agent: AgentContext): Promise<AgentExecutio
 					});
 
 					const llmPythonCode = extractPythonCode(agentPlanResponse);
+					console.log('Original code');
+					console.log(llmPythonCode);
+
+					console.log('Updated code ========================================');
+					console.log(llmPythonCode);
 
 					agent.state = 'functions';
 					await agentStateService.save(agent);
@@ -136,6 +149,9 @@ export async function runPythonAgent(agent: AgentContext): Promise<AgentExecutio
 					for (const schema of schemas) {
 						const [className, method] = schema.name.split(FUNC_SEP);
 						jsGlobals[schema.name] = async (...args) => {
+							// // Un-proxy any JsProxy objects. https://pyodide.org/en/stable/usage/type-conversions.html
+							// args = args.map(arg => typeof arg.toJs === 'function' ? arg.toJs() : arg)
+
 							// Convert arg array to parameters name/value map
 							const parameters: { [key: string]: any } = {};
 							for (let index = 0; index < args.length; index++) parameters[schema.parameters[index].name] = args[index];

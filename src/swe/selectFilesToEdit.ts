@@ -3,7 +3,8 @@ import path from 'path';
 import { createByModelName } from '@microsoft/tiktokenizer';
 import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { logger } from '#o11y/logger';
-import { ProjectMaps, generateProjectMaps } from '#swe/projectMap';
+import { getRepositoryOverview } from '#swe/documentationBuilder.ts';
+import { RepositoryMaps, generateRepositoryMaps } from '#swe/repositoryMap.ts';
 import { ProjectInfo } from './projectDetection';
 
 export interface SelectFilesResponse {
@@ -17,7 +18,7 @@ export interface SelectedFile {
 }
 
 export async function selectFilesToEdit(requirements: string, projectInfo: ProjectInfo): Promise<SelectFilesResponse> {
-	const projectMaps: ProjectMaps = await generateProjectMaps(projectInfo);
+	const projectMaps: RepositoryMaps = await generateRepositoryMaps([projectInfo]);
 
 	const tokenizer = await createByModelName('gpt-4o'); // TODO model specific tokenizing
 	const fileSystemTreeTokens = tokenizer.encode(projectMaps.fileSystemTreeWithSummaries.text).length;
@@ -25,11 +26,13 @@ export async function selectFilesToEdit(requirements: string, projectInfo: Proje
 
 	if (projectInfo.fileSelection) requirements += `\nAdditional note: ${projectInfo.fileSelection}`;
 
-	const prompt = `
-<project_map>
-${projectMaps.fileSystemTreeWithSummaries.text}
-</project_map>
+	const repositoryOverview: string = await getRepositoryOverview();
+	const fileSystemWithSummaries: string = `<project_map>\n${projectMaps.fileSystemTreeWithSummaries.text}\n</project_map>\n`;
+
+	const prompt = `${repositoryOverview}
+${fileSystemWithSummaries}
 <requirements>${requirements}</requirements>
+
 <task>
 The end goal is to meet the requirements defined.  This will be achieved by editing the source code and configuration.
 Your task is to select from in <project_map> the files which will be required to edit to fulfill the requirements.

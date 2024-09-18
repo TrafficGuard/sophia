@@ -1,5 +1,6 @@
 # Convenience script for running Aider
 source variables/local.env
 export VERTEXAI_PROJECT=$GCLOUD_PROJECT
-export VERTEXAI_LOCATION=$GCLOUD_REGION
+export VERTEXAI_LOCATION=$GCLOUD_CLAUDE_REGION
+echo $VERTEXAI_PROJECT $VERTEXAI_LOCATION
 aider --model vertex_ai/claude-3-5-sonnet@20240620

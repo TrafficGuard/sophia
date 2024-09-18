@@ -89,10 +89,14 @@ class AnthropicVertexLLM extends BaseLLM {
 		if (!this.client) {
 			this.client = new AnthropicVertex({
 				projectId: currentUser().llmConfig.vertexProjectId ?? envVar('GCLOUD_PROJECT'),
-				region: envVar('GCLOUD_CLAUDE_REGION') ?? currentUser().llmConfig.vertexRegion ?? envVar('GCLOUD_REGION'),
+				region: currentUser().llmConfig.vertexRegion || process.env.GCLOUD_CLAUDE_REGION || envVar('GCLOUD_REGION'),
 			});
 		}
 		return this.client;
+	}
+
+	isConfigured(): boolean {
+		return Boolean(currentUser().llmConfig.vertexRegion || process.env.GCLOUD_CLAUDE_REGION || process.env.GCLOUD_REGION);
 	}
 
 	// Error when

@@ -8,6 +8,8 @@ export interface Chat {
 	updatedAt: number;
 	/** When a chat is branched from the original thread by deleting/updating messages etc */
 	parentId: undefined | string;
+	/** The original parent */
+	rootId: undefined | string;
 	messages: LlmMessage[];
 }
 

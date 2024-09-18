@@ -15,20 +15,20 @@ export const DEEPSEEK_SERVICE = 'deepseek';
 
 export function deepseekLLMRegistry(): Record<string, () => LLM> {
 	return {
-		[`${DEEPSEEK_SERVICE}:deepseek-coder`]: () => deepseekCoder(),
+		[`${DEEPSEEK_SERVICE}:deepseek-coder`]: () => deepseekChat(),
 		[`${DEEPSEEK_SERVICE}:deepseek-chat`]: () => deepseekChat(),
 	};
 }
 
-export function deepseekCoder(): LLM {
-	return new DeepseekLLM(
-		'DeepSeek Coder',
-		'deepseek-coder',
-		32000,
-		(input: string) => (input.length * 0.14) / (1_000_000 * 3.5),
-		(output: string) => (output.length * 0.28) / (1_000_000 * 3.5),
-	);
-}
+// export function deepseekCoder(): LLM {
+// 	return new DeepseekLLM(
+// 		'DeepSeek Coder',
+// 		'deepseek-coder',
+// 		32000,
+// 		(input: string) => (input.length * 0.14) / (1_000_000 * 3.5),
+// 		(output: string) => (output.length * 0.28) / (1_000_000 * 3.5),
+// 	);
+// }
 
 export function deepseekChat(): LLM {
 	return new DeepseekLLM(
@@ -115,12 +115,19 @@ export class DeepseekLLM extends BaseLLM {
 
 				const responseText = response.data.choices[0].message.content;
 
+				const inputCacheHitTokens = response.data.prompt_cache_hit_tokens;
+				const inputCacheMissTokens = response.data.prompt_cache_miss_tokens;
+				const outputTokens = response.data.completion_tokens;
+
+				console.log(response.data);
+
 				const timeToFirstToken = Date.now() - requestTime;
 				const finishTime = Date.now();
 				const llmCall: LlmCall = await llmCallSave;
 
-				const inputCost = this.calculateInputCost(prompt);
-				const outputCost = this.calculateOutputCost(responseText);
+				const inputCost = (inputCacheHitTokens * 0.014) / 1_000_000 + (inputCacheMissTokens * 0.14) / 1_000_000;
+
+				const outputCost = (outputTokens * 0.28) / 1_000_000;
 				const cost = inputCost + outputCost;
 				addCost(cost);
 
@@ -139,6 +146,9 @@ export class DeepseekLLM extends BaseLLM {
 				span.setAttributes({
 					response: responseText,
 					timeToFirstToken,
+					inputCacheHitTokens,
+					inputCacheMissTokens,
+					outputTokens,
 					inputCost,
 					outputCost,
 					cost,

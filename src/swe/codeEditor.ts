@@ -8,7 +8,7 @@ import { func, funcClass } from '#functionSchema/functionDecorators';
 import { LLM } from '#llm/llm';
 import { Anthropic, Claude3_5_Sonnet } from '#llm/models/anthropic';
 import { Claude3_5_Sonnet_Vertex } from '#llm/models/anthropic-vertex';
-import { DeepseekLLM, deepseekCoder } from '#llm/models/deepseek';
+import { DeepseekLLM, deepseekChat } from '#llm/models/deepseek';
 import { GPT4o } from '#llm/models/openai';
 import { logger } from '#o11y/logger';
 import { getActiveSpan } from '#o11y/trace';
@@ -58,10 +58,10 @@ export class CodeEditor {
 			span.setAttribute('model', 'sonnet');
 			llm = Claude3_5_Sonnet();
 		} else if (deepSeekKey) {
-			modelArg = '--model deepseek/deepseek-coder';
+			modelArg = '--model deepseek/deepseek-chat';
 			env = { DEEPSEEK_API_KEY: deepSeekKey };
 			span.setAttribute('model', 'deepseek');
-			llm = deepseekCoder();
+			llm = deepseekChat();
 		} else if (openaiKey) {
 			// default to gpt4o
 			modelArg = '';
