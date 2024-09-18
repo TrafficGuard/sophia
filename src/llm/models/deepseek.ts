@@ -15,20 +15,9 @@ export const DEEPSEEK_SERVICE = 'deepseek';
 
 export function deepseekLLMRegistry(): Record<string, () => LLM> {
 	return {
-		[`${DEEPSEEK_SERVICE}:deepseek-coder`]: () => deepseekChat(),
 		[`${DEEPSEEK_SERVICE}:deepseek-chat`]: () => deepseekChat(),
 	};
 }
-
-// export function deepseekCoder(): LLM {
-// 	return new DeepseekLLM(
-// 		'DeepSeek Coder',
-// 		'deepseek-coder',
-// 		32000,
-// 		(input: string) => (input.length * 0.14) / (1_000_000 * 3.5),
-// 		(output: string) => (output.length * 0.28) / (1_000_000 * 3.5),
-// 	);
-// }
 
 export function deepseekChat(): LLM {
 	return new DeepseekLLM(
@@ -73,7 +62,6 @@ export class DeepseekLLM extends BaseLLM {
 		super(displayName, DEEPSEEK_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
 	}
 
-	@logTextGeneration
 	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
 		return withSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);

@@ -1,10 +1,21 @@
 import { BaseLLM } from '#llm/base-llm.ts';
 import { GenerateTextOptions, LLM } from '#llm/llm.ts';
+import { getLLM } from '#llm/llmFactory.ts';
 import { Claude3_5_Sonnet_Vertex } from '#llm/models/anthropic-vertex.ts';
 import { fireworksLlama3_405B } from '#llm/models/fireworks.ts';
 import { GPT4o } from '#llm/models/openai.ts';
 import { Gemini_1_5_Pro } from '#llm/models/vertexai.ts';
 import { logger } from '#o11y/logger.ts';
+
+// sparse multi-agent debate https://arxiv.org/abs/2406.11776
+// self-refine https://arxiv.org/pdf/2303.17651
+// https://www.academia.edu/123745078/Mind_over_Data_Elevating_LLMs_from_Memorization_to_Cognition
+
+export function blueberryLLMRegistry(): Record<string, () => LLM> {
+	return {
+		'blueberry:': () => new Blueberry(),
+	};
+}
 
 const MIND_OVER_DATA_SYS_PROMPT = `When addressing a problem, employ "Comparative Problem Analysis and Direct Reasoning" as follows:
 
@@ -66,18 +77,40 @@ const MIND_OVER_DATA_SYS_PROMPT = `When addressing a problem, employ "Comparativ
 `;
 
 export class Blueberry extends BaseLLM {
-	llms: LLM[] = [Claude3_5_Sonnet_Vertex(), GPT4o(), Gemini_1_5_Pro(), Claude3_5_Sonnet_Vertex(), fireworksLlama3_405B()];
-	mediator: LLM = Claude3_5_Sonnet_Vertex();
+	llms: LLM[];
+	mediator: LLM;
 
-	constructor() {
+	constructor(model = 'default') {
 		super(
 			'Blueberry',
-			'MAD',
 			'blueberry',
+			model,
 			200_000,
 			() => 0,
 			() => 0,
 		);
+		if (model !== 'default') {
+			try {
+				const parts = model.split('|');
+				if (parts.length > 1) {
+					// Set the mediator
+					this.mediator = getLLM(parts[0]);
+
+					// Set the LLMs
+					this.llms = parts.slice(1).map((llmId) => getLLM(llmId));
+				} else {
+					logger.error(`Invalid model string format for Blueberry ${model}`);
+				}
+			} catch (e) {
+				logger.error(e, `Invalid model string format for Blueberry ${model}`);
+			}
+		}
+		if (!this.llms) this.llms = [Claude3_5_Sonnet_Vertex(), GPT4o(), Gemini_1_5_Pro(), Claude3_5_Sonnet_Vertex(), fireworksLlama3_405B()];
+		if (!this.mediator) this.mediator = Claude3_5_Sonnet_Vertex();
+	}
+
+	getModel(): string {
+		return `${this.mediator.getId()}|${this.llms.map((llm) => llm.getId()).join('|')}`;
 	}
 
 	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {

@@ -10,7 +10,7 @@ import { Blueberry } from '#llm/multi-agent/blueberry.ts';
 import { initFirestoreApplicationContext } from '../app';
 import { parseProcessArgs } from './cli';
 
-// See https://github.com/autogenai/easy-problems-that-llms-get-wrong
+// See https://arxiv.org/html/2405.19616v1 https://github.com/autogenai/easy-problems-that-llms-get-wrong
 // Usage:
 // npm run easy
 

@@ -1,6 +1,8 @@
+
 export interface LlmMessage {
   role: 'system' | 'user' | 'assistant';
   text: string;
+  llmId?: string;
   /** Set the cache_control flag with Claude models */
   cache?: 'ephemeral';
   index: number;

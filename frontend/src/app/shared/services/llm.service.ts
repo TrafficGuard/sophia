@@ -33,7 +33,7 @@ export class LlmService {
   }
 
   private fetchLlms(): Observable<LLM[]> {
-    return this.http.get<{ data: LLM[] }>(`${environment.serverUrl}/api/llms/list`)
+    return this.http.get<{ data: LLM[] }>(`${environment.serverUrl}/llms/list`)
       .pipe(
         map(response => response.data),
         retry(3),

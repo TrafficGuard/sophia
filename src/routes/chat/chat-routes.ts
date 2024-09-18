@@ -2,8 +2,10 @@ import { randomUUID } from 'crypto';
 import { Type } from '@sinclair/typebox';
 import { Chat, ChatList } from '#chat/chatTypes.ts';
 import { send, sendBadRequest } from '#fastify/index';
+import { LLM } from '#llm/llm.ts';
 import { getLLM } from '#llm/llmFactory.ts';
 import { Claude3_5_Sonnet_Vertex } from '#llm/models/anthropic-vertex.ts';
+import { logger } from '#o11y/logger.ts';
 import { currentUser } from '#user/userService/userContext.ts';
 import { AppFastifyInstance } from '../../app';
 
@@ -58,9 +60,13 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
 				  }
 				: await fastify.chatService.loadChat(chatId);
 
-			// const llm = getLLM(llmId)
-			const llm = getLLM(Claude3_5_Sonnet_Vertex().getId());
-			if (!llm.isConfigured()) return sendBadRequest(reply, 'LLM is not configured');
+			let llm: LLM = getLLM(Claude3_5_Sonnet_Vertex().getId());
+			try {
+				llm = getLLM(llmId);
+			} catch (e) {
+				logger.error(`No LLM for ${llmId}`);
+			}
+			if (!llm.isConfigured()) return sendBadRequest(reply, `LLM ${llm.getId()} is not configured`);
 
 			const titlePromise: Promise<string> | undefined = isNew
 				? llm.generateText(

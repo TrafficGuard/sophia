@@ -87,7 +87,7 @@ export class ChatControlsComponent implements OnInit {
         this.scrollBottom();
         this.messageSent.emit([
           { role: 'user', text: msg, index: -1 },
-          { role: 'assistant', text: data, index: -1 },
+          { role: 'assistant', text: data, index: -1, llmId: selectedLlmId },
         ]);
       },
       error: (err: Error) => {
