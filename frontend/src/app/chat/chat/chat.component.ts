@@ -1,7 +1,7 @@
-import { Component, OnInit, Input, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, Input, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, of, BehaviorSubject } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Chat, LlmMessage } from '@app/chat/model/chat';
 import { ApiChatService } from '@app/chat/services/api/api-chat.service';
 
@@ -10,12 +10,10 @@ import { ApiChatService } from '@app/chat/services/api/api-chat.service';
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.scss'],
 })
-export class ChatComponent implements OnInit {
+export class ChatComponent implements OnInit, AfterViewChecked {
   @Input() height: string = '';
   @Input() width: string = '';
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
-
-  user: any = {};
 
   chat$: BehaviorSubject<Chat> = new BehaviorSubject<Chat>({
     id: 'new',
@@ -27,22 +25,26 @@ export class ChatComponent implements OnInit {
     visibility: 'private',
   });
 
+  private shouldScrollToBottom = true;
+
   constructor(private route: ActivatedRoute, private chatService: ApiChatService) {}
 
   ngOnInit() {
     const chatId: string | null = this.route.snapshot.paramMap.get('id');
     if (!chatId || chatId === 'new') {
       console.log('new chat!');
-      this.scrollToBottom();
     } else {
       this.chatService
         .getChat(chatId)
         .pipe(map((data: any) => data.data))
         .subscribe((chat: Chat) => {
           this.chat$.next(chat);
-          this.scrollToBottom();
         });
     }
+  }
+
+  ngAfterViewChecked() {
+    this.scrollToBottomIfNeeded();
   }
 
   trackByCreated(index: number, msg: LlmMessage) {
@@ -50,23 +52,32 @@ export class ChatComponent implements OnInit {
   }
 
   onMessageSent(messages: LlmMessage[]) {
-    console.log(messages);
-    console.log(messages[0]);
-    console.log(messages[1]);
     const currentChat = this.chat$.value;
     messages[0].index = currentChat.messages.length;
     messages[1].index = currentChat.messages.length + 1;
-    currentChat.messages.push(messages[0]);
-    currentChat.messages.push(messages[1]);
+    currentChat.messages.push(messages[0], messages[1]);
     this.chat$.next(currentChat);
-    this.scrollToBottom();
+    this.shouldScrollToBottom = true;
   }
 
-  private scrollToBottom() {
-    setTimeout(() => {
-      if (this.messagesContainer) {
-        this.messagesContainer.nativeElement.scrollTop = this.messagesContainer.nativeElement.scrollHeight;
+  private scrollToBottomIfNeeded() {
+    if (this.shouldScrollToBottom && this.messagesContainer) {
+      const element = this.messagesContainer.nativeElement;
+      const atBottom = element.scrollHeight - element.scrollTop === element.clientHeight;
+      
+      if (atBottom) {
+        element.scrollTop = element.scrollHeight;
+        this.shouldScrollToBottom = false;
       }
-    }, 100);
+    }
+  }
+
+  // Listen for scroll events to determine if we should auto-scroll on new messages
+  onScroll() {
+    if (this.messagesContainer) {
+      const element = this.messagesContainer.nativeElement;
+      const atBottom = element.scrollHeight - element.scrollTop === element.clientHeight;
+      this.shouldScrollToBottom = atBottom;
+    }
   }
 }
