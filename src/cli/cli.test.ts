@@ -1,11 +1,12 @@
 import { existsSync } from 'fs';
 import { unlinkSync } from 'node:fs';
 import { expect } from 'chai';
+import { systemDir } from '../appVars';
 import { parseUserCliArgs, saveAgentId } from './cli';
 
 describe('parseProcessArgs', () => {
 	beforeEach(() => {
-		if (existsSync('.nous/cli/test.lastRun')) unlinkSync('.nous/cli/test.lastRun');
+		if (existsSync(`${systemDir()}/cli/test.lastRun`)) unlinkSync(`${systemDir()}/cli/test.lastRun`);
 		// if (existsSync('.nous/cli/test')) unlinkSync('.nous/cli/test');
 	});
 

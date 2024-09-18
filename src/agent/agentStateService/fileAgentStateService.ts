@@ -6,28 +6,31 @@ import { AgentContext, AgentRunningState } from '#agent/agentContextTypes';
 import { AgentStateService } from '#agent/agentStateService/agentStateService';
 import { functionFactory } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
+import { systemDir } from '../../appVars';
+
+const BASE_DIR = '.sophia';
 
 export class FileAgentStateService implements AgentStateService {
 	async save(state: AgentContext): Promise<void> {
 		state.lastUpdate = Date.now();
-		mkdirSync('./.nous/agents', { recursive: true });
-		writeFileSync(`./.nous/agents/${state.agentId}.json`, JSON.stringify(serializeContext(state)));
+		mkdirSync(`${systemDir()}/agents`, { recursive: true });
+		writeFileSync(`${systemDir()}/agents/${state.agentId}.json`, JSON.stringify(serializeContext(state)));
 	}
 	async updateState(ctx: AgentContext, state: AgentRunningState): Promise<void> {
 		ctx.state = state;
 		await this.save(ctx);
 	}
 	async load(agentId: string): Promise<AgentContext> {
-		const jsonString = readFileSync(`./.nous/agents/${agentId}.json`).toString();
+		const jsonString = readFileSync(`${systemDir()}/agents/${agentId}.json`).toString();
 		return await deserializeAgentContext(JSON.parse(jsonString));
 	}
 
 	async list(): Promise<AgentContext[]> {
 		const contexts: AgentContext[] = [];
-		const files = readdirSync('./.nous/agents');
+		const files = readdirSync(`${systemDir()}/agents`);
 		for (const file of files) {
 			if (file.endsWith('.json')) {
-				const jsonString = readFileSync(`./.nous/agents/${file}`).toString();
+				const jsonString = readFileSync(`${systemDir()}/agents/${file}`).toString();
 				try {
 					const ctx: AgentContext = await deserializeAgentContext(JSON.parse(jsonString));
 					contexts.push(ctx);
@@ -49,7 +52,7 @@ export class FileAgentStateService implements AgentStateService {
 	async delete(ids: string[]): Promise<void> {
 		for (const id of ids) {
 			try {
-				const filePath = `./.nous/agents/${id}.json`;
+				const filePath = `${systemDir()}/agents/${id}.json`;
 				unlinkSync(filePath);
 			} catch (error) {
 				logger.warn(`Failed to delete agent ${id}: ${error.message}`);

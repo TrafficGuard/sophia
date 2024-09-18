@@ -1,0 +1,8 @@
+<div class="chat-container" *ngIf="chat$ | async as chat">
+  <div class="messages-container" #messagesContainer (scroll)="onScroll()">
+    <ng-container *ngFor="let msg of chat.messages; trackBy: trackByCreated; let i = index">
+      <app-chat-message [msg]="msg" [predecessor]="i - 1 >= 0 ? chat.messages[i - 1] : null"></app-chat-message>
+    </ng-container>
+  </div>
+  <app-chat-controls [chatId]="chat.id" (messageSent)="onMessageSent($event)"></app-chat-controls>
+</div>

@@ -18,6 +18,8 @@
     "skipLibCheck": true,
     "importHelpers": true,
     "moduleResolution": "node16",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
     "baseUrl": "./",
     "paths": {
       "#agent/*": ["./src/agent/*"],

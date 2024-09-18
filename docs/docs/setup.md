@@ -111,7 +111,7 @@ Documentation for deploying on Google Cloud will be provided soon.
 
 Keep the Firestore emulator running in a separate shell or in the background
 ```bash
-gcloud emulators firestore start --host-port=127.0.0.1:8243
+npm run emulators
 ```
 ```bash
 npm run test

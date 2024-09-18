@@ -8,7 +8,7 @@ import { envVar } from '#utils/env-var';
 import { appContext } from '../../app';
 import { RetryableError } from '../../cache/cacheRetry';
 import { BaseLLM } from '../base-llm';
-import { GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../llm';
+import { GenerateTextOptions, LLM, combinePrompts } from '../llm';
 
 export const FIREWORKS_SERVICE = 'fireworks';
 
@@ -42,7 +42,6 @@ export class FireworksLLM extends BaseLLM {
 		super(displayName, FIREWORKS_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
 	}
 
-	@logTextGeneration
 	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
 		return withSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);

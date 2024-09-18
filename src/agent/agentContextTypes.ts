@@ -5,9 +5,10 @@ import { User } from '#user/user';
 
 /**
  * The difficulty of a LLM generative task. Used to select an appropriate model for the cost vs capability.
- * easy   Haiku/GPT4-mini
- * medium Sonnet
- * hard   Opus
+ * xeasy  LLama 8b
+ * easy   Haiku 3.5/GPT4-mini/Llama 70b/Gemini Flash
+ * medium Sonnet 3.5/GPT4-o/Llama 405b
+ * hard   Opus 3.5/OpenAI o1
  * xhard  Ensemble (multi-gen with voting/merging of best answer)
  *
  */

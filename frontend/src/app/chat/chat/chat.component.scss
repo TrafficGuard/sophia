@@ -1,0 +1,21 @@
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 93vh;
+  width: 95%;
+  // max-width: 900px;
+}
+
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  max-height: calc(93vh - 100px); // Adjust the value as needed
+}
+
+app-chat-controls {
+  position: sticky;
+  bottom: 0;
+  background-color: #fff;
+  padding: 1rem 0;
+}

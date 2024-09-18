@@ -28,9 +28,14 @@ export class FirestoreUserService implements UserService {
 		if (!isSingleUser()) return;
 		if (!this.singleUser) {
 			const users = await this.listUsers();
-			if (users.length > 1) throw new Error('More than one user in the database');
-			if (users.length === 1) {
+			if (users.length > 1) {
+				const user = users.find((user) => user.email === process.env.SINGLE_USER_EMAIL);
+				if (!user) throw new Error(`No user found with email ${process.env.SINGLE_USER_EMAIL}`);
+				this.singleUser = user;
+			} else if (users.length === 1) {
 				this.singleUser = users[0];
+				if (process.env.SINGLE_USER_EMAIL && this.singleUser.email && this.singleUser.email !== process.env.SINGLE_USER_EMAIL)
+					logger.error(`Only user has email ${this.singleUser.email}. Expected ${process.env.SINGLE_USER_EMAIL}`);
 			} else {
 				this.singleUser = await this.createUser({
 					email: process.env.SINGLE_USER_EMAIL,
@@ -74,7 +79,7 @@ export class FirestoreUserService implements UserService {
 		return users[0];
 	}
 
-	@span({ email: (args) => args[0].email })
+	@span({ email: 0 })
 	async createUser(user: Partial<User>): Promise<User> {
 		const docRef = this.db.collection('Users').doc();
 		// const userId = docRef.id;

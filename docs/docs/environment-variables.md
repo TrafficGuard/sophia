@@ -30,7 +30,7 @@ This document provides comprehensive details about the environment variables uti
 - **Description**: The base URL for the user interface.
 - **Default Value**: `http://localhost:4200/`
 
-**NOUS_FS**
+**SOPHIA_FS**
 
 - **Description**: The base path for the FileSystem interface/tool. Useful for editing code in other local repositories. Alternatively use the -fs= arg.
 - **Default Value**: (Not set - defaults to `process.cwd()`)

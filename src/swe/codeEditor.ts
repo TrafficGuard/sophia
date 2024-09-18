@@ -8,12 +8,13 @@ import { func, funcClass } from '#functionSchema/functionDecorators';
 import { LLM } from '#llm/llm';
 import { Anthropic, Claude3_5_Sonnet } from '#llm/models/anthropic';
 import { Claude3_5_Sonnet_Vertex } from '#llm/models/anthropic-vertex';
-import { DeepseekLLM, deepseekCoder } from '#llm/models/deepseek';
+import { DeepseekLLM, deepseekChat } from '#llm/models/deepseek';
 import { GPT4o } from '#llm/models/openai';
 import { logger } from '#o11y/logger';
 import { getActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { execCommand } from '#utils/exec';
+import { systemDir } from '../appVars';
 
 @funcClass(__filename)
 export class CodeEditor {
@@ -57,10 +58,10 @@ export class CodeEditor {
 			span.setAttribute('model', 'sonnet');
 			llm = Claude3_5_Sonnet();
 		} else if (deepSeekKey) {
-			modelArg = '--model deepseek/deepseek-coder';
+			modelArg = '--model deepseek/deepseek-chat';
 			env = { DEEPSEEK_API_KEY: deepSeekKey };
 			span.setAttribute('model', 'deepseek');
-			llm = deepseekCoder();
+			llm = deepseekChat();
 		} else if (openaiKey) {
 			// default to gpt4o
 			modelArg = '';
@@ -73,9 +74,9 @@ export class CodeEditor {
 			);
 		}
 
-		// User a folder in Sophia process directory, not the FileSystem working directory
+		// Use the Sophia system directory, not the FileSystem working directory
 		// as we want all the 'system' files in one place.
-		const llmHistoryFolder = join(process.cwd(), '.nous/aider/llm-history');
+		const llmHistoryFolder = join(systemDir(), 'aider/llm-history');
 		await promisify(fs.mkdir)(llmHistoryFolder, { recursive: true });
 		const llmHistoryFile = `${llmHistoryFolder}/${agentContext().agentId}-${Date.now()}`;
 

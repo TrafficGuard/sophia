@@ -1,0 +1,30 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title
+      >Chats
+      <button mat-icon-button color="primary" (click)="openChat('new')" aria-label="Start new chat">
+        <mat-icon>add</mat-icon>
+      </button>
+    </mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <ng-container *ngIf="!isLoading && !errorMessage">
+      <mat-list *ngIf="chats !== null && chats.chats.length > 0">
+        <mat-list-item *ngFor="let chat of chats.chats">
+          <div matListItemIcon>
+            <!--
+            <button mat-icon-button (click)="confirmDelete(chat)">
+              <mat-icon>delete</mat-icon>
+            </button>
+            -->
+          </div>
+          <div matListItemTitle (click)="openChat(chat.id)">{{ chat.title }}</div>
+        </mat-list-item>
+      </mat-list>
+      <p *ngIf="chats !== null && chats.chats.length === 0">No chats. Start one by clicking the plus icon above.</p>
+    </ng-container>
+
+    <mat-spinner *ngIf="isLoading"></mat-spinner>
+    <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
+  </mat-card-content>
+</mat-card>

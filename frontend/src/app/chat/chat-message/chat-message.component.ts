@@ -1,7 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Message } from '../model/message';
-import { User } from '../model/user';
-import * as moment from 'moment';
+import { LlmMessage, User } from '@app/chat/model/chat';
+import { MarkdownService } from 'ngx-markdown';
 
 @Component({
   selector: 'app-chat-message',
@@ -9,65 +8,62 @@ import * as moment from 'moment';
   styleUrls: ['./chat-message.component.scss'],
 })
 export class ChatMessageComponent implements OnInit {
-  @Input() msg: Message = {} as Message;
-  @Input() predecessor: Message | null = null;
-  @Input() user: User = {} as User;
+  @Input() msg: LlmMessage = {} as LlmMessage;
+  @Input() predecessor: LlmMessage | null = null;
   @Input() allowsReply = false;
 
-  constructor() {}
+  constructor(private markdown: MarkdownService) {}
 
   ngOnInit() {}
 
-  getDateDivider(msg: Message | undefined): string {
-    // if (!msg.createdAt) {
-    //   return null;
-    // }
-    //
-    // return msg.createdAt.format('l');
-    return '';
-  }
-
-  getUserName(user: User | undefined): string | null {
-    if (!user) {
-      return null;
+  getDateDivider(msg: LlmMessage | undefined): string {
+    if (!msg || !msg.createdAt) {
+      return '';
     }
-    return user.displayName;
+    return new Date(msg.createdAt).toLocaleDateString();
   }
 
-  getCreatedDate(msg: Message): string | null {
+  getUserName(role: 'system' | 'user' | 'assistant'): string {
+    switch (role) {
+      case 'user':
+        return 'You';
+      case 'assistant':
+        return 'Assistant';
+      case 'system':
+        return 'System';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  getCreatedDate(msg: LlmMessage): string | null {
     if (!msg.createdAt) {
       return null;
     }
-    // return msg.createdAt.format('LT');
-    return '';
+    return new Date(msg.createdAt).toLocaleTimeString();
   }
 
   isPredecessorSameAuthor(): boolean {
     if (!this.predecessor) {
       return false;
     }
-    return this.predecessor.uid === this.msg?.uid;
+    return this.predecessor.role === this.msg.role;
   }
 
   isTemporalClose(): boolean {
-    if (!this.predecessor) {
-      return true;
+    if (!this.predecessor || !this.msg.createdAt || !this.predecessor.createdAt) {
+      return false;
     }
-
-    // const duration = moment.duration(
-    //   this.msg?.createdAt.diff(this.predecessor.createdAt)
-    // );
-    // return duration.asMinutes() <= 1;
-    return false;
+    const timeDiff = Math.abs(this.msg.createdAt - this.predecessor.createdAt);
+    return timeDiff <= 60000; // 1 minute in milliseconds
   }
 
   isPreviousMessageFromOtherDay() {
-    if (!this.predecessor) {
+    if (!this.predecessor || !this.msg.createdAt || !this.predecessor.createdAt) {
       return true;
     }
-    // const prevDate = this.predecessor.createdAt.day();
-    // const date = this.msg.createdAt.day();
-    // return prevDate !== date;
-    return false;
+    const prevDate = new Date(this.predecessor.createdAt).toDateString();
+    const currentDate = new Date(this.msg.createdAt).toDateString();
+    return prevDate !== currentDate;
   }
 }

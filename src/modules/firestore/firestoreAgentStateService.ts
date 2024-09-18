@@ -6,7 +6,7 @@ import { AgentStateService } from '#agent/agentStateService/agentStateService';
 import { functionFactory } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
-import { firestoreDb } from '../../firestore';
+import { firestoreDb } from './firestore';
 
 /**
  * Google Firestore implementation of AgentStateService

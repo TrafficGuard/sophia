@@ -5,7 +5,7 @@ import { Claude3_Haiku_Vertex } from '#llm/models/anthropic-vertex';
 import { cerebrasLlama3_8b } from '#llm/models/cerebras';
 import { deepseekChat } from '#llm/models/deepseek';
 import { fireworksLlama3_70B } from '#llm/models/fireworks';
-import { groqGemma7bIt } from '#llm/models/groq';
+import { groqLlama3_1_8b } from '#llm/models/groq.ts';
 import { Ollama_Phi3 } from '#llm/models/ollama';
 import { GPT4oMini } from '#llm/models/openai';
 import { togetherLlama3_70B } from '#llm/models/together';
@@ -84,7 +84,7 @@ describe('LLMs', () => {
 		});
 
 		describe('Groq', () => {
-			const llm = groqGemma7bIt();
+			const llm = groqLlama3_1_8b();
 
 			it('should generateText', async () => {
 				const response = await llm.generateText(SKY_PROMPT, null, { temperature: 0 });

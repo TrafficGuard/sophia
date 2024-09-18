@@ -79,7 +79,11 @@ export async function runXmlAgent(agent: AgentContext): Promise<AgentExecution> 
 				let controlError = false;
 				try {
 					if (hilCount && countSinceHil === hilCount) {
+						agent.state = 'hil';
+						await agentStateService.save(agent);
 						await agentHumanInTheLoop(`Agent control loop has performed ${hilCount} iterations`);
+						agent.state = 'agent';
+						await agentStateService.save(agent);
 						countSinceHil = 0;
 					}
 					countSinceHil++;
@@ -93,6 +97,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<AgentExecution> 
 						await agentHumanInTheLoop(`Agent cost has increased by USD\$${costSinceHil.toFixed(2)}`);
 						costSinceHil = 0;
 					}
+
 					const filePrompt = await buildToolStatePrompt();
 
 					if (!currentPrompt.includes('<function_call_history>')) {

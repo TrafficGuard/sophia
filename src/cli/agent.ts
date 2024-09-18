@@ -22,6 +22,7 @@ export async function main() {
 	let functions: Array<any>;
 	functions = [FileSystem, SoftwareDeveloperAgent, Perplexity, PublicWeb];
 	functions = [CodeEditingAgent, Perplexity];
+	functions = [FileSystem];
 
 	const { initialPrompt, resumeAgentId } = parseProcessArgs();
 

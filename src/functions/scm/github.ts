@@ -8,6 +8,7 @@ import { logger } from '#o11y/logger';
 import { functionConfig } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
 import { checkExecResult, execCmd, execCommand, failOnError, runShellCommand, spawnCommand } from '#utils/exec';
+import { systemDir } from '../../appVars';
 import { GitProject } from './gitProject';
 
 type RequestType = typeof request;
@@ -77,7 +78,7 @@ export class GitHub implements SourceControlManagement {
 		const org = paths[0];
 		const project = paths[1];
 
-		const path = join(process.cwd(), '.nous', 'github', org, project);
+		const path = join(systemDir(), 'github', org, project);
 
 		// TODO it cloned a project to the main branch when the default is master?
 		// If the project already exists pull updates

@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import path, { join } from 'path';
 import { logger } from '#o11y/logger';
+import { systemDir } from '../appVars';
 
 export interface CliOptions {
 	/** Name of the executed .ts file without the extension */
@@ -43,13 +44,13 @@ export function parseUserCliArgs(scriptName: string, args: string[]): CliOptions
 }
 
 export function saveAgentId(scriptName: string, agentId: string): void {
-	const dirPath = join(process.cwd(), '.nous', 'cli');
+	const dirPath = join(systemDir(), 'cli');
 	mkdirSync(dirPath, { recursive: true });
 	writeFileSync(join(dirPath, `${scriptName}.lastRun`), agentId);
 }
 
 export function getLastRunAgentId(scriptName: string): string | undefined {
-	const filePath = join(process.cwd(), '.nous', 'cli', `${scriptName}.lastRun`);
+	const filePath = join(systemDir(), 'cli', `${scriptName}.lastRun`);
 	if (existsSync(filePath)) {
 		return readFileSync(filePath, 'utf-8').trim();
 	}

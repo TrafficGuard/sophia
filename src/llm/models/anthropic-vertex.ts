@@ -89,10 +89,14 @@ class AnthropicVertexLLM extends BaseLLM {
 		if (!this.client) {
 			this.client = new AnthropicVertex({
 				projectId: currentUser().llmConfig.vertexProjectId ?? envVar('GCLOUD_PROJECT'),
-				region: envVar('GCLOUD_CLAUDE_REGION') ?? currentUser().llmConfig.vertexRegion ?? envVar('GCLOUD_REGION'),
+				region: currentUser().llmConfig.vertexRegion || process.env.GCLOUD_CLAUDE_REGION || envVar('GCLOUD_REGION'),
 			});
 		}
 		return this.client;
+	}
+
+	isConfigured(): boolean {
+		return Boolean(currentUser().llmConfig.vertexRegion || process.env.GCLOUD_CLAUDE_REGION || process.env.GCLOUD_REGION);
 	}
 
 	// Error when
@@ -110,7 +114,7 @@ class AnthropicVertexLLM extends BaseLLM {
 				inputChars: combinedPrompt.length,
 				model: this.model,
 				service: this.service,
-				caller: agentContext().callStack.at(-1) ?? '',
+				caller: agentContext()?.callStack.at(-1) ?? '',
 			});
 			if (opts?.id) span.setAttribute('id', opts.id);
 
@@ -118,8 +122,8 @@ class AnthropicVertexLLM extends BaseLLM {
 				userPrompt,
 				systemPrompt,
 				llmId: this.getId(),
-				agentId: agentContext().agentId,
-				callStack: agentContext().callStack.join(' > '),
+				agentId: agentContext()?.agentId,
+				callStack: agentContext()?.callStack.join(' > '),
 			});
 			const requestTime = Date.now();
 
@@ -189,7 +193,7 @@ class AnthropicVertexLLM extends BaseLLM {
 				outputCost: outputCost.toFixed(4),
 				cost: cost.toFixed(4),
 				outputChars: responseText.length,
-				callStack: agentContext().callStack.join(' > '),
+				callStack: agentContext()?.callStack.join(' > '),
 			});
 
 			try {
