@@ -35,7 +35,4 @@ export class ApiChatService {
     return this.http.post<string>(`/chat/${chatId}/send`, { text: content, llmId });
   }
 
-  getLlmList(): Observable<Data<{ id: string; name: string; isConfigured: boolean }[]>> {
-    return this.http.get<Data<{ id: string; name: string; isConfigured: boolean }[]>>('/api/llms/list');
-  }
 }

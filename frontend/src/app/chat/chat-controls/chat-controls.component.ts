@@ -2,6 +2,7 @@ import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { debounceTime, filter, throttleTime } from 'rxjs/operators';
 import { ApiChatService } from '@app/chat/services/api/api-chat.service';
+import { LlmService, LLM } from '@app/shared/services/llm.service';
 import { LlmMessage } from '@app/chat/model/chat';
 
 @Component({
@@ -15,9 +16,13 @@ export class ChatControlsComponent implements OnInit {
 
   chatForm: FormGroup;
   isSending: boolean = false;
-  llms: { id: string; name: string; isConfigured: boolean }[] = [];
+  llms: LLM[] = [];
 
-  constructor(private chatService: ApiChatService, private fb: FormBuilder) {
+  constructor(
+    private chatService: ApiChatService,
+    private llmService: LlmService,
+    private fb: FormBuilder
+  ) {
     this.chatForm = this.fb.group({
       message: [''],
       selectedLlm: ['']
@@ -48,9 +53,9 @@ export class ChatControlsComponent implements OnInit {
   }
 
   private fetchLlms(): void {
-    this.chatService.getLlmList().subscribe({
-      next: (data) => {
-        this.llms = data.data;
+    this.llmService.getLlms().subscribe({
+      next: (llms) => {
+        this.llms = llms;
         if (this.llms.length > 0) {
           this.chatForm.get('selectedLlm')?.setValue(this.llms[0].id);
         }
