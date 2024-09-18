@@ -1,6 +1,5 @@
 import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
-
-import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { debounceTime, filter, throttleTime } from 'rxjs/operators';
 import { ApiChatService } from '@app/chat/services/api/api-chat.service';
 import { LlmMessage } from '@app/chat/model/chat';
@@ -29,21 +28,21 @@ export class ChatControlsComponent implements OnInit {
     this.scrollBottom();
     this.fetchLlms();
 
-    this.messageControl.valueChanges
+    this.chatForm.get('message')?.valueChanges
       .pipe(
-        filter((data) => data !== ''),
+        filter((data: string) => data !== ''),
         throttleTime(1400)
       )
-      .subscribe((data) => {
+      .subscribe(() => {
         // Implement typing indicator if needed
       });
 
-    this.messageControl.valueChanges
+    this.chatForm.get('message')?.valueChanges
       .pipe(
-        filter((data) => data !== ''),
+        filter((data: string) => data !== ''),
         debounceTime(1500)
       )
-      .subscribe((data) => {
+      .subscribe(() => {
         // Implement typing indicator removal if needed
       });
   }
@@ -52,7 +51,9 @@ export class ChatControlsComponent implements OnInit {
     this.chatService.getLlmList().subscribe({
       next: (data) => {
         this.llms = data.data;
-        this.selectedLlmId = this.llms.length > 0 ? this.llms[0].id : '';
+        if (this.llms.length > 0) {
+          this.chatForm.get('selectedLlm')?.setValue(this.llms[0].id);
+        }
       },
       error: (error) => {
         console.error('Error fetching LLMs:', error);
@@ -74,17 +75,17 @@ export class ChatControlsComponent implements OnInit {
 
     this.isSending = true;
     this.chatService.sendMessage(this.chatId, msg, selectedLlmId).subscribe({
-      next: (data: any) => {
-        console.log(data.data);
+      next: (data: string) => {
+        console.log(data);
         this.isSending = false;
         this.chatForm.get('message')?.reset();
         this.scrollBottom();
         this.messageSent.emit([
           { role: 'user', text: msg, index: -1 },
-          { role: 'assistant', text: data.data, index: -1 },
+          { role: 'assistant', text: data, index: -1 },
         ]);
       },
-      error: (err: any) => {
+      error: (err: Error) => {
         console.error('Error sending message:', err);
         this.isSending = false;
         alert('Failed to send message. Please try again.');
@@ -97,12 +98,12 @@ export class ChatControlsComponent implements OnInit {
   }
 
   // Attachment methods left as placeholders for future implementation
-  setSelectedFiles(event: any): void {}
-  deleteAttachment(file: any): void {}
+  setSelectedFiles(event: Event): void {}
+  deleteAttachment(file: File): void {}
   getAttachments(): File[] {
     return [];
   }
-  hasAttachments() {
+  hasAttachments(): boolean {
     return false;
   }
 }
