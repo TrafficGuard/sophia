@@ -1,17 +1,16 @@
 import { Injectable } from '@angular/core';
-import {Chat, ChatList} from '../../model/chat';
+import { Chat, ChatList } from '../../model/chat';
 import { Observable } from 'rxjs';
-import {Data} from "@shared";
-import {HttpClient} from "@angular/common/http";
-
-
+import { Data } from '@shared';
+import { HttpClient } from '@angular/common/http';
 
 // Service client for the chat routes
 
 @Injectable({
   providedIn: 'root',
 })
-export class ApiChatService  { // extends ChatBaseService
+export class ApiChatService {
+  // extends ChatBaseService
   constructor(private http: HttpClient) {
     // super();
   }
@@ -25,7 +24,7 @@ export class ApiChatService  { // extends ChatBaseService
   // }
 
   list(startAfterId?: string): Observable<Data<ChatList>> {
-    return this.http.get<Data<ChatList>>(`/chats`, ); // { params: {startAfterId} }
+    return this.http.get<Data<ChatList>>(`/chats`); // { params: {startAfterId} }
   }
 
   getChat(chatId: string): Observable<Data<Chat>> {
@@ -33,6 +32,6 @@ export class ApiChatService  { // extends ChatBaseService
   }
 
   sendMessage(chatId: string, content: string, llmId: string): Observable<string> {
-    return this.http.post<string>(`/chat/${chatId}/send`, {text: content, llmId});
+    return this.http.post<string>(`/chat/${chatId}/send`, { text: content, llmId });
   }
 }

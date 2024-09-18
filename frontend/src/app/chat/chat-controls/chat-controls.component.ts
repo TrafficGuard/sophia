@@ -2,8 +2,8 @@ import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { debounceTime, filter, throttleTime } from 'rxjs/operators';
-import { ApiChatService } from "@app/chat/services/api/api-chat.service";
-import {LlmMessage} from "@app/chat/model/chat";
+import { ApiChatService } from '@app/chat/services/api/api-chat.service';
+import { LlmMessage } from '@app/chat/model/chat';
 
 @Component({
   selector: 'app-chat-controls',
@@ -18,10 +18,7 @@ export class ChatControlsComponent implements OnInit {
   chatForm: FormGroup;
   isSending: boolean = false;
 
-  constructor(
-    private chatService: ApiChatService,
-    private fb: FormBuilder
-  ) {
+  constructor(private chatService: ApiChatService, private fb: FormBuilder) {
     this.messageControl = new FormControl();
     this.chatForm = this.fb.group({ message: this.messageControl });
   }
@@ -61,7 +58,10 @@ export class ChatControlsComponent implements OnInit {
         this.isSending = false;
         this.messageControl.reset();
         this.scrollBottom();
-        this.messageSent.emit([{role: 'user', text: msg, index: -1}, {role: 'assistant', text: data.data, index: -1}]);
+        this.messageSent.emit([
+          { role: 'user', text: msg, index: -1 },
+          { role: 'assistant', text: data.data, index: -1 },
+        ]);
       },
       (err: any) => {
         console.error('Error sending message:', err);
@@ -78,6 +78,10 @@ export class ChatControlsComponent implements OnInit {
   // Attachment methods left as placeholders for future implementation
   setSelectedFiles(event: any): void {}
   deleteAttachment(file: any): void {}
-  getAttachments(): File[] { return []; }
-  hasAttachments() { return false; }
+  getAttachments(): File[] {
+    return [];
+  }
+  hasAttachments() {
+    return false;
+  }
 }

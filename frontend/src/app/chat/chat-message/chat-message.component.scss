@@ -20,7 +20,8 @@
 
 /* Responsive design for smaller screens */
 @media (max-width: 600px) {
-  .user-message, .assistant-message {
+  .user-message,
+  .assistant-message {
     max-width: 85%;
     margin-left: 5%;
     margin-right: 5%;

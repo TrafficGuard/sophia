@@ -3,14 +3,14 @@
     style="box-shadow: none; background-color: transparent"
     [ngStyle]="{
       'align-self': msg.role !== 'user' ? 'flex-end' : 'flex-start',
-      'padding': '5px'
+      padding: '5px'
     }"
   >
     <mat-card-content style="display: inline-flex; flex-direction: column; width: 90%; min-width: 300px">
       <!-- Message content-->
       <mat-card
         class="message-bubble"
-        [ngClass]="{'user-message': msg.role === 'user', 'assistant-message': msg.role !== 'user'}"
+        [ngClass]="{ 'user-message': msg.role === 'user', 'assistant-message': msg.role !== 'user' }"
         [ngStyle]="{
           'background-color': msg.role !== 'user' ? 'rgb(226, 228, 220)' : 'rgb(246, 248, 250)',
           color: 'rgb(31, 35, 40)',
@@ -18,16 +18,13 @@
           'text-align': 'left',
           'min-width': '150px',
           'max-width': '100%',
-          'width': '100%',
+          width: '100%',
           'margin-bottom': '8px',
           padding: '0px 12px 0px 12px'
         }"
       >
-
         <span style="overflow-wrap: break-word">
-          <markdown
-            [data]="msg.text">
-          </markdown>
+          <markdown [data]="msg.text"> </markdown>
         </span>
       </mat-card>
 

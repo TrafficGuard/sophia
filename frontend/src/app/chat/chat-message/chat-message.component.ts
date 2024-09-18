@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { LlmMessage, User } from "@app/chat/model/chat";
-import {MarkdownService} from "ngx-markdown";
+import { LlmMessage, User } from '@app/chat/model/chat';
+import { MarkdownService } from 'ngx-markdown';
 
 @Component({
   selector: 'app-chat-message',
@@ -12,7 +12,7 @@ export class ChatMessageComponent implements OnInit {
   @Input() predecessor: LlmMessage | null = null;
   @Input() allowsReply = false;
 
-  constructor (private markdown: MarkdownService) {}
+  constructor(private markdown: MarkdownService) {}
 
   ngOnInit() {}
 

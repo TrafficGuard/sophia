@@ -3,8 +3,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 
 import { MatDialogModule } from '@angular/material/dialog';
-import {ApiChatService} from "@app/chat/services/api/api-chat.service";
-import {ChatList} from "@app/chat/model/chat";
+import { ApiChatService } from '@app/chat/services/api/api-chat.service';
+import { ChatList } from '@app/chat/model/chat';
 
 @Component({
   selector: 'app-code-chat-list',
@@ -31,7 +31,7 @@ export class ChatListComponent implements OnInit {
         this.isLoading = false;
       },
       (error: any) => {
-        console.log(error)
+        console.log(error);
         this.errorMessage = 'Error loading configurations';
         this.isLoading = false;
       }

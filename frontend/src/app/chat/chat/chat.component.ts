@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Observable, of, BehaviorSubject } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { Chat, LlmMessage } from '@app/chat/model/chat';
-import { ApiChatService } from "@app/chat/services/api/api-chat.service";
+import { ApiChatService } from '@app/chat/services/api/api-chat.service';
 
 @Component({
   selector: 'app-chat',
@@ -23,24 +23,22 @@ export class ChatComponent implements OnInit {
     title: '',
     userId: '',
     parentId: undefined,
-    visibility: 'private'
+    visibility: 'private',
   });
 
-  constructor(
-    private route: ActivatedRoute,
-    private chatService: ApiChatService,
-  ) {}
+  constructor(private route: ActivatedRoute, private chatService: ApiChatService) {}
 
   ngOnInit() {
     const chatId: string | null = this.route.snapshot.paramMap.get('id');
     if (!chatId || chatId === 'new') {
       console.log('new chat!');
     } else {
-      this.chatService.getChat(chatId).pipe(
-        map((data: any) => data.data)
-      ).subscribe((chat: Chat) => {
-        this.chat$.next(chat);
-      });
+      this.chatService
+        .getChat(chatId)
+        .pipe(map((data: any) => data.data))
+        .subscribe((chat: Chat) => {
+          this.chat$.next(chat);
+        });
     }
   }
 
@@ -49,12 +47,12 @@ export class ChatComponent implements OnInit {
   }
 
   onMessageSent(messages: LlmMessage[]) {
-    console.log(messages)
-    console.log(messages[0])
-    console.log(messages[1])
+    console.log(messages);
+    console.log(messages[0]);
+    console.log(messages[1]);
     const currentChat = this.chat$.value;
-    messages[0].index = currentChat.messages.length
-    messages[1].index = currentChat.messages.length + 1
+    messages[0].index = currentChat.messages.length;
+    messages[1].index = currentChat.messages.length + 1;
     currentChat.messages.push(messages[0]);
     currentChat.messages.push(messages[1]);
     // this.messages.push(messages[0]);

@@ -1,4 +1,3 @@
-
 import { Chat } from '../model/chat';
 import { Observable } from 'rxjs';
 import { ServicesConfig } from './services-config';

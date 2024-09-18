@@ -2,7 +2,12 @@
   <mat-card-content>
     <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="center center">
       <mat-form-field fxFlex="calc(100%-56px-56px-16px-16px-8px-8px)">
-        <textarea matInput placeholder="Message" formControlName="message" (keydown.enter)="$event.preventDefault(); submit()"></textarea>
+        <textarea
+          matInput
+          placeholder="Message"
+          formControlName="message"
+          (keydown.enter)="$event.preventDefault(); submit()"
+        ></textarea>
       </mat-form-field>
 
       <button mat-fab color="primary" (click)="submit()" [disabled]="!chatForm.get('message')?.value || isSending">

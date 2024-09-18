@@ -13,7 +13,7 @@ import { HomeModule } from './home/home.module';
 import { ShellModule } from './shell/shell.module';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
-import {MarkdownModule} from "ngx-markdown";
+import { MarkdownModule } from 'ngx-markdown';
 
 @NgModule({
   imports: [
