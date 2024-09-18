@@ -1,7 +1,7 @@
-import { Component, OnInit, Input, ViewChild, ElementRef, AfterViewChecked, AfterViewInit } from '@angular/core';
+import { Component, OnInit, Input, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { BehaviorSubject } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { BehaviorSubject, Subject } from 'rxjs';
+import { map, takeUntil, debounceTime } from 'rxjs/operators';
 import { Chat, LlmMessage } from '@app/chat/model/chat';
 import { ApiChatService } from '@app/chat/services/api/api-chat.service';
 
@@ -10,7 +10,7 @@ import { ApiChatService } from '@app/chat/services/api/api-chat.service';
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.scss'],
 })
-export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
+export class ChatComponent implements OnInit, OnDestroy {
   @Input() height: string = '';
   @Input() width: string = '';
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
@@ -26,36 +26,45 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
   });
 
   private shouldScrollToBottom = true;
-  private initialChatLoaded = false;
+  private destroy$ = new Subject<void>();
+  private scrollEvent$ = new Subject<void>();
 
   constructor(private route: ActivatedRoute, private chatService: ApiChatService) {}
 
   ngOnInit() {
     const chatId: string | null = this.route.snapshot.paramMap.get('id');
     if (!chatId || chatId === 'new') {
-      console.log('new chat!');
-      this.initialChatLoaded = true;
+      setTimeout(() => this.scrollToBottom(), 0);
     } else {
       this.chatService
         .getChat(chatId)
-        .pipe(map((data: any) => data.data))
-        .subscribe((chat: Chat) => {
-          this.chat$.next(chat);
-          this.initialChatLoaded = true;
-          this.scrollToBottom();
+        .pipe(
+          map((data: any) => data.data),
+          takeUntil(this.destroy$)
+        )
+        .subscribe({
+          next: (chat: Chat) => {
+            this.chat$.next(chat);
+            setTimeout(() => this.scrollToBottom(), 0);
+          },
+          error: (error) => {
+            console.error('Error loading chat:', error);
+            // Handle error (e.g., show error message to user)
+          }
         });
     }
+
+    this.scrollEvent$
+      .pipe(
+        debounceTime(200),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => this.checkScrollPosition());
   }
 
-  ngAfterViewInit() {
-    if (this.initialChatLoaded) {
-      this.scrollToBottom();
-    }
-  }
-
-  ngAfterViewChecked() {
-    console.log('ngAfterViewChecked')
-    this.scrollToBottomIfNeeded();
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   trackByCreated(index: number, msg: LlmMessage) {
@@ -72,13 +81,6 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
     setTimeout(() => this.scrollToBottom(), 0);
   }
 
-  private scrollToBottomIfNeeded() {
-    if (this.shouldScrollToBottom && this.messagesContainer) {
-      this.scrollToBottom();
-      this.shouldScrollToBottom = false;
-    }
-  }
-
   private scrollToBottom() {
     if (this.messagesContainer) {
       const element = this.messagesContainer.nativeElement;
@@ -86,9 +88,11 @@ export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
     }
   }
 
-  // Listen for scroll events to determine if we should auto-scroll on new messages
   onScroll() {
-    console.log('onScroll')
+    this.scrollEvent$.next();
+  }
+
+  private checkScrollPosition() {
     if (this.messagesContainer) {
       const element = this.messagesContainer.nativeElement;
       const atBottom = element.scrollHeight - element.scrollTop === element.clientHeight;
