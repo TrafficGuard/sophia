@@ -13,7 +13,7 @@ import { ApiChatService } from '@app/chat/services/api/api-chat.service';
 export class ChatComponent implements OnInit {
   @Input() height: string = '';
   @Input() width: string = '';
-  @ViewChild('messagesContainer') private messagesContainer: ElementRef;
+  @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
 
   user: any = {};
 
