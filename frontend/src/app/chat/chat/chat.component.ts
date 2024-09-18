@@ -44,6 +44,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   }
 
   ngAfterViewChecked() {
+    console.log('ngAfterViewChecked')
     this.scrollToBottomIfNeeded();
   }
 
@@ -61,10 +62,11 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   }
 
   private scrollToBottomIfNeeded() {
+    console.log('scrollToBottomIfNeeded')
     if (this.shouldScrollToBottom && this.messagesContainer) {
       const element = this.messagesContainer.nativeElement;
       const atBottom = element.scrollHeight - element.scrollTop === element.clientHeight;
-      
+
       if (atBottom) {
         element.scrollTop = element.scrollHeight;
         this.shouldScrollToBottom = false;
@@ -74,6 +76,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
 
   // Listen for scroll events to determine if we should auto-scroll on new messages
   onScroll() {
+    console.log('onScroll')
     if (this.messagesContainer) {
       const element = this.messagesContainer.nativeElement;
       const atBottom = element.scrollHeight - element.scrollTop === element.clientHeight;
