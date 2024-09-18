@@ -6,7 +6,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { environment } from '@env/environment';
 import { AgentEventService } from '@app/agent-event.service';
-import { LlmService, LLM } from '@app/shared/services/llm.service';
+import { LlmService } from '@app/shared/services/llm.service';
 
 interface StartAgentResponse {
   data: {
@@ -21,7 +21,7 @@ interface StartAgentResponse {
 })
 export class RunAgentComponent implements OnInit {
   functions: string[] = [];
-  llms: LLM[] = [];
+  llms: any[] = [];
   runAgentForm: FormGroup;
   isSubmitting: boolean = false;
 

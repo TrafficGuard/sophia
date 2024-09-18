@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { tap, shareReplay, map } from 'rxjs/operators';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, BehaviorSubject, throwError } from 'rxjs';
+import { tap, shareReplay, map, catchError, retry } from 'rxjs/operators';
 import { environment } from '@env/environment';
 
 export interface LLM {
@@ -35,7 +35,22 @@ export class LlmService {
   private fetchLlms(): Observable<LLM[]> {
     return this.http.get<{ data: LLM[] }>(`${environment.serverUrl}/api/llms/list`)
       .pipe(
-        map(response => response.data)
+        map(response => response.data),
+        retry(3),
+        catchError(this.handleError)
       );
+  }
+
+  private handleError(error: HttpErrorResponse) {
+    let errorMessage = 'An error occurred';
+    if (error.error instanceof ErrorEvent) {
+      // Client-side error
+      errorMessage = `Error: ${error.error.message}`;
+    } else {
+      // Server-side error
+      errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
+    }
+    console.error(errorMessage);
+    return throwError(() => new Error(errorMessage));
   }
 }

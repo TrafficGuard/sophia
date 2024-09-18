@@ -2,7 +2,7 @@ import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { debounceTime, filter, throttleTime } from 'rxjs/operators';
 import { ApiChatService } from '@app/chat/services/api/api-chat.service';
-import { LlmService, LLM } from '@app/shared/services/llm.service';
+import { LlmService } from '@app/shared/services/llm.service';
 import { LlmMessage } from '@app/chat/model/chat';
 
 @Component({
@@ -16,7 +16,7 @@ export class ChatControlsComponent implements OnInit {
 
   chatForm: FormGroup;
   isSending: boolean = false;
-  llms: LLM[] = [];
+  llms: any[] = [];
 
   constructor(
     private chatService: ApiChatService,
