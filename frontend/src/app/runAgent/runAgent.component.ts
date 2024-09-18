@@ -6,17 +6,12 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { environment } from '@env/environment';
 import { AgentEventService } from '@app/agent-event.service';
+import { LlmService, LLM } from '@app/shared/services/llm.service';
 
 interface StartAgentResponse {
   data: {
     agentId: string;
   };
-}
-
-interface LLM {
-  id: string;
-  name: string;
-  isConfigured: boolean;
 }
 
 @Component({
@@ -34,7 +29,8 @@ export class RunAgentComponent implements OnInit {
     private http: HttpClient,
     private snackBar: MatSnackBar,
     private router: Router,
-    private agentEventService: AgentEventService
+    private agentEventService: AgentEventService,
+    private llmService: LlmService
   ) {
     this.runAgentForm = new FormGroup({
       name: new FormControl('', Validators.required),
@@ -89,17 +85,17 @@ export class RunAgentComponent implements OnInit {
           (this.runAgentForm as FormGroup).addControl('function' + index, new FormControl(false));
         });
       });
-    this.http
-      .get<{ data: LLM[] }>(`${environment.serverUrl}/llms/list`)
-      .pipe(
-        map((response) => {
-          console.log(response);
-          return response.data;
-        })
-      )
-      .subscribe((llms) => {
+    
+    this.llmService.getLlms().subscribe({
+      next: (llms) => {
         this.llms = llms;
-      });
+      },
+      error: (error) => {
+        console.error('Error fetching LLMs:', error);
+        this.snackBar.open('Failed to load LLMs', 'Close', { duration: 3000 });
+      }
+    });
+    
     this.loadUserProfile();
   }
 
