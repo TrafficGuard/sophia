@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, of, BehaviorSubject } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
@@ -13,6 +13,7 @@ import { ApiChatService } from '@app/chat/services/api/api-chat.service';
 export class ChatComponent implements OnInit {
   @Input() height: string = '';
   @Input() width: string = '';
+  @ViewChild('messagesContainer') private messagesContainer: ElementRef;
 
   user: any = {};
 
@@ -32,12 +33,14 @@ export class ChatComponent implements OnInit {
     const chatId: string | null = this.route.snapshot.paramMap.get('id');
     if (!chatId || chatId === 'new') {
       console.log('new chat!');
+      this.scrollToBottom();
     } else {
       this.chatService
         .getChat(chatId)
         .pipe(map((data: any) => data.data))
         .subscribe((chat: Chat) => {
           this.chat$.next(chat);
+          this.scrollToBottom();
         });
     }
   }
@@ -55,24 +58,15 @@ export class ChatComponent implements OnInit {
     messages[1].index = currentChat.messages.length + 1;
     currentChat.messages.push(messages[0]);
     currentChat.messages.push(messages[1]);
-    // this.messages.push(messages[0]);
-    // this.messages.push(messages[1]);
     this.chat$.next(currentChat);
-    // this.messages = currentChat.messages;
-    this.scrollBottom();
-
-    // Refresh the chat from the server
-    // if (currentChat.id !== 'new') {
-    //   this.chatService.getChat(currentChat.id).pipe(
-    //     map((data: any) => data.data)
-    //   ).subscribe((updatedChat: Chat) => {
-    //     this.chat$.next(updatedChat);
-    //     this.messages = updatedChat.messages;
-    //   });
-    // }
+    this.scrollToBottom();
   }
 
-  private scrollBottom() {
-    setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 500);
+  private scrollToBottom() {
+    setTimeout(() => {
+      if (this.messagesContainer) {
+        this.messagesContainer.nativeElement.scrollTop = this.messagesContainer.nativeElement.scrollHeight;
+      }
+    }, 100);
   }
 }
