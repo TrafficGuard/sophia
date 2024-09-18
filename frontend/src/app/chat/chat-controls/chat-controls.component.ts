@@ -17,6 +17,8 @@ export class ChatControlsComponent implements OnInit {
   messageControl: FormControl;
   chatForm: FormGroup;
   isSending: boolean = false;
+  llms: { id: string; name: string; isConfigured: boolean }[] = [];
+  selectedLlmId: string = '';
 
   constructor(private chatService: ApiChatService, private fb: FormBuilder) {
     this.messageControl = new FormControl();
@@ -25,6 +27,7 @@ export class ChatControlsComponent implements OnInit {
 
   ngOnInit() {
     this.scrollBottom();
+    this.fetchLlms();
 
     this.messageControl.valueChanges
       .pipe(
@@ -45,14 +48,31 @@ export class ChatControlsComponent implements OnInit {
       });
   }
 
+  private fetchLlms(): void {
+    this.chatService.getLlmList().subscribe(
+      (data) => {
+        this.llms = data.data;
+        if (this.llms.length > 0) {
+          this.selectedLlmId = this.llms[0].id;
+        }
+      },
+      (error) => {
+        console.error('Error fetching LLMs:', error);
+      }
+    );
+  }
+
   submit(): void {
     const msg = this.messageControl.value;
     if (!msg) {
       return alert('Please enter a message.');
     }
+    if (!this.selectedLlmId) {
+      return alert('Please select an LLM.');
+    }
 
     this.isSending = true;
-    this.chatService.sendMessage(this.chatId, msg, 'llmIdPlaceholder').subscribe(
+    this.chatService.sendMessage(this.chatId, msg, this.selectedLlmId).subscribe(
       (data: any) => {
         console.log(data.data);
         this.isSending = false;

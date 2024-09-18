@@ -1,7 +1,7 @@
 <mat-card [formGroup]="chatForm" style="width: 100%; min-height: 125px; margin-bottom: 8px">
   <mat-card-content>
     <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="center center">
-      <mat-form-field fxFlex="calc(100%-56px-56px-16px-16px-8px-8px)">
+      <mat-form-field fxFlex="calc(100%-56px-56px-16px-16px-8px-8px-120px)">
         <textarea
           matInput
           placeholder="Message"
@@ -10,7 +10,15 @@
         ></textarea>
       </mat-form-field>
 
-      <button mat-fab color="primary" (click)="submit()" [disabled]="!chatForm.get('message')?.value || isSending">
+      <mat-form-field fxFlex="120px">
+        <mat-select [(value)]="selectedLlmId">
+          <mat-option *ngFor="let llm of llms" [value]="llm.id">
+            {{ llm.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-fab color="primary" (click)="submit()" [disabled]="!chatForm.get('message')?.value || isSending || !selectedLlmId">
         <mat-icon *ngIf="!isSending">send</mat-icon>
         <mat-spinner *ngIf="isSending" diameter="24"></mat-spinner>
       </button>
