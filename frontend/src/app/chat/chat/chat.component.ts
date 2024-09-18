@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, Input, ViewChild, ElementRef, AfterViewChecked, AfterViewInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -10,7 +10,7 @@ import { ApiChatService } from '@app/chat/services/api/api-chat.service';
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.scss'],
 })
-export class ChatComponent implements OnInit, AfterViewChecked {
+export class ChatComponent implements OnInit, AfterViewChecked, AfterViewInit {
   @Input() height: string = '';
   @Input() width: string = '';
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
@@ -26,6 +26,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   });
 
   private shouldScrollToBottom = true;
+  private initialChatLoaded = false;
 
   constructor(private route: ActivatedRoute, private chatService: ApiChatService) {}
 
@@ -33,13 +34,22 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     const chatId: string | null = this.route.snapshot.paramMap.get('id');
     if (!chatId || chatId === 'new') {
       console.log('new chat!');
+      this.initialChatLoaded = true;
     } else {
       this.chatService
         .getChat(chatId)
         .pipe(map((data: any) => data.data))
         .subscribe((chat: Chat) => {
           this.chat$.next(chat);
+          this.initialChatLoaded = true;
+          this.scrollToBottom();
         });
+    }
+  }
+
+  ngAfterViewInit() {
+    if (this.initialChatLoaded) {
+      this.scrollToBottom();
     }
   }
 
@@ -59,18 +69,20 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     currentChat.messages.push(messages[0], messages[1]);
     this.chat$.next(currentChat);
     this.shouldScrollToBottom = true;
+    setTimeout(() => this.scrollToBottom(), 0);
   }
 
   private scrollToBottomIfNeeded() {
-    console.log('scrollToBottomIfNeeded')
     if (this.shouldScrollToBottom && this.messagesContainer) {
-      const element = this.messagesContainer.nativeElement;
-      const atBottom = element.scrollHeight - element.scrollTop === element.clientHeight;
+      this.scrollToBottom();
+      this.shouldScrollToBottom = false;
+    }
+  }
 
-      if (atBottom) {
-        element.scrollTop = element.scrollHeight;
-        this.shouldScrollToBottom = false;
-      }
+  private scrollToBottom() {
+    if (this.messagesContainer) {
+      const element = this.messagesContainer.nativeElement;
+      element.scrollTop = element.scrollHeight;
     }
   }
 
