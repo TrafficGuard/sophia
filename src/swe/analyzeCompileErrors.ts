@@ -37,17 +37,19 @@ export async function analyzeCompileErrors(
 	}
 	const compileOutputXml = `<compiler_output>\n${compilerOutput}\n</compiler_output>`;
 
+	const currentFileList = `<current-files>\n${initialFileSelection.join('\n')}\n</current-files>`;
+
 	const instructions =
 		'The compile errors above need to be analyzed to determine next steps fixing them. You will respond with a JSON object in the format of the example.\n' +
 		'- Include a brief summary of the compile issues in the "compileIssuesSummary" property.\n' +
-		'- If addtional files are required to be added to the context to help fix the issues (for implementation details, interfaces, typings etc. or with compile errors to fix) then set an array of the filenames on the "additionalFiles" property.\n' +
+		'- If addtional files not in the <current-files> tag are required to be added to the context to help fix the issues (ie. have compile errors to fix in that file, or needed for implementation details, interfaces, typings etc) then set an array of the filenames on the "additionalFiles" property.\n' +
 		'- If you need to perform research to fix a compile issue (e.g. how to use a library/API, or fix an obscure compiler error) then set a natural language query to search on the "researchQuery" property.\n' +
 		'- If the compile errors indicate one or more missing packages/modules, then set an array with the missing packages, e.g. ["package1", "package2"], on the "installPackages" property.\n' +
 		'- If there appears to be an fatal error which can\'t be fixed (e.g. configuration issue, or stuck on the same error multiple times, or a dependant project needs to be updated) that requires human intervention, then set a message describing the problem in the "fatalError" property.\n' +
 		`Respond with your resoning following by the JSON object that MUST be in the format of this example:
 <response_example>
 - Analysis of the compile issues
-- Reasoning if any additional files need to be added to the context
+- Reasoning if any additional files need to be added to the available <file_contents> list which have compile errors or required implementation details
 - Reasoning if any web research is required to fix issues
 - Reasoning if there is a fatal error
 <json>
@@ -62,7 +64,7 @@ export async function analyzeCompileErrors(
 </response_example>`;
 
 	// ${fileList}\n
-	const prompt = `${fileContents}\n${compileErrorHistory}\n${compileOutputXml}\n${instructions}`;
+	const prompt = `${fileContents}\n${compileErrorHistory}\n${compileOutputXml}\n${currentFileList}\n${instructions}`;
 	const analysis: CompileErrorAnalysis = await llms().hard.generateJson(prompt, null, {
 		id: 'analyzeCompileErrors',
 	});

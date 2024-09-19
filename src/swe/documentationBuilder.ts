@@ -372,7 +372,7 @@ export async function getTopLevelSummary(): Promise<string> {
 
 export async function getRepositoryOverview(): Promise<string> {
 	const repositoryOverview: string = await getTopLevelSummary();
-	return repositoryOverview ? '<repository-overview>\n${topLevelSummary}\n</repository-overview>\n' : '';
+	return repositoryOverview ? `<repository-overview>\n${repositoryOverview}\n</repository-overview>\n` : '';
 }
 
 async function getParentSummaries(folderPath: string): Promise<Summary[]> {
