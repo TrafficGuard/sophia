@@ -98,7 +98,7 @@ export class TypescriptTools implements LanguageTools {
 			if (packageJson.devDependencies) {
 				info += '<development>\n';
 				for (const [pkg, version] of Object.entries(packageJson.devDependencies)) {
-					info += `${pkg}: ${version}\n`;
+					if (!pkg.startsWith('@types/')) info += `${pkg}: ${version}\n`;
 				}
 				info += '</development>\n';
 			}

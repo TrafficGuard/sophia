@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, BehaviorSubject, throwError } from 'rxjs';
 import { tap, shareReplay, map, catchError, retry } from 'rxjs/operators';
 import { environment } from '@env/environment';
+import { CredentialsService } from '@app/auth';
 
 export interface LLM {
   id: string;
@@ -38,6 +39,12 @@ export class LlmService {
       retry(3),
       catchError(this.handleError)
     );
+  }
+
+  clearCache() {
+    this.llmsLoaded = false;
+    this.llmsSubject.next([]);
+    this.getLlms();
   }
 
   private handleError(error: HttpErrorResponse) {

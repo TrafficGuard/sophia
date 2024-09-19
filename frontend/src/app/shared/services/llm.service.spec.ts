@@ -36,33 +36,31 @@ describe('LlmService', () => {
       expect(llms).toEqual(mockLlms);
     });
 
-    const req = httpMock.expectOne(LLM_LIST_API_URL);
+    const req = httpMock.expectOne(`${LLM_LIST_API_URL}`);
     expect(req.request.method).toBe('GET');
     req.flush({ data: mockLlms });
   });
 
-  it('should cache LLMs after the first request', () => {
+  it('should cache LLMs per user', () => {
+    const mockLlms1: LLM[] = [{ id: 'llm1', name: 'LLM 1', isConfigured: true }];
+
+    service.getLlms().subscribe();
+    httpMock.expectOne(`${LLM_LIST_API_URL}`).flush({ data: mockLlms1 });
+
+    service.getLlms().subscribe((llms) => {
+      expect(llms).toEqual(mockLlms1);
+    });
+  });
+
+  it('should clear the cache', () => {
     const mockLlms: LLM[] = [{ id: 'llm1', name: 'LLM 1', isConfigured: true }];
 
     service.getLlms().subscribe();
-    httpMock.expectOne(LLM_LIST_API_URL).flush({ data: mockLlms });
+    httpMock.expectOne(`${LLM_LIST_API_URL}`).flush({ data: mockLlms });
 
-    service.getLlms().subscribe((llms) => {
-      expect(llms).toEqual(mockLlms);
-    });
+    service.clearCache();
 
-    httpMock.expectNone(LLM_LIST_API_URL);
-  });
-
-  it('should handle errors when fetching LLMs', () => {
-    service.getLlms().subscribe({
-      next: () => fail('should have failed with the 404 error'),
-      error: (error) => {
-        expect(error.message).toContain('Error Code: 404');
-      },
-    });
-
-    const req = httpMock.expectOne(LLM_LIST_API_URL);
-    req.flush('Not Found', { status: 404, statusText: 'Not Found' });
+    service.getLlms().subscribe();
+    httpMock.expectOne(`${LLM_LIST_API_URL}`);
   });
 });

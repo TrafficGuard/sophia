@@ -3,6 +3,7 @@ import { FormGroup, FormControl } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '@env/environment';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { LlmService } from '../shared/services/llm.service';
 
 @Component({
   selector: 'app-profile',
@@ -11,7 +12,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 })
 export class ProfileComponent implements OnInit {
   profileForm: FormGroup;
-  constructor(private http: HttpClient, private snackBar: MatSnackBar) {
+  constructor(private http: HttpClient, private snackBar: MatSnackBar, private llmService: LlmService) {
     this.profileForm = this.createProfileForm();
   }
 
@@ -66,6 +67,8 @@ export class ProfileComponent implements OnInit {
     this.http.post(updateUrl, { user: formValue }).subscribe({
       next: () => {
         this.snackBar.open('Profile updated', 'Close', { duration: 3000 });
+        this.llmService.clearCache();
+        this.loadLlmList();
       },
       error: (error) => {
         this.snackBar.open('Failed to save profile.', 'Close', { duration: 3000 });
@@ -74,9 +77,8 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  // ... (rest of the component methods)
   private loadUserProfile(): void {
-    console.log('Loading profile profile...');
+    console.log('Loading user profile...');
     const profileUrl = `${environment.serverUrl}/profile/view`;
     this.http.get(profileUrl).subscribe(
       (response: any) => {
@@ -88,5 +90,17 @@ export class ProfileComponent implements OnInit {
         this.snackBar.open('Failed to load user profile', 'Close', { duration: 3000 });
       }
     );
+  }
+
+  private loadLlmList(): void {
+    this.llmService.getLlms().subscribe({
+      next: (llms) => {
+        console.log('LLM list loaded:', llms);
+      },
+      error: (error) => {
+        console.error('Failed to load LLM list:', error);
+        this.snackBar.open('Failed to load LLM list', 'Close', { duration: 3000 });
+      },
+    });
   }
 }

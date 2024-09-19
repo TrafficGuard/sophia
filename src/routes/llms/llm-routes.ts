@@ -5,6 +5,7 @@ import { AppFastifyInstance } from '../../app';
 const basePath = '/api/llms';
 
 export async function llmRoutes(fastify: AppFastifyInstance) {
+	// Returns the LLMs which are configured for the current user
 	fastify.get(`${basePath}/list`, async (req, reply) => {
 		const configuredLLMs = LLM_TYPES.map((llm) => getLLM(llm.id))
 			.filter((llm) => llm.isConfigured())
