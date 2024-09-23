@@ -77,14 +77,14 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
 
 			chat.messages.push({ role: 'user', text: text }); //, cache: cache ? 'ephemeral' : undefined // remove any previous cache marker
 
-			const response = await llm.generateTextFromMessages(chat.messages);
-			chat.messages.push({ role: 'assistant', text: response });
+			const generatedMessage = await llm.generateTextFromMessages(chat.messages);
+			chat.messages.push({ role: 'assistant', text: generatedMessage });
 
 			if (titlePromise) chat.title = await titlePromise;
 
 			await fastify.chatService.saveChat(chat);
 
-			send(reply, 200, chat);
+			send(reply, 200, generatedMessage);
 		},
 	);
 	fastify.get(

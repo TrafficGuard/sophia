@@ -4,6 +4,7 @@ import { debounceTime, filter, throttleTime } from 'rxjs/operators';
 import { ApiChatService } from '@app/chat/services/api/api-chat.service';
 import { LlmService } from '@app/shared/services/llm.service';
 import { LlmMessage } from '@app/chat/model/chat';
+import { Data } from '@shared';
 
 @Component({
   selector: 'app-chat-controls',
@@ -78,14 +79,14 @@ export class ChatControlsComponent implements OnInit {
 
     this.isSending = true;
     this.chatService.sendMessage(this.chatId, msg, selectedLlmId).subscribe({
-      next: (data: string) => {
-        console.log(data);
+      next: (data: Data<string>) => {
+        console.log(data.data);
         this.isSending = false;
         this.chatForm.get('message')?.reset();
         this.scrollBottom();
         this.messageSent.emit([
           { role: 'user', text: msg, index: -1 },
-          { role: 'assistant', text: data, index: -1, llmId: selectedLlmId },
+          { role: 'assistant', text: data.data, index: -1, llmId: selectedLlmId },
         ]);
       },
       error: (err: Error) => {
