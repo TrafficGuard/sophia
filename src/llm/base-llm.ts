@@ -15,8 +15,6 @@ import { extractJsonResult, extractStringResult, parseFunctionCallsXml } from '.
 import { agentContext } from '#agent/agentContextLocalStorage';
 import { addCost } from '#agent/agentContextLocalStorage';
 import { LlmCall } from '#llm/llmCallService/llmCall';
-import { ANTHROPIC_VERTEX_SERVICE } from '#llm/models/anthropic-vertex.ts';
-import { ANTHROPIC_SERVICE } from '#llm/models/anthropic.ts';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { appContext } from '../app';
@@ -103,7 +101,7 @@ export abstract class BaseLLM implements LLM {
 		return withActiveSpan(`generateTextFromMessages ${opts?.id ?? ''}`, async (span) => {
 			const messages: CoreMessage[] = llmMessages.map((msg) => {
 				const coreMsg: CoreMessage = { role: msg.role, content: msg.text };
-				if (msg.cache === 'ephemeral' && (this.getService() === ANTHROPIC_SERVICE || this.getService() === ANTHROPIC_VERTEX_SERVICE)) {
+				if (msg.cache === 'ephemeral') {
 					coreMsg.experimental_providerMetadata = { anthropic: { cacheControl: { type: 'ephemeral' } } };
 				}
 				return coreMsg;
