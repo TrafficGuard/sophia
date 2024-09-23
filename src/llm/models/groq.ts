@@ -139,6 +139,17 @@ export class GroqLLM extends BaseLLM {
 				return responseText;
 			} catch (e) {
 				if (e.error?.code === 'rate_limit_exceeded') throw new RetryableError(e);
+
+				/*
+				message: "429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.1-70b-versatile` in organization `org_01hrcrxd39e6ksnmqv6rydzy02` on tokens per minute (TPM): Limit 20000, Used 27280, Requested 9378. Please try again in 49.974s. Visit https://console.groq.com/docs/rate-limits for more information.\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}"
+				err: {
+				  "type": "RateLimitError",
+				  "message": "429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.1-70b-versatile` in organization `org_01hrcrxd39e6ksnmqv6rydzy02` on tokens per minute (TPM): Limit 20000, Used 27280, Requested 9378. Please try again in 49.974s. Visit https://console.groq.com/docs/rate-limits for more information.\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}",
+				  "stack":
+					  Error: 429 {"error":{"message":"Rate limit reached for model `llama-3.1-70b-versatile` in organization `org_01hrcrxd39e6ksnmqv6rydzy02` on tokens per minute (TPM): Limit 20000, Used 27280, Requested 9378. Please try again in 49.974s. Visit https://console.groq.com/docs/rate-limits for more information.","type":"tokens","code":"rate_limit_exceeded"}}
+
+				 */
+
 				throw e;
 			}
 		});

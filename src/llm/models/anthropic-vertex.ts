@@ -216,7 +216,7 @@ class AnthropicVertexLLM extends BaseLLM {
 	// Error when
 	// {"error":{"code":400,"message":"Project `1234567890` is not allowed to use Publisher Model `projects/project-id/locations/us-central1/publishers/anthropic/models/claude-3-haiku@20240307`","status":"FAILED_PRECONDITION"}}
 	@cacheRetry({ backOffMs: 5000 })
-	async generateText2(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string> {
+	async generateTextFromMessages(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string> {
 		return await withActiveSpan(`generateText2 ${opts?.id ?? ''}`, async (span) => {
 			const maxOutputTokens = this.model.includes('3-5') ? 8192 : 4096;
 

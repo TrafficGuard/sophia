@@ -26,7 +26,7 @@ Your task is to search through the relevant files in the project to generate a r
 
 Your first task is from the project outlines to select the minimal list of files which will contain the information required to formulate an answer.
 
-1. Make observations about the project releated to the query.
+1. Make observations about the project releated to the query. Focus on functionality, not opinions.
 
 2. Explaing your thoughts and reasoning of what the minimal files (not folders) would be relevant to answer the query.
 
@@ -53,11 +53,11 @@ Your first task is from the project outlines to select the minimal list of files
 	
 	Give the project information and file contents, answer the query, providing references to the source files.
 	
-	1. List your observations relevant to query
+	1. List your observations relevant to query, focusing on functionality. Only provide opinions if asked.
 	
-	2. Reflect on your observations
+	2. Review and reflect on your observations taking into account the provided information and your knowledge on the subject  .
 	
-	3. Output your response within <result></result> tags
+	3. Output your final query response within <result></result> tags
 	`;
 
 	const response = await llms().medium.generateTextWithResult(resultPrompt);

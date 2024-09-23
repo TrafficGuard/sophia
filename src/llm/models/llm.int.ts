@@ -25,11 +25,11 @@ describe('LLMs', () => {
 			},
 		];
 
-		describe.only('Anthropic Vertex', () => {
+		describe('Anthropic Vertex', () => {
 			const llm = Claude3_Haiku_Vertex();
 
 			it('should generateText', async () => {
-				const response = await llm.generateText2(SKY_MESSAGES, { temperature: 0 });
+				const response = await llm.generateTextFromMessages(SKY_MESSAGES, { temperature: 0 });
 				expect(response.toLowerCase()).to.include('blue');
 			});
 		});

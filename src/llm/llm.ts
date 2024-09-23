@@ -1,4 +1,5 @@
 // https://github.com/AgentOps-AI/tokencost/blob/main/tokencost/model_prices.json
+import { StreamTextResult } from 'ai';
 
 export interface GenerateTextOptions {
 	type?: 'text' | 'json';
@@ -68,10 +69,10 @@ export function assistant(text: string): LlmMessage {
 }
 
 export interface LLM {
-	generateText2(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string>;
+	generateTextFromMessages(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string>;
 
 	/* Generates a response that is expected to be in JSON format, and returns the object */
-	generateJson2<T>(messages: LlmMessage[], opts?: GenerateJsonOptions): Promise<T>;
+	generateJsonFromMessages<T>(messages: LlmMessage[], opts?: GenerateJsonOptions): Promise<T>;
 
 	/* Generates text from a LLM */
 	generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string>;
@@ -94,6 +95,14 @@ export interface LLM {
 	generateFunctionResponse(prompt: string, systemPrompt?: string, opts?: GenerateFunctionOptions): Promise<FunctionResponse>;
 
 	/**
+	 * Streams text from the LLM
+	 * @param messages
+	 * @param onChunk streaming chunk callback
+	 * @param opts
+	 */
+	streamText(messages: LlmMessage[], onChunk: ({ string }) => void, opts?: GenerateTextOptions): Promise<StreamTextResult<any>>;
+
+	/**
 	 * The service provider of the LLM (OpenAI, Google, TogetherAI etc)
 	 */
 	getService(): string;
@@ -103,6 +112,7 @@ export interface LLM {
 	 */
 	getModel(): string;
 
+	/** UI display name */
 	getDisplayName(): string;
 
 	/**

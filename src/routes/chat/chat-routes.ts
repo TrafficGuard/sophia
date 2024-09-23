@@ -77,7 +77,7 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
 
 			chat.messages.push({ role: 'user', text: text }); //, cache: cache ? 'ephemeral' : undefined // remove any previous cache marker
 
-			const response = await llm.generateText2(chat.messages);
+			const response = await llm.generateTextFromMessages(chat.messages);
 			chat.messages.push({ role: 'assistant', text: response });
 
 			if (titlePromise) chat.title = await titlePromise;

@@ -74,22 +74,25 @@ The file paths MUST exist in the <project_map /> file_contents path attributes.
 
 function createAnalysisPrompt(requirements: string, file: SelectedFile, fileContents: string): string {
 	return `
-Requirements: ${requirements}
+<file_path>${file.path}</file_path>
 
-Task: Analyze the following file and determine if it is related to the given requirements. 
-A file is considered related if it's likely to be modified or referenced when implementing the requirements.
+<file_contents>${fileContents}</file_contents>
 
-File: ${file.path}
-Reason for selection: ${file.reason}
+<requirements>${requirements}</requirements>
 
-File contents:
-${fileContents}
+This file was selected as a candidate file to implement the requirements based only on its file name, with the provided reason: ${file.reason}
 
-Respond with a JSON object in the following format:
+Now that you can view the full contents of ths file, reassess if the file does need to be included in the fileset for the requirements.
+We want to ensure we have the minimal required files to reduce costs and focus on the necessary files.
+A file is considered related if it would be modified to implement the requirements, or contains essential details (code, types, configuration, documentation etc) that would be required to known when implementing the requirements.
+
+Discuss why or why not this file should be included.
+
+Then respond with a JSON object in the following format:
 <json>
 {
+	"explanation": "Brief explanation of why the file is required or not"
 	"isRelated": true/false,
-	"explanation": "Brief explanation of why the file is related or not"
 }
 </json>
 `;
