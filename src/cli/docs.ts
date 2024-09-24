@@ -7,9 +7,9 @@ import { shutdownTrace } from '#fastify/trace-init/trace-init';
 import { ClaudeLLMs } from '#llm/models/anthropic';
 import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { Gemini_1_5_Flash } from '#llm/models/vertexai';
-import { buildSummaryDocs } from '#swe/documentationBuilder.ts';
+import { buildSummaryDocs } from '#swe/documentationBuilder';
 import { detectProjectInfo } from '#swe/projectDetection';
-import { generateRepositoryMaps } from '#swe/repositoryMap.ts';
+import { generateRepositoryMaps } from '#swe/repositoryMap';
 import { initFirestoreApplicationContext } from '../app';
 import { parseProcessArgs, saveAgentId } from './cli';
 

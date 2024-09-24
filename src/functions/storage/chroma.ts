@@ -1,4 +1,4 @@
-import { ChromaClient } from 'chromadb';
+import { ChromaClient } from 'chromadb/dist/main/index';
 import { funcClass } from '#functionSchema/functionDecorators';
 
 import { Chroma } from "@langchain/community/vectorstores/chroma";
