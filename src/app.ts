@@ -20,6 +20,7 @@ import { agentDetailsRoutes } from './routes/agent/agent-details-routes';
 import { agentExecutionRoutes } from './routes/agent/agent-execution-routes';
 import { agentStartRoute } from './routes/agent/agent-start-route';
 import { chatRoutes } from './routes/chat/chat-routes';
+import { codeRoutes } from './routes/code/code-routes';
 import { gitlabRoutesV1 } from './routes/gitlab/gitlabRoutes-v1';
 import { llmCallRoutes } from './routes/llms/llm-call-routes';
 import { llmRoutes } from './routes/llms/llm-routes';
@@ -81,6 +82,7 @@ export async function initServer(): Promise<void> {
 				llmCallRoutes as RouteDefinition,
 				codeReviewRoutes as RouteDefinition,
 				chatRoutes as RouteDefinition,
+				codeRoutes as RouteDefinition,
 				// Add your routes below this line
 			],
 			instanceDecorators: applicationContext, // This makes all properties on the ApplicationContext interface available on the fastify instance in the routes

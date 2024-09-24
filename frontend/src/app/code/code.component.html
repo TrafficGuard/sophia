@@ -1,0 +1,37 @@
+<div class="container">
+  <h1>Code Operations</h1>
+  <form [formGroup]="codeForm" (ngSubmit)="onSubmit()">
+    <mat-form-field appearance="fill">
+      <mat-label>Working Directory</mat-label>
+      <input matInput formControlName="workingDirectory" required>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Operation Type</mat-label>
+      <mat-select formControlName="operationType" required>
+        <mat-option value="code">Code Edit Workflow</mat-option>
+        <mat-option value="query">Codebase Query</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Input</mat-label>
+      <textarea matInput formControlName="input" rows="4" required></textarea>
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" type="submit" [disabled]="!codeForm.valid || isLoading">
+      Submit
+    </button>
+  </form>
+
+  <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+
+  <mat-card *ngIf="result">
+    <mat-card-header>
+      <mat-card-title>Result</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <pre>{{ result }}</pre>
+    </mat-card-content>
+  </mat-card>
+</div>

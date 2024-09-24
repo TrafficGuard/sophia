@@ -53,6 +53,10 @@
             <span translate>Code Reviews</span>
           </a>
           <mat-divider></mat-divider>
+          <a mat-list-item routerLink="/code" routerLinkActive="active" (click)="isMobile && sidenav.close()">
+            <span translate>Code Operations</span>
+          </a>
+          <mat-divider></mat-divider>
         </mat-list>
       </nav>
     </mat-sidenav>
