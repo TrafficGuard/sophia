@@ -19,7 +19,7 @@ import { functionRegistry } from './functionRegistry';
 import { agentDetailsRoutes } from './routes/agent/agent-details-routes';
 import { agentExecutionRoutes } from './routes/agent/agent-execution-routes';
 import { agentStartRoute } from './routes/agent/agent-start-route';
-import { chatRoutes } from './routes/chat/chat-routes.ts';
+import { chatRoutes } from './routes/chat/chat-routes';
 import { gitlabRoutesV1 } from './routes/gitlab/gitlabRoutes-v1';
 import { llmCallRoutes } from './routes/llms/llm-call-routes';
 import { llmRoutes } from './routes/llms/llm-routes';

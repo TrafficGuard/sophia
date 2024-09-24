@@ -4,7 +4,7 @@ import { logger } from '#o11y/logger';
 import { ProjectInfo } from '#swe/projectDetection';
 import { errorToString } from '#utils/errors';
 import { sophiaDirName } from '../appVars';
-import { Summary, getTopLevelSummary } from './documentationBuilder.ts';
+import { Summary, getTopLevelSummary } from './documentationBuilder';
 
 interface RepositoryMap {
 	text: string;

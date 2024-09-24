@@ -1,11 +1,11 @@
-import { BaseLLM } from '#llm/base-llm.ts';
-import { GenerateTextOptions, LLM } from '#llm/llm.ts';
-import { getLLM } from '#llm/llmFactory.ts';
-import { Claude3_5_Sonnet_Vertex } from '#llm/models/anthropic-vertex.ts';
-import { fireworksLlama3_405B } from '#llm/models/fireworks.ts';
-import { GPT4o } from '#llm/models/openai.ts';
-import { Gemini_1_5_Pro } from '#llm/models/vertexai.ts';
-import { logger } from '#o11y/logger.ts';
+import { BaseLLM } from '#llm/base-llm';
+import { GenerateTextOptions, LLM } from '#llm/llm';
+import { getLLM } from '#llm/llmFactory';
+import { Claude3_5_Sonnet_Vertex } from '#llm/models/anthropic-vertex';
+import { fireworksLlama3_405B } from '#llm/models/fireworks';
+import { GPT4o } from '#llm/models/openai';
+import { Gemini_1_5_Pro } from '#llm/models/vertexai';
+import { logger } from '#o11y/logger';
 
 // sparse multi-agent debate https://arxiv.org/abs/2406.11776
 // self-refine https://arxiv.org/pdf/2303.17651

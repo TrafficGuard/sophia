@@ -6,12 +6,12 @@ import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { shutdownTrace } from '#fastify/trace-init/trace-init';
 import { ClaudeLLMs } from '#llm/models/anthropic';
 import { Claude3_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
-import { cerebrasLlama3_70b } from '#llm/models/cerebras.ts';
-import { deepseekChat } from '#llm/models/deepseek.ts';
-import { groqLlama3_1_70B } from '#llm/models/groq.ts';
-import { GPT4oMini, openAIo1, openAIo1mini } from '#llm/models/openai.ts';
+import { cerebrasLlama3_70b } from '#llm/models/cerebras';
+import { deepseekChat } from '#llm/models/deepseek';
+import { groqLlama3_1_70B } from '#llm/models/groq';
+import { GPT4oMini, openAIo1, openAIo1mini } from '#llm/models/openai';
 import { Gemini_1_5_Flash } from '#llm/models/vertexai';
-import { codebaseQuery } from '#swe/codebaseQuery.ts';
+import { codebaseQuery } from '#swe/codebaseQuery';
 import { initFirestoreApplicationContext } from '../app';
 import { parseProcessArgs, saveAgentId } from './cli';
 

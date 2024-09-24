@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { FileSystem } from '#functions/storage/filesystem';
-import { loadBuildDocsSummaries } from '#swe/repositoryMap.ts';
+import { loadBuildDocsSummaries } from '#swe/repositoryMap';
 import { removeNonExistingFiles } from '#swe/selectFilesToEdit';
 
 describe('removeNonExistingFiles', () => {

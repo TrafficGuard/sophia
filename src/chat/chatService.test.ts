@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { Chat, ChatService } from '#chat/chatTypes';
 
-import { SINGLE_USER_ID } from '#user/userService/inMemoryUserService.ts';
+import { SINGLE_USER_ID } from '#user/userService/inMemoryUserService';
 
 export function runChatServiceTests(createService: () => ChatService, beforeEachHook: () => Promise<void> | void = () => {}) {
 	let service: ChatService;

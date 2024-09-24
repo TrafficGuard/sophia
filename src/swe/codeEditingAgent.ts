@@ -6,7 +6,7 @@ import { Perplexity } from '#functions/web/perplexity';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
 import { CompileErrorAnalysis, CompileErrorAnalysisDetails, analyzeCompileErrors } from '#swe/analyzeCompileErrors';
-import { getRepositoryOverview, getTopLevelSummary } from '#swe/documentationBuilder.ts';
+import { getRepositoryOverview, getTopLevelSummary } from '#swe/documentationBuilder';
 import { reviewChanges } from '#swe/reviewChanges';
 import { supportingInformation } from '#swe/supportingInformation';
 import { execCommand, runShellCommand } from '#utils/exec';

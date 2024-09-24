@@ -1,5 +1,5 @@
 import { assert, expect } from 'chai';
-import { resetFirestoreEmulator } from '#firestore/resetFirestoreEmulator.ts';
+import { resetFirestoreEmulator } from '#firestore/resetFirestoreEmulator';
 import { User } from '#user/user';
 import { FirestoreUserService } from './firestoreUserService';
 

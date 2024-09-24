@@ -1,8 +1,8 @@
-import { getFileSystem, llms } from '#agent/agentContextLocalStorage.ts';
-import { LlmMessage } from '#llm/llm.ts';
-import { getTopLevelSummary } from '#swe/documentationBuilder.ts';
+import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
+import { LlmMessage } from '#llm/llm';
+import { getTopLevelSummary } from '#swe/documentationBuilder';
 import { ProjectInfo, getProjectInfo } from '#swe/projectDetection';
-import { RepositoryMaps, generateRepositoryMaps } from '#swe/repositoryMap.ts';
+import { RepositoryMaps, generateRepositoryMaps } from '#swe/repositoryMap';
 
 interface FileSelection {
 	files: string[];

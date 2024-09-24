@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { logger } from '#o11y/logger.ts';
+import { logger } from '#o11y/logger';
 
 const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST;
 

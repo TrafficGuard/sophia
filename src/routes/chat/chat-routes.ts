@@ -1,12 +1,12 @@
 import { randomUUID } from 'crypto';
 import { Type } from '@sinclair/typebox';
-import { Chat, ChatList } from '#chat/chatTypes.ts';
+import { Chat, ChatList } from '#chat/chatTypes';
 import { send, sendBadRequest } from '#fastify/index';
-import { LLM } from '#llm/llm.ts';
-import { getLLM } from '#llm/llmFactory.ts';
-import { Claude3_5_Sonnet_Vertex } from '#llm/models/anthropic-vertex.ts';
-import { logger } from '#o11y/logger.ts';
-import { currentUser } from '#user/userService/userContext.ts';
+import { LLM } from '#llm/llm';
+import { getLLM } from '#llm/llmFactory';
+import { Claude3_5_Sonnet_Vertex } from '#llm/models/anthropic-vertex';
+import { logger } from '#o11y/logger';
+import { currentUser } from '#user/userService/userContext';
 import { AppFastifyInstance } from '../../app';
 
 const basePath = '/api';

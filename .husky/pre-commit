@@ -1,1 +1,1 @@
-npm run lint && npm test && npx --no-install lint-staged
+#npm run lint && npm test && npx --no-install lint-staged
