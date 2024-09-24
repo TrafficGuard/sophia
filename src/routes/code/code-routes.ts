@@ -17,10 +17,20 @@ export const codeRoutes: RouteOptions[] = [
       },
     },
     handler: async (request, reply) => {
-      const { workingDirectory, requirements } = request.body;
+      const { workingDirectory, requirements } = request.body as { workingDirectory: string; requirements: string };
       const agent = new CodeEditingAgent();
       try {
-        await agent.runCodeEditWorkflow(requirements, { baseDir: workingDirectory });
+        await agent.runCodeEditWorkflow(requirements, { 
+          baseDir: workingDirectory,
+          language: '',
+          languageTools: null,
+          devBranch: '',
+          fileSelection: '',
+          initialise: '',
+          compile: '',
+          staticAnalysis: '',
+          test: ''
+        });
         reply.send({ success: true, message: 'Code edit workflow completed successfully' });
       } catch (error) {
         reply.status(500).send({ success: false, message: error.message });
@@ -40,7 +50,7 @@ export const codeRoutes: RouteOptions[] = [
       },
     },
     handler: async (request, reply) => {
-      const { workingDirectory, query } = request.body;
+      const { workingDirectory, query } = request.body as { workingDirectory: string; query: string };
       try {
         const result = await codebaseQuery(query);
         reply.send(result);
