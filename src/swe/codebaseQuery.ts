@@ -53,7 +53,7 @@ Your first task is from the project outlines to select the minimal list of files
 async function secondPass(query: string, filePaths: string[]): Promise<string[]> {
 	const projectInfo: ProjectInfo = await getProjectInfo();
 	const projectMaps: RepositoryMaps = await generateRepositoryMaps(projectInfo ? [projectInfo] : []);
-
+	const fileContents = await getFileSystem().readFilesAsXml(filePaths);``
 	const prompt = `${await getTopLevelSummary()}
 <project-outline>
 ${projectMaps.fileSystemTreeWithSummaries.text}
@@ -61,40 +61,42 @@ ${projectMaps.fileSystemTreeWithSummaries.text}
 
 <query>${query}</query>
 
-<initial-file-selection>
+<current-file-selection-contents>
+${fileContents}
+</current-file-selection-contents>
+<current-file-selection>
 ${filePaths.join('\n')}
-</initial-file-selection>
+</current-file-selection>
 
-Your task is to refine the initial file selection for the given query. Review the project outline and the initial file selection, then determine if any files should be added or removed from the list.
+Your task is to refine the current file selection for the given query. Review the project outline and the curent file selection, then determine if any files should be added or removed from the list.
 
 1. Analyze the initial file selection in relation to the query.
 2. Identify any missing files that should be added to better answer the query.
 3. Identify any files in the initial selection that may not be necessary or relevant.
 4. Explain your reasoning for any additions or removals.
-5. Provide a final list of files as a JSON object in the following format:
+5. Provide a list of files to add or remove as a JSON object in the following format:
 
 <json>
 {
-  "files": ["path/to/file1.ts", "path/to/file2.ts"],
-  "added": ["path/to/newfile.ts"],
-  "removed": ["path/to/removedfile.ts"]
+  "filesToAdd": ["path/to/newfile.ts"],
+  "filesToRemove": ["path/to/removedfile.ts"]
 }
 </json>
 
 The "files" array should contain the final list of all relevant files. The "added" and "removed" arrays should contain only the changes made to the initial selection.`;
 
 	const result = (await llms().medium.generateJson(prompt)) as {
-		files: string[];
-		added: string[];
-		removed: string[];
+		filesToAdd: string[];
+		filesToRemove: string[];
 	};
 
 	console.log('Second pass file selection:');
-	console.log(`Files: ${result.files.join(', ')}`);
-	console.log(`Added: ${result.added.join(', ')}`);
-	console.log(`Removed: ${result.removed.join(', ')}`);
+	console.log(`Added: ${result.filesToAdd.join(', ')}`);
+	console.log(`Removed: ${result.filesToRemove.join(', ')}`);
 
-	return result.files;
+
+
+	return filePaths;
 }
 
 async function synthesiseResult(query: string, filePaths: string[]): Promise<string> {
