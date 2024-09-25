@@ -93,7 +93,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 			const { workingDirectory, query } = request.body as { workingDirectory: string; query: string };
 			try {
 				const config: RunAgentConfig = {
-					agentName: 'Query: ${query}',
+					agentName: `Query: ${query}`,
 					llms: ClaudeVertexLLMs(),
 					functions: [], //FileSystem,
 					initialPrompt: '',

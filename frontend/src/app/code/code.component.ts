@@ -22,18 +22,18 @@ export class CodeComponent implements OnInit {
       input: ['', Validators.required]
     });
 
-    this.codeService.getRepositories().subscribe(
-      function(repos) {
+    this.codeService.getRepositories().subscribe({
+      next: (repos: string[]) => {
         this.repositories = repos;
         if (repos.length > 0) {
           this.codeForm.patchValue({ workingDirectory: repos[0] });
         }
-      }.bind(this),
-      function(error) {
+      },
+      error: (error: any) => {
         console.error('Error fetching repositories:', error);
         this.result = 'Error fetching repositories. Please try again later.';
-      }.bind(this)
-    );
+      }
+    });
   }
 
   onSubmit() {
@@ -42,27 +42,27 @@ export class CodeComponent implements OnInit {
       const { workingDirectory, operationType, input } = this.codeForm.value;
 
       if (operationType === 'code') {
-        this.codeService.runCodeEditWorkflow(workingDirectory, input).subscribe(
-          function(response) {
+        this.codeService.runCodeEditWorkflow(workingDirectory, input).subscribe({
+          next: (response: any) => {
             this.result = JSON.stringify(response, null, 2);
             this.isLoading = false;
-          }.bind(this),
-          function(error) {
+          },
+          error: (error: any) => {
             this.result = 'Error: ' + error.message;
             this.isLoading = false;
-          }.bind(this)
-        );
+          }
+        });
       } else {
-        this.codeService.runCodebaseQuery(workingDirectory, input).subscribe(
-          function(response) {
+        this.codeService.runCodebaseQuery(workingDirectory, input).subscribe({
+          next: (response: string) => {
             this.result = response;
             this.isLoading = false;
-          }.bind(this),
-          function(error) {
+          },
+          error: (error: any) => {
             this.result = 'Error: ' + error.message;
             this.isLoading = false;
-          }.bind(this)
-        );
+          }
+        });
       }
     }
   }
