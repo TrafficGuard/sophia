@@ -5,7 +5,7 @@ import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { logger } from '#o11y/logger';
 import { getRepositoryOverview } from '#swe/documentationBuilder';
 import { RepositoryMaps, generateRepositoryMaps } from '#swe/repositoryMap';
-import { ProjectInfo } from './projectDetection';
+import {getProjectInfo, ProjectInfo} from './projectDetection';
 
 export interface SelectFilesResponse {
 	primaryFiles: SelectedFile[];
@@ -17,7 +17,13 @@ export interface SelectedFile {
 	reason: string;
 }
 
-export async function selectFilesToEdit(requirements: string, projectInfo: ProjectInfo): Promise<SelectFilesResponse> {
+/**
+ *
+ * @param requirements
+ * @param projectInfo
+ */
+export async function selectFilesToEdit(requirements: string, projectInfo?: ProjectInfo): Promise<SelectFilesResponse> {
+	projectInfo ??= await getProjectInfo();
 	const projectMaps: RepositoryMaps = await generateRepositoryMaps([projectInfo]);
 
 	const tokenizer = await createByModelName('gpt-4o'); // TODO model specific tokenizing
@@ -72,7 +78,7 @@ The file paths MUST exist in the <project_map /> file_contents path attributes.
 	return selectedFiles;
 }
 
-function createAnalysisPrompt(requirements: string, file: SelectedFile, fileContents: string): string {
+function keepOrRemoveFileAnalysisPrompt(requirements: string, file: SelectedFile, fileContents: string): string {
 	return `
 <file_path>${file.path}</file_path>
 
@@ -102,7 +108,7 @@ export async function removeUnrelatedFiles(requirements: string, fileSelection: 
 	const analyzeFile = async (file: SelectedFile): Promise<{ file: SelectedFile; isRelated: boolean; explanation: string }> => {
 		const fileSystem = getFileSystem();
 		const fileContents = (await fs.readFile(path.join(fileSystem.getWorkingDirectory(), file.path))).toString(); // TODO access filesystem directly to avoid lots of function calls
-		const prompt = createAnalysisPrompt(requirements, file, fileContents);
+		const prompt = keepOrRemoveFileAnalysisPrompt(requirements, file, fileContents);
 
 		const jsonResult = await llms().easy.generateJson(
 			prompt,
