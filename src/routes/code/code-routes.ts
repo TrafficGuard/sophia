@@ -8,7 +8,27 @@ import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { codebaseQuery } from '#swe/codebaseQuery';
 import { AppFastifyInstance } from '../../app';
+import * as fs from 'fs';
+import * as path from 'path';
 
+
+function findRepositories(dir: string): string[] {
+    const repos: string[] = [];
+    const items = fs.readdirSync(dir, { withFileTypes: true });
+
+    for (const item of items) {
+        if (item.isDirectory()) {
+            const fullPath = path.join(dir, item.name);
+            if (fs.existsSync(path.join(fullPath, '.git'))) {
+                repos.push(fullPath);
+            } else {
+                repos.push(...findRepositories(fullPath));
+            }
+        }
+    }
+
+    return repos;
+}
 
 export async function codeRoutes(fastify: AppFastifyInstance) {
 	// /get
@@ -97,4 +117,19 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 			}
 		},
 	);
+
+	fastify.get('/api/code/repositories', async (request, reply) => {
+		try {
+			const workingDirectory = process.cwd();
+			const gitlabRepos = findRepositories(path.join(workingDirectory, 'gitlab'));
+			const githubRepos = findRepositories(path.join(workingDirectory, 'github'));
+
+			const allRepos = [workingDirectory, ...gitlabRepos, ...githubRepos];
+
+			reply.send(allRepos);
+		} catch (error) {
+			logger.error(error, 'Error fetching repositories');
+			reply.status(500).send({ error: 'Internal Server Error' });
+		}
+	});
 }
