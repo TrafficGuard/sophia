@@ -9,14 +9,19 @@ interface FileSelection {
 }
 
 export async function codebaseQuery(query: string): Promise<string> {
+	let fileSelection = await firstPass(query);
+	fileSelection = await secondPass(query, fileSelection);
+	return synthesiseResult(query, fileSelection);
+}
+
+async function firstPass(query: string): Promise<string[]> {
 	const projectInfo: ProjectInfo = await getProjectInfo();
 	const projectMaps: RepositoryMaps = await generateRepositoryMaps(projectInfo ? [projectInfo] : []);
 
-	const messages: LlmMessage[] = [];
-
 	console.log(projectMaps.fileSystemTreeWithSummaries.text);
 	console.log(projectMaps.fileSystemTreeWithSummaries.tokens);
-	const prompt = `<project-outline>
+	const prompt = `${await getTopLevelSummary()}
+<project-outline>
 ${projectMaps.fileSystemTreeWithSummaries.text}
 <project-outline>
 
@@ -34,16 +39,23 @@ Your first task is from the project outlines to select the minimal list of files
 
 4. Reflect on your initial list and review the selections, whether any files could be removed, or if any particular files need to be added, and why.
 
-5. Finally, taking your reflection into account, respond with the final file selection as a JSON object in the format:
+5. Finally, taking your reflection into account, respond with the final full file path selections as a JSON object in the format:
 <json>
-{ "files": ["dir/file1", "dir/file1"] } 
+{ "files": ["config.json", "dir1/dir2/file1.txt", "dir1/dir2/dir3/source.ts"] } 
 </json>
 `;
 
-	const selection = (await llms().medium.generateJson(prompt)) as FileSelection;
+	const fileSelection = (await llms().medium.generateJson(prompt)) as FileSelection;
+	console.log(`${fileSelection.files.join('\n')}\n\n`);
+	return fileSelection.files;
+}
 
-	console.log(`${selection.files.join('\n')}\n\n`);
-	const fileContents = await getFileSystem().readFilesAsXml(selection.files);
+async function secondPass(query: string, filePaths: string[]): Promise<string[]> {
+	return []
+}
+
+async function synthesiseResult(query: string, filePaths: string[]): Promise<string> {
+	const fileContents = await getFileSystem().readFilesAsXml(filePaths);
 
 	const resultPrompt = `
 	${await getTopLevelSummary()}
@@ -60,6 +72,5 @@ Your first task is from the project outlines to select the minimal list of files
 	3. Output your final query response within <result></result> tags
 	`;
 
-	const response = await llms().medium.generateTextWithResult(resultPrompt);
-	return response;
+	return await llms().medium.generateTextWithResult(resultPrompt, null, {id:'codebase query synthesis'});
 }
