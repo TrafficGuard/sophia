@@ -53,7 +53,7 @@ Your first task is from the project outlines to select the minimal list of files
 async function secondPass(query: string, filePaths: string[]): Promise<string[]> {
 	const projectInfo: ProjectInfo = await getProjectInfo();
 	const projectMaps: RepositoryMaps = await generateRepositoryMaps(projectInfo ? [projectInfo] : []);
-	const fileContents = await getFileSystem().readFilesAsXml(filePaths);``
+	const fileContents = await getFileSystem().readFilesAsXml(filePaths);
 	const prompt = `${await getTopLevelSummary()}
 <project-outline>
 ${projectMaps.fileSystemTreeWithSummaries.text}
@@ -68,7 +68,7 @@ ${fileContents}
 ${filePaths.join('\n')}
 </current-file-selection>
 
-Your task is to refine the current file selection for the given query. Review the project outline and the curent file selection, then determine if any files should be added or removed from the list.
+Your task is to refine the current file selection for the given query. Review the project outline and the current file selection, then determine if any files should be added or removed from the list.
 
 1. Analyze the initial file selection in relation to the query.
 2. Identify any missing files that should be added to better answer the query.
@@ -83,7 +83,7 @@ Your task is to refine the current file selection for the given query. Review th
 }
 </json>
 
-The "files" array should contain the final list of all relevant files. The "added" and "removed" arrays should contain only the changes made to the initial selection.`;
+The "filesToAdd" array should contain new files to add. The "filesToRemove" array should contain files to remove from the initial selection.`;
 
 	const result = (await llms().medium.generateJson(prompt)) as {
 		filesToAdd: string[];
@@ -94,7 +94,15 @@ The "files" array should contain the final list of all relevant files. The "adde
 	console.log(`Added: ${result.filesToAdd.join(', ')}`);
 	console.log(`Removed: ${result.filesToRemove.join(', ')}`);
 
+	// Add new files
+	for (const fileToAdd of result.filesToAdd) {
+		if (!filePaths.includes(fileToAdd)) {
+			filePaths.push(fileToAdd);
+		}
+	}
 
+	// Remove files
+	filePaths = filePaths.filter(file => !result.filesToRemove.includes(file));
 
 	return filePaths;
 }
