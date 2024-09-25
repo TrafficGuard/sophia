@@ -8,7 +8,7 @@ import { CodeService } from '@app/shared/services/code.service';
   styleUrls: ['./code.component.scss']
 })
 export class CodeComponent implements OnInit {
-  codeForm: FormGroup;
+  codeForm!: FormGroup;
   result: string = '';
   isLoading: boolean = false;
 
@@ -26,7 +26,7 @@ export class CodeComponent implements OnInit {
     if (this.codeForm.valid) {
       this.isLoading = true;
       const { workingDirectory, operationType, input } = this.codeForm.value;
-      
+
       if (operationType === 'code') {
         this.codeService.runCodeEditWorkflow(workingDirectory, input).subscribe(
           response => {
