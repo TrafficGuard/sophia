@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import { Type } from '@sinclair/typebox';
 import { getFileSystem } from '#agent/agentContextLocalStorage';
 import { RunAgentConfig } from '#agent/agentRunner';
@@ -8,26 +10,24 @@ import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { codebaseQuery } from '#swe/codebaseQuery';
 import { AppFastifyInstance } from '../../app';
-import * as fs from 'fs';
-import * as path from 'path';
-
+import { systemDir } from '../../appVars';
 
 function findRepositories(dir: string): string[] {
-    const repos: string[] = [];
-    const items = fs.readdirSync(dir, { withFileTypes: true });
+	const repos: string[] = [];
+	const items = fs.readdirSync(dir, { withFileTypes: true });
 
-    for (const item of items) {
-        if (item.isDirectory()) {
-            const fullPath = path.join(dir, item.name);
-            if (fs.existsSync(path.join(fullPath, '.git'))) {
-                repos.push(fullPath);
-            } else {
-                repos.push(...findRepositories(fullPath));
-            }
-        }
-    }
+	for (const item of items) {
+		if (item.isDirectory()) {
+			const fullPath = path.join(dir, item.name);
+			if (fs.existsSync(path.join(fullPath, '.git'))) {
+				repos.push(fullPath);
+			} else {
+				repos.push(...findRepositories(fullPath));
+			}
+		}
+	}
 
-    return repos;
+	return repos;
 }
 
 export async function codeRoutes(fastify: AppFastifyInstance) {
@@ -67,8 +67,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 				};
 
 				await runAgentWorkflow(config, async () => {
-					if(workingDirectory?.trim())
-						getFileSystem().setWorkingDirectory(workingDirectory)
+					if (workingDirectory?.trim()) getFileSystem().setWorkingDirectory(workingDirectory);
 					await new CodeEditingAgent().runCodeEditWorkflow(config.initialPrompt);
 				});
 
@@ -87,7 +86,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 				body: Type.Object({
 					workingDirectory: Type.String(),
 					query: Type.String(),
-				})
+				}),
 			},
 		},
 		async (request, reply) => {
@@ -105,8 +104,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 
 				let response = '';
 				await runAgentWorkflow(config, async () => {
-					if(workingDirectory?.trim())
-						getFileSystem().setWorkingDirectory(workingDirectory)
+					if (workingDirectory?.trim()) getFileSystem().setWorkingDirectory(workingDirectory);
 					response = await codebaseQuery(query);
 				});
 
@@ -121,8 +119,8 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 	fastify.get('/api/code/repositories', async (request, reply) => {
 		try {
 			const workingDirectory = process.cwd();
-			const gitlabRepos = findRepositories(path.join(workingDirectory, 'gitlab'));
-			const githubRepos = findRepositories(path.join(workingDirectory, 'github'));
+			const gitlabRepos = findRepositories(path.join(systemDir(), 'gitlab'));
+			const githubRepos = findRepositories(path.join(systemDir(), 'github'));
 
 			const allRepos = [workingDirectory, ...gitlabRepos, ...githubRepos];
 
