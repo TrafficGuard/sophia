@@ -75,7 +75,75 @@ The file paths MUST exist in the <project_map /> file_contents path attributes.
 
 	selectedFiles = await removeUnrelatedFiles(requirements, selectedFiles);
 
+	// Perform second pass
+	selectedFiles = await secondPass(requirements, selectedFiles);
+
 	return selectedFiles;
+}
+
+async function secondPass(requirements: string, initialSelection: SelectFilesResponse): Promise<SelectFilesResponse> {
+	const fileSystem = getFileSystem();
+	const allFiles = [...initialSelection.primaryFiles, ...initialSelection.secondaryFiles];
+	const fileContents = await fileSystem.readFilesAsXml(allFiles.map(file => file.path));
+
+	const prompt = `
+<requirements>${requirements}</requirements>
+
+<current-file-selection-contents>
+${fileContents}
+</current-file-selection-contents>
+
+<current-file-selection>
+${JSON.stringify(initialSelection, null, 2)}
+</current-file-selection>
+
+Your task is to refine the current file selection for the given requirements. Review the current file selection and their contents, then determine if any files should be added or removed from the list.
+
+1. Analyze the initial file selection in relation to the requirements.
+2. Identify any missing files that should be added to better meet the requirements.
+3. Identify any files in the initial selection that may not be necessary or relevant.
+4. Explain your reasoning for any additions or removals.
+5. Provide a list of files to add or remove as a JSON object in the following format:
+
+<json>
+{
+  "filesToAdd": [
+    { "path": "/path/to/newfile.ts", "reason": "Reason for adding", "type": "primary/secondary" }
+  ],
+  "filesToRemove": [
+    { "path": "/path/to/removedfile.ts", "reason": "Reason for removing" }
+  ]
+}
+</json>
+
+The "filesToAdd" array should contain new files to add, specifying whether they are primary or secondary. The "filesToRemove" array should contain files to remove from the initial selection.`;
+
+	const result = (await llms().medium.generateJson(prompt)) as {
+		filesToAdd: { path: string; reason: string; type: 'primary' | 'secondary' }[];
+		filesToRemove: { path: string; reason: string }[];
+	};
+
+	logger.info(`Second pass file selection. Added: [${result.filesToAdd.map(f => f.path).join(', ')}]. Removed: [${result.filesToRemove.map(f => f.path).join(', ')}]`);
+
+	// Remove files
+	initialSelection.primaryFiles = initialSelection.primaryFiles.filter(file => !result.filesToRemove.some(r => r.path === file.path));
+	initialSelection.secondaryFiles = initialSelection.secondaryFiles.filter(file => !result.filesToRemove.some(r => r.path === file.path));
+
+	// Add new files
+	for (const fileToAdd of result.filesToAdd) {
+		const newFile = { path: fileToAdd.path, reason: fileToAdd.reason };
+		if (fileToAdd.type === 'primary') {
+			if (!initialSelection.primaryFiles.some(f => f.path === fileToAdd.path)) {
+				initialSelection.primaryFiles.push(newFile);
+			}
+		} else {
+			if (!initialSelection.secondaryFiles.some(f => f.path === fileToAdd.path)) {
+				initialSelection.secondaryFiles.push(newFile);
+			}
+		}
+	}
+
+	return initialSelection;
 }
 
 function keepOrRemoveFileAnalysisPrompt(requirements: string, file: SelectedFile, fileContents: string): string {
