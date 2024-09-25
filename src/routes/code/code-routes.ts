@@ -9,7 +9,7 @@ import { Gemini_1_5_Flash } from '#llm/models/vertexai';
 import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { codebaseQuery } from '#swe/codebaseQuery';
-import { selectFilesToEdit, SelectFilesResponse } from '#swe/selectFilesToEdit';
+import { SelectFilesResponse, selectFilesToEdit } from '#swe/selectFilesToEdit';
 import { AppFastifyInstance } from '../../app';
 import { systemDir } from '../../appVars';
 
@@ -151,7 +151,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 				logger.error(error, 'Error running select files to edit');
 				reply.status(500).send(error.message);
 			}
-		}
+		},
 	);
 
 	fastify.get('/api/code/repositories', async (request, reply) => {
