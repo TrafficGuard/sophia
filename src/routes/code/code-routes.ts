@@ -127,7 +127,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 				}),
 			},
 		},
-		async (request, reply) => {
+		function (request, reply) {
 			const { workingDirectory, requirements } = request.body as { workingDirectory: string; requirements: string };
 			try {
 				const config: RunAgentConfig = {
@@ -141,12 +141,15 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 				};
 
 				let response: SelectFilesResponse;
-				await runAgentWorkflow(config, async () => {
+				runAgentWorkflow(config, async () => {
 					if (workingDirectory?.trim()) getFileSystem().setWorkingDirectory(workingDirectory);
 					response = await selectFilesToEdit(requirements);
+				}).then(() => {
+					reply.send(response);
+				}).catch((error) => {
+					logger.error(error, 'Error running select files to edit');
+					reply.status(500).send(error.message);
 				});
-
-				reply.send(response);
 			} catch (error) {
 				logger.error(error, 'Error running select files to edit');
 				reply.status(500).send(error.message);
