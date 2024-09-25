@@ -11,6 +11,7 @@ export class CodeComponent implements OnInit {
   codeForm!: FormGroup;
   result: string = '';
   isLoading: boolean = false;
+  repositories: string[] = [];
 
   constructor(private fb: FormBuilder, private codeService: CodeService) {}
 
@@ -20,6 +21,18 @@ export class CodeComponent implements OnInit {
       operationType: ['code', Validators.required],
       input: ['', Validators.required]
     });
+
+    this.codeService.getRepositories().subscribe(
+      repos => {
+        this.repositories = repos;
+        if (repos.length > 0) {
+          this.codeForm.patchValue({ workingDirectory: repos[0] });
+        }
+      },
+      error => {
+        console.error('Error fetching repositories:', error);
+      }
+    );
   }
 
   onSubmit() {

@@ -17,4 +17,8 @@ export class CodeService {
   runCodebaseQuery(workingDirectory: string, query: string): Observable<string> {
     return this.http.post<string>(`${environment.serverUrl}/code/query`, { workingDirectory, query });
   }
+
+  getRepositories(): Observable<string[]> {
+    return this.http.get<string[]>(`${environment.serverUrl}/api/code/repositories`);
+  }
 }

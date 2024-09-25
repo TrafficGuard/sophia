@@ -3,7 +3,11 @@
   <form [formGroup]="codeForm" (ngSubmit)="onSubmit()">
     <mat-form-field appearance="fill">
       <mat-label>Working Directory</mat-label>
-      <input matInput formControlName="workingDirectory" required>
+      <mat-select formControlName="workingDirectory" required>
+        <mat-option *ngFor="let repo of repositories" [value]="repo">
+          {{repo}}
+        </mat-option>
+      </mat-select>
     </mat-form-field>
 
     <mat-form-field appearance="fill">
