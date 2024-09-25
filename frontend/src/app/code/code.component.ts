@@ -54,8 +54,9 @@ export class CodeComponent implements OnInit {
         });
       } else {
         this.codeService.runCodebaseQuery(workingDirectory, input).subscribe({
-          next: (response: string) => {
-            this.result = response;
+          next: (response) => {
+            console.log(response)
+            this.result = response.response;
             this.isLoading = false;
           },
           error: (error: any) => {

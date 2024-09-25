@@ -14,11 +14,11 @@ export class CodeService {
     return this.http.post(`${environment.serverUrl}/code/edit`, { workingDirectory, requirements });
   }
 
-  runCodebaseQuery(workingDirectory: string, query: string): Observable<string> {
-    return this.http.post<string>(`${environment.serverUrl}/code/query`, { workingDirectory, query });
+  runCodebaseQuery(workingDirectory: string, query: string): Observable<{response:string}> {
+    return this.http.post<{response:string}>(`${environment.serverUrl}/code/query`, { workingDirectory, query });
   }
 
   getRepositories(): Observable<string[]> {
-    return this.http.get<string[]>(`${environment.serverUrl}/api/code/repositories`);
+    return this.http.get<string[]>(`${environment.serverUrl}/code/repositories`);
   }
 }

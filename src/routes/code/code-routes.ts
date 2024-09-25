@@ -108,7 +108,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 					response = await codebaseQuery(query);
 				});
 
-				reply.send(response);
+				reply.send({ response });
 			} catch (error) {
 				logger.error(error, 'Error running codebase query');
 				reply.status(500).send(error.message);
@@ -122,7 +122,11 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 			const gitlabRepos = findRepositories(path.join(systemDir(), 'gitlab'));
 			const githubRepos = findRepositories(path.join(systemDir(), 'github'));
 
-			const allRepos = [workingDirectory, ...gitlabRepos, ...githubRepos];
+			const allRepos = [
+				workingDirectory,
+				...gitlabRepos.map((path) => path.replace(systemDir(), '.')),
+				...githubRepos.map((path) => path.replace(systemDir(), '.')),
+			];
 
 			reply.send(allRepos);
 		} catch (error) {
