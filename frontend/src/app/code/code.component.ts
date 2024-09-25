@@ -71,11 +71,11 @@ export class CodeComponent implements OnInit {
 
   private runCodeEditWorkflow(workingDirectory: string, input: string) {
     this.codeService.runCodeEditWorkflow(workingDirectory, input).subscribe({
-      next: (response: any) => {
+      next: response => {
         this.result = JSON.stringify(response, null, 2);
         this.isLoading = false;
       },
-      error: (error: any) => {
+      error: error => {
         this.result = 'Error: ' + error.message;
         this.isLoading = false;
       }
@@ -84,11 +84,11 @@ export class CodeComponent implements OnInit {
 
   private runCodebaseQuery(workingDirectory: string, input: string) {
     this.codeService.runCodebaseQuery(workingDirectory, input).subscribe({
-      next: (response) => {
+      next: response => {
         this.result = response.response;
         this.isLoading = false;
       },
-      error: (error: any) => {
+      error: error => {
         this.result = 'Error: ' + error.message;
         this.isLoading = false;
       }
@@ -97,11 +97,11 @@ export class CodeComponent implements OnInit {
 
   private selectFilesToEdit(workingDirectory: string, input: string) {
     this.codeService.selectFilesToEdit(workingDirectory, input).subscribe({
-      next: (response: any) => {
+      next: response => {
         this.result = JSON.stringify(response, null, 2);
         this.isLoading = false;
       },
-      error: (error: any) => {
+      error: error => {
         this.result = 'Error: ' + error.message;
         this.isLoading = false;
       }
