@@ -71,9 +71,11 @@ function extractFunctions(fileContents: string): Record<string, string> {
 	// In a real implementation, you'd use an AST parser for more accurate extraction.
 	const functionRegex = /function\s+(\w+)\s*\([\s\S]*?\)\s*{[\s\S]*?}/g;
 	const functions: Record<string, string> = {};
-	let match;
-	while ((match = functionRegex.exec(fileContents)) !== null) {
+	let match: RegExpExecArray | null;
+	match = functionRegex.exec(fileContents);
+	while (match !== null) {
 		functions[match[1]] = match[0];
+		match = functionRegex.exec(fileContents);
 	}
 	return functions;
 }
