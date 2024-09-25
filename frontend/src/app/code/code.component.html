@@ -15,11 +15,12 @@
       <mat-select formControlName="operationType" required>
         <mat-option value="code">Code Edit Workflow</mat-option>
         <mat-option value="query">Codebase Query</mat-option>
+        <mat-option value="selectFiles">Select Files To Edit</mat-option>
       </mat-select>
     </mat-form-field>
 
     <mat-form-field appearance="fill">
-      <mat-label>Input</mat-label>
+      <mat-label>{{ getInputLabel() }}</mat-label>
       <textarea matInput formControlName="input" rows="4" required></textarea>
     </mat-form-field>
 

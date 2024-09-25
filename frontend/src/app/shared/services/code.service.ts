@@ -18,6 +18,10 @@ export class CodeService {
     return this.http.post<{response:string}>(`${environment.serverUrl}/code/query`, { workingDirectory, query });
   }
 
+  selectFilesToEdit(workingDirectory: string, requirements: string): Observable<any> {
+    return this.http.post(`${environment.serverUrl}/code/select-files`, { workingDirectory, requirements });
+  }
+
   getRepositories(): Observable<string[]> {
     return this.http.get<string[]>(`${environment.serverUrl}/code/repositories`);
   }

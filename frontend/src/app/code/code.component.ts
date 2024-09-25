@@ -36,35 +36,75 @@ export class CodeComponent implements OnInit {
     });
   }
 
+  getInputLabel(): string {
+    const operationType = this.codeForm.get('operationType')?.value;
+    switch (operationType) {
+      case 'code':
+        return 'Requirements';
+      case 'query':
+        return 'Query';
+      case 'selectFiles':
+        return 'Requirements for File Selection';
+      default:
+        return 'Input';
+    }
+  }
+
   onSubmit() {
     if (this.codeForm.valid) {
       this.isLoading = true;
       const { workingDirectory, operationType, input } = this.codeForm.value;
 
-      if (operationType === 'code') {
-        this.codeService.runCodeEditWorkflow(workingDirectory, input).subscribe({
-          next: (response: any) => {
-            this.result = JSON.stringify(response, null, 2);
-            this.isLoading = false;
-          },
-          error: (error: any) => {
-            this.result = 'Error: ' + error.message;
-            this.isLoading = false;
-          }
-        });
-      } else {
-        this.codeService.runCodebaseQuery(workingDirectory, input).subscribe({
-          next: (response) => {
-            console.log(response)
-            this.result = response.response;
-            this.isLoading = false;
-          },
-          error: (error: any) => {
-            this.result = 'Error: ' + error.message;
-            this.isLoading = false;
-          }
-        });
+      switch (operationType) {
+        case 'code':
+          this.runCodeEditWorkflow(workingDirectory, input);
+          break;
+        case 'query':
+          this.runCodebaseQuery(workingDirectory, input);
+          break;
+        case 'selectFiles':
+          this.selectFilesToEdit(workingDirectory, input);
+          break;
       }
     }
+  }
+
+  private runCodeEditWorkflow(workingDirectory: string, input: string) {
+    this.codeService.runCodeEditWorkflow(workingDirectory, input).subscribe({
+      next: (response: any) => {
+        this.result = JSON.stringify(response, null, 2);
+        this.isLoading = false;
+      },
+      error: (error: any) => {
+        this.result = 'Error: ' + error.message;
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private runCodebaseQuery(workingDirectory: string, input: string) {
+    this.codeService.runCodebaseQuery(workingDirectory, input).subscribe({
+      next: (response) => {
+        this.result = response.response;
+        this.isLoading = false;
+      },
+      error: (error: any) => {
+        this.result = 'Error: ' + error.message;
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private selectFilesToEdit(workingDirectory: string, input: string) {
+    this.codeService.selectFilesToEdit(workingDirectory, input).subscribe({
+      next: (response: any) => {
+        this.result = JSON.stringify(response, null, 2);
+        this.isLoading = false;
+      },
+      error: (error: any) => {
+        this.result = 'Error: ' + error.message;
+        this.isLoading = false;
+      }
+    });
   }
 }

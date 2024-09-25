@@ -9,6 +9,7 @@ import { Gemini_1_5_Flash } from '#llm/models/vertexai';
 import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { codebaseQuery } from '#swe/codebaseQuery';
+import { selectFilesToEdit, SelectFilesResponse } from '#swe/selectFilesToEdit';
 import { AppFastifyInstance } from '../../app';
 import { systemDir } from '../../appVars';
 
@@ -114,6 +115,43 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 				reply.status(500).send(error.message);
 			}
 		},
+	);
+
+	fastify.post(
+		'/api/code/select-files',
+		{
+			schema: {
+				body: Type.Object({
+					workingDirectory: Type.String(),
+					requirements: Type.String(),
+				}),
+			},
+		},
+		async (request, reply) => {
+			const { workingDirectory, requirements } = request.body as { workingDirectory: string; requirements: string };
+			try {
+				const config: RunAgentConfig = {
+					agentName: `Select Files: ${requirements}`,
+					llms: ClaudeVertexLLMs(),
+					functions: [],
+					initialPrompt: '',
+					humanInLoop: {
+						budget: 2,
+					},
+				};
+
+				let response: SelectFilesResponse;
+				await runAgentWorkflow(config, async () => {
+					if (workingDirectory?.trim()) getFileSystem().setWorkingDirectory(workingDirectory);
+					response = await selectFilesToEdit(requirements);
+				});
+
+				reply.send(response);
+			} catch (error) {
+				logger.error(error, 'Error running select files to edit');
+				reply.status(500).send(error.message);
+			}
+		}
 	);
 
 	fastify.get('/api/code/repositories', async (request, reply) => {
