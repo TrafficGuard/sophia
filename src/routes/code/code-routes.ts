@@ -49,7 +49,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 			let agentName = 'code-ui';
 			try {
 				agentName = await Gemini_1_5_Flash().generateText(
-					`<requirements>${requirements}</requirements>\nGenerate a summary of the requirements in a short sentence. Only output the summary, nothing else.`,
+					'<requirements>${requirements}</requirements>\nGenerate a summary of the requirements in a short sentence. Only output the summary, nothing else.',
 				);
 			} catch (e) {
 				logger.error('Error generating code agent name', e);
@@ -93,7 +93,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 			const { workingDirectory, query } = request.body as { workingDirectory: string; query: string };
 			try {
 				const config: RunAgentConfig = {
-					agentName: `Query: ${query}`,
+					agentName: 'Query: ${query}',
 					llms: ClaudeVertexLLMs(),
 					functions: [], //FileSystem,
 					initialPrompt: '',

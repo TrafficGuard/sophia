@@ -23,15 +23,16 @@ export class CodeComponent implements OnInit {
     });
 
     this.codeService.getRepositories().subscribe(
-      repos => {
+      function(repos) {
         this.repositories = repos;
         if (repos.length > 0) {
           this.codeForm.patchValue({ workingDirectory: repos[0] });
         }
-      },
-      error => {
+      }.bind(this),
+      function(error) {
         console.error('Error fetching repositories:', error);
-      }
+        this.result = 'Error fetching repositories. Please try again later.';
+      }.bind(this)
     );
   }
 
@@ -42,25 +43,25 @@ export class CodeComponent implements OnInit {
 
       if (operationType === 'code') {
         this.codeService.runCodeEditWorkflow(workingDirectory, input).subscribe(
-          response => {
+          function(response) {
             this.result = JSON.stringify(response, null, 2);
             this.isLoading = false;
-          },
-          error => {
+          }.bind(this),
+          function(error) {
             this.result = 'Error: ' + error.message;
             this.isLoading = false;
-          }
+          }.bind(this)
         );
       } else {
         this.codeService.runCodebaseQuery(workingDirectory, input).subscribe(
-          response => {
+          function(response) {
             this.result = response;
             this.isLoading = false;
-          },
-          error => {
+          }.bind(this),
+          function(error) {
             this.result = 'Error: ' + error.message;
             this.isLoading = false;
-          }
+          }.bind(this)
         );
       }
     }
