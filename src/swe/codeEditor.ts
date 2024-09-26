@@ -78,8 +78,9 @@ export class CodeEditor {
 		// as we want all the 'system' files in one place.
 		const llmHistoryFolder = join(systemDir(), 'aider/llm-history');
 		await promisify(fs.mkdir)(llmHistoryFolder, { recursive: true });
-		const llmHistoryFile = `${llmHistoryFolder}/${agentContext().agentId}-${Date.now()}`;
+		const llmHistoryFile = `${llmHistoryFolder}/${getFormattedDate}__${agentContext().agentId}}`;
 
+		logger.info(`LLM history file ${llmHistoryFile}`);
 		try {
 			writeFileSync(llmHistoryFile, '');
 		} catch (e) {
@@ -92,9 +93,9 @@ export class CodeEditor {
 		// Due to limitations in the provider APIs, caching statistics and costs are not available when streaming responses.
 		// --map-tokens=2048
 		// Use the Python from the Sophia .python-version as it will have aider installed
-		const cmd = `${getPythonPath()} -m aider --no-check-update --no-stream --yes ${modelArg} --llm-history-file="${llmHistoryFile}" --message-file=${messageFilePath} ${filesToEdit
-			.map((file) => `"${file}"`)
-			.join(' ')}`;
+		const fileToEditArg = filesToEdit.map((file) => `"${file}"`).join(' ');
+		logger.info(fileToEditArg);
+		const cmd = `${getPythonPath()} -m aider --no-check-update --no-stream --yes ${modelArg} --llm-history-file="${llmHistoryFile}" --message-file=${messageFilePath} ${fileToEditArg}`;
 
 		const { stdout, stderr, exitCode } = await execCommand(cmd, { envVars: env });
 		if (stdout) logger.info(stdout);
@@ -148,4 +149,16 @@ export function getPythonPath() {
 	const pythonVersion = fs.readFileSync(pythonVersionFile, 'utf8').trim();
 	// Use pyenv to find the path of the specified Python version
 	return `${execSync(`pyenv prefix ${pythonVersion}`, { encoding: 'utf8' }).trim()}/bin/python`;
+}
+
+function getFormattedDate() {
+	const now = new Date();
+
+	const year = now.getFullYear();
+	const month = String(now.getMonth() + 1).padStart(2, '0');
+	const day = String(now.getDate()).padStart(2, '0');
+	const hours = String(now.getHours()).padStart(2, '0');
+	const minutes = String(now.getMinutes()).padStart(2, '0');
+	const seconds = String(now.getSeconds()).padStart(2, '0');
+	return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
 }

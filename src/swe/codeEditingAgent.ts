@@ -152,6 +152,8 @@ export class CodeEditingAgent {
 				// Start with the installed packages list and project conventions
 				let codeEditorRequirements = await supportingInformation(projectInfo);
 
+				codeEditorRequirements += '\nEnsure when making edits that any existing code comments are retained.\n';
+
 				// If the project doesn't compile or previous edit caused compile errors then we will create a requirements specifically for fixing any compile errors first before making more functionality changes
 				if (compileErrorAnalysis) {
 					const installPackages = compileErrorAnalysis.installPackages ?? [];

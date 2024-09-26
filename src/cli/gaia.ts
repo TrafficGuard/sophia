@@ -138,7 +138,7 @@ async function main() {
 		llms = ClaudeLLMs();
 	}
 
-	const args = process.argv.splice(2);
+	const args = process.argv.slice(2);
 	const questions = JSON.parse(readFileSync(tasksFile).toString()) as GaiaQuestion[];
 	if (args.length === 0) {
 		logger.info('Running entire Gaia benchmark...');

@@ -2,9 +2,7 @@ import { getFileSystem } from '#agent/agentContextLocalStorage';
 import { countTokens } from '#llm/tokens';
 import { logger } from '#o11y/logger';
 import { ProjectInfo } from '#swe/projectDetection';
-import { errorToString } from '#utils/errors';
-import { sophiaDirName } from '../appVars';
-import { Summary, getTopLevelSummary } from './documentationBuilder';
+import { Summary, getTopLevelSummary, loadBuildDocsSummaries } from './documentationBuilder';
 
 interface RepositoryMap {
 	text: string;
@@ -59,7 +57,7 @@ async function generateFolderTreeWithSummaries(summaries: Map<string, Summary>):
 
 	for (const [folderPath, files] of Object.entries(treeStructure)) {
 		const folderSummary = summaries.get(folderPath);
-		documentation += `${folderPath}/ (${files.length} files)  ${folderSummary ? `  ${folderSummary.sentence}` : ''}\n`;
+		documentation += `${folderPath}/ (${files.length} files)  ${folderSummary ? `  ${folderSummary.short}` : ''}\n`;
 		documentation += '\n';
 	}
 	return documentation;
@@ -77,13 +75,13 @@ async function generateFileSystemTreeWithSummaries(summaries: Map<string, Summar
 
 	for (const [folderPath, files] of Object.entries(treeStructure)) {
 		const folderSummary = summaries.get(folderPath);
-		documentation += `${folderPath}/  ${folderSummary ? `  ${folderSummary.sentence}` : ''}\n`;
+		documentation += `${folderPath}/  ${folderSummary ? `  ${folderSummary.short}` : ''}\n`;
 
 		for (const file of files) {
 			const filePath = `${folderPath}/${file}`;
 			const fileSummary = summaries.get(filePath);
 			if (fileSummary && includeFileSummaries) {
-				documentation += `  ${file}  ${fileSummary.sentence}\n`;
+				documentation += `  ${file}  ${fileSummary.short}\n`;
 			} else {
 				documentation += `  ${file}\n`;
 			}
@@ -91,46 +89,4 @@ async function generateFileSystemTreeWithSummaries(summaries: Map<string, Summar
 		documentation += '\n';
 	}
 	return documentation;
-}
-
-export async function loadBuildDocsSummaries(): Promise<Map<string, Summary>> {
-	const summaries = new Map<string, Summary>();
-	const fileSystem = getFileSystem();
-	const docsDir = `${sophiaDirName}/docs`;
-	logger.info(`Load summaries from ${docsDir}`);
-
-	try {
-		const dirExists = await fileSystem.fileExists(docsDir);
-		if (!dirExists) {
-			logger.warn(`The ${docsDir} directory does not exist.`);
-			return summaries;
-		}
-
-		const files = await fileSystem.listFilesRecursively(docsDir, false);
-		logger.info(`Found ${files.length} files in ${docsDir}`);
-
-		if (files.length === 0) {
-			logger.warn(`No files found in ${docsDir}. Directory might be empty.`);
-			return summaries;
-		}
-
-		for (const file of files) {
-			if (file.endsWith('.json')) {
-				try {
-					if (await fileSystem.fileExists(file)) {
-						const content = await fileSystem.readFile(file);
-						const summary: Summary = JSON.parse(content);
-						summaries.set(summary.path, summary);
-					}
-				} catch (error) {
-					logger.warn(`Failed to read or parse summary file: ${file}. ${errorToString(error)}`);
-				}
-			}
-		}
-	} catch (error) {
-		logger.error(`Error listing files in ${docsDir}: ${error.message}`);
-	}
-
-	logger.info(`Loaded ${summaries.size} summaries`);
-	return summaries;
 }

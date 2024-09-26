@@ -14,20 +14,31 @@ export function parseProcessArgs(): CliOptions {
 	const scriptPath = process.argv[1];
 	let scriptName = scriptPath.split(path.sep).at(-1);
 	scriptName = scriptName.substring(0, scriptName.length - 3);
-	return parseUserCliArgs(scriptName, process.argv.splice(2));
+	return parseUserCliArgs(scriptName, process.argv.slice(2));
 }
 
-export function parseUserCliArgs(scriptName: string, args: string[]): CliOptions {
+/**
+ *
+ * @param scriptName
+ * @param scriptArgs copy of the script arguments
+ */
+export function parseUserCliArgs(scriptName: string, scriptArgs: string[]): CliOptions {
+	// strip out filesystem arg if it exists
+	const fsArgIndex = scriptArgs.findIndex((arg) => arg.startsWith('--fs='));
+	if (fsArgIndex > -1) {
+		scriptArgs.splice(fsArgIndex, 1);
+	}
+
 	let resumeLastRun = false;
 	let i = 0;
-	for (; i < args.length; i++) {
-		if (args[i] === '-r') {
+	for (; i < scriptArgs.length; i++) {
+		if (scriptArgs[i] === '-r') {
 			resumeLastRun = true;
 		} else {
 			break;
 		}
 	}
-	let initialPrompt = args.slice(i).join(' ');
+	let initialPrompt = scriptArgs.slice(i).join(' ');
 
 	logger.info(initialPrompt);
 

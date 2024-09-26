@@ -24,6 +24,9 @@ const NODE_ENV = process.env.NODE_ENV ?? 'local';
 
 export const DEFAULT_HEALTHCHECK = '/health-check';
 
+/** Path prefix that the Angular app is served on. */
+const UI_PREFIX = '/ui/';
+
 export type TypeBoxFastifyInstance = FastifyInstance<
 	http.Server,
 	RawRequestDefaultExpression<http.Server>,
@@ -36,6 +39,12 @@ export type RouteDefinition = (fastify: TypeBoxFastifyInstance) => Promise<void>
 
 export const fastifyInstance: TypeBoxFastifyInstance = fastify({
 	maxParamLength: 256,
+	rewriteUrl: (req) => {
+		if (req.url.startsWith(UI_PREFIX)) {
+			return UI_PREFIX;
+		}
+		return req.url;
+	},
 }).withTypeProvider<TypeBoxTypeProvider>();
 
 export interface FastifyConfig {
@@ -64,7 +73,7 @@ export async function initFastify(config: FastifyConfig): Promise<void> {
 	registerRoutes(config.routes);
 	fastifyInstance.register(require('@fastify/static'), {
 		root: join(process.cwd(), 'public'),
-		prefix: '/ui/', // optional: default '/'
+		prefix: UI_PREFIX, // optional: default '/'
 		// constraints: { host: 'example.com' } // optional: default {}
 	});
 	setErrorHandler();
