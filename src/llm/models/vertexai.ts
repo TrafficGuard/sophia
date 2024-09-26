@@ -33,21 +33,22 @@ export function vertexLLMRegistry(): Record<string, () => LLM> {
 	};
 }
 
-// A token is equivalent to about 4 characters for Gemini models. 100 tokens are about 60-80 English words.
+// Text input is charged by every 1,000 characters of input (prompt) and every 1,000 characters of output (response).
+// Characters are counted by UTF-8 code points and white space is excluded from the count, resulting in approximately 4 characters per token
 // https://ai.google.dev/gemini-api/docs/models/gemini#token-size
 // https://cloud.google.com/vertex-ai/generative-ai/pricing
 
 // gemini-1.5-pro-latest
 // gemini-1.5-pro-exp-0801
 // exp-0801
-export function Gemini_1_5_Pro(version = '001') {
+export function Gemini_1_5_Pro(version = '002') {
 	return new VertexLLM(
 		'Gemini 1.5 Pro',
 		VERTEX_SERVICE,
 		`gemini-1.5-pro-${version}`,
 		1_000_000,
-		(input: string) => (input.length * 0.00125) / 1000,
-		(output: string) => (output.length * 0.00375) / 1000,
+		(input: string) => (input.length * (input.length > 128_000 * 4 ? 0.0003125 : 0.000625)) / 1000,
+		(output: string) => (output.length * (output.length > 128_000 * 4 ? 0.0025 : 0.00125)) / 1000,
 	);
 }
 
@@ -62,7 +63,7 @@ export function Gemini_1_5_Experimental() {
 	);
 }
 
-export function Gemini_1_5_Flash(version = '001') {
+export function Gemini_1_5_Flash(version = '002') {
 	return new VertexLLM(
 		'Gemini 1.5 Flash',
 		VERTEX_SERVICE,

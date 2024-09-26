@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { join } from 'path';
 import { Type } from '@sinclair/typebox';
 import { getFileSystem } from '#agent/agentContextLocalStorage';
 import { RunAgentConfig } from '#agent/agentRunner';
@@ -91,7 +92,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 			},
 		},
 		async (request, reply) => {
-			const { workingDirectory, query } = request.body as { workingDirectory: string; query: string };
+			let { workingDirectory, query } = request.body as { workingDirectory: string; query: string };
 			try {
 				const config: RunAgentConfig = {
 					agentName: `Query: ${query}`,
@@ -105,7 +106,14 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 
 				let response = '';
 				await runAgentWorkflow(config, async () => {
-					if (workingDirectory?.trim()) getFileSystem().setWorkingDirectory(workingDirectory);
+					// In the UI we strip out the systemDir
+					if (workingDirectory !== systemDir()) {
+						workingDirectory = join(systemDir(), workingDirectory);
+					}
+					logger.info(`Setting working directory to ${workingDirectory}`);
+					getFileSystem().setWorkingDirectory(workingDirectory);
+					logger.info(`Working directory is ${getFileSystem().getWorkingDirectory()}`);
+
 					response = await codebaseQuery(query);
 				});
 
@@ -127,7 +135,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 				}),
 			},
 		},
-		function (request, reply) {
+		(request, reply) => {
 			const { workingDirectory, requirements } = request.body as { workingDirectory: string; requirements: string };
 			try {
 				const config: RunAgentConfig = {
@@ -144,12 +152,14 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 				runAgentWorkflow(config, async () => {
 					if (workingDirectory?.trim()) getFileSystem().setWorkingDirectory(workingDirectory);
 					response = await selectFilesToEdit(requirements);
-				}).then(() => {
-					reply.send(response);
-				}).catch((error) => {
-					logger.error(error, 'Error running select files to edit');
-					reply.status(500).send(error.message);
-				});
+				})
+					.then(() => {
+						reply.send(response);
+					})
+					.catch((error) => {
+						logger.error(error, 'Error running select files to edit');
+						reply.status(500).send(error.message);
+					});
 			} catch (error) {
 				logger.error(error, 'Error running select files to edit');
 				reply.status(500).send(error.message);

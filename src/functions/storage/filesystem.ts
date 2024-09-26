@@ -56,21 +56,23 @@ export class FileSystem {
 	 */
 	constructor(public basePath?: string) {
 		this.basePath ??= process.cwd();
-		const args = process.argv.slice(2); // Remove the first two elements (node and script path)
+		logger.info(`process.argv ${JSON.stringify(process.argv)}`);
+		const args = process.argv; //.slice(2); // Remove the first two elements (node and script path)
 		const fsArg = args.find((arg) => arg.startsWith('--fs='));
 		const fsEnvVar = process.env[SOPHIA_FS];
 		if (fsArg) {
-			const fsPath = fsArg.slice(4); // Extract the value after '-fs='
+			const fsPath = fsArg.slice(5); // Extract the value after '-fs='
 			if (existsSync(fsPath)) {
 				this.basePath = fsPath;
+				logger.info(`Setting basePath to ${fsPath}`);
 			} else {
-				logger.error(`Invalid -fs arg value. ${fsPath} does not exist`);
+				throw new Error(`Invalid -fs arg value. ${fsPath} does not exist`);
 			}
 		} else if (fsEnvVar) {
 			if (existsSync(fsEnvVar)) {
 				this.basePath = fsEnvVar;
 			} else {
-				logger.error(`Invalid ${SOPHIA_FS} env var. ${fsEnvVar} does not exist`);
+				throw new Error(`Invalid ${SOPHIA_FS} env var. ${fsEnvVar} does not exist`);
 			}
 		}
 		this.workingDirectory = this.basePath;
@@ -417,7 +419,7 @@ export class FileSystem {
 	 * @param {string} filePath The file to update
 	 * @param {string} descriptionOfChanges A natual language description of the changes to make to the file contents
 	 */
-	@func()
+	// @func()
 	async editFileContents(filePath: string, descriptionOfChanges: string): Promise<void> {
 		const contents = await this.readFile(filePath);
 		const updatedContent = await new LlmTools().processText(contents, descriptionOfChanges);

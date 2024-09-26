@@ -5,7 +5,7 @@ import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { logger } from '#o11y/logger';
 import { getRepositoryOverview } from '#swe/documentationBuilder';
 import { RepositoryMaps, generateRepositoryMaps } from '#swe/repositoryMap';
-import {getProjectInfo, ProjectInfo} from './projectDetection';
+import { ProjectInfo, getProjectInfo } from './projectDetection';
 
 export interface SelectFilesResponse {
 	primaryFiles: SelectedFile[];
@@ -37,14 +37,18 @@ export async function selectFilesToEdit(requirements: string, projectInfo?: Proj
 
 	const prompt = `${repositoryOverview}
 ${fileSystemWithSummaries}
-<requirements>${requirements}</requirements>
+<requirements>\n${requirements}\n</requirements>
 
 <task>
 The end goal is to meet the requirements defined.  This will be achieved by editing the source code and configuration.
-Your task is to select from in <project_map> the files which will be required to edit to fulfill the requirements.
+Your task is to select from in <project_map> the files which will be required to edit or view to fulfill the requirements.
+The selected files will be passed to the AI code agent for impementation, and the agent will only have access to those particular files.
+
 You will select:
 1. The primary files which you anticipate will need to be edited, and their corresponding test files.
 2. The secondary supporting files which contain documentation and type information (interfaces, types, classes, function, consts etc) that will be required to correctly makes the changes. Include any files imported by the primary files. If the requirements reference any files relevant to the changes then include them too.
+
+If there are any instructions related to file selection in the requirements, then those instructions take priority.
 
 Your response MUST ONLY be a JSON object in the format of the following example:
 The file paths MUST exist in the <project_map /> file_contents path attributes.
@@ -76,18 +80,27 @@ The file paths MUST exist in the <project_map /> file_contents path attributes.
 	selectedFiles = await removeUnrelatedFiles(requirements, selectedFiles);
 
 	// Perform second pass
-	selectedFiles = await secondPass(requirements, selectedFiles);
+	selectedFiles = await secondPass(requirements, selectedFiles, projectInfo);
+
+	selectedFiles = removeLockFiles(selectedFiles);
 
 	return selectedFiles;
 }
 
-async function secondPass(requirements: string, initialSelection: SelectFilesResponse): Promise<SelectFilesResponse> {
+async function secondPass(requirements: string, initialSelection: SelectFilesResponse, projectInfo: ProjectInfo): Promise<SelectFilesResponse> {
 	const fileSystem = getFileSystem();
 	const allFiles = [...initialSelection.primaryFiles, ...initialSelection.secondaryFiles];
-	const fileContents = await fileSystem.readFilesAsXml(allFiles.map(file => file.path));
+	const fileContents = await fileSystem.readFilesAsXml(allFiles.map((file) => file.path));
 
-	const prompt = `
-<requirements>${requirements}</requirements>
+	if (projectInfo.fileSelection) requirements += `\nAdditional note: ${projectInfo.fileSelection}`;
+
+	const projectMaps: RepositoryMaps = await generateRepositoryMaps([projectInfo]);
+
+	const fileSystemWithSummaries: string = `<project_map>\n${projectMaps.fileSystemTreeWithSummaries.text}\n</project_map>\n`;
+	const repositoryOverview: string = await getRepositoryOverview();
+
+	const prompt = `${repositoryOverview}
+${fileSystemWithSummaries}
 
 <current-file-selection-contents>
 ${fileContents}
@@ -97,49 +110,67 @@ ${fileContents}
 ${JSON.stringify(initialSelection, null, 2)}
 </current-file-selection>
 
-Your task is to refine the current file selection for the given requirements. Review the current file selection and their contents, then determine if any files should be added or removed from the list.
+<requirements>${requirements}</requirements>
 
-1. Analyze the initial file selection in relation to the requirements.
+Your task is to refine the current file selection for the given requirements.
+The selected files will be passed to the AI code agent for impementation, and the agent will only have access to those particular files.
+
+Review the current file selection and their contents, then determine if any files should be added or removed from the list.
+
+1. Analyze the initial file selection in relation to the requirements, particuarly noting any instructions relating to file selection.
 2. Identify any missing files that should be added to better meet the requirements.
 3. Identify any files in the initial selection that may not be necessary or relevant.
-4. Explain your reasoning for any additions or removals.
-5. Provide a list of files to add or remove as a JSON object in the following format:
+4. Explain your reasoning for any additions, and the type, or removals.
+The "type" property must be "primary" or "secondary"
+- The primary files which you anticipate will need to be edited, and their corresponding test files.
+- The secondary supporting files which contain documentation and type information (interfaces, types, classes, function, consts etc) that will be required to correctly makes the changes. Include any files imported by the primary files. If the requirements reference any files relevant to the changes then include them too.
 
+5. Provide a JSON object with the list of files to add or remove. 
+The "filesToAdd" array should contain new files to add, specifying whether they are primary or secondary.
+The "filesToRemove" array should contain files to remove from the initial selection.
+Response with the JSON object in the following format, including the surrounding <json> tag:
 <json>
 {
   "filesToAdd": [
-    { "path": "/path/to/newfile.ts", "reason": "Reason for adding", "type": "primary/secondary" }
+    { "reason": "Reason for adding", "type": "primary|secondary", "path": "/path/to/newfile.ts" }
   ],
   "filesToRemove": [
-    { "path": "/path/to/removedfile.ts", "reason": "Reason for removing" }
+    { "reason": "Reason for removing", "path": "/path/to/removedfile.ts"  }
   ]
 }
 </json>
-
-The "filesToAdd" array should contain new files to add, specifying whether they are primary or secondary. The "filesToRemove" array should contain files to remove from the initial selection.`;
+`;
 
 	const result = (await llms().medium.generateJson(prompt)) as {
 		filesToAdd: { path: string; reason: string; type: 'primary' | 'secondary' }[];
 		filesToRemove: { path: string; reason: string }[];
 	};
 
-	logger.info(`Second pass file selection. Added: [${result.filesToAdd.map(f => f.path).join(', ')}]. Removed: [${result.filesToRemove.map(f => f.path).join(', ')}]`);
+	logger.info(
+		`Second pass file selection. Added: [${result.filesToAdd.map((f) => f.path).join(', ')}]. Removed: [${result.filesToRemove.map((f) => f.path).join(', ')}]`,
+	);
 
 	// Remove files
-	initialSelection.primaryFiles = initialSelection.primaryFiles.filter(file => !result.filesToRemove.some(r => r.path === file.path));
-	initialSelection.secondaryFiles = initialSelection.secondaryFiles.filter(file => !result.filesToRemove.some(r => r.path === file.path));
+	initialSelection.primaryFiles = initialSelection.primaryFiles.filter((file) => !result.filesToRemove.some((r) => r.path === file.path));
+	initialSelection.secondaryFiles = initialSelection.secondaryFiles.filter((file) => !result.filesToRemove.some((r) => r.path === file.path));
 
 	// Add new files
 	for (const fileToAdd of result.filesToAdd) {
 		const newFile = { path: fileToAdd.path, reason: fileToAdd.reason };
+
+		if (!(await fileExists(newFile))) continue;
+
 		if (fileToAdd.type === 'primary') {
-			if (!initialSelection.primaryFiles.some(f => f.path === fileToAdd.path)) {
+			if (!initialSelection.primaryFiles.some((f) => f.path === fileToAdd.path)) {
 				initialSelection.primaryFiles.push(newFile);
 			}
-		} else {
-			if (!initialSelection.secondaryFiles.some(f => f.path === fileToAdd.path)) {
+		} else if (fileToAdd.type === 'secondary') {
+			if (!initialSelection.secondaryFiles.some((f) => f.path === fileToAdd.path)) {
 				initialSelection.secondaryFiles.push(newFile);
 			}
+		} else {
+			logger.info(`Invalid type ${fileToAdd.type} for ${fileToAdd.path}`);
+			initialSelection.primaryFiles.push(newFile);
 		}
 	}
 
@@ -160,9 +191,15 @@ Now that you can view the full contents of ths file, reassess if the file does n
 We want to ensure we have the minimal required files to reduce costs and focus on the necessary files.
 A file is considered related if it would be modified to implement the requirements, or contains essential details (code, types, configuration, documentation etc) that would be required to known when implementing the requirements.
 
-Discuss why or why not this file should be included.
+Output the following:
 
-Then respond with a JSON object in the following format:
+1. If there are any instructions related to file selection in the requirements, then details how that relates to the file_path and file_contents.
+
+2. Discuss why or why not this file should be included from the requirements, taking into priority consideration any file selection instructions in the requirements.
+
+3. Critically review the discussion points, providing evidence for/against each point.
+
+4. Respond with a JSON object in the following format:
 <json>
 {
 	"explanation": "Brief explanation of why the file is required or not"
@@ -181,7 +218,7 @@ export async function removeUnrelatedFiles(requirements: string, fileSelection: 
 		const jsonResult = await llms().easy.generateJson(
 			prompt,
 			'You are an expert software developer tasked with identifying relevant files for a coding task.',
-			{ temperature: 0.5, id: 'removeUnrelatedFiles' },
+			{ temperature: 0.5, id: 'Select files to edit - Remove unrelated files' },
 		);
 
 		return {
@@ -228,19 +265,8 @@ function removeLockFiles(fileSelection: SelectFilesResponse): SelectFilesRespons
 }
 
 export async function removeNonExistingFiles(fileSelection: SelectFilesResponse): Promise<SelectFilesResponse> {
-	const fileSystem = getFileSystem();
 	const primaryFiles = fileSelection.primaryFiles;
 	const secondaryFiles = fileSelection.secondaryFiles;
-
-	async function fileExists(selectedFile: SelectedFile): Promise<SelectedFile> {
-		try {
-			await fs.access(path.join(fileSystem.getWorkingDirectory(), selectedFile.path));
-			return selectedFile;
-		} catch {
-			logger.info(`Selected file for editing "${selectedFile.path}" does not exists.`);
-			return null;
-		}
-	}
 
 	const existingPrimaryFiles = (await Promise.all(primaryFiles.map(fileExists))).filter((selected) => selected !== null);
 	const existingSecondaryFiles = (await Promise.all(secondaryFiles.map(fileExists))).filter((selected) => selected !== null);
@@ -249,4 +275,14 @@ export async function removeNonExistingFiles(fileSelection: SelectFilesResponse)
 		primaryFiles: existingPrimaryFiles as SelectedFile[],
 		secondaryFiles: existingSecondaryFiles as SelectedFile[],
 	};
+}
+
+async function fileExists(selectedFile: SelectedFile): Promise<SelectedFile> {
+	try {
+		await fs.access(path.join(getFileSystem().getWorkingDirectory(), selectedFile.path));
+		return selectedFile;
+	} catch {
+		logger.info(`Selected file for editing "${selectedFile.path}" does not exists.`);
+		return null;
+	}
 }

@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import { FileSystem } from '#functions/storage/filesystem';
-import { loadBuildDocsSummaries } from '#swe/repositoryMap';
 import { removeNonExistingFiles } from '#swe/selectFilesToEdit';
 
 describe('removeNonExistingFiles', () => {
@@ -23,13 +22,5 @@ describe('removeNonExistingFiles', () => {
 		expect(result.primaryFiles).to.have.lengthOf(1);
 		expect(result.primaryFiles[0].path).to.equal(existingFilePath);
 		expect(result.secondaryFiles).to.be.empty;
-	});
-});
-
-describe('loadBuildDocsSummaries', () => {
-	it.skip('should load build documentation summaries', async () => {
-		const summaries = await loadBuildDocsSummaries();
-		expect(summaries).to.be.an('Map');
-		expect(summaries.size).to.be.greaterThan(0);
 	});
 });

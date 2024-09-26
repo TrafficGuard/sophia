@@ -46,7 +46,7 @@ export class TypescriptTools implements LanguageTools {
 
 		const dtsFiles = new Map();
 		// getFileSystem().setWorkingDirectory(dtsFolder)
-		const allFiles = await getFileSystem().getFileContentsRecursively(dtsFolder, false);
+		const allFiles: Map<string, string> = await getFileSystem().getFileContentsRecursively(dtsFolder, false);
 		// getFileSystem().setWorkingDirectory(process.cwd())
 
 		allFiles.forEach((value, key) => {

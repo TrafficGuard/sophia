@@ -18,7 +18,7 @@
     "skipLibCheck": true,
     "importHelpers": true,
     "moduleResolution": "node16",
-    "allowImportingTsExtensions": true,
+    "allowImportingTsExtensions": false,
     "noEmit": false,
     "baseUrl": "./",
     "paths": {

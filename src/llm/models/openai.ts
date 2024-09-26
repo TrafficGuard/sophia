@@ -1,3 +1,4 @@
+import { OpenAIChatModelId } from '@ai-sdk/openai/internal';
 import { OpenAI as OpenAISDK } from 'openai';
 import { addCost, agentContext } from '#agent/agentContextLocalStorage';
 import { LlmCall } from '#llm/llmCallService/llmCall';
@@ -7,7 +8,7 @@ import { currentUser } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
 import { appContext } from '../../app';
 import { BaseLLM } from '../base-llm';
-import { GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../llm';
+import { GenerateTextOptions, LLM, combinePrompts } from '../llm';
 
 export const OPENAI_SERVICE = 'openai';
 
@@ -34,6 +35,7 @@ export function openAIo1() {
 	return new OpenAI(
 		'OpenAI o1',
 		'o1-preview',
+		'o1-preview',
 		128_000,
 		(input: string) => (input.length * 15) / 1_000_000,
 		(output: string) => (output.length * 60) / (1_000_000 * 4),
@@ -43,6 +45,7 @@ export function openAIo1() {
 export function openAIo1mini() {
 	return new OpenAI(
 		'OpenAI o1-mini',
+		'o1-mini',
 		'o1-mini',
 		128_000,
 		(input: string) => (input.length * 3) / 1_000_000,
@@ -54,6 +57,7 @@ export function GPT4o() {
 	return new OpenAI(
 		'GPT4o',
 		'gpt-4o',
+		'gpt-4o',
 		128_000,
 		(input: string) => (input.length * 2.5) / 1_000_000,
 		(output: string) => (output.length * 10) / (1_000_000 * 4),
@@ -63,6 +67,7 @@ export function GPT4o() {
 export function GPT4oMini() {
 	return new OpenAI(
 		'GPT4o mini',
+		'gpt-4o-mini',
 		'gpt-4o-mini',
 		128_000,
 		(input: string) => (input.length * 0.15) / (1_000_000 * 4),
@@ -76,6 +81,7 @@ export class OpenAI extends BaseLLM {
 	constructor(
 		name: string,
 		model: Model,
+		aiModel: OpenAIChatModelId,
 		maxInputTokens: number,
 		calculateInputCost: (input: string) => number,
 		calculateOutputCost: (output: string) => number,

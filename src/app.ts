@@ -82,7 +82,7 @@ export async function initServer(): Promise<void> {
 				llmCallRoutes as RouteDefinition,
 				codeReviewRoutes as RouteDefinition,
 				chatRoutes as RouteDefinition,
-				codeRoutes as unknown as RouteDefinition,
+				codeRoutes as RouteDefinition,
 				// Add your routes below this line
 			],
 			instanceDecorators: applicationContext, // This makes all properties on the ApplicationContext interface available on the fastify instance in the routes

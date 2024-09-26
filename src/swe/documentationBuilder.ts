@@ -1,7 +1,9 @@
-import { promises as fs, readFile } from 'node:fs';
+import { promises as fs } from 'node:fs';
 import { basename, dirname, join } from 'path';
 import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { logger } from '#o11y/logger';
+import { sleep } from '#utils/async-utils';
+import { errorToString } from '#utils/errors';
 import { sophiaDirName } from '../appVars';
 
 /**
@@ -19,10 +21,10 @@ import { sophiaDirName } from '../appVars';
 export interface Summary {
 	/** Path to the file/folder */
 	path: string;
-	/** A one sentence summary of the file/folder */
-	sentence: string;
-	/** A paragraph long summary of the file/folder */
-	paragraph: string;
+	/** A short of the file/folder */
+	short: string;
+	/** A longer summary of the file/folder */
+	long: string;
 }
 
 /**
@@ -30,7 +32,10 @@ export interface Summary {
  * This should generally be run in the root folder of a project/repository.
  * The documentation summaries are saved in a parallel directory structure under the .sophia/docs folder
  */
-export async function buildSummaryDocs(fileFilter: (path: string) => boolean = (file) => file.endsWith('.ts') && !file.endsWith('test.ts')): Promise<void> {
+export async function buildSummaryDocs(
+	fileFilter: (path: string) => boolean = (file) => (file.endsWith('.tf') || file.endsWith('.ts') || file.endsWith('.py')) && !file.endsWith('test.ts'),
+): Promise<void> {
+	logger.info('Building summary docs');
 	// In the first pass we generate the summaries for the individual files
 	await buildFileDocs(fileFilter);
 	// // In the second pass we build the folder-level summaries from the bottom up
@@ -41,6 +46,11 @@ export async function buildSummaryDocs(fileFilter: (path: string) => boolean = (
 
 // Utils -----------------------------------------------------------
 
+/**
+ * Returns the summary file path for a given source file path
+ * @param filePath source file path
+ * @returns summary file path
+ */
 function getSummaryFileName(filePath: string): string {
 	const fileName = basename(filePath);
 	const dirPath = dirname(filePath);
@@ -54,22 +64,22 @@ function getSummaryFileName(filePath: string): string {
 export async function buildFileDocs(fileFilter: (path: string) => boolean): Promise<void> {
 	const files: string[] = await getFileSystem().listFilesRecursively();
 	const cwd = getFileSystem().getWorkingDirectory();
-
 	const easyLlm = llms().easy;
 
-	console.log(files);
+	const filteredFiles: string[] = files.filter(fileFilter);
 
-	const docGenOperations = files.filter(fileFilter).map((file) => async () => {
+	logger.info(`Building summary file docs for ${filteredFiles.length} files matching filters`);
+
+	const docGenOperations = filteredFiles.map((file) => async () => {
 		const parentSummaries: Summary[] = [];
 
-		logger.info(file);
-		const fileContents = await fs.readFile(file);
+		const fileContents = await fs.readFile(join(cwd, file));
 		try {
 			let parentSummary = '';
 			if (parentSummaries.length) {
 				parentSummary = '<parent-summaries>';
 				for (const summary of parentSummaries) {
-					parentSummary += `<parent-summary path="${summary.path}">\n${summary.paragraph}\n</parent-summary>}\n`;
+					parentSummary += `<parent-summary path="${summary.path}">\n${summary.long}\n</parent-summary>}\n`;
 				}
 			}
 
@@ -88,28 +98,34 @@ Task: Generate concise and informative summaries for this file to be used as an 
 
 2. File Summary:
    Provide two summaries in JSON format:
-   a) A one-sentence overview capturing the file's main purpose.
-   b) A paragraph-length description highlighting:
+   a) A short, terse overview capturing the keywords of the file's main purpose and key details.
+   b) A longer, tersely keyworded outline highlighting:
       - Main functions, classes, or interfaces exported
       - Key algorithms or data structures implemented
       - Important dependencies or relationships with other parts of the codebase
       - Unique or noteworthy aspects of the implementation
-      This should be proportional to the length of the file. About one sentence of summary for every 100 lines of the file_contents.
+      - This should be proportional to the length of the file. About one sentence of summary for every 100 lines of the file_contents.
+      - Written in a terse keyword-heavy style without any filler words.
+      
+The summaries should be in a very terse, gramatically shortened writing style that is incorrect English grammer. This will be only used by LLMs for search, so we want to minimise the tokens.
 
 Note: Avoid duplicating information from parent summaries. Focus on what's unique to this file.
 
+
 Respond with JSON in this format:
 {
-  "sentence": "Concise one-sentence summary",
-  "paragraph": "Detailed paragraph summary with key points and identifiers"
+  "short": "Key details",
+  "long": "Extended details. Key points. Identifiers"
 }`;
 
+			logger.info(`Generating summary for ${file}`);
 			const doc = (await easyLlm.generateJson(prompt)) as Summary;
 			doc.path = file;
 			logger.info(doc);
 			// Save the documentation summary files in a parallel directory structure under the .sophia/docs folder
 			await fs.mkdir(join(cwd, sophiaDirName, 'docs', dirname(file)), { recursive: true });
-			await fs.writeFile(join(cwd, sophiaDirName, 'docs', `${file}.json`), JSON.stringify(doc, null, 2));
+			const summaryFilePath = join(cwd, sophiaDirName, 'docs', `${file}.json`);
+			await fs.writeFile(summaryFilePath, JSON.stringify(doc, null, 2));
 		} catch (e) {
 			logger.error(e, `Failed to write documentation for file ${file}`);
 		}
@@ -137,6 +153,8 @@ Respond with JSON in this format:
  */
 export async function buildFolderDocs(): Promise<void> {
 	const fileSystem = getFileSystem();
+	logger.info(`Building summary docs for ${fileSystem.getWorkingDirectory()}`);
+
 	const easyLlm = llms().easy;
 
 	const folders = await fileSystem.getAllFoldersRecursively();
@@ -225,7 +243,7 @@ async function getSubFolderSummaries(folder: string): Promise<Summary[]> {
  */
 function combineFileAndSubFoldersSummaries(fileSummaries: Summary[], subFolderSummaries: Summary[]): string {
 	const allSummaries = [...subFolderSummaries, ...fileSummaries];
-	return allSummaries.map((summary) => `${summary.path}\n${summary.paragraph}`).join('\n\n');
+	return allSummaries.map((summary) => `${summary.path}\n${summary.long}`).join('\n\n');
 }
 
 async function generateFolderSummary(llm: any, combinedSummary: string, parentSummaries: Summary[] = []): Promise<Summary> {
@@ -233,7 +251,7 @@ async function generateFolderSummary(llm: any, combinedSummary: string, parentSu
 	if (parentSummaries.length) {
 		parentSummary = '<parent-summaries>\n';
 		for (const summary of parentSummaries) {
-			parentSummary += `<parent-summary path="${summary.path}">\n${summary.paragraph}\n</parent-summary>\n`;
+			parentSummary += `<parent-summary path="${summary.path}">\n${summary.long}\n</parent-summary>\n`;
 		}
 		parentSummary += '</parent-summaries>\n\n';
 	}
@@ -299,7 +317,7 @@ export async function generateTopLevelSummary(): Promise<string> {
 	const folderSummaries = await getAllFolderSummaries(cwd);
 
 	// Combine all folder summaries
-	const combinedSummary = folderSummaries.map((summary) => `${summary.path}:\n${summary.paragraph}`).join('\n\n');
+	const combinedSummary = folderSummaries.map((summary) => `${summary.path}:\n${summary.long}`).join('\n\n');
 
 	// Generate the top-level summary using LLM
 	const topLevelSummary = await llms().easy.generateText(generateDetailedSummaryPrompt(combinedSummary));
@@ -322,7 +340,7 @@ async function getAllFolderSummaries(rootDir: string): Promise<Summary[]> {
 			const summaryContent = await fs.readFile(summaryPath, 'utf-8');
 			summaries.push(JSON.parse(summaryContent));
 		} catch (e) {
-			logger.warn(`Failed to read summary for folder ${folder}`);
+			// logger.warn(`Failed to read summary for folder ${folder}`);
 		}
 	}
 
@@ -382,7 +400,7 @@ async function getParentSummaries(folderPath: string): Promise<Summary[]> {
 
 	while (currentPath !== '.') {
 		const folderName = basename(currentPath);
-		const summaryPath = join('.sophia', 'docs', currentPath, `_${folderName}.json`);
+		const summaryPath = join(sophiaDirName, 'docs', currentPath, `_${folderName}.json`);
 		try {
 			const summaryContent = await fs.readFile(summaryPath, 'utf-8');
 			parentSummaries.unshift(JSON.parse(summaryContent));
@@ -394,4 +412,67 @@ async function getParentSummaries(folderPath: string): Promise<Summary[]> {
 	}
 
 	return parentSummaries;
+}
+
+/**
+ * Loads build documentation summaries from the specified directory.
+ *
+ * @param {boolean} [createIfNotExits=true] - If true, creates the documentation directory if it doesn't exist.
+ * @returns {Promise<Map<string, Summary>>} A promise that resolves to a Map of file paths to their corresponding Summary objects.
+ * @throws {Error} If there's an error listing files in the docs directory.
+ *
+ * @description
+ * This function performs the following steps:
+ * 1. Checks if the docs directory exists, creating it if necessary.
+ * 2. Lists all JSON files in the docs directory recursively.
+ * 3. Reads and parses each JSON file, storing the resulting Summary objects in a Map.
+ *
+ * @example
+ * const summaries = await loadBuildDocsSummaries();
+ * console.log(`Loaded ${summaries.size} summaries`);
+ */
+export async function loadBuildDocsSummaries(createIfNotExits = true): Promise<Map<string, Summary>> {
+	const summaries = new Map<string, Summary>();
+	const fileSystem = getFileSystem();
+	const docsDir = join(sophiaDirName, 'docs');
+	logger.info(`Load summaries from ${docsDir}`);
+
+	try {
+		const dirExists = await fileSystem.fileExists(docsDir);
+		if (!dirExists && !createIfNotExits) {
+			logger.warn(`The ${docsDir} directory does not exist.`);
+			return summaries;
+		}
+		if (!dirExists) {
+			await buildSummaryDocs();
+		}
+
+		const files = await fileSystem.listFilesRecursively(docsDir, false);
+		logger.info(`Found ${files.length} files in ${docsDir}`);
+
+		if (files.length === 0) {
+			logger.warn(`No files found in ${docsDir}. Directory might be empty.`);
+			return summaries;
+		}
+
+		for (const file of files) {
+			if (file.endsWith('.json')) {
+				try {
+					if (await fileSystem.fileExists(file)) {
+						const content = await fileSystem.readFile(file);
+						const summary: Summary = JSON.parse(content);
+						summaries.set(summary.path, summary);
+					}
+				} catch (error) {
+					logger.warn(`Failed to read or parse summary file: ${file}. ${errorToString(error)}`);
+				}
+			}
+		}
+	} catch (error) {
+		logger.error(`Error listing files in ${docsDir}: ${error.message}`);
+		throw error;
+	}
+
+	logger.info(`Loaded ${summaries.size} summaries`);
+	return summaries;
 }

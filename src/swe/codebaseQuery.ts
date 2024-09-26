@@ -1,5 +1,6 @@
 import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { LlmMessage } from '#llm/llm';
+import { logger } from '#o11y/logger';
 import { getTopLevelSummary } from '#swe/documentationBuilder';
 import { ProjectInfo, getProjectInfo } from '#swe/projectDetection';
 import { RepositoryMaps, generateRepositoryMaps } from '#swe/repositoryMap';
@@ -18,8 +19,6 @@ async function firstPass(query: string): Promise<string[]> {
 	const projectInfo: ProjectInfo = await getProjectInfo();
 	const projectMaps: RepositoryMaps = await generateRepositoryMaps(projectInfo ? [projectInfo] : []);
 
-	console.log(projectMaps.fileSystemTreeWithSummaries.text);
-	console.log(projectMaps.fileSystemTreeWithSummaries.tokens);
 	const prompt = `${await getTopLevelSummary()}
 <project-outline>
 ${projectMaps.fileSystemTreeWithSummaries.text}
@@ -90,9 +89,7 @@ The "filesToAdd" array should contain new files to add. The "filesToRemove" arra
 		filesToRemove: string[];
 	};
 
-	console.log('Second pass file selection:');
-	console.log(`Added: ${result.filesToAdd.join(', ')}`);
-	console.log(`Removed: ${result.filesToRemove.join(', ')}`);
+	logger.info(`Second pass file selection. Added:[${result.filesToAdd.join(', ')}]. Removed: [${result.filesToRemove.join(', ')}]`);
 
 	// Add new files
 	for (const fileToAdd of result.filesToAdd) {
@@ -100,9 +97,8 @@ The "filesToAdd" array should contain new files to add. The "filesToRemove" arra
 			filePaths.push(fileToAdd);
 		}
 	}
-
 	// Remove files
-	filePaths = filePaths.filter(file => !result.filesToRemove.includes(file));
+	filePaths = filePaths.filter((file) => !result.filesToRemove.includes(file));
 
 	return filePaths;
 }
@@ -125,5 +121,5 @@ async function synthesiseResult(query: string, filePaths: string[]): Promise<str
 	3. Output your final query response within <result></result> tags
 	`;
 
-	return await llms().medium.generateTextWithResult(resultPrompt, null, {id:'codebase query synthesis'});
+	return await llms().medium.generateTextWithResult(resultPrompt, null, { id: 'codebase query synthesis' });
 }
