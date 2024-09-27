@@ -78,7 +78,7 @@ export class CodeEditor {
 		// as we want all the 'system' files in one place.
 		const llmHistoryFolder = join(systemDir(), 'aider/llm-history');
 		await promisify(fs.mkdir)(llmHistoryFolder, { recursive: true });
-		const llmHistoryFile = `${llmHistoryFolder}/${getFormattedDate}__${agentContext().agentId}}`;
+		const llmHistoryFile = `${llmHistoryFolder}/${getFormattedDate()}__${agentContext().agentId}}`;
 
 		logger.info(`LLM history file ${llmHistoryFile}`);
 		try {
