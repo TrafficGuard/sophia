@@ -40,7 +40,7 @@ export class Perplexity {
 			});
 
 			response = await perplexity.chat.completions.create({
-				model: 'llama-3-sonar-large-32k-online',
+				model: 'llama-3.1-sonar-large-128k-online',
 				max_tokens: 4096,
 				messages: [{ role: 'user', content: researchQuery }],
 				stream: false,
