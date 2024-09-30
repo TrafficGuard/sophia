@@ -1,5 +1,5 @@
 import { LlmFunctions } from '#agent/LlmFunctions';
-import { FileSystem } from '#functions/storage/filesystem';
+import { FileSystemService } from '#functions/storage/fileSystemService';
 import { FunctionCall, FunctionCallResult, LLM, LlmMessage } from '#llm/llm';
 import { User } from '#user/user';
 
@@ -95,7 +95,7 @@ export interface AgentContext {
 	/** Pre-configured LLMs by task difficulty level for the agent. Specific LLMs can always be instantiated if required. */
 	llms: AgentLLMs;
 	/** Working filesystem */
-	fileSystem?: FileSystem | null;
+	fileSystem?: FileSystemService | null;
 	/** Memory persisted over the agent's executions */
 	memory: Record<string, string>;
 	/** Time of the last database write of the state */

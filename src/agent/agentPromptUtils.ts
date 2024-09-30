@@ -1,6 +1,6 @@
 import { agentContext, getFileSystem } from '#agent/agentContextLocalStorage';
+import { FileSystemService } from '#functions/storage/fileSystemService';
 import { FileMetadata, FileStore } from '#functions/storage/filestore';
-import { FileSystem } from '#functions/storage/filesystem';
 import { FunctionCallResult } from '#llm/llm';
 import { logger } from '#o11y/logger';
 
@@ -29,7 +29,7 @@ export async function buildToolStatePrompt(): Promise<string> {
  */
 function buildFileSystemPrompt(): string {
 	const functions = agentContext().functions;
-	if (!functions.getFunctionClassNames().includes(FileSystem.name)) return '';
+	if (!functions.getFunctionClassNames().includes(FileSystemService.name)) return '';
 	const fileSystem = getFileSystem();
 	return `\n<file_system>
 	<base_path>${fileSystem.basePath}</base_path>

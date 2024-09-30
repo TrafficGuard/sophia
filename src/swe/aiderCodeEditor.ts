@@ -17,7 +17,7 @@ import { execCommand } from '#utils/exec';
 import { systemDir } from '../appVars';
 
 @funcClass(__filename)
-export class CodeEditor {
+export class AiderCodeEditor {
 	/**
 	 * Makes the changes to the project files to meet the task requirements
 	 * @param requirements the complete task requirements with all the supporting documentation and code samples
@@ -101,21 +101,22 @@ export class CodeEditor {
 		if (stdout) logger.info(stdout);
 		if (stderr) logger.error(stderr);
 
-		// TODO parse  $0.12 session from the output
-
 		try {
+			const cost = extractSessionCost(stdout);
+			addCost(cost);
+			logger.debug(`Aider cost ${cost}`);
+			// const costs = llm.calculateCost(parsedInput, parsedOutput);
+			// addCost(costs[0]);
+			// logger.debug(`Aider cost ${costs[0]}`);
+
 			const llmHistory = readFileSync(llmHistoryFile).toString();
 			const parsedInput = this.parseAiderInput(llmHistory);
 			const parsedOutput = this.parseAiderOutput(llmHistory);
 
-			const costs = llm.calculateCost(parsedInput, parsedOutput);
-			addCost(costs[0]);
-			logger.debug(`Aider cost ${costs[0]}`);
-
 			span.setAttributes({
 				inputChars: parsedInput.length,
 				outputChars: parsedOutput.length,
-				cost: costs[0],
+				cost: cost,
 			});
 			// unlinkSync(llmHistoryFile);
 			// TODO should save them as LLMCalls
@@ -141,6 +142,17 @@ export class CodeEditor {
 			.map((line) => line.replace(/^ASSISTANT\s/, ''))
 			.join('\n');
 	}
+}
+
+function extractSessionCost(text: string): number {
+	const regex = /Cost:.*\$(\d+(?:\.\d+)?) session/;
+	const match = text.match(regex);
+
+	if (match?.[1]) {
+		return parseFloat(match[1]);
+	}
+
+	return 0; // Return null if no match is found
 }
 
 export function getPythonPath() {

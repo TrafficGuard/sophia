@@ -53,10 +53,6 @@ export async function notifySupervisor(agent: AgentContext, message: string) {
 	}
 }
 
-export async function agentHumanInTheLoop(reason: string) {
-	await waitForConsoleInput(reason);
-}
-
-export async function toolHumanInTheLoop(reason: string) {
+export async function humanInTheLoop(reason: string) {
 	await waitForConsoleInput(reason);
 }

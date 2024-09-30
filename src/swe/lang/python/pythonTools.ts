@@ -1,7 +1,7 @@
 import { getFileSystem } from '#agent/agentContextLocalStorage';
 import { funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
-import { getPythonPath } from '#swe/codeEditor';
+import { getPythonPath } from '#swe/aiderCodeEditor';
 import { execCmd, execCommand } from '#utils/exec';
 import { LanguageTools } from '../languageTools';
 

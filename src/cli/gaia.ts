@@ -4,7 +4,7 @@ import { promises as fs, readFileSync } from 'fs';
 import { AgentLLMs } from '#agent/agentContextTypes';
 import { AGENT_COMPLETED_PARAM_NAME } from '#agent/agentFunctions';
 import { startAgent, startAgentAndWait } from '#agent/agentRunner';
-import { FileSystem } from '#functions/storage/filesystem';
+import { FileSystemRead } from '#functions/storage/FileSystemRead';
 import { LlmTools } from '#functions/util';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
@@ -101,7 +101,7 @@ async function answerGaiaQuestion(task: GaiaQuestion): Promise<GaiaResult> {
 				budget,
 				count: 100,
 			},
-			functions: [PublicWeb, Perplexity, FileSystem, LlmTools],
+			functions: [PublicWeb, Perplexity, FileSystemRead, LlmTools],
 		});
 
 		const agent = await appContext().agentStateService.load(agentId);

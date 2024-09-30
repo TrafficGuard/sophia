@@ -3,10 +3,11 @@ import { FUNC_SEP, FunctionSchema, getFunctionSchemas } from '#functionSchema/fu
 import { FunctionCall } from '#llm/llm';
 import { logger } from '#o11y/logger';
 
-import { FileSystem } from '#functions/storage/filesystem';
+import { FileSystemService } from '#functions/storage/fileSystemService';
 import { GetToolType, ToolType, toolType } from '#functions/toolType';
 
 import { functionFactory } from '#functionSchema/functionDecorators';
+import { FileSystemRead } from '#functions/storage/FileSystemRead';
 
 /**
  * Holds the instances of the classes with function callable methods.
@@ -31,6 +32,8 @@ export class LlmFunctions {
 		for (const functionClassName of functionClassNames) {
 			const ctor = functionFactory()[functionClassName];
 			if (ctor) this.functionInstances[functionClassName] = new ctor();
+			else if (functionClassName === 'FileSystem')
+				this.functionInstances[FileSystemRead.name] = new FileSystemRead(); // backwards compatability from creating FileSystemRead/Write wrappers
 			else logger.warn(`${functionClassName} not found`);
 		}
 		return this;

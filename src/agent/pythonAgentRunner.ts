@@ -6,7 +6,7 @@ import { AgentContext } from '#agent/agentContextTypes';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK, AGENT_SAVE_MEMORY_CONTENT_PARAM_NAME } from '#agent/agentFunctions';
 import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, buildToolStatePrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
 import { AgentExecution, formatFunctionError, formatFunctionResult } from '#agent/agentRunner';
-import { agentHumanInTheLoop } from '#agent/humanInTheLoop';
+import { humanInTheLoop } from '#agent/humanInTheLoop';
 import { convertJsonToPythonDeclaration, extractPythonCode } from '#agent/pythonAgentUtils';
 import { getServiceName } from '#fastify/trace-init/trace-init';
 import { FUNC_SEP, FunctionSchema, getAllFunctionSchemas } from '#functionSchema/functions';
@@ -88,7 +88,7 @@ export async function runPythonAgent(agent: AgentContext): Promise<AgentExecutio
 					if (hilCount && countSinceHil === hilCount) {
 						agent.state = 'hil';
 						await agentStateService.save(agent);
-						await agentHumanInTheLoop(`Agent control loop has performed ${hilCount} iterations`);
+						await humanInTheLoop(`Agent control loop has performed ${hilCount} iterations`);
 						agent.state = 'agent';
 						await agentStateService.save(agent);
 						countSinceHil = 0;
@@ -101,7 +101,7 @@ export async function runPythonAgent(agent: AgentContext): Promise<AgentExecutio
 					costSinceHil += newCosts;
 					logger.debug(`Spent $${costSinceHil.toFixed(2)} since last input. Total cost $${agentContextStorage.getStore().cost.toFixed(2)}`);
 					if (hilBudget && costSinceHil > hilBudget) {
-						await agentHumanInTheLoop(`Agent cost has increased by USD\$${costSinceHil.toFixed(2)}`);
+						await humanInTheLoop(`Agent cost has increased by USD\$${costSinceHil.toFixed(2)}`);
 						costSinceHil = 0;
 					}
 

@@ -5,7 +5,7 @@ import { AgentContext } from '#agent/agentContextTypes';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
 import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, buildToolStatePrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
 import { AgentExecution, formatFunctionError, formatFunctionResult, summariseLongFunctionOutput } from '#agent/agentRunner';
-import { agentHumanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
+import { humanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
 import { getServiceName } from '#fastify/trace-init/trace-init';
 import { FunctionSchema, getAllFunctionSchemas } from '#functionSchema/functions';
 import { FunctionResponse } from '#llm/llm';
@@ -81,7 +81,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<AgentExecution> 
 					if (hilCount && countSinceHil === hilCount) {
 						agent.state = 'hil';
 						await agentStateService.save(agent);
-						await agentHumanInTheLoop(`Agent control loop has performed ${hilCount} iterations`);
+						await humanInTheLoop(`Agent control loop has performed ${hilCount} iterations`);
 						agent.state = 'agent';
 						await agentStateService.save(agent);
 						countSinceHil = 0;
@@ -94,7 +94,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<AgentExecution> 
 					costSinceHil += newCosts;
 					logger.debug(`Spent $${costSinceHil.toFixed(2)} since last input. Total cost $${agentContextStorage.getStore().cost.toFixed(2)}`);
 					if (hilBudget && costSinceHil > hilBudget) {
-						await agentHumanInTheLoop(`Agent cost has increased by USD\$${costSinceHil.toFixed(2)}`);
+						await humanInTheLoop(`Agent cost has increased by USD\$${costSinceHil.toFixed(2)}`);
 						costSinceHil = 0;
 					}
 

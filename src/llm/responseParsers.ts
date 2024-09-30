@@ -63,40 +63,41 @@ export function parseFunctionCallsXml(response: string): FunctionCalls {
  */
 export function extractJsonResult(rawText: string): any {
 	let text = rawText.trim();
-	if ((text.startsWith('```json') || text.startsWith('```JSON')) && text.endsWith('```')) {
-		// Gemini returns in this format
-		return JSON.parse(text.slice(7, -3));
-	}
-	if (text.startsWith('```') && text.endsWith('```')) {
-		// Gemini returns in this format
-		return JSON.parse(text.slice(3, -3));
-	}
-
-	const regex = /```[jJ][sS][oO][nN]\n({.*})\n```/s;
-	const match = regex.exec(text);
-	if (match) {
-		return JSON.parse(match[1]);
-	}
-
-	const regexXml = /<json>(.*)<\/json>/is;
-	const matchXml = regexXml.exec(text);
-	if (matchXml) {
-		return JSON.parse(matchXml[1]);
-	}
-
-	// Sometimes more than three trailing backticks
-	while (text.endsWith('`')) {
-		text = text.slice(0, -1);
-	}
-	// If there's some chit-chat before the JSON then remove it.
-	const firstSquare = text.indexOf('[');
-	const fistCurly = text.indexOf('{');
-	if (fistCurly > 0 || firstSquare > 0) {
-		if (firstSquare < 0) text = text.slice(fistCurly);
-		else if (fistCurly < 0) text = text.slice(firstSquare);
-		else text = text.slice(Math.min(firstSquare, fistCurly));
-	}
 	try {
+		if ((text.startsWith('```json') || text.startsWith('```JSON')) && text.endsWith('```')) {
+			// Gemini returns in this format
+			return JSON.parse(text.slice(7, -3));
+		}
+		if (text.startsWith('```') && text.endsWith('```')) {
+			// Gemini returns in this format
+			return JSON.parse(text.slice(3, -3));
+		}
+
+		const regex = /```[jJ][sS][oO][nN]\n({.*})\n```/s;
+		const match = regex.exec(text);
+		if (match) {
+			return JSON.parse(match[1]);
+		}
+
+		const regexXml = /<json>(.*)<\/json>/is;
+		const matchXml = regexXml.exec(text);
+		if (matchXml) {
+			return JSON.parse(matchXml[1]);
+		}
+
+		// Sometimes more than three trailing backticks
+		while (text.endsWith('`')) {
+			text = text.slice(0, -1);
+		}
+		// If there's some chit-chat before the JSON then remove it.
+		const firstSquare = text.indexOf('[');
+		const fistCurly = text.indexOf('{');
+		if (fistCurly > 0 || firstSquare > 0) {
+			if (firstSquare < 0) text = text.slice(fistCurly);
+			else if (fistCurly < 0) text = text.slice(firstSquare);
+			else text = text.slice(Math.min(firstSquare, fistCurly));
+		}
+
 		return JSON.parse(text);
 	} catch (e) {
 		logger.error(`Could not parse:\n${text}`);

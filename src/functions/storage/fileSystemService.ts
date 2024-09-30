@@ -32,6 +32,8 @@ const globAsync = promisify(glob);
 type FileFilter = (filename: string) => boolean;
 
 /**
+ * Interface to the file system based for an Agent which maintains the state of the working directory.
+ *
  * Provides functions for LLMs to access the file system. Tools should generally use the functions as
  * - They are automatically included in OpenTelemetry tracing
  * - They use the working directory, so Sophia can perform its actions outside the process running directory.
@@ -43,8 +45,7 @@ type FileFilter = (filename: string) => boolean;
  *
  * By default, the basePath is the current working directory of the process.
  */
-@funcClass(__filename)
-export class FileSystem {
+export class FileSystemService {
 	/** The filesystem path */
 	private workingDirectory = '';
 	vcs: VersionControlSystem | null = null;
@@ -109,7 +110,7 @@ export class FileSystem {
 	 * If the dir starts with / it will first be checked as an absolute directory, then as relative path to the working directory.
 	 * @param dir the new working directory
 	 */
-	@func() setWorkingDirectory(dir: string): void {
+	setWorkingDirectory(dir: string): void {
 		if (!dir) throw new Error('dir must be provided');
 		let relativeDir = dir;
 		// Check absolute directory path
@@ -148,7 +149,6 @@ export class FileSystem {
 	 * @param storeToMemory if the file contents should be stored to memory. The key will be in the format file-contents-<FileSystem.workingDirectory>-<dirPath>
 	 * @returns the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
 	 */
-	@func()
 	async getFileContentsRecursivelyAsXml(dirPath: string, storeToMemory: boolean, filter: (path) => boolean = () => true): Promise<string> {
 		const filenames = (await this.listFilesRecursively(dirPath)).filter(filter);
 		const contents = await this.readFilesAsXml(filenames);
@@ -161,7 +161,6 @@ export class FileSystem {
 	 * @param contentsRegex the regular expression to search the content all the files recursively for
 	 * @returns the list of filenames (with postfix :<match_count>) which have contents matching the regular expression.
 	 */
-	@func()
 	async searchFilesMatchingContents(contentsRegex: string): Promise<string> {
 		// --count Only show count of line matches for each file
 		// rg likes this spawnCommand. Doesn't work it others execs
@@ -178,7 +177,6 @@ export class FileSystem {
 	 * @param fileNameRegex the regular expression to match the filename.
 	 * @returns the list of filenames matching the regular expression.
 	 */
-	@func()
 	async searchFilesMatchingName(fileNameRegex: string): Promise<string[]> {
 		const regex = new RegExp(fileNameRegex);
 		const files = await this.listFilesRecursively();
@@ -191,7 +189,6 @@ export class FileSystem {
 	 * @param dirPath the folder to list the files in. Defaults to the working directory
 	 * @returns the list of file and folder names
 	 */
-	@func()
 	async listFilesInDirectory(dirPath = '.'): Promise<string[]> {
 		// const rootPath = path.join(this.basePath, dirPath);
 		const filter: FileFilter = (name) => true;
@@ -228,7 +225,6 @@ export class FileSystem {
 	 * @param dirPath
 	 * @returns the list of files
 	 */
-	@func()
 	async listFilesRecursively(dirPath = './', useGitIgnore = true): Promise<string[]> {
 		this.log.debug(`cwd: ${this.workingDirectory}`);
 
@@ -276,7 +272,6 @@ export class FileSystem {
 	 * @param filePath The file path to read the contents of (e.g. src/index.ts)
 	 * @returns the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
 	 */
-	@func()
 	async readFile(filePath: string): Promise<string> {
 		logger.debug(`readFile ${filePath}`);
 		let contents: string;
@@ -309,7 +304,6 @@ export class FileSystem {
 	 * @param filePath The file path to read the contents of (e.g. src/index.ts)
 	 * @returns the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents>
 	 */
-	@func()
 	async readFileAsXML(filePath: string): Promise<string> {
 		return `<file_content file_path="${filePath}">\n${await this.readFile(filePath)}\n</file_contents>\n`;
 	}
@@ -338,7 +332,6 @@ export class FileSystem {
 	 * @param {Array<string>} filePaths The files paths to read the contents of
 	 * @returns {Promise<string>} the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
 	 */
-	@func()
 	async readFilesAsXml(filePaths: string | string[]): Promise<string> {
 		if (!Array.isArray(filePaths)) {
 			filePaths = parseArrayParameterValue(filePaths);
@@ -364,7 +357,6 @@ export class FileSystem {
 	 * @param filePath The file path to check
 	 * @returns true if the file exists, else false
 	 */
-	@func()
 	async fileExists(filePath: string): Promise<boolean> {
 		// TODO remove the basePath checks. Either absolute or relative to this.cwd
 		logger.debug(`fileExists: ${filePath}`);
@@ -394,7 +386,6 @@ export class FileSystem {
 	 * @param filePath The file path (either full filesystem path or relative to current working directory)
 	 * @param contents The contents to write to the file
 	 */
-	@func()
 	async writeNewFile(filePath: string, contents: string): Promise<void> {
 		if (await this.fileExists(filePath)) throw new Error(`File ${filePath} already exists. Cannot overwrite`);
 		await this.writeFile(filePath, contents);
@@ -405,7 +396,6 @@ export class FileSystem {
 	 * @param filePath The file path (either full filesystem path or relative to current working directory)
 	 * @param contents The contents to write to the file
 	 */
-	@func()
 	async writeFile(filePath: string, contents: string): Promise<void> {
 		const fileSystemPath = filePath.startsWith(this.basePath) ? filePath : join(this.getWorkingDirectory(), filePath);
 		logger.debug(`Writing file "${filePath}" to ${fileSystemPath}`);
@@ -419,7 +409,6 @@ export class FileSystem {
 	 * @param {string} filePath The file to update
 	 * @param {string} descriptionOfChanges A natual language description of the changes to make to the file contents
 	 */
-	// @func()
 	async editFileContents(filePath: string, descriptionOfChanges: string): Promise<void> {
 		const contents = await this.readFile(filePath);
 		const updatedContent = await new LlmTools().processText(contents, descriptionOfChanges);
@@ -528,7 +517,6 @@ export class FileSystem {
 	 * src/utils/
 	 *   helper.js
 	 */
-	@func()
 	async getFileSystemTree(dirPath = './'): Promise<string> {
 		const files = await this.listFilesRecursively(dirPath);
 		const tree = new Map<string, string>();
@@ -557,7 +545,6 @@ export class FileSystem {
 	 * @param dirPath
 	 * @returns a record with the keys as the folders paths, and the list values as the files in the folder
 	 */
-	@func()
 	async getFileSystemTreeStructure(dirPath = './'): Promise<Record<string, string[]>> {
 		const files = await this.listFilesRecursively(dirPath);
 		const tree: Record<string, string[]> = {};

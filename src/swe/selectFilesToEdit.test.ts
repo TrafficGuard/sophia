@@ -1,9 +1,9 @@
 import { expect } from 'chai';
-import { FileSystem } from '#functions/storage/filesystem';
+import { FileSystemService } from '#functions/storage/fileSystemService';
 import { removeNonExistingFiles } from '#swe/selectFilesToEdit';
 
 describe('removeNonExistingFiles', () => {
-	const fileSystem = new FileSystem();
+	const fileSystem = new FileSystemService();
 
 	it('should remove non-existing files from the selection', async () => {
 		const existingFilePath = './package.json'; // assuming package.json exists

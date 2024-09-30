@@ -111,6 +111,78 @@ The summaries should be in a very terse, gramatically shortened writing style th
 
 Note: Avoid duplicating information from parent summaries. Focus on what's unique to this file.
 
+<example>
+When the filename is variables.tf or output.tf and just has variable declarations respond like the following. Variables which are common to all (ie. project_id, project_number, region) dont require any description.
+<file_contents>
+variable "project_id" {
+  description = "The project id where the resources will be created"
+  type        = string
+}
+
+variable "region" {
+  description = "The region where all resources will be deployed"
+  type        = string
+}
+
+variable "run_sa" {
+  description = "Cloud Run Service Account"
+  type        = string
+}
+</file_contents>
+<response>
+<json>
+{
+  "short": "project_id, region, run_sa",
+  "long": "project_id, region, run_sa: Cloud Run Service Account",
+}
+</json>
+</response>
+</example>
+
+<example>
+When a file has terraform resources respond like this example.
+<file_contents>
+terraform {
+  required_version = ">= 1.1.4"
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 4.46"
+    }
+  }
+}
+
+resource "google_cloud_run_service" "affiliate-conversion-importer" {
+  name     = "affiliate-conversion-importer"
+  location = var.region
+  project  = var.project_id
+
+  template {
+    spec {
+      containers {
+        image = "gcr.io/cloudrun/hello"
+      }
+      service_account_name = var.run_sa
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [
+      template
+    ]
+  }
+}
+</file_contents>
+<response>
+<json>
+{
+    "short": "Cloud run service affiliate-conversion-importer",
+    "long": "Cloud run service affiliate-conversion-importer with region, project_id, run_sa vars. Ignores changes to template."
+}
+</json>
+</response>
+</example>
+Note the terse values for short and long in the previous example.
 
 Respond with JSON in this format:
 {
@@ -125,6 +197,7 @@ Respond with JSON in this format:
 			// Save the documentation summary files in a parallel directory structure under the .sophia/docs folder
 			await fs.mkdir(join(cwd, sophiaDirName, 'docs', dirname(file)), { recursive: true });
 			const summaryFilePath = join(cwd, sophiaDirName, 'docs', `${file}.json`);
+			logger.info(`Writing summary to ${summaryFilePath}`);
 			await fs.writeFile(summaryFilePath, JSON.stringify(doc, null, 2));
 		} catch (e) {
 			logger.error(e, `Failed to write documentation for file ${file}`);
@@ -142,6 +215,7 @@ Respond with JSON in this format:
 		logger.error(e);
 	}
 	logger.info('Files done');
+	await sleep(2000);
 }
 
 // -----------------------------------------------------------------------------

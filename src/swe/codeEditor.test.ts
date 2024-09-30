@@ -1,11 +1,11 @@
 import { expect } from 'chai';
-import { CodeEditor } from './codeEditor';
+import { AiderCodeEditor } from './aiderCodeEditor';
 
 describe('CodeEditor', () => {
-	let codeEditor: CodeEditor;
+	let codeEditor: AiderCodeEditor;
 
 	beforeEach(() => {
-		codeEditor = new CodeEditor();
+		codeEditor = new AiderCodeEditor();
 	});
 
 	describe('parseAiderInput', () => {

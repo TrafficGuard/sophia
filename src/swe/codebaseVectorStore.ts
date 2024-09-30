@@ -3,7 +3,7 @@ import { Chroma } from '@langchain/community/vectorstores/chroma';
 import { Document } from '@langchain/core/documents';
 import { OpenAIEmbeddings } from '@langchain/openai';
 import { llms } from '#agent/agentContextLocalStorage';
-import { FileSystem } from '#functions/storage/filesystem';
+import { FileSystemService } from '#functions/storage/fileSystemService';
 import { LlmTools } from '#functions/util';
 import { logger } from '#o11y/logger';
 
@@ -19,7 +19,7 @@ const vectorStore = new Chroma(embeddings, {
 	},
 });
 
-const fileSystem = new FileSystem();
+const fileSystem = new FileSystemService();
 const llmTools = new LlmTools();
 
 async function generateContextualEmbeddings() {

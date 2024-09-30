@@ -1,7 +1,7 @@
 import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
 
 import { provideFeedback, resumeCompleted, resumeError, resumeHil, startAgentAndWait } from '#agent/agentRunner';
-import { FileSystem } from '#functions/storage/filesystem';
+import { FileSystemRead } from '#functions/storage/FileSystemRead';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
 import { ClaudeLLMs } from '#llm/models/anthropic';
@@ -20,9 +20,9 @@ export async function main() {
 	}
 
 	let functions: Array<any>;
-	functions = [FileSystem, SoftwareDeveloperAgent, Perplexity, PublicWeb];
+	functions = [FileSystemRead, SoftwareDeveloperAgent, Perplexity, PublicWeb];
 	functions = [CodeEditingAgent, Perplexity];
-	functions = [FileSystem];
+	functions = [FileSystemRead];
 
 	const { initialPrompt, resumeAgentId } = parseProcessArgs();
 

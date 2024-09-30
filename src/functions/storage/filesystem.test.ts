@@ -1,10 +1,10 @@
 import path, { join, resolve } from 'path';
 import { expect } from 'chai';
-import { FileSystem } from './filesystem';
+import { FileSystemService } from './fileSystemService';
 
 describe('FileSystem', () => {
 	describe.skip('setWorkingDirectory with fakePath', () => {
-		const fileSystem = new FileSystem('/basePath');
+		const fileSystem = new FileSystemService('/basePath');
 		it('should be able to set a path from the baseDir when the new working directory starts with /', async () => {
 			fileSystem.setWorkingDirectory('/otherWorkDir');
 			fileSystem.setWorkingDirectory('/newWorkDir');
@@ -12,21 +12,21 @@ describe('FileSystem', () => {
 		});
 
 		it('should be able to set a relative new working directory', async () => {
-			const fileSystem = new FileSystem('/basePath');
+			const fileSystem = new FileSystemService('/basePath');
 			fileSystem.setWorkingDirectory('dir1');
 			fileSystem.setWorkingDirectory('dir2');
 			expect(fileSystem.getWorkingDirectory()).to.equal('/basePath/dir1/dir2');
 		});
 
 		it('should be able to navigate up a directory', async () => {
-			const fileSystem = new FileSystem('/basePath');
+			const fileSystem = new FileSystemService('/basePath');
 			fileSystem.setWorkingDirectory('dir1/dir2');
 			fileSystem.setWorkingDirectory('..');
 			expect(fileSystem.getWorkingDirectory()).to.equal('/basePath/dir1');
 		});
 
 		it('should assume if the new working directory starts with basePath, then its the basePath', async () => {
-			const fileSystem = new FileSystem('/basePath');
+			const fileSystem = new FileSystemService('/basePath');
 			fileSystem.setWorkingDirectory('/basePath/dir1');
 			expect(fileSystem.getWorkingDirectory()).to.equal('/basePath/dir1');
 		});
@@ -45,10 +45,10 @@ describe('FileSystem', () => {
 	});
 
 	describe('setWorkingDirectory with real project path', () => {
-		const fileSystem = new FileSystem();
+		const fileSystem = new FileSystemService();
 
 		it('should set the real working directory with a relative path', async () => {
-			const fileSystem = new FileSystem();
+			const fileSystem = new FileSystemService();
 			fileSystem.setWorkingDirectory('frontend');
 			const exists = await fileSystem.fileExists('angular.json');
 			expect(exists).to.equal(true);
@@ -56,7 +56,7 @@ describe('FileSystem', () => {
 	});
 
 	describe('fileExists', () => {
-		const fileSystem = new FileSystem();
+		const fileSystem = new FileSystemService();
 		it('should return true if a file exists', async () => {
 			expect(await fileSystem.fileExists('package.json')).to.be.true;
 			expect(await fileSystem.fileExists('/package.json')).to.true;
@@ -67,7 +67,7 @@ describe('FileSystem', () => {
 		});
 
 		it('should return the correct result when the working directory has been set', async () => {
-			const fileSystem = new FileSystem();
+			const fileSystem = new FileSystemService();
 			fileSystem.setWorkingDirectory('frontend');
 			let exists = await fileSystem.fileExists('angular.json');
 			expect(exists).to.equal(true);
@@ -78,10 +78,10 @@ describe('FileSystem', () => {
 
 	describe('listFilesRecursively', () => {
 		describe('test filesystem', () => {
-			let fileSystem: FileSystem;
+			let fileSystem: FileSystemService;
 			beforeEach(() => {
 				// set the workingDirectory to test/filesystem
-				fileSystem = new FileSystem(path.join(process.cwd(), 'test', 'filesystem'));
+				fileSystem = new FileSystemService(path.join(process.cwd(), 'test', 'filesystem'));
 			});
 
 			it('should list all files under the filesystem baseDir honouring .gitignore files in current and sub-directories', async () => {
@@ -105,7 +105,7 @@ describe('FileSystem', () => {
 	});
 
 	describe('listFilesInDirectory', () => {
-		const fileSystem = new FileSystem();
+		const fileSystem = new FileSystemService();
 		it('should list files and folders only in the current directory', async () => {
 			const files: string[] = await fileSystem.listFilesInDirectory('./');
 			expect(files).to.include('package.json');
@@ -130,7 +130,7 @@ describe('FileSystem', () => {
 	});
 
 	describe('getMultipleFileContentsAsXml', () => {
-		const fileSystem = new FileSystem();
+		const fileSystem = new FileSystemService();
 		it('should include files', async () => {
 			const paths = ['package.json', '/README.md', '/src/index.ts'];
 			const contents: string = await fileSystem.readFilesAsXml(paths);
@@ -151,7 +151,7 @@ describe('FileSystem', () => {
 	});
 
 	describe('readFile', () => {
-		const fileSystem = new FileSystem();
+		const fileSystem = new FileSystemService();
 		it('should get the file contents for the current directory', async () => {
 			const samplePackageJsonContents = '@opentelemetry/instrumentation-http';
 			let contents: string = await fileSystem.readFile('package.json');
@@ -180,7 +180,7 @@ describe('FileSystem', () => {
 	 */
 	describe('getFileSystemTree', () => {
 		it('should respect nested .gitignore files', async () => {
-			const fileSystem = new FileSystem();
+			const fileSystem = new FileSystemService();
 			const tree = await fileSystem.getFileSystemTree();
 
 			// Check that root-level .gitignore is respected

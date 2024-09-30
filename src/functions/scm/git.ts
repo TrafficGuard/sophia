@@ -1,6 +1,6 @@
 import util from 'util';
 import { funcClass } from '#functionSchema/functionDecorators';
-import { FileSystem } from '#functions/storage/filesystem';
+import { FileSystemService } from '#functions/storage/fileSystemService';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
 import { execCmd, execCommand, failOnError } from '#utils/exec';
@@ -12,7 +12,7 @@ export class Git implements VersionControlSystem {
 	/** The branch name before calling switchToBranch. This enables getting the diff between the current and previous branch */
 	previousBranch: string | undefined;
 
-	constructor(private fileSystem: FileSystem) {}
+	constructor(private fileSystem: FileSystemService) {}
 
 	async clone(repoURL: string, commitOrBranch = ''): Promise<void> {
 		const { exitCode, stdout, stderr } = await execCommand(`git clone ${repoURL} ${commitOrBranch}`);

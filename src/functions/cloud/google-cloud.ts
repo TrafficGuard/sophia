@@ -1,5 +1,5 @@
 import { agentContext } from '#agent/agentContextLocalStorage';
-import { waitForConsoleInput } from '#agent/humanInTheLoop';
+import { humanInTheLoop, waitForConsoleInput } from '#agent/humanInTheLoop';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { execCommand, failOnError } from '#utils/exec';
 
@@ -23,14 +23,29 @@ export class GoogleCloud {
 	/**
 	 * Query resource information by executing the gcloud command line tool. This must ONLY be used for querying information, and MUST NOT update or modify resources.
 	 * Must have the --project=<projectId> argument.
-	 * @param gcloudQueryCommand The gcloud query command to execute (
+	 * @param gcloudQueryCommand The gcloud query command to execute
 	 * @returns the console output if the exit code is 0, else throws the console output
 	 */
 	@func()
 	async executeGcloudCommandQuery(gcloudQueryCommand: string): Promise<string> {
-		await waitForConsoleInput(`Agent "${agentContext().name}" is requesting to run the command ${gcloudQueryCommand}`);
 		if (!gcloudQueryCommand.includes('--project='))
 			throw new Error('When calling executeGcloudCommandQuery the gcloudQueryCommand parameter must include the --project=<projectId> argument');
+
+		// Whitelist list, describe and get-iam-policy commands, otherwise require human-in-the-loop approval
+		const args = gcloudQueryCommand.split(' ');
+		if (args[1] === 'alpha' || args[1] === 'beta') {
+			args.splice(1, 1);
+		}
+
+		let isQuery = false;
+		for (const i of [2, 3, 4]) {
+			if (args[i].startsWith('list') || args[i] === 'describe' || args[i] === 'get-iam-policy') isQuery = true;
+		}
+
+		if (!isQuery) {
+			await humanInTheLoop(`Agent "${agentContext().name}" is requesting to run the command ${gcloudQueryCommand}`);
+		}
+
 		const result = await execCommand(gcloudQueryCommand);
 		if (result.exitCode > 0) throw new Error(`Error running ${gcloudQueryCommand}. ${result.stdout}${result.stderr}`);
 		return result.stdout;

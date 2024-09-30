@@ -1,6 +1,6 @@
 import { LlmFunctions } from '#agent/LlmFunctions';
-import { deserializeAgentContext, serializeContext } from '#agent/agentContextLocalStorage';
 import { AgentContext, AgentRunningState } from '#agent/agentContextTypes';
+import { deserializeAgentContext, serializeContext } from '#agent/agentSerialization';
 import { AgentStateService } from '#agent/agentStateService/agentStateService';
 import { functionFactory } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';

@@ -5,7 +5,7 @@ import { agentContextStorage, createContext, getFileSystem, llms } from '#agent/
 import { Jira } from '#functions/jira';
 import { GitLab } from '#functions/scm/gitlab';
 
-import { FileSystem } from '#functions/storage/filesystem';
+import { FileSystemService } from '#functions/storage/fileSystemService';
 import { Claude3_Opus, ClaudeLLMs } from '#llm/models/anthropic';
 import { Claude3_5_Sonnet_Vertex, Claude3_Haiku_Vertex, Claude3_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { GPT4o } from '#llm/models/openai';
@@ -37,7 +37,7 @@ const utilLLMs: AgentLLMs = {
 async function main() {
 	await appContext().userService.ensureSingleUser();
 	const functions = new LlmFunctions();
-	functions.addFunctionClass(FileSystem);
+	functions.addFunctionClass(FileSystemService);
 
 	const config: RunAgentConfig = {
 		agentName: 'util',

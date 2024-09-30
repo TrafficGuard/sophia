@@ -6,7 +6,7 @@ import { AgentContext } from '#agent/agentContextTypes';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK, AGENT_SAVE_MEMORY_CONTENT_PARAM_NAME } from '#agent/agentFunctions';
 import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, buildToolStatePrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
 import { AgentExecution, formatFunctionError, formatFunctionResult } from '#agent/agentRunner';
-import { agentHumanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
+import { humanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
 import { convertJsonToPythonDeclaration, extractPythonCode } from '#agent/pythonAgentUtils';
 import { getServiceName } from '#fastify/trace-init/trace-init';
 import { FUNC_SEP, FunctionSchema, getAllFunctionSchemas } from '#functionSchema/functions';
@@ -105,7 +105,7 @@ export async function runCachingPythonAgent(agent: AgentContext): Promise<AgentE
 				try {
 					// Human in the loop checks ------------------------
 					if (hilCount && countSinceHil === hilCount) {
-						await agentHumanInTheLoop(`Agent control loop has performed ${hilCount} iterations`);
+						await humanInTheLoop(`Agent control loop has performed ${hilCount} iterations`);
 						countSinceHil = 0;
 					}
 					countSinceHil++;
@@ -114,7 +114,7 @@ export async function runCachingPythonAgent(agent: AgentContext): Promise<AgentE
 					if (hilBudget && agent.budgetRemaining <= 0) {
 						// HITL happens once budget is exceeded, which may be more than the allocated budget
 						const increase = agent.hilBudget - agent.budgetRemaining;
-						await agentHumanInTheLoop(`Agent cost has increased by USD\$${increase.toFixed(2)}. Increase budget by $${agent.hilBudget}`);
+						await humanInTheLoop(`Agent cost has increased by USD\$${increase.toFixed(2)}. Increase budget by $${agent.hilBudget}`);
 						agent.budgetRemaining = agent.hilBudget;
 					}
 

@@ -1,10 +1,12 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { LlmFunctions } from '#agent/LlmFunctions';
-import { createContext, deserializeAgentContext, serializeContext } from '#agent/agentContextLocalStorage';
+import { createContext } from '#agent/agentContextLocalStorage';
 import { AgentContext } from '#agent/agentContextTypes';
 import { RunAgentConfig } from '#agent/agentRunner';
-import { FileSystem } from '#functions/storage/filesystem';
+import { deserializeAgentContext, serializeContext } from '#agent/agentSerialization';
+import { FileSystemRead } from '#functions/storage/FileSystemRead';
+import { FileSystemService } from '#functions/storage/fileSystemService';
 import { LlmTools } from '#functions/util';
 import { GPT4o } from '#llm/models/openai';
 import { appContext } from '../app';
@@ -25,7 +27,7 @@ describe('agentContext', () => {
 				xhard: GPT4o(),
 			};
 			// We want to check that the FileSystem gets re-added by the resetFileSystemFunction function
-			const functions = new LlmFunctions(LlmTools, FileSystem);
+			const functions = new LlmFunctions(LlmTools, FileSystemRead);
 
 			const config: RunAgentConfig = {
 				agentName: 'SWE',
@@ -36,7 +38,7 @@ describe('agentContext', () => {
 				metadata: { 'metadata-key': 'metadata-value' },
 			};
 			const agentContext: AgentContext = createContext(config);
-			agentContext.fileSystem.setWorkingDirectory('./workingDir');
+			agentContext.fileSystem.setWorkingDirectory('./src');
 			agentContext.memory.memory_key = 'memory_value';
 			agentContext.functionCallHistory.push({
 				function_name: 'func',
@@ -63,9 +65,6 @@ describe('agentContext', () => {
 			const reserialised = serializeContext(deserialised);
 
 			expect(serialized).to.be.deep.equal(reserialised);
-
-			// test agentContext.resetFileSystemFunction()
-			expect(deserialised.fileSystem === deserialised.functions.getFunctionInstanceMap()[FileSystem.name]).to.be.true;
 		});
 	});
 });

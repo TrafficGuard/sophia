@@ -1,7 +1,7 @@
 import path from 'path';
 import { agentContext, getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { func, funcClass } from '#functionSchema/functionDecorators';
-import { FileSystem } from '#functions/storage/filesystem';
+import { FileSystemService } from '#functions/storage/fileSystemService';
 import { Perplexity } from '#functions/web/perplexity';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
@@ -12,7 +12,7 @@ import { supportingInformation } from '#swe/supportingInformation';
 import { execCommand, runShellCommand } from '#utils/exec';
 import { appContext } from '../app';
 import { cacheRetry } from '../cache/cacheRetry';
-import { CodeEditor } from './codeEditor';
+import { AiderCodeEditor } from './aiderCodeEditor';
 import { ProjectInfo, detectProjectInfo } from './projectDetection';
 import { basePrompt } from './prompt';
 import { SelectFilesResponse, selectFilesToEdit } from './selectFilesToEdit';
@@ -48,7 +48,7 @@ export class CodeEditingAgent {
 		}
 
 		logger.info(projectInfo);
-		const fs: FileSystem = getFileSystem();
+		const fs: FileSystemService = getFileSystem();
 		const git = fs.vcs;
 		fs.setWorkingDirectory(projectInfo.baseDir);
 
@@ -83,7 +83,38 @@ export class CodeEditingAgent {
 		Check if any of the requirements have already been correctly implemented in the code as to not duplicate work.
 		Look at the existing style of the code when producing the requirements.
 		`;
-		const implementationRequirements = await llms().hard.generateText(implementationDetailsPrompt, null, { id: 'implementationSpecification' });
+		let implementationRequirements = await llms().hard.generateText(implementationDetailsPrompt, null, { id: 'implementationSpecification' });
+
+		const searchPrompt = `${repositoryOverview}${installedPackages}\n<requirement>\n${implementationRequirements}\n</requirement>
+Given the requirements, if there are any changes which require using open source libraries, provide search queries to look up the API usage online.
+
+First discuss what 3rd party API usages would be required in the changes, if any. Then taking into account propose queries for online research, which must contain all the required context (e.g. language, library). For example if the requirements were "Update the Bigtable table results to include the table size" and from the repository information we could determine that it is a node.js project, then a suitable query would be "With the Google Cloud Node.js sdk how can I get the size of a Bigtable table?"
+(If there is no 3rd party API usage that is not already done in the provided files then return an empty array for the searchQueries property)
+
+Then respond in following format:
+<json>
+{
+	searchQueries: ["query 1", "query 2"]
+}
+</json> 
+`;
+		try {
+			const queries = (await llms().medium.generateJson(searchPrompt, null, { id: 'online queries from requirements' })) as { searchQueries: string[] };
+			if (queries.searchQueries.length > 0) {
+				logger.info(`Researching ${queries.searchQueries.join(', ')}`);
+				const perplexity = new Perplexity();
+
+				let webResearch = '<online-research>';
+				for (const query of queries.searchQueries) {
+					const result = await perplexity.research(query, false);
+					webResearch += `<research>\n${query}\n\n${result}\n</research>`;
+				}
+				webResearch += '</online-research>\n';
+				implementationRequirements = webResearch + implementationRequirements;
+			}
+		} catch (e) {
+			logger.error(e, 'Error performing online queries from code requirements');
+		}
 
 		await installPromise;
 
@@ -131,7 +162,7 @@ export class CodeEditingAgent {
 		   which don't compile, we can provide the diff since the last good commit to help identify causes of compile issues. */
 		let compiledCommitSha: string | null = agentContext().memory.compiledCommitSha;
 
-		const fs: FileSystem = getFileSystem();
+		const fs: FileSystemService = getFileSystem();
 		const git = fs.vcs;
 
 		const MAX_ATTEMPTS = 5;
@@ -206,7 +237,7 @@ export class CodeEditingAgent {
 					codeEditorRequirements += '\nOnly make changes directly related to these requirements.';
 				}
 
-				await new CodeEditor().editFilesToMeetRequirements(codeEditorRequirements, codeEditorFiles);
+				await new AiderCodeEditor().editFilesToMeetRequirements(codeEditorRequirements, codeEditorFiles);
 
 				// The code editor may add new files, so we want to add them to the initial file set
 				const addedFiles: string[] = await git.getAddedFiles(compiledCommitSha);
@@ -263,7 +294,7 @@ export class CodeEditingAgent {
 						logger.info(`Static analysis error output: ${staticAnalysisErrorOutput}`);
 						const staticErrorFiles = await this.extractFilenames(`${staticAnalysisErrorOutput}\n\nExtract the filenames from the compile errors.`);
 
-						await new CodeEditor().editFilesToMeetRequirements(
+						await new AiderCodeEditor().editFilesToMeetRequirements(
 							`Static analysis command: ${projectInfo.staticAnalysis}\n${staticAnalysisErrorOutput}\nFix these static analysis errors`,
 							staticErrorFiles,
 						);
@@ -328,7 +359,7 @@ export class CodeEditingAgent {
 			try {
 				let testRequirements = `${requirements}\nSome of the requirements may have already been implemented, so don't duplicate any existing implementation meeting the requirements.\n`;
 				testRequirements += 'Write any additional tests that would be of value.';
-				await new CodeEditor().editFilesToMeetRequirements(testRequirements, initialSelectedFiles);
+				await new AiderCodeEditor().editFilesToMeetRequirements(testRequirements, initialSelectedFiles);
 				await this.compile(projectInfo);
 				await this.runTests(projectInfo);
 				errorAnalysis = null;
