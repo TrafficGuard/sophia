@@ -17,20 +17,40 @@ One way is doing multiple calls which can be optimised with caching. Two potenti
 import {llms} from "#agent/agentContextLocalStorage";
 
 export class SummarizerAgent {
+    async summarizeTranscript(transcript: string): Promise<string> {
+        // Step 1: Initial summary with cache marker
+        const initialPrompt = `
+            <transcript>
+            ${transcript}
+            </transcript>
 
-    async summarizeTranscript1(transcript: string): Promise<string> {
+            Please provide a concise summary of the above transcript. 
+            Include the main points and key details.
+            
+            <response>
+            [Your summary here]
+            </response>
+        `;
 
-        const prompt: string = '<transcript>\n${transcript}\n</transcript>\n'
+        const initialSummary = await llms().medium.generateText(initialPrompt, null, { cache: 'ephemeral' });
 
-        return await llms().medium.generateText(prompt, null, {})
+        // Step 2: Expand on the initial summary
+        const expandPrompt = `
+            Here's an initial summary of a transcript:
 
-    }
+            ${initialSummary}
 
-    async summarizeTranscript2(transcript: string): Promise<string> {
+            Please expand on this summary, adding any important details that might have been missed. 
+            Focus on including specific information, examples, or context that would be valuable 
+            for a comprehensive understanding of the transcript.
 
-        const prompt: string = '<transcript>\n${transcript}\n</transcript>\n'
+            <response>
+            [Your expanded summary here]
+            </response>
+        `;
 
-        return await llms().medium.generateText(prompt, null, {})
+        const expandedSummary = await llms().medium.generateText(expandPrompt, null, {});
 
+        return expandedSummary;
     }
 }
