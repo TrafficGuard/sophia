@@ -17,7 +17,7 @@ One way is doing multiple calls which can be optimised with caching. Two potenti
 import {llms} from "#agent/agentContextLocalStorage";
 
 export class SummarizerAgent {
-    async summarizeTranscript(transcript: string): Promise<string> {
+    async summarizeTranscript(transcript: string, expandIterations: number = 1): Promise<string> {
         // Step 1: Initial summary with cache marker
         const initialPrompt = `
             You are an expert summarizer tasked with creating a concise yet comprehensive summary of a transcript.
@@ -61,45 +61,47 @@ export class SummarizerAgent {
             </response>
         `;
 
-        const initialSummary = await llms().medium.generateText(initialPrompt, null);
+        let currentSummary = await llms().medium.generateText(initialPrompt, null);
 
-        // Step 2: Expand on the initial summary
-        const expandPrompt = `
-            You are an expert analyst tasked with expanding and enriching a summary of a transcript. Here's the initial summary:
-            <initial-summary>
-            ${initialSummary}
-            </initial-summary>
+        // Step 2: Expand on the summary for the specified number of iterations
+        for (let i = 0; i < expandIterations; i++) {
+            const expandPrompt = `
+                You are an expert analyst tasked with expanding and enriching a summary of a transcript. Here's the current summary:
+                <current-summary>
+                ${currentSummary}
+                </current-summary>
 
-            Please enhance this summary by following these steps:
-            1. Identify any important details, examples, or context that might have been missed in the initial summary.
-            2. Add nuance to the main points, explaining any complex ideas or concepts.
-            3. Provide additional context for key decisions or conclusions.
-            4. Elaborate on the potential implications of unresolved issues.
-            5. Include any relevant quotes that support the main points (if applicable).
+                Please enhance this summary by following these steps:
+                1. Identify any important details, examples, or context that might have been missed in the previous summary.
+                2. Add nuance to the main points, explaining any complex ideas or concepts.
+                3. Provide additional context for key decisions or conclusions.
+                4. Elaborate on the potential implications of unresolved issues.
+                5. Include any relevant quotes that support the main points (if applicable).
 
-            Format your expanded summary as follows:
-            <response>
-            [Include the original summary structure, but expand each section with additional details and context]
+                Format your expanded summary as follows:
+                <response>
+                [Include the original summary structure, but expand each section with additional details and context]
 
-            Additional Insights:
-            - [Insight 1: Explanation and importance]
-            - [Insight 2: Explanation and importance]
-            ...
+                Additional Insights:
+                - [Insight 1: Explanation and importance]
+                - [Insight 2: Explanation and importance]
+                ...
 
-            Key Quotes:
-            - "[Quote 1]" - [Speaker] (Context: [Brief explanation])
-            - "[Quote 2]" - [Speaker] (Context: [Brief explanation])
-            ...
+                Key Quotes:
+                - "[Quote 1]" - [Speaker] (Context: [Brief explanation])
+                - "[Quote 2]" - [Speaker] (Context: [Brief explanation])
+                ...
 
-            Implications and Next Steps:
-            - [Implication/Next step 1: Explanation]
-            - [Implication/Next step 2: Explanation]
-            ...
-            </response>
-        `;
+                Implications and Next Steps:
+                - [Implication/Next step 1: Explanation]
+                - [Implication/Next step 2: Explanation]
+                ...
+                </response>
+            `;
 
-        const expandedSummary = await llms().medium.generateText(expandPrompt, null, {});
+            currentSummary = await llms().medium.generateText(expandPrompt, null, {});
+        }
 
-        return expandedSummary;
+        return currentSummary;
     }
 }
