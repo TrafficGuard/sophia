@@ -61,13 +61,14 @@ export class SummarizerAgent {
             </response>
         `;
 
-        const initialSummary = await llms().medium.generateText(initialPrompt, null, { cache: 'ephemeral' });
+        const initialSummary = await llms().medium.generateText(initialPrompt, null);
 
         // Step 2: Expand on the initial summary
         const expandPrompt = `
             You are an expert analyst tasked with expanding and enriching a summary of a transcript. Here's the initial summary:
-
+            <initial-summary>
             ${initialSummary}
+            </initial-summary>
 
             Please enhance this summary by following these steps:
             1. Identify any important details, examples, or context that might have been missed in the initial summary.
