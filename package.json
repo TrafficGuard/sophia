@@ -21,6 +21,7 @@
     "query": "   node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register src/cli/query.ts",
     "scrape": "  node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register src/cli/scrape.ts",
     "slack": "   node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register src/cli/slack.ts",
+    "summarize": "node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register src/cli/summarize.ts",
     "swe": "     node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register src/cli/swe.ts",
     "swebench": "node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register src/cli/swebench.ts",
     "research": "node --env-file=variables/local.env -r ts-node/register -r tsconfig-paths/register src/cli/research.ts",
