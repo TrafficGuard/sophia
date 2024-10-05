@@ -122,18 +122,24 @@ export async function runPythonAgent(agent: AgentContext): Promise<AgentExecutio
 						? oldFunctionCallHistory + buildMemoryPrompt() + toolStatePrompt + currentPrompt
 						: currentPrompt + requestFeedbackCallResult;
 
-					const agentPlanResponse: string = await agentLLM.generateText(initialPrompt, systemPromptWithFunctions, {
-						id: 'dynamicAgentPlan',
-						stopSequences,
-						temperature: 0.5,
-					});
-
-					const llmPythonCode = extractPythonCode(agentPlanResponse);
-					console.log('Original code');
-					console.log(llmPythonCode);
-
-					console.log('Updated code ========================================');
-					console.log(llmPythonCode);
+					let agentPlanResponse: string;
+					let llmPythonCode: string;
+					try {
+						agentPlanResponse = await agentLLM.generateText(initialPrompt, systemPromptWithFunctions, {
+							id: 'dynamicAgentPlan',
+							stopSequences,
+							temperature: 0.5,
+						});
+						llmPythonCode = extractPythonCode(agentPlanResponse);
+					} catch (e) {
+						// One re-try if the generate fails or the code can't be extracted
+						agentPlanResponse = await agentLLM.generateText(initialPrompt, systemPromptWithFunctions, {
+							id: 'dynamicAgentPlan',
+							stopSequences,
+							temperature: 0.5,
+						});
+						llmPythonCode = extractPythonCode(agentPlanResponse);
+					}
 
 					agent.state = 'functions';
 					await agentStateService.save(agent);
@@ -238,17 +244,19 @@ main()`.trim();
 						} catch (e) {
 							// Attempt to fix Syntax/indentation errors and retry
 							// Otherwise let execution errors re-throw.
-							if (e.type !== 'IndentationError' && e.type !== 'SyntaxError') throw e;
+							if (e.type === 'IndentationError' || e.type !== 'SyntaxError') {
+								// Fix the compile issues in the script
+								const prompt = `${functionsXml}\n<python>\n${pythonScript}</python>\n<error>${e.message}</error>\nPlease adjust/reformat the Python script to fix the issue. Output only the updated code. Do no chat, do not output markdown ticks. Only the updated code.`;
+								pythonScript = await llms().hard.generateText(prompt, null, { id: 'Fix python script error' });
 
-							// Fix the compile issues in the script
-							const prompt = `${functionsXml}\n<python>\n${pythonScript}</python>\n<error>${e.message}</error>\nPlease adjust/reformat the Python script to fix the issue. Output only the updated code. Do no chat, do not output markdown ticks. Only the updated code.`;
-							pythonScript = await llms().hard.generateText(prompt, null, { id: 'Fix python script error' });
-
-							// Re-try execution of fixed syntax/indentation error
-							const result = await pyodide.runPythonAsync(pythonScript, { globals });
-							pythonScriptResult = result?.toJs ? result.toJs() : result;
-							pythonScriptResult = JSON.stringify(pythonScriptResult);
-							if (result?.destroy) result.destroy();
+								// Re-try execution of fixed syntax/indentation error
+								const result = await pyodide.runPythonAsync(pythonScript, { globals });
+								pythonScriptResult = result?.toJs ? result.toJs() : result;
+								pythonScriptResult = JSON.stringify(pythonScriptResult);
+								if (result?.destroy) result.destroy();
+							} else {
+								throw e;
+							}
 						}
 						logger.info(pythonScriptResult, 'Script result');
 
