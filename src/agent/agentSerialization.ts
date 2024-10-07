@@ -75,6 +75,7 @@ export async function deserializeAgentContext(serialized: Record<keyof AgentCont
 
 	// backwards compatability
 	if (!context.type) context.type = 'xml';
+	if ((context.type as string) === 'python') context.type = 'codegen';
 	if (!context.iterations) context.iterations = 0;
 
 	// Need to default empty parameters. Seems to get lost in Firestore

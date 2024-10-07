@@ -6,50 +6,27 @@ import { AgentContext } from '#agent/agentContextTypes';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK, AGENT_SAVE_MEMORY_CONTENT_PARAM_NAME } from '#agent/agentFunctions';
 import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, buildToolStatePrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
 import { AgentExecution, formatFunctionError, formatFunctionResult } from '#agent/agentRunner';
-import { humanInTheLoop, notifySupervisor } from '#agent/humanInTheLoop';
-import { convertJsonToPythonDeclaration, extractPythonCode } from '#agent/pythonAgentUtils';
+import { convertJsonToPythonDeclaration, extractPythonCode } from '#agent/codeGenAgentUtils';
+import { humanInTheLoop } from '#agent/humanInTheLoop';
 import { getServiceName } from '#fastify/trace-init/trace-init';
 import { FUNC_SEP, FunctionSchema, getAllFunctionSchemas } from '#functionSchema/functions';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { errorToString } from '#utils/errors';
 import { appContext } from '../app';
-import { agentContextStorage, llms } from './agentContextLocalStorage';
+import { agentContext, agentContextStorage, llms } from './agentContextLocalStorage';
 
 const stopSequences = ['</response>'];
 
-export const DYNAMIC_AGENT_SPAN = 'DynamicAgent';
+export const CODEGEN_AGENT_SPAN = 'CodeGen Agent';
 
 let pyodide: PyodideInterface;
 
-/*
- * The aim of the cachingPython agent compared to the pythonAgent is to utilise the context caching in Claude.
- * This will require using the new methods on the LLM interface which have a message history. This message history
- * will be treated in some ways like a stack.
- *
- * Message stack:
- * system prompt
- * function definitions
- * user request
- * -- cache
- * memory
- * -- cache
- * user - function call history
- * assistant - response
- * -----------------------
- * user - function call results
- * assistant - observations/actions/memory ops
- *
- */
-/**
- *
- * @param agent
- */
-export async function runCachingPythonAgent(agent: AgentContext): Promise<AgentExecution> {
+export async function runCodeGenAgent(agent: AgentContext): Promise<AgentExecution> {
 	if (!pyodide) pyodide = await loadPyodide();
 
 	// Hot reload (TODO only when not deployed)
-	const systemPrompt = readFileSync('src/agent/caching-python-agent-system-prompt').toString();
+	const codegenSystemPrompt = readFileSync('src/agent/codegen-agent-system-prompt').toString();
 
 	const agentStateService = appContext().agentStateService;
 	agent.state = 'agent';
@@ -59,7 +36,7 @@ export async function runCachingPythonAgent(agent: AgentContext): Promise<AgentE
 	const agentLLM = llms().hard;
 
 	const userRequestXml = `<user_request>\n${agent.userPrompt}\n</user_request>`;
-	const currentPrompt = agent.inputPrompt;
+	let currentPrompt = agent.inputPrompt;
 	// logger.info(`userRequestXml ${userRequestXml}`)
 	logger.info(`currentPrompt ${currentPrompt}`);
 
@@ -75,6 +52,8 @@ export async function runCachingPythonAgent(agent: AgentContext): Promise<AgentE
 	}
 
 	let countSinceHil = 0;
+	let costSinceHil = 0;
+	let previousCost = 0;
 
 	await agentStateService.save(agent);
 
@@ -95,47 +74,39 @@ export async function runCachingPythonAgent(agent: AgentContext): Promise<AgentE
 
 		let shouldContinue = true;
 		while (shouldContinue) {
-			shouldContinue = await withActiveSpan(DYNAMIC_AGENT_SPAN, async (span) => {
+			shouldContinue = await withActiveSpan(CODEGEN_AGENT_SPAN, async (span) => {
 				agent.callStack = [];
+				// Might need to reload the agent for dynamic updating of the tools
+				const functionsXml = convertJsonToPythonDeclaration(getAllFunctionSchemas(agent.functions.getFunctionInstances()));
+				const systemPromptWithFunctions = updateFunctionSchemas(codegenSystemPrompt, functionsXml);
 
 				let completed = false;
 				let requestFeedback = false;
 				const anyFunctionCallErrors = false;
 				let controlError = false;
 				try {
-					// Human in the loop checks ------------------------
 					if (hilCount && countSinceHil === hilCount) {
+						agent.state = 'hil';
+						await agentStateService.save(agent);
 						await humanInTheLoop(`Agent control loop has performed ${hilCount} iterations`);
+						agent.state = 'agent';
+						await agentStateService.save(agent);
 						countSinceHil = 0;
 					}
 					countSinceHil++;
 
-					logger.debug(`Budget remaining $${agent.budgetRemaining.toFixed(2)}. Total cost $${agentContextStorage.getStore().cost.toFixed(2)}`);
-					if (hilBudget && agent.budgetRemaining <= 0) {
-						// HITL happens once budget is exceeded, which may be more than the allocated budget
-						const increase = agent.hilBudget - agent.budgetRemaining;
-						await humanInTheLoop(`Agent cost has increased by USD\$${increase.toFixed(2)}. Increase budget by $${agent.hilBudget}`);
-						agent.budgetRemaining = agent.hilBudget;
+					const newCosts = agentContext().cost - previousCost;
+					if (newCosts) logger.debug(`New costs $${newCosts.toFixed(2)}`);
+					previousCost = agentContext().cost;
+					costSinceHil += newCosts;
+					logger.debug(`Spent $${costSinceHil.toFixed(2)} since last input. Total cost $${agentContextStorage.getStore().cost.toFixed(2)}`);
+					if (hilBudget && costSinceHil > hilBudget) {
+						await humanInTheLoop(`Agent cost has increased by USD\$${costSinceHil.toFixed(2)}`);
+						costSinceHil = 0;
 					}
 
-					// Main control loop action ------------------------
-
-					// Agent state ----------------
-
-					// Function definitions. May need to reload the agent for dynamic updating of the tools
-					const functionsXml = convertJsonToPythonDeclaration(getAllFunctionSchemas(agent.functions.getFunctionInstances()));
-					const systemPromptWithFunctions = updateFunctionSchemas(systemPrompt, functionsXml);
-
-					agent.messages[0] = { role: 'system', text: systemPromptWithFunctions, cache: 'ephemeral' };
-
-					// User request. The functions and user request are unlikely to change, so we will use a cache marker
-					agent.messages[1] = { role: 'user', text: userRequestXml, cache: 'ephemeral' };
-
-					// Memory output
-					agent.messages[2] = { role: 'assistant', text: `This is my current memory items:\n${buildMemoryPrompt()}`, cache: 'ephemeral' };
-
-					// Function history and tool state
 					const toolStatePrompt = await buildToolStatePrompt();
+
 					// If the last function was requestFeedback then we'll remove it from function history add it as function results
 					let historyToIndex = agent.functionCallHistory.length ? agent.functionCallHistory.length - 1 : 0;
 					let requestFeedbackCallResult = '';
@@ -145,47 +116,31 @@ export async function runCachingPythonAgent(agent: AgentContext): Promise<AgentE
 					}
 					const oldFunctionCallHistory = buildFunctionCallHistoryPrompt('history', 10000, 0, historyToIndex);
 
-					agent.messages[3] = { role: 'user', text: `State your recent function call history${toolStatePrompt ? ' and functions/tool state.' : ''}` };
-					agent.messages[4] = { role: 'assistant', text: `${oldFunctionCallHistory}\n${toolStatePrompt}` };
-
 					const isNewAgent = agent.iterations === 0 && agent.functionCallHistory.length === 0;
-					// // For the initial prompt we create the empty memory, functional calls and default tool state content. Subsequent iterations already have it
-					// const initialPrompt = isNewAgent
-					// 	? oldFunctionCallHistory + buildMemoryPrompt() + toolStatePrompt + currentPrompt
-					// 	: currentPrompt + requestFeedbackCallResult;
+					// For the initial prompt we create the empty memory, functional calls and default tool state content. Subsequent iterations already have it
+					const initialPrompt = isNewAgent
+						? oldFunctionCallHistory + buildMemoryPrompt() + toolStatePrompt + currentPrompt
+						: currentPrompt + requestFeedbackCallResult;
 
-					// Planning ----------------
-
-					agent.messages[5] = {
-						role: 'user',
-						text: 'Generate a <planning-response> response as per the system instructions provided given the user request, available functions, memory items and recent function call history',
-					};
-					agent.messages[6] = { role: 'assistant', text: '<planning-response>' };
-					agent.messages.length = 7; // If we've restarted remove any extra messages
-					const agentPlanResponse: string = `<planning-response>\n${await agentLLM.generateTextFromMessages(agent.messages, {
-						id: 'dynamicAgentPlan',
-						stopSequences,
-						temperature: 0.6,
-					})}`;
-					agent.messages[6] = { role: 'assistant', text: agentPlanResponse };
-
-					// Code gen for function calling -----------
-
-					agent.messages[7] = {
-						role: 'user',
-						text: 'Generate a coding response as per the system instructions provided given the user request, memory items, recent function call history and plan',
-					};
-					agent.messages[8] = { role: 'assistant', text: '<python-code>' };
-					const agentCodeResponse: string = `<python-code>\n${await agentLLM.generateTextFromMessages(agent.messages, {
-						id: 'dynamicAgentCode',
-						stopSequences,
-						temperature: 0.7,
-					})}`;
-					console.log(agentCodeResponse);
-					agent.messages[8] = { role: 'assistant', text: agentCodeResponse };
-					const llmPythonCode = extractPythonCode(agentCodeResponse);
-
-					// Function calling ----------------
+					let agentPlanResponse: string;
+					let llmPythonCode: string;
+					try {
+						agentPlanResponse = await agentLLM.generateText(initialPrompt, systemPromptWithFunctions, {
+							id: 'Codegen agent plan',
+							stopSequences,
+							temperature: 0.5,
+						});
+						llmPythonCode = extractPythonCode(agentPlanResponse);
+					} catch (e) {
+						logger.warn(e, 'Error with Codegen agent plan');
+						// One re-try if the generate fails or the code can't be extracted
+						agentPlanResponse = await agentLLM.generateText(initialPrompt, systemPromptWithFunctions, {
+							id: 'Codegen agent plan',
+							stopSequences,
+							temperature: 0.5,
+						});
+						llmPythonCode = extractPythonCode(agentPlanResponse);
+					}
 
 					agent.state = 'functions';
 					await agentStateService.save(agent);
@@ -201,6 +156,9 @@ export async function runCachingPythonAgent(agent: AgentContext): Promise<AgentE
 					for (const schema of schemas) {
 						const [className, method] = schema.name.split(FUNC_SEP);
 						jsGlobals[schema.name] = async (...args) => {
+							// // Un-proxy any JsProxy objects. https://pyodide.org/en/stable/usage/type-conversions.html
+							// args = args.map(arg => typeof arg.toJs === 'function' ? arg.toJs() : arg)
+
 							// Convert arg array to parameters name/value map
 							const parameters: { [key: string]: any } = {};
 							for (let index = 0; index < args.length; index++) parameters[schema.parameters[index].name] = args[index];
@@ -268,7 +226,7 @@ class JsProxyEncoder(json.JSONEncoder):
             return obj.to_py()
         # Let the base class default method raise the TypeError
         return super().default(obj)
-        
+
 async def main():
 ${llmPythonCode
 	.split('\n')
@@ -287,17 +245,19 @@ main()`.trim();
 						} catch (e) {
 							// Attempt to fix Syntax/indentation errors and retry
 							// Otherwise let execution errors re-throw.
-							if (e.type !== 'IndentationError' && e.type !== 'SyntaxError') throw e;
+							if (e.type === 'IndentationError' || e.type !== 'SyntaxError') {
+								// Fix the compile issues in the script
+								const prompt = `${functionsXml}\n<python>\n${pythonScript}</python>\n<error>${e.message}</error>\nPlease adjust/reformat the Python script to fix the issue. Output only the updated code. Do no chat, do not output markdown ticks. Only the updated code.`;
+								pythonScript = await llms().hard.generateText(prompt, null, { id: 'Fix python script error' });
 
-							// Fix the compile issues in the script
-							const prompt = `${functionsXml}\n<python>\n${pythonScript}</python>\n<error>${e.message}</error>\nPlease adjust/reformat the Python script to fix the issue. Output only the updated code. Do no chat, do not output markdown ticks. Only the updated code.`;
-							pythonScript = await llms().hard.generateText(prompt, null, { id: 'Fix python script error' });
-
-							// Re-try execution of fixed syntax/indentation error
-							const result = await pyodide.runPythonAsync(pythonScript, { globals });
-							pythonScriptResult = result?.toJs ? result.toJs() : result;
-							pythonScriptResult = JSON.stringify(pythonScriptResult);
-							if (result?.destroy) result.destroy();
+								// Re-try execution of fixed syntax/indentation error
+								const result = await pyodide.runPythonAsync(pythonScript, { globals });
+								pythonScriptResult = result?.toJs ? result.toJs() : result;
+								pythonScriptResult = JSON.stringify(pythonScriptResult);
+								if (result?.destroy) result.destroy();
+							} else {
+								throw e;
+							}
 						}
 						logger.info(pythonScriptResult, 'Script result');
 
@@ -320,14 +280,16 @@ main()`.trim();
 						functionErrorCount++;
 					}
 					// Function invocations are complete
+					// span.setAttribute('functionCalls', pythonCode.map((functionCall) => functionCall.function_name).join(', '));
 
+					// The agent should store important values in memory
+					// functionResults
+
+					// This section is duplicated in the provideFeedback function
+					agent.invoking = [];
 					const currentFunctionCallHistory = buildFunctionCallHistoryPrompt('results', 10000, currentFunctionHistorySize);
-					// TODO output any saved memory items
-					agent.messages[9] = {
-						role: 'user',
-						text: `<script-result>${pythonScriptResult}</script-result>\nReview the results of the scripts and make any observations about the output/errors, then provide an updated planning response.`,
-					};
 
+					currentPrompt = `${oldFunctionCallHistory}${buildMemoryPrompt()}${toolStatePrompt}\n${userRequestXml}\n${agentPlanResponse}\n${currentFunctionCallHistory}\n<script-result>${pythonScriptResult}</script-result>\nReview the results of the scripts and make any observations about the output/errors, then proceed with the response.`;
 					currentFunctionHistorySize = agent.functionCallHistory.length;
 				} catch (e) {
 					span.setStatus({ code: SpanStatusCode.ERROR, message: e.toString() });

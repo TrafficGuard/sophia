@@ -1,5 +1,7 @@
-.container {
+.code-card {
+  margin: 20px;
   padding: 20px;
+  margin-bottom: 20px;
 }
 
 form {
@@ -10,8 +12,12 @@ form {
   margin-bottom: 20px;
 }
 
-mat-card {
-  margin-top: 20px;
+.progress-card {
+  margin: 20px;
+}
+
+.result-card {
+  margin: 20px;
 }
 
 pre {

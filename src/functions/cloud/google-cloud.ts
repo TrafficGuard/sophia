@@ -67,12 +67,12 @@ export class GoogleCloud {
 		return result.stdout;
 	}
 
-	/**
-	 * Returns the open alert incidents across all the production projects
-	 * @returns {string[]} the open alert incidents
-	 */
-	@func()
-	getOpenProductionIncidents(gcpProjectId: string): Promise<string[]> {
-		return Promise.resolve([]);
-	}
+	// /**
+	//  * Returns the open alert incidents across all the production projects
+	//  * @returns {string[]} the open alert incidents
+	//  */
+	// @func()
+	// getOpenProductionIncidents(gcpProjectId: string): Promise<string[]> {
+	// 	return Promise.resolve([]);
+	// }
 }

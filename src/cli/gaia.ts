@@ -96,7 +96,7 @@ async function answerGaiaQuestion(task: GaiaQuestion): Promise<GaiaResult> {
 				xhard: Claude3_5_Sonnet_Vertex(),
 			},
 			agentName: `gaia-${task.task_id}`,
-			type: 'python',
+			type: 'codegen',
 			humanInLoop: {
 				budget,
 				count: 100,

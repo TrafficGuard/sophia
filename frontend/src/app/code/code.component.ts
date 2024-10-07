@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CodeService } from '@app/shared/services/code.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-code',
   templateUrl: './code.component.html',
-  styleUrls: ['./code.component.scss']
+  styleUrls: ['./code.component.scss'],
 })
 export class CodeComponent implements OnInit {
   codeForm!: FormGroup;
@@ -19,7 +20,7 @@ export class CodeComponent implements OnInit {
     this.codeForm = this.fb.group({
       workingDirectory: ['', Validators.required],
       operationType: ['code', Validators.required],
-      input: ['', Validators.required]
+      input: ['', Validators.required],
     });
 
     this.codeService.getRepositories().subscribe({
@@ -32,7 +33,7 @@ export class CodeComponent implements OnInit {
       error: (error: any) => {
         console.error('Error fetching repositories:', error);
         this.result = 'Error fetching repositories. Please try again later.';
-      }
+      },
     });
   }
 
@@ -51,60 +52,49 @@ export class CodeComponent implements OnInit {
   }
 
   onSubmit() {
+    console.log(`valid ${this.codeForm.valid}`);
     if (this.codeForm.valid) {
       this.isLoading = true;
-      const { workingDirectory, operationType, input } = this.codeForm.value;
-
-      switch (operationType) {
-        case 'code':
-          this.runCodeEditWorkflow(workingDirectory, input);
-          break;
-        case 'query':
-          this.runCodebaseQuery(workingDirectory, input);
-          break;
-        case 'selectFiles':
-          this.selectFilesToEdit(workingDirectory, input);
-          break;
-      }
+      this.executeOperation();
     }
   }
 
-  private runCodeEditWorkflow(workingDirectory: string, input: string) {
-    this.codeService.runCodeEditWorkflow(workingDirectory, input).subscribe({
-      next: response => {
-        this.result = JSON.stringify(response, null, 2);
-        this.isLoading = false;
-      },
-      error: error => {
-        this.result = 'Error: ' + error.message;
-        this.isLoading = false;
-      }
-    });
-  }
+  /**
+   * Executes the selected operation based on the form input.
+   * This method handles different operation types and calls the appropriate service method.
+   * It also manages the loading state and error handling for all operations.
+   */
+  private executeOperation() {
+    const { workingDirectory, operationType, input } = this.codeForm.value;
 
-  private runCodebaseQuery(workingDirectory: string, input: string) {
-    this.codeService.runCodebaseQuery(workingDirectory, input).subscribe({
-      next: response => {
-        this.result = response.response;
-        this.isLoading = false;
-      },
-      error: error => {
-        this.result = 'Error: ' + error.message;
-        this.isLoading = false;
-      }
-    });
-  }
+    let operation: Observable<any>;
 
-  private selectFilesToEdit(workingDirectory: string, input: string) {
-    this.codeService.selectFilesToEdit(workingDirectory, input).subscribe({
-      next: response => {
-        this.result = JSON.stringify(response, null, 2);
+    switch (operationType) {
+      case 'code':
+        operation = this.codeService.runCodeEditWorkflow(workingDirectory, input);
+        break;
+      case 'query':
+        operation = this.codeService.runCodebaseQuery(workingDirectory, input);
+        break;
+      case 'selectFiles':
+        operation = this.codeService.selectFilesToEdit(workingDirectory, input);
+        break;
+      default:
+        this.result = 'Error: Invalid operation type';
+        this.isLoading = false;
+        return;
+    }
+
+    operation.subscribe({
+      next: (response: any) => {
+        this.result = operationType === 'query' ? response.response : JSON.stringify(response, null, 2);
         this.isLoading = false;
       },
-      error: error => {
-        this.result = 'Error: ' + error.message;
+      error: (error: Error) => {
+        console.error(`Error in ${operationType} operation:`, error);
+        this.result = `Error during ${operationType} operation: ${error.message}`;
         this.isLoading = false;
-      }
+      },
     });
   }
 }

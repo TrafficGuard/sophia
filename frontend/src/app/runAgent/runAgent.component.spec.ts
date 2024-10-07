@@ -41,12 +41,12 @@ describe('RunAgentComponent', () => {
     expect(component.runAgentForm.valid).toBeTruthy();
   });
 
-  it('should have "xml" as the default type', () => {
-    expect(component.runAgentForm.get('type')?.value).toBe('python');
+  it('should have "codegen" as the default type', () => {
+    expect(component.runAgentForm.get('type')?.value).toBe('codegen');
   });
 
-  it('should allow changing the type to "python"', () => {
-    component.runAgentForm.patchValue({ type: 'python' });
-    expect(component.runAgentForm.get('type')?.value).toBe('python');
+  it('should allow changing the type to "xml"', () => {
+    component.runAgentForm.patchValue({ type: 'xml' });
+    expect(component.runAgentForm.get('type')?.value).toBe('xml');
   });
 });

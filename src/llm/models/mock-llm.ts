@@ -114,7 +114,7 @@ export class MockLLM extends BaseLLM {
 				outputChars: responseText.length,
 			});
 
-			logger.info(`MockLLM response ${responseText}`);
+			logger.debug(`MockLLM response ${responseText}`);
 			return responseText;
 		});
 	}

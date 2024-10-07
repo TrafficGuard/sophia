@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { debounceTime, filter, throttleTime } from 'rxjs/operators';
 import { ApiChatService } from '@app/chat/services/api/api-chat.service';
@@ -10,10 +10,12 @@ import { Data } from '@shared';
   selector: 'app-chat-controls',
   templateUrl: './chat-controls.component.html',
   styleUrls: ['./chat-controls.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChatControlsComponent implements OnInit {
   @Input() chatId: string = '';
   @Output() messageSent = new EventEmitter<LlmMessage[]>();
+  @Output() chatError = new EventEmitter<string>();
 
   chatForm: FormGroup;
   isSending: boolean = false;
@@ -67,14 +69,23 @@ export class ChatControlsComponent implements OnInit {
   }
 
   submit(): void {
+    console.log('Submit method called'); // Debug log
     const msg = this.chatForm.get('message')?.value;
     const selectedLlmId = this.chatForm.get('selectedLlm')?.value;
 
+    if (!this.chatId) {
+      console.error('Chat ID is not set');
+      this.chatError.emit('Unable to send message. Please try again later.');
+      return;
+    }
+
     if (!msg) {
-      return alert('Please enter a message.');
+      this.chatError.emit('Please enter a message.');
+      return;
     }
     if (!selectedLlmId) {
-      return alert('Please select an LLM.');
+      this.chatError.emit('Please select an LLM.');
+      return;
     }
 
     this.isSending = true;
@@ -92,7 +103,7 @@ export class ChatControlsComponent implements OnInit {
       error: (err: Error) => {
         console.error('Error sending message:', err);
         this.isSending = false;
-        alert('Failed to send message. Please try again.');
+        this.chatError.emit('Failed to send message. Please try again.');
       },
     });
   }

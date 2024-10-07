@@ -94,7 +94,7 @@ First discuss what 3rd party API usages would be required in the changes, if any
 Then respond in following format:
 <json>
 {
-	searchQueries: ["query 1", "query 2"]
+	"searchQueries": ["query 1", "query 2"]
 }
 </json> 
 `;

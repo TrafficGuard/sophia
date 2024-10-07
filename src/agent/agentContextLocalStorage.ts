@@ -57,7 +57,7 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		traceId: '',
 		metadata: config.metadata ?? {},
 		name: config.agentName,
-		type: config.type ?? 'python',
+		type: config.type ?? 'codegen',
 		user: config.user ?? currentUser(),
 		inputPrompt: '',
 		userPrompt: config.initialPrompt,

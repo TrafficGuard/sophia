@@ -46,7 +46,7 @@ export async function main() {
 		initialPrompt,
 		functions,
 		llms,
-		type: 'python',
+		type: 'codegen',
 		resumeAgentId,
 	});
 	logger.info('AgentId ', agentId);

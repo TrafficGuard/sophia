@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { MatTableDataSource } from '@angular/material/table';
 import { environment } from '@env/environment';
+import { AgentType } from '@shared';
 
 export type TaskLevel = 'easy' | 'medium' | 'hard' | 'xhard';
 
@@ -78,7 +79,7 @@ export interface AgentContext {
   /** Empty string in single-user mode */
   userId: string;
   userEmail?: string;
-  type: 'xml' | 'python';
+  type: AgentType;
   state: AgentRunningState;
   inputPrompt: string;
   userPrompt: string;

@@ -37,11 +37,12 @@ The `@funcClass(__filename)` annotation must be on the class so ts-morph can fin
 The `@func()` annotation must be on each class method to be exposed as a LLM callable function.
 
 If the schema files don't exist at runtime then they will automatically be generated. To improve startup time
-the schema files are cached under the folder `.sophia/functions` and only re-built if the source file modified date is newer. 
-Also, the schema files can be generated at build time with the `npm run functionSchemas` script.
+the schema files are cached under the folder `.sophia/functions` and only re-built if the source file modified date is newer.
+
+The schema files can be generated at build time with the `npm run functionSchemas` script.
 
 Function calling agents can transform the object implementing the [FunctionSchema](https://github.com/TrafficGuard/sophia/blob/main/src/functionSchema/functions.ts#L13)
-interface into the format required, e.g. the custom XML format, or native function calling types for OpenAI, Anthropic, Gemini etc.
+interface into the format required, e.g. the custom XML format, or (not yet implemented) native function calling types for OpenAI, Anthropic, Gemini etc.
 
 The `@func` annotation also adds OpenTelemetry tracing to the function call.
 

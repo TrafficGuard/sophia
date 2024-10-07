@@ -3,11 +3,13 @@ import { Routes, RouterModule } from '@angular/router';
 
 import { CodeReviewEditComponent } from './code-review-edit.component';
 import { CodeReviewListComponent } from './code-review-list.component';
+import { marker } from '@biesbjerg/ngx-translate-extract-marker';
 
 const routes: Routes = [
   {
     path: '',
     component: CodeReviewListComponent,
+    data: { title: marker('Code Reviews') },
   },
   {
     path: 'new',

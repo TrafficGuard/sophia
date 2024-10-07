@@ -26,7 +26,7 @@ export function func() {
 			const tracer = getTracer();
 			const agent = agentContext();
 
-			// TODO move agent.functionCallHistory.push from xml and python runners to here so agentWorkflows show the function call history
+			// TODO move agent.functionCallHistory.push from xml and codegen runners to here so agentWorkflows show the function call history
 			// output summarising might have to happen in the agentService.save
 			// // Convert arg array to parameters name/value map
 			// const parameters: { [key: string]: any } = {};

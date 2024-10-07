@@ -9,3 +9,5 @@ export * from '@ngneat/until-destroy';
 export type Data<T> = {
   data: T;
 };
+
+export type AgentType = 'xml' | 'codegen';

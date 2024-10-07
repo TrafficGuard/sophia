@@ -46,6 +46,7 @@ nav:
     - code-review.md
     - chatbot.md
   - integrations.md
+  - chat.md
   - roadmap.md
   - Blog:
       - blog/index.md

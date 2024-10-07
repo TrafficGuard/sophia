@@ -13,7 +13,7 @@ import { User } from '#user/user';
  *
  */
 export type TaskLevel = 'easy' | 'medium' | 'hard' | 'xhard';
-export type AgentType = 'xml' | 'python';
+export type AgentType = 'xml' | 'codegen';
 
 export interface AgentCompleted {
 	notifyCompleted(agentContext: AgentContext): Promise<void>;

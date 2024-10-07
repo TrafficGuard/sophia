@@ -2,8 +2,7 @@ import { LlmFunctions } from '#agent/LlmFunctions';
 import { createContext, llms } from '#agent/agentContextLocalStorage';
 import { AgentCompleted, AgentContext, AgentLLMs, AgentType } from '#agent/agentContextTypes';
 import { AGENT_REQUEST_FEEDBACK } from '#agent/agentFunctions';
-import { runCachingPythonAgent } from '#agent/cachingPythonAgentRunner';
-import { runPythonAgent } from '#agent/pythonAgentRunner';
+import { runCodeGenAgent } from '#agent/codeGenAgentRunner';
 import { runXmlAgent } from '#agent/xmlAgentRunner';
 import { FUNC_SEP } from '#functionSchema/functions';
 import { FunctionCall, FunctionCallResult } from '#llm/llm';
@@ -25,7 +24,7 @@ export interface RunAgentConfig {
 	user?: User;
 	/** The name of this agent */
 	agentName: string;
-	/** The type of autonomous agent function calling. Defaults to python/dynamic */
+	/** The type of autonomous agent function calling. Defaults to codegen */
 	type?: AgentType;
 	/** The function classes the agent has available to call */
 	functions: LlmFunctions | Array<new () => any>;
@@ -66,8 +65,8 @@ async function runAgent(agent: AgentContext): Promise<AgentExecution> {
 		case 'xml':
 			execution = await runXmlAgent(agent);
 			break;
-		case 'python':
-			execution = await runPythonAgent(agent);
+		case 'codegen':
+			execution = await runCodeGenAgent(agent);
 			break;
 		default:
 			throw new Error(`Invalid agent type ${agent.type}`);
@@ -196,7 +195,7 @@ export async function summariseLongFunctionOutput(functionCall: FunctionCall, re
 
 	const prompt = `<function_name>${functionCall.function_name}</function_name>\n<output>\n${result}\n</output>\n
 	For the above function call summarise the output into a paragraph that captures key details about the output content, which might include identifiers, content summary, content structure and examples. Only responsd with the summary`;
-	return await llms().easy.generateText(prompt, null, { id: 'summariseLongFunctionOutput' });
+	return await llms().easy.generateText(prompt, null, { id: 'Summarise long function output' });
 }
 
 /**

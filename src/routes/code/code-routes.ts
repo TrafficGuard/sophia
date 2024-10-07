@@ -12,7 +12,7 @@ import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { codebaseQuery } from '#swe/codebaseQuery';
 import { SelectFilesResponse, selectFilesToEdit } from '#swe/selectFilesToEdit';
 import { AppFastifyInstance } from '../../app';
-import { systemDir } from '../../appVars';
+import { sophiaDirName, systemDir } from '../../appVars';
 
 function findRepositories(dir: string): string[] {
 	const repos: string[] = [];
@@ -107,7 +107,9 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 				let response = '';
 				await runAgentWorkflow(config, async () => {
 					// In the UI we strip out the systemDir
-					if (workingDirectory !== systemDir()) {
+					logger.info(`systemDir ${systemDir()}`);
+					logger.info(`workinDir ${workingDirectory}`);
+					if (join(workingDirectory, sophiaDirName) !== systemDir()) {
 						workingDirectory = join(systemDir(), workingDirectory);
 					}
 					logger.info(`Setting working directory to ${workingDirectory}`);

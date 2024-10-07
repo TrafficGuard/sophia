@@ -7,12 +7,15 @@ import { Router } from '@angular/router';
 import { environment } from '@env/environment';
 import { AgentEventService } from '@app/agent-event.service';
 import { LlmService } from '@app/shared/services/llm.service';
+import { AgentType } from '@shared';
 
 interface StartAgentResponse {
   data: {
     agentId: string;
   };
 }
+
+const defaultType: AgentType = 'codegen';
 
 @Component({
   selector: 'app-run-agent',
@@ -35,7 +38,7 @@ export class RunAgentComponent implements OnInit {
     this.runAgentForm = new FormGroup({
       name: new FormControl('', Validators.required),
       userPrompt: new FormControl('', Validators.required),
-      type: new FormControl('python', Validators.required), // TODO make a constant
+      type: new FormControl(defaultType, Validators.required),
       llmEasy: new FormControl('', Validators.required),
       llmMedium: new FormControl('', Validators.required),
       llmHard: new FormControl('', Validators.required),

@@ -21,9 +21,7 @@ const routes: Routes = [
       loadChildren: () => import('./code-review/code-review.module').then((m) => m.CodeReviewModule),
     },
   ]),
-  Shell.childRoutes([
-    { path: 'code', loadChildren: () => import('./code/code.module').then(m => m.CodeModule) },
-  ]),
+  Shell.childRoutes([{ path: 'code', loadChildren: () => import('./code/code.module').then((m) => m.CodeModule) }]),
   // Fallback when no prior route is matched
   { path: '**', redirectTo: '', pathMatch: 'full' },
 ];

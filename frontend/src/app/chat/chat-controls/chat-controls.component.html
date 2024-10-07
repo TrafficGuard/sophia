@@ -18,12 +18,7 @@
         </mat-select>
       </mat-form-field>
 
-      <button
-        mat-fab
-        color="primary"
-        (click)="submit()"
-        [disabled]="!chatForm.get('message')?.value || isSending || !chatForm.get('selectedLlm')?.value"
-      >
+      <button mat-fab color="primary" (click)="submit()" [disabled]="!chatForm.valid || isSending">
         <mat-icon *ngIf="!isSending">send</mat-icon>
         <mat-spinner *ngIf="isSending" diameter="24"></mat-spinner>
       </button>

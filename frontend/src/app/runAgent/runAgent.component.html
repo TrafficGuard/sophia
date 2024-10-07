@@ -11,10 +11,11 @@
 
         <div class="form-row">
           <mat-form-field appearance="fill">
-            <mat-label>Function generation type</mat-label>
+            <mat-label>Function calling type</mat-label>
             <mat-select id="type" formControlName="type">
-              <mat-option value="python">Dynamic</mat-option>
+              <mat-option value="codegen">Code Generation</mat-option>
               <mat-option value="xml">XML</mat-option>
+              <mat-option value="native" disabled>Native</mat-option>
             </mat-select>
           </mat-form-field>
         </div>
