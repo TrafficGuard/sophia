@@ -39,12 +39,6 @@ export type RouteDefinition = (fastify: TypeBoxFastifyInstance) => Promise<void>
 
 export const fastifyInstance: TypeBoxFastifyInstance = fastify({
 	maxParamLength: 256,
-	rewriteUrl: (req) => {
-		if (req.url.startsWith(UI_PREFIX)) {
-			return UI_PREFIX;
-		}
-		return req.url;
-	},
 }).withTypeProvider<TypeBoxTypeProvider>();
 
 export interface FastifyConfig {

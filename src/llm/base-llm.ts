@@ -243,6 +243,7 @@ export abstract class BaseLLM implements LLM {
 		return true;
 	}
 
+	/** Model id form the Vercel AI package */
 	aiModel(): LanguageModel {
 		throw new Error('Unsupported implementation');
 	}

@@ -1,14 +1,13 @@
 import { Type } from '@sinclair/typebox';
 import { LlmFunctions } from '#agent/LlmFunctions';
+import { AgentType } from '#agent/agentContextTypes';
+import { AgentExecution, startAgent } from '#agent/agentRunner';
 import { send } from '#fastify/index';
+import { functionFactory } from '#functionSchema/functionDecorators';
 import { getLLM } from '#llm/llmFactory';
 import { logger } from '#o11y/logger';
-import { AppFastifyInstance } from '../../app';
-import { AgentExecution, startAgent } from '#agent/agentRunner';
 import { currentUser } from '#user/userService/userContext';
-import { functionFactory } from '#functionSchema/functionDecorators';
-import {AgentType} from "#agent/agentContextTypes";
-
+import { AppFastifyInstance } from '../../app';
 
 const v1BasePath = '/api/agent/v1';
 
