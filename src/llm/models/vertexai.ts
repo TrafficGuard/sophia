@@ -1,4 +1,6 @@
+import { createVertex, vertex } from '@ai-sdk/google-vertex';
 import { GenerativeModel, HarmBlockThreshold, HarmCategory, SafetySetting, VertexAI } from '@google-cloud/vertexai';
+import { LanguageModel } from 'ai';
 import axios from 'axios';
 import { addCost, agentContext } from '#agent/agentContextLocalStorage';
 import { AgentLLMs } from '#agent/agentContextTypes';
@@ -41,11 +43,11 @@ export function vertexLLMRegistry(): Record<string, () => LLM> {
 // gemini-1.5-pro-latest
 // gemini-1.5-pro-exp-0801
 // exp-0801
-export function Gemini_1_5_Pro(version = '002') {
+export function Gemini_1_5_Pro() {
 	return new VertexLLM(
 		'Gemini 1.5 Pro',
 		VERTEX_SERVICE,
-		`gemini-1.5-pro-${version}`,
+		'gemini-1.5-pro',
 		1_000_000,
 		(input: string) => (input.length * (input.length > 128_000 * 4 ? 0.0003125 : 0.000625)) / 1000,
 		(output: string) => (output.length * (output.length > 128_000 * 4 ? 0.0025 : 0.00125)) / 1000,
@@ -63,11 +65,11 @@ export function Gemini_1_5_Experimental() {
 	);
 }
 
-export function Gemini_1_5_Flash(version = '002') {
+export function Gemini_1_5_Flash() {
 	return new VertexLLM(
 		'Gemini 1.5 Flash',
 		VERTEX_SERVICE,
-		`gemini-1.5-flash-${version}`,
+		'gemini-1.5-flash',
 		1_000_000,
 		(input: string) => (input.length * 0.000125) / 1000,
 		(output: string) => (output.length * 0.000375) / 1000,
@@ -147,6 +149,7 @@ export function Vertex_Llama3_405b() {
  */
 class VertexLLM extends BaseLLM {
 	_vertex: VertexAI;
+	aimodel: LanguageModel;
 
 	vertex(): VertexAI {
 		if (!this._vertex) {
@@ -156,6 +159,14 @@ class VertexLLM extends BaseLLM {
 			});
 		}
 		return this._vertex;
+	}
+
+	aiModel(): LanguageModel {
+		if (!this.aimodel) {
+			const provider = createVertex({ project: process.env.GCLOUD_PROJECT, location: process.env.GCLOUD_REGION });
+			this.aimodel = provider(this.getModel());
+		}
+		return this.aimodel;
 	}
 
 	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {

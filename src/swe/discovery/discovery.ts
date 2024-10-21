@@ -1,7 +1,7 @@
 import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { logger } from '#o11y/logger';
+import { SelectedFile, selectFilesToEdit } from '#swe/discovery/selectFilesToEdit';
 import { getProjectInfo } from '#swe/projectDetection';
-import { SelectedFile, selectFilesToEdit } from '#swe/selectFilesToEdit';
 
 interface DiscoveryResult {
 	readyForExecution: boolean;

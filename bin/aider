@@ -2,5 +2,6 @@
 source variables/local.env
 export VERTEXAI_PROJECT=$GCLOUD_PROJECT
 export VERTEXAI_LOCATION=$GCLOUD_CLAUDE_REGION
+export OPENAI_API_KEY=$OPENAI_API_KEY
 echo $VERTEXAI_PROJECT $VERTEXAI_LOCATION
-aider --model vertex_ai/claude-3-5-sonnet@20240620
+aider --o1-preview --editor-model vertex_ai/claude-3-5-sonnet@20240620

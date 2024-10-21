@@ -1,7 +1,8 @@
+import { createOpenAI } from '@ai-sdk/openai';
+import { LanguageModel } from 'ai';
 import axios from 'axios';
 import { addCost, agentContext } from '#agent/agentContextLocalStorage';
 import { LlmCall } from '#llm/llmCallService/llmCall';
-import { CallerId } from '#llm/llmCallService/llmCallService';
 import { withSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { sleep } from '#utils/async-utils';
@@ -35,6 +36,7 @@ export function deepseekChat(): LLM {
  */
 export class DeepseekLLM extends BaseLLM {
 	_client: any;
+	aimodel: LanguageModel;
 
 	client() {
 		if (!this._client) {
@@ -50,6 +52,16 @@ export class DeepseekLLM extends BaseLLM {
 
 	isConfigured(): boolean {
 		return Boolean(currentUser().llmConfig.deepseekKey || process.env.DEEPSEEK_API_KEY);
+	}
+
+	aiModel(): LanguageModel {
+		if (!this.aimodel) {
+			this.aimodel = createOpenAI({
+				baseURL: 'https://api.deepseek.com',
+				apiKey: currentUser().llmConfig.deepseekKey || envVar('DEEPSEEK_API_KEY'),
+			})('deepseek-coder');
+		}
+		return this.aimodel;
 	}
 
 	constructor(

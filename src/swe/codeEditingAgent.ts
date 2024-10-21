@@ -13,9 +13,9 @@ import { execCommand, runShellCommand } from '#utils/exec';
 import { appContext } from '../app';
 import { cacheRetry } from '../cache/cacheRetry';
 import { AiderCodeEditor } from './aiderCodeEditor';
+import { SelectFilesResponse, selectFilesToEdit } from './discovery/selectFilesToEdit';
 import { ProjectInfo, detectProjectInfo } from './projectDetection';
 import { basePrompt } from './prompt';
-import { SelectFilesResponse, selectFilesToEdit } from './selectFilesToEdit';
 import { summariseRequirements } from './summariseRequirements';
 
 export function buildPrompt(args: {

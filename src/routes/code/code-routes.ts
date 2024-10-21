@@ -9,8 +9,8 @@ import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { Gemini_1_5_Flash } from '#llm/models/vertexai';
 import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
-import { codebaseQuery } from '#swe/codebaseQuery';
-import { SelectFilesResponse, selectFilesToEdit } from '#swe/selectFilesToEdit';
+import { codebaseQuery } from '#swe/discovery/codebaseQuery';
+import { SelectFilesResponse, selectFilesToEdit } from '#swe/discovery/selectFilesToEdit';
 import { AppFastifyInstance } from '../../app';
 import { sophiaDirName, systemDir } from '../../appVars';
 

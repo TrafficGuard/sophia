@@ -5,7 +5,7 @@ import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { logger } from '#o11y/logger';
 import { getRepositoryOverview } from '#swe/documentationBuilder';
 import { RepositoryMaps, generateRepositoryMaps } from '#swe/repositoryMap';
-import { ProjectInfo, getProjectInfo } from './projectDetection';
+import { ProjectInfo, getProjectInfo } from '../projectDetection';
 
 export interface SelectFilesResponse {
 	primaryFiles: SelectedFile[];

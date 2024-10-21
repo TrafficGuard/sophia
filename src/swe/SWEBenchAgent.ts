@@ -5,9 +5,9 @@ import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { countTokens } from '#llm/tokens';
 import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
+import { selectFilesToEdit } from '#swe/discovery/selectFilesToEdit';
 import { PythonTools } from '#swe/lang/python/pythonTools';
 import { ProjectInfo } from '#swe/projectDetection';
-import { selectFilesToEdit } from '#swe/selectFilesToEdit';
 import { MAP_REPO_TO_TEST_FRAMEWORK, MAP_VERSION_TO_INSTALL, VersionInstallation } from '#swe/sweBenchConstant';
 import { execCommand } from '#utils/exec';
 

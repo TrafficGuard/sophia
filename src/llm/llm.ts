@@ -71,7 +71,7 @@ export function assistant(text: string): LlmMessage {
 export interface LLM {
 	generateTextFromMessages(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string>;
 
-	/* Generates a response that is expected to be in JSON format, and returns the object */
+	/* Generates a response that is expected to be in JSON format, or end with a JSON object wrapped in <json> tags or Markdown triple ticks, and returns the object */
 	generateJsonFromMessages<T>(messages: LlmMessage[], opts?: GenerateJsonOptions): Promise<T>;
 
 	/* Generates text from a LLM */
@@ -108,7 +108,7 @@ export interface LLM {
 	getService(): string;
 
 	/**
-	 * The LLM model identifier
+	 * The LLM model identifier. This should match the model ids in the Vercel ai module (https://github.com/vercel/ai)
 	 */
 	getModel(): string;
 

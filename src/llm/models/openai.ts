@@ -1,4 +1,6 @@
+import { createOpenAI, openai } from '@ai-sdk/openai';
 import { OpenAIChatModelId } from '@ai-sdk/openai/internal';
+import { LanguageModel } from 'ai';
 import { OpenAI as OpenAISDK } from 'openai';
 import { addCost, agentContext } from '#agent/agentContextLocalStorage';
 import { LlmCall } from '#llm/llmCallService/llmCall';
@@ -77,11 +79,12 @@ export function GPT4oMini() {
 
 export class OpenAI extends BaseLLM {
 	openAISDK: OpenAISDK | null = null;
+	aimodel: LanguageModel;
 
 	constructor(
 		name: string,
 		model: Model,
-		aiModel: OpenAIChatModelId,
+		private aiModelId: OpenAIChatModelId,
 		maxInputTokens: number,
 		calculateInputCost: (input: string) => number,
 		calculateOutputCost: (output: string) => number,
@@ -100,6 +103,15 @@ export class OpenAI extends BaseLLM {
 
 	isConfigured(): boolean {
 		return Boolean(currentUser().llmConfig.openaiKey || process.env.OPENAI_API_KEY);
+	}
+
+	aiModel(): LanguageModel {
+		if (!this.aimodel) {
+			this.aimodel = createOpenAI({
+				apiKey: currentUser().llmConfig.openaiKey || envVar('OPENAI_API_KEY'),
+			})(this.getModel());
+		}
+		return this.aimodel;
 	}
 
 	async generateImage(description: string): Promise<string> {

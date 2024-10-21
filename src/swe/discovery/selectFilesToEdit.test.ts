@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { FileSystemService } from '#functions/storage/fileSystemService';
-import { removeNonExistingFiles } from '#swe/selectFilesToEdit';
+import { removeNonExistingFiles } from '#swe/discovery/selectFilesToEdit';
 
 describe('removeNonExistingFiles', () => {
 	const fileSystem = new FileSystemService();
