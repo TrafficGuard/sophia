@@ -40,7 +40,7 @@ export function Claude3_Opus() {
 export function Claude3_5_Sonnet() {
 	return new Anthropic(
 		'Claude 3.5 Sonnet',
-		'claude-3-5-sonnet-20240620',
+		'claude-3-5-sonnet-20241022',
 		(input: string) => (input.length * 3) / (1_000_000 * 3.5),
 		(output: string) => (output.length * 15) / (1_000_000 * 3.5),
 	);

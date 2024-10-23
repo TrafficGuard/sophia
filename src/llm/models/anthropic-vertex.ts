@@ -22,25 +22,14 @@ export const ANTHROPIC_VERTEX_SERVICE = 'anthropic-vertex';
 export function anthropicVertexLLMRegistry(): Record<string, () => LLM> {
 	return {
 		[`${ANTHROPIC_VERTEX_SERVICE}:claude-3-haiku`]: Claude3_Haiku_Vertex,
-		[`${ANTHROPIC_VERTEX_SERVICE}:claude-3-sonnet`]: Claude3_Sonnet_Vertex,
 		[`${ANTHROPIC_VERTEX_SERVICE}:claude-3-5-sonnet`]: Claude3_5_Sonnet_Vertex,
-		[`${ANTHROPIC_VERTEX_SERVICE}:claude-3-opus`]: Claude3_Opus_Vertex,
 	};
-}
-
-export function Claude3_Sonnet_Vertex() {
-	return new AnthropicVertexLLM(
-		'Claude 3 Sonnet (Vertex)',
-		'claude-3-sonnet@20240229',
-		(input: string) => (input.length * 3) / (1_000_000 * 3.5),
-		(output: string) => (output.length * 15) / (1_000_000 * 3.5),
-	);
 }
 
 export function Claude3_5_Sonnet_Vertex() {
 	return new AnthropicVertexLLM(
 		'Claude 3.5 Sonnet (Vertex)',
-		'claude-3-5-sonnet@20240620',
+		'claude-3-5-sonnet-v2@20241022',
 		(input: string) => (input.length * 3) / (1_000_000 * 3.5),
 		(output: string) => (output.length * 15) / (1_000_000 * 3.5),
 	);
@@ -55,14 +44,14 @@ export function Claude3_Haiku_Vertex() {
 	);
 }
 
-export function Claude3_Opus_Vertex() {
-	return new AnthropicVertexLLM(
-		'Claude 3 Opus (Vertex)',
-		'claude-3-opus@20240229',
-		(input: string) => (input.length * 15) / (1_000_000 * 3.5),
-		(output: string) => (output.length * 75) / (1_000_000 * 3.5),
-	);
-}
+// export function Claude3_Opus_Vertex() {
+// 	return new AnthropicVertexLLM(
+// 		'Claude 3 Opus (Vertex)',
+// 		'claude-3-opus@20240229',
+// 		(input: string) => (input.length * 15) / (1_000_000 * 3.5),
+// 		(output: string) => (output.length * 75) / (1_000_000 * 3.5),
+// 	);
+// }
 
 export function ClaudeVertexLLMs(): AgentLLMs {
 	const hard = Claude3_5_Sonnet_Vertex();
