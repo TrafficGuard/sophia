@@ -16,6 +16,7 @@ import { sophiaDirName, systemDir } from '../../appVars';
 
 function findRepositories(dir: string): string[] {
 	const repos: string[] = [];
+	if (!fs.existsSync(dir)) return [];
 	const items = fs.readdirSync(dir, { withFileTypes: true });
 
 	for (const item of items) {

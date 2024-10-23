@@ -1,0 +1,114 @@
+<div
+    class="flex w-full min-w-0 flex-col sm:absolute sm:inset-0 sm:overflow-hidden"
+>
+    <mat-drawer-container class="flex-auto sm:h-full">
+        <!-- Drawer -->
+        <mat-drawer
+            class="dark:bg-gray-900 sm:w-96"
+            [autoFocus]="false"
+            [mode]="drawerMode"
+            [opened]="drawerOpened"
+            #drawer
+        >
+            <!-- Header -->
+            <div class="m-8 mr-6 flex items-center justify-between sm:my-10">
+                <!-- Title -->
+                <div
+                    class="text-3xl font-medium leading-none tracking-tight"
+                >
+                    Settings
+                </div>
+                <!-- Close button -->
+                <div class="lg:hidden">
+                    <button mat-icon-button (click)="drawer.close()">
+                        <mat-icon
+                            [svgIcon]="'heroicons_outline:x-mark'"
+                        ></mat-icon>
+                    </button>
+                </div>
+            </div>
+            <!-- Panel links -->
+            <div class="flex flex-col divide-y border-b border-t">
+                @for (panel of panels; track trackByFn($index, panel)) {
+                    <div
+                        class="flex cursor-pointer px-8 py-5"
+                        [ngClass]="{
+                            'dark:hover:bg-hover hover:bg-gray-100':
+                                !selectedPanel || selectedPanel !== panel.id,
+                            'bg-primary-50 dark:bg-hover':
+                                selectedPanel && selectedPanel === panel.id,
+                        }"
+                        (click)="goToPanel(panel.id)"
+                    >
+                        <mat-icon
+                            [ngClass]="{
+                                'text-hint':
+                                    !selectedPanel ||
+                                    selectedPanel !== panel.id,
+                                'text-primary dark:text-primary-500':
+                                    selectedPanel && selectedPanel === panel.id,
+                            }"
+                            [svgIcon]="panel.icon"
+                        ></mat-icon>
+                        <div class="ml-3">
+                            <div
+                                class="font-medium leading-6"
+                                [ngClass]="{
+                                    'text-primary dark:text-primary-500':
+                                        selectedPanel &&
+                                        selectedPanel === panel.id,
+                                }"
+                            >
+                                {{ panel.title }}
+                            </div>
+                            <div class="text-secondary mt-0.5">
+                                {{ panel.description }}
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </mat-drawer>
+
+        <!-- Drawer content -->
+        <mat-drawer-content class="flex flex-col">
+            <!-- Main -->
+            <div class="flex-auto px-6 pb-12 pt-9 md:p-8 md:pb-12 lg:p-12">
+                <!-- Panel header -->
+                <div class="flex items-center">
+                    <!-- Drawer toggle -->
+                    <button
+                        class="-ml-2 lg:hidden"
+                        mat-icon-button
+                        (click)="drawer.toggle()"
+                    >
+                        <mat-icon
+                            [svgIcon]="'heroicons_outline:bars-3'"
+                        ></mat-icon>
+                    </button>
+
+                    <!-- Panel title -->
+                    <div
+                        class="ml-2 text-3xl font-bold leading-none tracking-tight lg:ml-0"
+                    >
+                        {{ getPanelInfo(selectedPanel).title }}
+                    </div>
+                </div>
+
+                <!-- Load settings panel -->
+                <div class="mt-8">
+                    @switch (selectedPanel) {
+                        <!-- Account -->
+                        @case ('account') {
+                            <settings-account></settings-account>
+                        }
+                        <!-- Team -->
+                        @case ('ui') {
+                            <ui-settings></ui-settings>
+                        }
+                    }
+                </div>
+            </div>
+        </mat-drawer-content>
+    </mat-drawer-container>
+</div>

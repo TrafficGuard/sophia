@@ -1,0 +1,331 @@
+<div class="w-full max-w-3xl">
+  
+    <div class="mt-8 flex flex-col divide-y border-b border-t">
+    </div>
+
+    <div class="flex flex-col p-6">
+
+        <!-- Scheme -->
+        <div class="text-secondary text-md font-semibold">SCHEME</div>
+        <div class="mt-6 grid grid-cols-3 justify-items-start gap-3">
+            <!-- Auto -->
+            <div
+                    class="bg-hover flex cursor-pointer items-center rounded-full py-3 pl-5 pr-6 ring-inset ring-primary"
+                    [class.ring-2]="config.scheme === 'auto'"
+                    matTooltip="Automatically sets the scheme based on user's operating system's color scheme preference using 'prefer-color-scheme' media query."
+                    (click)="setScheme('auto')"
+            >
+                <div class="flex items-center overflow-hidden rounded-full">
+                    <mat-icon
+                            class="icon-size-5"
+                            [svgIcon]="'heroicons_solid:bolt'"
+                    ></mat-icon>
+                </div>
+                <div
+                        class="ml-2 flex items-center font-medium leading-5"
+                        [class.text-secondary]="config.scheme !== 'auto'"
+                >
+                    Auto
+                </div>
+            </div>
+            <!-- Dark -->
+            <div
+                    class="bg-hover flex cursor-pointer items-center rounded-full py-3 pl-5 pr-6 ring-inset ring-primary"
+                    [class.ring-2]="config.scheme === 'dark'"
+                    (click)="setScheme('dark')"
+            >
+                <div class="flex items-center overflow-hidden rounded-full">
+                    <mat-icon
+                            class="icon-size-5"
+                            [svgIcon]="'heroicons_solid:moon'"
+                    ></mat-icon>
+                </div>
+                <div
+                        class="ml-2 flex items-center font-medium leading-5"
+                        [class.text-secondary]="config.scheme !== 'dark'"
+                >
+                    Dark
+                </div>
+            </div>
+            <!-- Light -->
+            <div
+                    class="bg-hover flex cursor-pointer items-center rounded-full py-3 pl-5 pr-6 ring-inset ring-primary"
+                    [class.ring-2]="config.scheme === 'light'"
+                    (click)="setScheme('light')"
+            >
+                <div class="flex items-center overflow-hidden rounded-full">
+                    <mat-icon
+                            class="icon-size-5"
+                            [svgIcon]="'heroicons_solid:sun'"
+                    ></mat-icon>
+                </div>
+                <div
+                        class="ml-2 flex items-center font-medium leading-5"
+                        [class.text-secondary]="config.scheme !== 'light'"
+                >
+                    Light
+                </div>
+            </div>
+        </div>
+
+        <hr class="my-8" />
+
+        <!-- Layout -->
+        <div class="text-secondary text-md font-semibold">LAYOUT</div>
+        <div class="mt-6 grid grid-cols-3 gap-3">
+
+            <!-- Compact -->
+            <div
+                    class="flex cursor-pointer flex-col"
+                    (click)="setLayout('compact')"
+            >
+                <div
+                        class="flex h-20 overflow-hidden rounded-md border-2 hover:opacity-80"
+                        [class.border-primary]="config.layout === 'compact'"
+                >
+                    <div class="w-5 bg-gray-100 dark:bg-gray-800">
+                        <div
+                                class="mx-auto mt-2 h-3 w-3 rounded-sm bg-gray-300 dark:bg-gray-700"
+                        ></div>
+                        <div
+                                class="mt-2 flex w-full flex-col items-center space-y-1"
+                        >
+                            <div
+                                    class="h-2.5 w-3 rounded-sm bg-gray-300 dark:bg-gray-700"
+                            ></div>
+                            <div
+                                    class="h-2.5 w-3 rounded-sm bg-gray-300 dark:bg-gray-700"
+                            ></div>
+                            <div
+                                    class="h-2.5 w-3 rounded-sm bg-gray-300 dark:bg-gray-700"
+                            ></div>
+                        </div>
+                    </div>
+                    <div class="flex flex-auto flex-col border-l">
+                        <div class="h-3 bg-gray-100 dark:bg-gray-800">
+                            <div
+                                    class="mr-1.5 flex h-full items-center justify-end"
+                            >
+                                <div
+                                        class="ml-1 h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-700"
+                                ></div>
+                                <div
+                                        class="ml-1 h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-700"
+                                ></div>
+                                <div
+                                        class="ml-1 h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-700"
+                                ></div>
+                            </div>
+                        </div>
+                        <div
+                                class="flex flex-auto border-t bg-gray-50 dark:bg-gray-900"
+                        ></div>
+                    </div>
+                </div>
+                <div
+                        class="text-secondary mt-2 text-center text-md font-medium"
+                        [class.text-primary]="config.layout === 'compact'"
+                >
+                    Compact
+                </div>
+            </div>
+
+            <!-- Dense -->
+            <div
+                    class="flex cursor-pointer flex-col"
+                    (click)="setLayout('dense')"
+            >
+                <div
+                        class="flex h-20 overflow-hidden rounded-md border-2 hover:opacity-80"
+                        [class.border-primary]="config.layout === 'dense'"
+                >
+                    <div class="w-4 bg-gray-100 dark:bg-gray-800">
+                        <div
+                                class="mx-auto mt-2 h-2 w-2 rounded-sm bg-gray-300 dark:bg-gray-700"
+                        ></div>
+                        <div
+                                class="mt-2 flex w-full flex-col items-center space-y-1"
+                        >
+                            <div
+                                    class="h-2 w-2 rounded-sm bg-gray-300 dark:bg-gray-700"
+                            ></div>
+                            <div
+                                    class="h-2 w-2 rounded-sm bg-gray-300 dark:bg-gray-700"
+                            ></div>
+                            <div
+                                    class="h-2 w-2 rounded-sm bg-gray-300 dark:bg-gray-700"
+                            ></div>
+                        </div>
+                    </div>
+                    <div class="flex flex-auto flex-col border-l">
+                        <div class="h-3 bg-gray-100 dark:bg-gray-800">
+                            <div
+                                    class="mr-1.5 flex h-full items-center justify-end"
+                            >
+                                <div
+                                        class="ml-1 h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-700"
+                                ></div>
+                                <div
+                                        class="ml-1 h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-700"
+                                ></div>
+                                <div
+                                        class="ml-1 h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-700"
+                                ></div>
+                            </div>
+                        </div>
+                        <div
+                                class="flex flex-auto border-t bg-gray-50 dark:bg-gray-900"
+                        ></div>
+                    </div>
+                </div>
+                <div
+                        class="text-secondary mt-2 text-center text-md font-medium"
+                        [class.text-primary]="config.layout === 'dense'"
+                >
+                    Dense
+                </div>
+            </div>
+
+            <!-- Thin -->
+            <div
+                    class="flex cursor-pointer flex-col"
+                    (click)="setLayout('thin')"
+            >
+                <div
+                        class="flex h-20 overflow-hidden rounded-md border-2 hover:opacity-80"
+                        [class.border-primary]="config.layout === 'thin'"
+                >
+                    <div class="w-3 bg-gray-100 dark:bg-gray-800">
+                        <div
+                                class="mx-auto mt-2 h-1.5 w-1.5 rounded-sm bg-gray-300 dark:bg-gray-700"
+                        ></div>
+                        <div
+                                class="mt-2 flex w-full flex-col items-center space-y-1"
+                        >
+                            <div
+                                    class="h-1.5 w-1.5 rounded-full bg-gray-300 dark:bg-gray-700"
+                            ></div>
+                            <div
+                                    class="h-1.5 w-1.5 rounded-full bg-gray-300 dark:bg-gray-700"
+                            ></div>
+                            <div
+                                    class="h-1.5 w-1.5 rounded-full bg-gray-300 dark:bg-gray-700"
+                            ></div>
+                            <div
+                                    class="h-1.5 w-1.5 rounded-full bg-gray-300 dark:bg-gray-700"
+                            ></div>
+                            <div
+                                    class="h-1.5 w-1.5 rounded-full bg-gray-300 dark:bg-gray-700"
+                            ></div>
+                        </div>
+                    </div>
+                    <div class="flex flex-auto flex-col border-l">
+                        <div class="h-3 bg-gray-100 dark:bg-gray-800">
+                            <div
+                                    class="mr-1.5 flex h-full items-center justify-end"
+                            >
+                                <div
+                                        class="ml-1 h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-700"
+                                ></div>
+                                <div
+                                        class="ml-1 h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-700"
+                                ></div>
+                                <div
+                                        class="ml-1 h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-700"
+                                ></div>
+                            </div>
+                        </div>
+                        <div
+                                class="flex flex-auto border-t bg-gray-50 dark:bg-gray-900"
+                        ></div>
+                    </div>
+                </div>
+                <div
+                        class="text-secondary mt-2 text-center text-md font-medium"
+                        [class.text-primary]="config.layout === 'thin'"
+                >
+                    Thin
+                </div>
+            </div>
+
+
+
+            <!-- Modern -->
+            <div
+                    class="flex cursor-pointer flex-col"
+                    (click)="setLayout('modern')"
+            >
+                <div
+                        class="flex h-20 flex-col overflow-hidden rounded-md border-2 hover:opacity-80"
+                        [class.border-primary]="config.layout === 'modern'"
+                >
+                    <div
+                            class="flex h-4 items-center border-b bg-gray-100 px-2 dark:bg-gray-800"
+                    >
+                        <div
+                                class="h-2 w-2 rounded-full bg-gray-300 dark:bg-gray-700"
+                        ></div>
+                        <div class="ml-2 flex h-3 items-center space-x-1">
+                            <div
+                                    class="h-1 w-3 rounded-full bg-gray-300 dark:bg-gray-700"
+                            ></div>
+                            <div
+                                    class="h-1 w-3 rounded-full bg-gray-300 dark:bg-gray-700"
+                            ></div>
+                            <div
+                                    class="h-1 w-3 rounded-full bg-gray-300 dark:bg-gray-700"
+                            ></div>
+                        </div>
+                        <div
+                                class="ml-auto flex items-center justify-end space-x-1"
+                        >
+                            <div
+                                    class="h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-700"
+                            ></div>
+                            <div
+                                    class="h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-700"
+                            ></div>
+                        </div>
+                    </div>
+                    <div class="flex flex-auto flex-col">
+                        <div
+                                class="flex flex-auto bg-gray-50 dark:bg-gray-900"
+                        ></div>
+                    </div>
+                </div>
+                <div
+                        class="text-secondary mt-2 text-center text-md font-medium"
+                        [class.text-primary]="config.layout === 'modern'"
+                >
+                    Top
+                </div>
+            </div>
+        </div>
+
+        <hr class="my-8" />
+
+        <!-- Theme -->
+        <div class="text-secondary text-md font-semibold">THEME</div>
+        <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          @for (theme of config.themes; track theme.id) {
+            <div
+              class="bg-hover flex cursor-pointer items-center justify-center rounded-full px-4 py-3 ring-inset ring-primary"
+              [class.ring-2]="config.theme === theme.id"
+              [ngClass]="theme.id"
+              (click)="setTheme(theme.id)"
+            >
+              <div
+                class="h-3 w-3 flex-0 rounded-full bg-primary"
+              ></div>
+              <div
+                class="ml-2.5 truncate font-medium leading-5"
+                [class.text-secondary]="config.theme !== theme.id"
+              >
+                {{ theme.name }}
+              </div>
+            </div>
+          }
+        </div>
+
+    </div>
+</div>

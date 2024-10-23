@@ -1,0 +1,65 @@
+fuse-card {
+    position: relative;
+    display: flex;
+    overflow: hidden;
+    @apply bg-card rounded-2xl shadow;
+
+    /* Flippable */
+    &.fuse-card-flippable {
+        border-radius: 0;
+        overflow: visible;
+        transform-style: preserve-3d;
+        transition: transform 1s;
+        perspective: 600px;
+        background: transparent;
+        @apply shadow-none;
+
+        &.fuse-card-face-back {
+            .fuse-card-front {
+                visibility: hidden;
+                opacity: 0;
+                transform: rotateY(180deg);
+            }
+
+            .fuse-card-back {
+                visibility: visible;
+                opacity: 1;
+                transform: rotateY(360deg);
+            }
+        }
+
+        .fuse-card-front,
+        .fuse-card-back {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+            z-index: 10;
+            transition:
+                transform 0.5s ease-out 0s,
+                visibility 0s ease-in 0.2s,
+                opacity 0s ease-in 0.2s;
+            backface-visibility: hidden;
+            @apply bg-card rounded-2xl shadow;
+        }
+
+        .fuse-card-front {
+            position: relative;
+            opacity: 1;
+            visibility: visible;
+            transform: rotateY(0deg);
+            overflow: hidden;
+        }
+
+        .fuse-card-back {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            opacity: 0;
+            visibility: hidden;
+            transform: rotateY(180deg);
+            overflow: hidden auto;
+        }
+    }
+}

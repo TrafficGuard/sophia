@@ -1,0 +1,153 @@
+<div
+        class="bg-card flex min-w-0 flex-auto flex-col dark:bg-transparent sm:absolute sm:inset-0 sm:overflow-hidden"
+>
+    <!-- Header -->
+    <div
+            class="relative flex flex-0 flex-col border-b px-6 py-6 sm:flex-row sm:items-center sm:justify-between md:px-8"
+    >
+        <!-- Loader -->
+        @if (isLoading) {
+            <div class="absolute inset-x-0 bottom-0">
+                <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
+            </div>
+        }
+        <!-- Title -->
+        <div class="text-3xl font-medium tracking-tight">Agents</div>
+        <!-- Actions -->
+        <div class="mt-6 flex shrink-0 items-center sm:ml-4 sm:mt-0">
+            <!-- Search -->
+            <mat-form-field
+                    class="fuse-mat-dense fuse-mat-rounded min-w-64"
+                    [subscriptSizing]="'dynamic'"
+            >
+                <mat-icon
+                        class="icon-size-5"
+                        matPrefix
+                        [svgIcon]="'heroicons_solid:magnifying-glass'"
+                ></mat-icon>
+                <input
+                        matInput
+                        [formControl]="searchInputControl"
+                        [autocomplete]="'off'"
+                        [placeholder]="'Search agents'"
+                />
+            </mat-form-field>
+            <!-- Add product button -->
+            <button
+                    class="ml-4"
+                    mat-flat-button
+                    [color]="'primary'"
+                    [routerLink]="['/agents/new']"
+            >
+                <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                <span class="ml-2 mr-1">Add</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main -->
+    <div class="flex flex-auto overflow-hidden">
+        <div
+                class="flex flex-auto flex-col overflow-hidden sm:mb-18 sm:overflow-y-auto"
+        >
+            @if (agents$ | async; as products) {
+                @if (products.length > 0) {
+                    <div class="grid">
+                        <!-- Header -->
+                        <div
+                                class="inventory-grid text-secondary sticky top-0 z-10 grid gap-4 bg-gray-50 px-6 py-4 text-md font-semibold shadow dark:bg-black dark:bg-opacity-5 md:px-8"
+                                matSort
+                                matSortDisableClear
+                        >
+                            <!-- Select -->
+                            <div></div>
+
+                            <!-- Name -->
+                            <div [mat-sort-header]="'name'">Name</div>
+
+                            <!-- State -->
+                            <div [mat-sort-header]="'state'">State</div>
+
+                            <div [mat-sort-header]="'type'">Type</div>
+
+                            <!-- User Prompt -->
+                            <div [mat-sort-header]="'userPrompt'">User Prompt</div>
+
+                            <!-- Error/Completed Output -->
+                            <div [mat-sort-header]="'output'">Error/Output</div>
+
+                            <!-- Cost -->
+                            <div [mat-sort-header]="'cost'">Cost</div>
+                        </div>
+                        <!-- Rows -->
+                        @if (agents$ | async; as agents) {
+                            @for (agent of agents; track trackByFn($index, agent)) {
+                                <div class="inventory-grid grid items-center gap-4 border-b px-6 py-3 md:px-8">
+                                    <!-- Select Checkbox -->
+                                    <div class="flex items-center">
+                                        <mat-checkbox
+                                                (click)="$event.stopPropagation()"
+                                                (change)="$event ? selection.toggle(agent) : null"
+                                                [checked]="selection.isSelected(agent)"
+                                        >
+                                        </mat-checkbox>
+                                    </div>
+
+                                    <!-- Name -->
+                                    <div class="truncate">
+                                        <a [routerLink]="['/agents', agent.agentId]">{{ agent.name }}</a>
+                                    </div>
+
+                                    <!-- State -->
+                                    <div>{{ agent.state }}</div>
+
+                                    <!-- Type -->
+                                    <div>{{ agent.type }}</div>
+
+                                    <!-- User Prompt -->
+                                    <div>{{ agent.userPrompt | slice: 0 : 150 }}</div>
+
+                                    <!-- Error/Completed Output -->
+                                    <div>
+                                        {{ (agent.state === 'error' ? agent.error : agent.output) | slice: 0 : 150 }}
+                                    </div>
+
+                                    <!-- Cost -->
+                                    <div>${{ agent.cost | number: '1.2-2' }}</div>
+                                </div>
+                            }
+                        }
+                    </div>
+                    <!--
+                    <mat-paginator
+                            class="z-10 border-b bg-gray-50 dark:bg-transparent sm:absolute sm:inset-x-0 sm:bottom-0 sm:border-b-0 sm:border-t"
+                            [ngClass]="{ 'pointer-events-none': isLoading }"
+                            [length]="pagination.length"
+                            [pageIndex]="pagination.page"
+                            [pageSize]="pagination.size"
+                            [pageSizeOptions]="[5, 10, 25, 100]"
+                            [showFirstLastButtons]="true"
+                    ></mat-paginator>
+                    -->
+                } @else {
+                    <div
+                            class="border-t p-8 text-center text-3xl font-medium tracking-tight sm:p-16"
+                    >
+                        <div>There are no agents!</div>
+
+                        <button
+                                class="ml-4"
+                                mat-flat-button
+                                [color]="'primary'"
+                                [routerLink]="['/agents/new']"
+                        >
+                            <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                            <span class="ml-2 mr-1">Add</span>
+                        </button>
+
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>

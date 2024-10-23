@@ -13,20 +13,9 @@ import { env } from './.env';
 
 export const environment = {
   production: false,
-  version: env['npm_package_version'] + '-dev',
-  defaultLanguage: 'en-US',
-  supportedLanguages: ['en-US'],
   serverUrl: env['SERVER_URL'] || 'http://localhost:3000/api',
   gcpProject: env['GCLOUD_PROJECT'],
   firestoreDb: env['FIRESTORE_DATABASE'],
   auth: env['AUTH'],
+  apiBaseUrl: 'http://localhost:3000/api/', // Adjust this URL as needed for local development
 };
-
-/*
- * For easier debugging in development mode, you can import the following file
- * to ignore zone related error stack frames such as `zone.run`, `zoneDelegate.invokeTask`.
- *
- * This import should be commented out in production mode because it will have a negative impact
- * on performance if an error is thrown.
- */
-// import 'zone.js/plugins/zone-error';  // Included with Angular CLI.

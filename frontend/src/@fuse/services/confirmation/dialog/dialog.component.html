@@ -1,0 +1,95 @@
+<div class="relative flex h-full w-full flex-col">
+    <!-- Dismiss button -->
+    @if (data.dismissible) {
+        <div class="absolute right-0 top-0 pr-4 pt-4">
+            <button mat-icon-button [matDialogClose]="undefined">
+                <mat-icon
+                    class="text-secondary"
+                    [svgIcon]="'heroicons_outline:x-mark'"
+                ></mat-icon>
+            </button>
+        </div>
+    }
+
+    <!-- Content -->
+    <div
+        class="flex flex-auto flex-col items-center p-8 pb-6 sm:flex-row sm:items-start sm:pb-8"
+    >
+        <!-- Icon -->
+        @if (data.icon.show) {
+            <div
+                class="flex h-10 w-10 flex-0 items-center justify-center rounded-full sm:mr-4"
+                [ngClass]="{
+                    'bg-primary-100 text-primary-600 dark:bg-primary-600 dark:text-primary-50':
+                        data.icon.color === 'primary',
+                    'bg-accent-100 text-accent-600 dark:bg-accent-600 dark:text-accent-50':
+                        data.icon.color === 'accent',
+                    'bg-warn-100 text-warn-600 dark:bg-warn-600 dark:text-warn-50':
+                        data.icon.color === 'warn',
+                    'bg-gray-100 text-gray-600 dark:bg-gray-600 dark:text-gray-50':
+                        data.icon.color === 'basic',
+                    'bg-blue-100 text-blue-600 dark:bg-blue-600 dark:text-blue-50':
+                        data.icon.color === 'info',
+                    'bg-green-100 text-green-500 dark:bg-green-500 dark:text-green-50':
+                        data.icon.color === 'success',
+                    'bg-amber-100 text-amber-500 dark:bg-amber-500 dark:text-amber-50':
+                        data.icon.color === 'warning',
+                    'bg-red-100 text-red-600 dark:bg-red-600 dark:text-red-50':
+                        data.icon.color === 'error',
+                }"
+            >
+                <mat-icon
+                    class="text-current"
+                    [svgIcon]="data.icon.name"
+                ></mat-icon>
+            </div>
+        }
+
+        @if (data.title || data.message) {
+            <div
+                class="mt-4 flex flex-col items-center space-y-1 text-center sm:mt-0 sm:items-start sm:pr-8 sm:text-left"
+            >
+                <!-- Title -->
+                @if (data.title) {
+                    <div
+                        class="text-xl font-medium leading-6"
+                        [innerHTML]="data.title"
+                    ></div>
+                }
+
+                <!-- Message -->
+                @if (data.message) {
+                    <div
+                        class="text-secondary"
+                        [innerHTML]="data.message"
+                    ></div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Actions -->
+    @if (data.actions.confirm.show || data.actions.cancel.show) {
+        <div
+            class="flex items-center justify-center space-x-3 bg-gray-50 px-6 py-4 dark:bg-black dark:bg-opacity-10 sm:justify-end"
+        >
+            <!-- Cancel -->
+            @if (data.actions.cancel.show) {
+                <button mat-stroked-button [matDialogClose]="'cancelled'">
+                    {{ data.actions.cancel.label }}
+                </button>
+            }
+
+            <!-- Confirm -->
+            @if (data.actions.confirm.show) {
+                <button
+                    mat-flat-button
+                    [color]="data.actions.confirm.color"
+                    [matDialogClose]="'confirmed'"
+                >
+                    {{ data.actions.confirm.label }}
+                </button>
+            }
+        </div>
+    }
+</div>

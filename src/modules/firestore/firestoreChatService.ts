@@ -114,4 +114,30 @@ export class FirestoreChatService implements ChatService {
 			throw error;
 		}
 	}
+
+	@span()
+	async deleteChat(chatId: string): Promise<void> {
+		try {
+			const userId = currentUser().id;
+			const docRef = this.db.doc(`Chats/${chatId}`);
+			const docSnap = await docRef.get();
+
+			if (!docSnap.exists) {
+				logger.warn(`Chat with id ${chatId} not found`);
+				throw new Error(`Chat with id ${chatId} not found`);
+			}
+
+			const chatData = docSnap.data();
+			if (chatData.userId !== userId) {
+				logger.warn(`User ${userId} is not authorized to delete chat ${chatId}`);
+				throw new Error('Not authorized to delete this chat');
+			}
+
+			await docRef.delete();
+			logger.info(`Chat ${chatId} deleted successfully`);
+		} catch (error) {
+			logger.error(error, `Error deleting chat ${chatId}`);
+			throw error;
+		}
+	}
 }

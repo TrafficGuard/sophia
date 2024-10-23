@@ -38,6 +38,8 @@ export interface LlmMessage {
 	llmId?: string;
 	/** Set the cache_control flag with Claude models */
 	cache?: 'ephemeral';
+	/** Time the message was sent */
+	time?: number;
 }
 
 export function system(text: string, cache = false): LlmMessage {

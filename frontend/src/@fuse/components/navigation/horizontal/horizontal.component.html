@@ -1,0 +1,37 @@
+<div class="fuse-horizontal-navigation-wrapper">
+    @for (item of navigation; track trackByFn($index, item)) {
+        <!-- Skip the hidden items -->
+        @if ((item.hidden && !item.hidden(item)) || !item.hidden) {
+            <!-- Basic -->
+            @if (item.type === 'basic') {
+                <fuse-horizontal-navigation-basic-item
+                    class="fuse-horizontal-navigation-menu-item"
+                    [item]="item"
+                    [name]="name"
+                ></fuse-horizontal-navigation-basic-item>
+            }
+
+            <!-- Branch: aside, collapsable, group -->
+            @if (
+                item.type === 'aside' ||
+                item.type === 'collapsable' ||
+                item.type === 'group'
+            ) {
+                <fuse-horizontal-navigation-branch-item
+                    class="fuse-horizontal-navigation-menu-item"
+                    [item]="item"
+                    [name]="name"
+                ></fuse-horizontal-navigation-branch-item>
+            }
+
+            <!-- Spacer -->
+            @if (item.type === 'spacer') {
+                <fuse-horizontal-navigation-spacer-item
+                    class="fuse-horizontal-navigation-menu-item"
+                    [item]="item"
+                    [name]="name"
+                ></fuse-horizontal-navigation-spacer-item>
+            }
+        }
+    }
+</div>

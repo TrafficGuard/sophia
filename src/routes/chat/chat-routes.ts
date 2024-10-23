@@ -28,6 +28,57 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
 		},
 	);
 	fastify.post(
+		`${basePath}/chat/new`,
+		{
+			schema: {
+				body: Type.Object({
+					text: Type.String(),
+					llmId: Type.String(),
+					cache: Type.Optional(Type.Boolean()),
+					temperature: Type.Optional(Type.Number()),
+				}),
+			},
+		},
+		async (req, reply) => {
+			const { text, llmId, cache } = req.body;
+
+			let chat: Chat = {
+				id: randomUUID(),
+				messages: [],
+				title: '',
+				updatedAt: Date.now(),
+				userId: currentUser().id,
+				visibility: 'private',
+				parentId: undefined,
+				rootId: undefined,
+			};
+
+			let llm: LLM = getLLM(Claude3_5_Sonnet_Vertex().getId());
+			try {
+				llm = getLLM(llmId);
+			} catch (e) {
+				logger.error(`No LLM for ${llmId}`);
+			}
+			if (!llm.isConfigured()) return sendBadRequest(reply, `LLM ${llm.getId()} is not configured`);
+
+			const titlePromise: Promise<string> | undefined = llm.generateText(
+				text,
+				'The following message is the first message in a new chat conversation. Your task is to create a short title for the conversation. Respond only with the title, nothing else',
+			);
+
+			chat.messages.push({ role: 'user', text: text, time: Date.now() }); //, cache: cache ? 'ephemeral' : undefined // remove any previous cache marker
+
+			const generatedMessage = await llm.generateTextFromMessages(chat.messages);
+			chat.messages.push({ role: 'assistant', text: generatedMessage, llmId: llmId, time: Date.now() });
+
+			if (titlePromise) chat.title = await titlePromise;
+
+			chat = await fastify.chatService.saveChat(chat);
+
+			send(reply, 200, chat);
+		},
+	);
+	fastify.post(
 		`${basePath}/chat/:chatId/send`,
 		{
 			schema: {
@@ -46,19 +97,7 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
 			const { chatId } = req.params; // Extract 'chatId' from path parameters
 			const { text, llmId, cache } = req.body;
 
-			const isNew = chatId === 'new';
-			const chat: Chat = isNew
-				? {
-						id: randomUUID(),
-						messages: [],
-						title: '',
-						updatedAt: Date.now(),
-						userId: currentUser().id,
-						visibility: 'private',
-						parentId: undefined,
-						rootId: undefined,
-				  }
-				: await fastify.chatService.loadChat(chatId);
+			const chat: Chat = await fastify.chatService.loadChat(chatId);
 
 			let llm: LLM = getLLM(Claude3_5_Sonnet_Vertex().getId());
 			try {
@@ -68,19 +107,10 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
 			}
 			if (!llm.isConfigured()) return sendBadRequest(reply, `LLM ${llm.getId()} is not configured`);
 
-			const titlePromise: Promise<string> | undefined = isNew
-				? llm.generateText(
-						text,
-						'The following message is the first message in a new chat conversation. Your task is to create a short title for the conversation. Respond only with the title, nothing else',
-				  )
-				: undefined;
-
-			chat.messages.push({ role: 'user', text: text }); //, cache: cache ? 'ephemeral' : undefined // remove any previous cache marker
+			chat.messages.push({ role: 'user', text: text, time: Date.now() }); //, cache: cache ? 'ephemeral' : undefined // remove any previous cache marker
 
 			const generatedMessage = await llm.generateTextFromMessages(chat.messages);
-			chat.messages.push({ role: 'assistant', text: generatedMessage });
-
-			if (titlePromise) chat.title = await titlePromise;
+			chat.messages.push({ role: 'assistant', text: generatedMessage, llmId, time: Date.now() });
 
 			await fastify.chatService.saveChat(chat);
 
@@ -100,6 +130,31 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
 			const { startAfterId } = req.params;
 			const chats: ChatList = await fastify.chatService.listChats(startAfterId);
 			send(reply, 200, chats);
+		},
+	);
+	fastify.delete(
+		`${basePath}/chat/:chatId`,
+		{
+			schema: {
+				params: Type.Object({
+					chatId: Type.String(),
+				}),
+			},
+		},
+		async (req, reply) => {
+			const { chatId } = req.params;
+			const userId = currentUser().id;
+			try {
+				const chat = await fastify.chatService.loadChat(chatId);
+				if (chat.userId !== userId) {
+					return sendBadRequest(reply, 'Unauthorized to delete this chat');
+				}
+				await fastify.chatService.deleteChat(chatId);
+				send(reply, 200, { success: true });
+			} catch (error) {
+				logger.error(`Failed to delete chat ${chatId}:`, error);
+				send(reply, 500, { error: 'Failed to delete chat' });
+			}
 		},
 	);
 }

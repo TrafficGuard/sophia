@@ -9,11 +9,9 @@ import { env } from './.env';
 
 export const environment = {
   production: true,
-  version: env['npm_package_version'],
-  defaultLanguage: 'en-US',
-  supportedLanguages: ['en-US'],
   serverUrl: env['SERVER_URL'] || 'http://localhost:3000/api',
   gcpProject: env['GCLOUD_PROJECT'],
   firestoreDb: env['FIRESTORE_DATABASE'],
   auth: env['AUTH'],
+  apiBaseUrl: 'https://api.yourdomain.com', // Adjust this URL for production
 };

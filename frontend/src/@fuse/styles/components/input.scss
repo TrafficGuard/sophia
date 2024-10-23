@@ -1,0 +1,43 @@
+input,
+textarea {
+    background: transparent;
+
+    /* Placeholder color */
+    &::placeholder {
+        @apply text-hint;
+    }
+
+    &::-moz-placeholder {
+        @apply text-hint;
+    }
+
+    &::-webkit-input-placeholder {
+        @apply text-hint;
+    }
+
+    &:-ms-input-placeholder {
+        @apply text-hint;
+    }
+
+    /* Autofill color fix */
+    &:-webkit-autofill,
+    &:-webkit-autofill:hover,
+    &:-webkit-autofill:focus,
+    &:-webkit-autofill:active {
+        -webkit-background-clip: text;
+        transition: background-color 5000s !important;
+    }
+
+    .dark & {
+        &:-webkit-autofill,
+        &:-webkit-autofill:hover,
+        &:-webkit-autofill:focus,
+        &:-webkit-autofill:active {
+            -webkit-text-fill-color: rgba(255, 255, 255, 0.87);
+        }
+    }
+
+    [data-autocompleted] {
+        background-color: transparent !important;
+    }
+}

@@ -7,6 +7,7 @@ import { logger } from '#o11y/logger';
  */
 import { startSpan, withSpan } from '#o11y/trace';
 import { sleep } from '#utils/async-utils';
+import { beep } from '#utils/beep';
 
 export async function waitForConsoleInput(humanInLoopReason: string) {
 	await withSpan('consoleHumanInLoop', async () => {
@@ -15,13 +16,7 @@ export async function waitForConsoleInput(humanInLoopReason: string) {
 		// await appContext().agentStateService.updateState(agentContextStorage.getStore(), 'humanInLoop_agent');
 
 		// Beep beep!
-		const delayMs = 100;
-		const beeps = 3;
-
-		for (let i = 0; i < beeps; i++) {
-			process.stdout.write('\u0007');
-			await sleep(delayMs);
-		}
+		await beep();
 
 		const rl = readline.createInterface({
 			input: process.stdin,

@@ -27,4 +27,5 @@ export interface ChatService {
 	listChats(startAfter?: string, limit?: number): Promise<ChatList>;
 	loadChat(chatId: string): Promise<Chat>;
 	saveChat(chat: Chat): Promise<Chat>;
+	deleteChat(chatId: string): Promise<void>;
 }

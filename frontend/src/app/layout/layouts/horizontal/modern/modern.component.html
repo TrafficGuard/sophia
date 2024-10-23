@@ -1,0 +1,83 @@
+<!-- Loading bar -->
+<fuse-loading-bar></fuse-loading-bar>
+
+<!-- Navigation -->
+@if (isScreenSmall) {
+    <fuse-vertical-navigation
+        class="dark bg-gray-900 print:hidden"
+        [mode]="'over'"
+        [name]="'mainNavigation'"
+        [navigation]="navigation.default"
+        [opened]="false"
+    >
+        <!-- Navigation header hook -->
+        <ng-container fuseVerticalNavigationContentHeader>
+            <!-- Logo -->
+            <div class="flex h-20 items-center px-8 pt-6">
+                <img
+                    class="w-24"
+                    src="images/logo/logo-text-on-dark.svg"
+                    alt="Logo image"
+                />
+            </div>
+        </ng-container>
+    </fuse-vertical-navigation>
+}
+
+<!-- Wrapper -->
+<div class="flex w-full min-w-0 flex-auto flex-col">
+    <!-- Header -->
+    <div
+        class="bg-card relative z-49 flex h-16 w-full flex-0 items-center px-4 shadow dark:border-b dark:bg-transparent dark:shadow-none sm:h-20 md:px-6 print:hidden"
+    >
+        @if (!isScreenSmall) {
+            <!-- Logo -->
+            <div class="mx-2 flex items-center lg:mr-8">
+                <!--
+                <div class="hidden lg:flex">
+                    <img
+                        class="w-24 dark:hidden"
+                        src="images/logo/logo-text.svg"
+                    />
+                    <img
+                        class="hidden w-24 dark:flex"
+                        src="images/logo/logo-text-on-dark.svg"
+                    />
+                </div>
+                <img class="flex w-8 lg:hidden" src="images/logo/logo.svg" />
+                -->
+                <img class="flex w-8" src="images/logo/s.png" alt="Sophia"/>
+            </div>
+            <!-- Horizontal navigation -->
+            <fuse-horizontal-navigation
+                class="mr-2"
+                [name]="'mainNavigation'"
+                [navigation]="navigation.horizontal"
+            ></fuse-horizontal-navigation>
+        }
+        <!-- Navigation toggle button -->
+        @if (isScreenSmall) {
+            <button
+                mat-icon-button
+                (click)="toggleNavigation('mainNavigation')"
+            >
+                <mat-icon [svgIcon]="'heroicons_outline:bars-3'"></mat-icon>
+            </button>
+        }
+        <!-- Components -->
+        <div class="ml-auto flex items-center space-x-0.5 pl-2 sm:space-x-2">
+            <fuse-fullscreen class="hidden md:block"></fuse-fullscreen>
+            <!-- <notifications></notifications> -->
+            <user></user>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex w-full flex-auto flex-col">
+        <!-- *ngIf="true" hack is required here for router-outlet to work correctly.
+             Otherwise, layout changes won't be registered and the view won't be updated! -->
+        @if (true) {
+            <router-outlet></router-outlet>
+        }
+    </div>
+</div>

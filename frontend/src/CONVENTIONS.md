@@ -1,1 +1,0 @@
-The angular unit tests should use the Page Object Model/Pattern approach. Each component should have a corresponding component.po.ts file which accesses the component through the DOM to avoid coupling to implementation details.

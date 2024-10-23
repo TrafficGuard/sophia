@@ -1,0 +1,234 @@
+<!-- Bar search -->
+@if (appearance === 'bar') {
+    @if (!opened) {
+        <button mat-icon-button (click)="open()">
+            <mat-icon
+                [svgIcon]="'heroicons_outline:magnifying-glass'"
+            ></mat-icon>
+        </button>
+    }
+    @if (opened) {
+        <div
+            class="bg-card absolute inset-0 z-99 flex shrink-0 items-center"
+            @slideInTop
+            @slideOutTop
+        >
+            <mat-icon
+                class="absolute ml-6 sm:ml-8"
+                [svgIcon]="'heroicons_outline:magnifying-glass'"
+            ></mat-icon>
+            <input
+                class="h-full w-full px-16 sm:px-18"
+                [formControl]="searchControl"
+                [matAutocomplete]="matAutocomplete"
+                [placeholder]="'Search...'"
+                (keydown)="onKeydown($event)"
+                #barSearchInput
+            />
+            <mat-autocomplete
+                class="max-h-128 rounded-b border-t shadow-md sm:px-2"
+                [autoSelectActiveOption]="true"
+                [disableRipple]="true"
+                #matAutocomplete="matAutocomplete"
+            >
+                @if (resultSets && !resultSets.length) {
+                    <mat-option
+                        class="text-secondary pointer-events-none bg-transparent px-6 py-0 text-md"
+                    >
+                        No results found!
+                    </mat-option>
+                }
+                @for (
+                    resultSet of resultSets;
+                    track trackByFn($index, resultSet)
+                ) {
+                    <mat-optgroup class="mt-2 flex items-center px-2">
+                        <span
+                            class="text-secondary text-sm font-semibold tracking-wider"
+                            >{{ resultSet.label.toUpperCase() }}</span
+                        >
+                    </mat-optgroup>
+                    @for (
+                        result of resultSet.results;
+                        track trackByFn($index, result)
+                    ) {
+                        <mat-option
+                            class="group relative mb-1 rounded-md px-6 py-0 text-md dark:hover:bg-hover hover:bg-gray-100"
+                            [routerLink]="result.link"
+                            [value]="result.value"
+                        >
+                            <!-- Contacts -->
+                            @if (resultSet.id === 'contacts') {
+                                <ng-container
+                                    *ngTemplateOutlet="
+                                        contactResult;
+                                        context: { $implicit: result }
+                                    "
+                                ></ng-container>
+                            }
+                            <!-- Pages -->
+                            @if (resultSet.id === 'pages') {
+                                <ng-container
+                                    *ngTemplateOutlet="
+                                        pageResult;
+                                        context: { $implicit: result }
+                                    "
+                                ></ng-container>
+                            }
+                            <!-- Tasks -->
+                            @if (resultSet.id === 'tasks') {
+                                <ng-container
+                                    *ngTemplateOutlet="
+                                        taskResult;
+                                        context: { $implicit: result }
+                                    "
+                                ></ng-container>
+                            }
+                        </mat-option>
+                    }
+                }
+            </mat-autocomplete>
+            <button
+                class="absolute right-5 top-1/2 -mt-5 h-10 w-10 shrink-0 sm:right-7"
+                mat-icon-button
+                (click)="close()"
+            >
+                <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+            </button>
+        </div>
+    }
+}
+
+<!-- Basic search -->
+@if (appearance === 'basic') {
+    <div class="w-full sm:min-w-80">
+        <mat-form-field class="w-full" [subscriptSizing]="'dynamic'">
+            <mat-icon
+                matPrefix
+                [svgIcon]="'heroicons_outline:magnifying-glass'"
+            ></mat-icon>
+            <input
+                matInput
+                [formControl]="searchControl"
+                [matAutocomplete]="matAutocomplete"
+                [placeholder]="'Search...'"
+                (keydown)="onKeydown($event)"
+            />
+        </mat-form-field>
+        <mat-autocomplete
+            class="mt-1 max-h-128 rounded"
+            [autoSelectActiveOption]="true"
+            [disableRipple]="true"
+            #matAutocomplete="matAutocomplete"
+        >
+            @if (resultSets && !resultSets.length) {
+                <mat-option
+                    class="text-secondary pointer-events-none bg-transparent px-6 py-0 text-md"
+                >
+                    No results found!
+                </mat-option>
+            }
+            @for (resultSet of resultSets; track trackByFn($index, resultSet)) {
+                <mat-optgroup class="mt-2 flex items-center px-2">
+                    <span
+                        class="text-secondary text-sm font-semibold tracking-wider"
+                        >{{ resultSet.label.toUpperCase() }}</span
+                    >
+                </mat-optgroup>
+                @for (
+                    result of resultSet.results;
+                    track trackByFn($index, result)
+                ) {
+                    <mat-option
+                        class="group relative mb-1 rounded-md px-6 py-0 text-md dark:hover:bg-hover hover:bg-gray-100"
+                        [routerLink]="result.link"
+                        [value]="result.value"
+                    >
+                        <!-- Contacts -->
+                        @if (resultSet.id === 'contacts') {
+                            <ng-container
+                                *ngTemplateOutlet="
+                                    contactResult;
+                                    context: { $implicit: result }
+                                "
+                            ></ng-container>
+                        }
+                        <!-- Pages -->
+                        @if (resultSet.id === 'pages') {
+                            <ng-container
+                                *ngTemplateOutlet="
+                                    pageResult;
+                                    context: { $implicit: result }
+                                "
+                            ></ng-container>
+                        }
+                        <!-- Tasks -->
+                        @if (resultSet.id === 'tasks') {
+                            <ng-container
+                                *ngTemplateOutlet="
+                                    taskResult;
+                                    context: { $implicit: result }
+                                "
+                            ></ng-container>
+                        }
+                    </mat-option>
+                }
+            }
+        </mat-autocomplete>
+    </div>
+}
+
+<!-- Contact result template -->
+<ng-template #contactResult let-result>
+    <div class="flex items-center">
+        <div
+            class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-100 dark:bg-primary-800"
+        >
+            @if (result.avatar) {
+                <img [src]="result.avatar" />
+            }
+            @if (!result.avatar) {
+                <mat-icon
+                    class="m-0 text-primary icon-size-5 dark:text-primary-400"
+                    [svgIcon]="'heroicons_outline:user-circle'"
+                ></mat-icon>
+            }
+        </div>
+        <div class="ml-3 truncate">
+            <span [innerHTML]="result.name"></span>
+        </div>
+    </div>
+</ng-template>
+
+<!-- Page result template -->
+<ng-template #pageResult let-result>
+    <div class="flex flex-col">
+        <div class="truncate leading-normal" [innerHTML]="result.title"></div>
+        <div class="text-secondary truncate text-sm leading-normal">
+            {{ result.link }}
+        </div>
+    </div>
+</ng-template>
+
+<!-- Task result template -->
+<ng-template #taskResult let-result>
+    <div class="flex items-center">
+        @if (result.completed) {
+            <mat-icon
+                class="mr-0 text-primary dark:text-primary-400"
+                [svgIcon]="'heroicons_outline:check-circle'"
+            ></mat-icon>
+        }
+        @if (!result.completed) {
+            <mat-icon
+                class="text-hint mr-0"
+                [svgIcon]="'heroicons_outline:check-circle'"
+            ></mat-icon>
+        }
+        <div
+            class="ml-3 truncate leading-normal"
+            [ngClass]="{ 'text-hint line-through': result.completed }"
+            [innerHTML]="result.title"
+        ></div>
+    </div>
+</ng-template>

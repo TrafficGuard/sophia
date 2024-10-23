@@ -1,0 +1,127 @@
+<div class="fuse-vertical-navigation-wrapper">
+    <!-- Header -->
+    <div class="fuse-vertical-navigation-header">
+        <ng-content select="[fuseVerticalNavigationHeader]"></ng-content>
+    </div>
+
+    <!-- Content -->
+    <div
+        class="fuse-vertical-navigation-content"
+        fuseScrollbar
+        [fuseScrollbarOptions]="{
+            wheelPropagation: inner,
+            suppressScrollX: true,
+        }"
+        #navigationContent
+    >
+        <!-- Content header -->
+        <div class="fuse-vertical-navigation-content-header">
+            <ng-content
+                select="[fuseVerticalNavigationContentHeader]"
+            ></ng-content>
+        </div>
+
+        <!-- Items -->
+        @for (item of navigation; track trackByFn($index, item)) {
+            <!-- Skip the hidden items -->
+            @if ((item.hidden && !item.hidden(item)) || !item.hidden) {
+                <!-- Aside -->
+                @if (item.type === 'aside') {
+                    <fuse-vertical-navigation-aside-item
+                        [item]="item"
+                        [name]="name"
+                        [activeItemId]="activeAsideItemId"
+                        [autoCollapse]="autoCollapse"
+                        [skipChildren]="true"
+                        (click)="toggleAside(item)"
+                    ></fuse-vertical-navigation-aside-item>
+                }
+
+                <!-- Basic -->
+                @if (item.type === 'basic') {
+                    <fuse-vertical-navigation-basic-item
+                        [item]="item"
+                        [name]="name"
+                    ></fuse-vertical-navigation-basic-item>
+                }
+
+                <!-- Collapsable -->
+                @if (item.type === 'collapsable') {
+                    <fuse-vertical-navigation-collapsable-item
+                        [item]="item"
+                        [name]="name"
+                        [autoCollapse]="autoCollapse"
+                    ></fuse-vertical-navigation-collapsable-item>
+                }
+
+                <!-- Divider -->
+                @if (item.type === 'divider') {
+                    <fuse-vertical-navigation-divider-item
+                        [item]="item"
+                        [name]="name"
+                    ></fuse-vertical-navigation-divider-item>
+                }
+
+                <!-- Group -->
+                @if (item.type === 'group') {
+                    <fuse-vertical-navigation-group-item
+                        [item]="item"
+                        [name]="name"
+                        [autoCollapse]="autoCollapse"
+                    ></fuse-vertical-navigation-group-item>
+                }
+
+                <!-- Spacer -->
+                @if (item.type === 'spacer') {
+                    <fuse-vertical-navigation-spacer-item
+                        [item]="item"
+                        [name]="name"
+                    ></fuse-vertical-navigation-spacer-item>
+                }
+            }
+        }
+
+        <!-- Content footer -->
+        <div class="fuse-vertical-navigation-content-footer">
+            <ng-content
+                select="[fuseVerticalNavigationContentFooter]"
+            ></ng-content>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="fuse-vertical-navigation-footer">
+        <ng-content select="[fuseVerticalNavigationFooter]"></ng-content>
+    </div>
+</div>
+
+<!-- Aside -->
+@if (activeAsideItemId) {
+    <div
+        class="fuse-vertical-navigation-aside-wrapper"
+        fuseScrollbar
+        [fuseScrollbarOptions]="{
+            wheelPropagation: false,
+            suppressScrollX: true,
+        }"
+        [@fadeInLeft]="position === 'left'"
+        [@fadeInRight]="position === 'right'"
+        [@fadeOutLeft]="position === 'left'"
+        [@fadeOutRight]="position === 'right'"
+    >
+        <!-- Items -->
+        @for (item of navigation; track trackByFn($index, item)) {
+            <!-- Skip the hidden items -->
+            @if ((item.hidden && !item.hidden(item)) || !item.hidden) {
+                <!-- Aside -->
+                @if (item.type === 'aside' && item.id === activeAsideItemId) {
+                    <fuse-vertical-navigation-aside-item
+                        [item]="item"
+                        [name]="name"
+                        [autoCollapse]="autoCollapse"
+                    ></fuse-vertical-navigation-aside-item>
+                }
+            }
+        }
+    </div>
+}

@@ -1,0 +1,135 @@
+@if (!child) {
+    <div
+        [ngClass]="{
+            'fuse-horizontal-navigation-menu-active': trigger.menuOpen,
+            'fuse-horizontal-navigation-menu-active-forced': item.active,
+        }"
+        [matMenuTriggerFor]="matMenu"
+        (onMenuOpen)="triggerChangeDetection()"
+        (onMenuClose)="triggerChangeDetection()"
+        #trigger="matMenuTrigger"
+    >
+        <ng-container
+            *ngTemplateOutlet="itemTemplate; context: { $implicit: item }"
+        ></ng-container>
+    </div>
+}
+
+<mat-menu
+    class="fuse-horizontal-navigation-menu-panel"
+    [overlapTrigger]="false"
+    #matMenu="matMenu"
+>
+    @for (item of item.children; track trackByFn($index, item)) {
+        <!-- Skip the hidden items -->
+        @if ((item.hidden && !item.hidden(item)) || !item.hidden) {
+            <!-- Basic -->
+            @if (item.type === 'basic') {
+                <div
+                    class="fuse-horizontal-navigation-menu-item"
+                    [disabled]="item.disabled"
+                    mat-menu-item
+                >
+                    <fuse-horizontal-navigation-basic-item
+                        [item]="item"
+                        [name]="name"
+                    ></fuse-horizontal-navigation-basic-item>
+                </div>
+            }
+
+            <!-- Branch: aside, collapsable, group -->
+            @if (
+                item.type === 'aside' ||
+                item.type === 'collapsable' ||
+                item.type === 'group'
+            ) {
+                <div
+                    class="fuse-horizontal-navigation-menu-item"
+                    [disabled]="item.disabled"
+                    [matMenuTriggerFor]="branch.matMenu"
+                    mat-menu-item
+                >
+                    <ng-container
+                        *ngTemplateOutlet="
+                            itemTemplate;
+                            context: { $implicit: item }
+                        "
+                    ></ng-container>
+                    <fuse-horizontal-navigation-branch-item
+                        [child]="true"
+                        [item]="item"
+                        [name]="name"
+                        #branch
+                    ></fuse-horizontal-navigation-branch-item>
+                </div>
+            }
+
+            <!-- Divider -->
+            @if (item.type === 'divider') {
+                <div class="fuse-horizontal-navigation-menu-item" mat-menu-item>
+                    <fuse-horizontal-navigation-divider-item
+                        [item]="item"
+                        [name]="name"
+                    ></fuse-horizontal-navigation-divider-item>
+                </div>
+            }
+        }
+    }
+</mat-menu>
+
+<!-- Item template -->
+<ng-template let-item #itemTemplate>
+    <div
+        class="fuse-horizontal-navigation-item-wrapper"
+        [class.fuse-horizontal-navigation-item-has-subtitle]="!!item.subtitle"
+        [ngClass]="item.classes?.wrapper"
+    >
+        <div
+            class="fuse-horizontal-navigation-item"
+            [ngClass]="{
+                'fuse-horizontal-navigation-item-disabled': item.disabled,
+                'fuse-horizontal-navigation-item-active-forced': item.active,
+            }"
+            [matTooltip]="item.tooltip || ''"
+        >
+            <!-- Icon -->
+            @if (item.icon) {
+                <mat-icon
+                    class="fuse-horizontal-navigation-item-icon"
+                    [ngClass]="item.classes?.icon"
+                    [svgIcon]="item.icon"
+                ></mat-icon>
+            }
+
+            <!-- Title & Subtitle -->
+            <div class="fuse-horizontal-navigation-item-title-wrapper">
+                <div class="fuse-horizontal-navigation-item-title">
+                    <span [ngClass]="item.classes?.title">
+                        {{ item.title }}
+                    </span>
+                </div>
+                @if (item.subtitle) {
+                    <div
+                        class="fuse-horizontal-navigation-item-subtitle text-hint"
+                    >
+                        <span [ngClass]="item.classes?.subtitle">
+                            {{ item.subtitle }}
+                        </span>
+                    </div>
+                }
+            </div>
+
+            <!-- Badge -->
+            @if (item.badge) {
+                <div class="fuse-horizontal-navigation-item-badge">
+                    <div
+                        class="fuse-horizontal-navigation-item-badge-content"
+                        [ngClass]="item.badge.classes"
+                    >
+                        {{ item.badge.title }}
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</ng-template>

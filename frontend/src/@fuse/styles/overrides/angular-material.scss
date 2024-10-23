@@ -1,0 +1,1283 @@
+/* -------------------------------------------------------------------------- */
+/*  @ Overlay
+/* -------------------------------------------------------------------------- */
+.fuse-backdrop-on-mobile {
+    @apply bg-black bg-opacity-60 sm:bg-transparent #{'!important'};
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Font smoothing
+/* -------------------------------------------------------------------------- */
+*[class*='mat-'],
+*[class*='mat-mdc-'] {
+    -webkit-font-smoothing: auto !important;
+    -moz-osx-font-smoothing: auto !important;
+
+    * {
+        -webkit-font-smoothing: auto !important;
+        -moz-osx-font-smoothing: auto !important;
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Accordion
+/* -------------------------------------------------------------------------- */
+.mat-accordion {
+    .mat-expansion-panel {
+        margin-bottom: 24px;
+        border-radius: 8px !important;
+        transition: box-shadow 225ms cubic-bezier(0.4, 0, 0.2, 1);
+        @apply shadow #{'!important'};
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+
+        &.mat-expanded,
+        &:hover {
+            @apply shadow-lg #{'!important'};
+        }
+
+        &:not(.mat-expanded) {
+            .mat-expansion-panel-header {
+                &:not([aria-disabled='true']) {
+                    &.cdk-keyboard-focused,
+                    &.cdk-program-focused,
+                    &:hover {
+                        background: transparent !important;
+                    }
+                }
+            }
+        }
+
+        .mat-expansion-panel-header {
+            font-size: 14px;
+
+            &[aria-disabled='true'] {
+                .mat-expansion-panel-header-description {
+                    margin-right: 28px;
+                }
+            }
+
+            .mat-expansion-indicator {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 12px;
+                height: 12px;
+
+                /* Do not override the border color of the expansion panel indicator */
+                &:after {
+                    border-color: currentColor !important;
+                }
+            }
+        }
+
+        .mat-expansion-panel-body {
+            @apply text-secondary #{'!important'};
+        }
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Buttons
+/* -------------------------------------------------------------------------- */
+.mat-mdc-button,
+.mat-mdc-raised-button,
+.mat-mdc-outlined-button,
+.mat-mdc-unelevated-button,
+.mat-mdc-icon-button,
+.mat-mdc-fab,
+.mat-mdc-mini-fab {
+    height: 40px;
+    min-height: 40px;
+    max-height: 40px;
+    line-height: 1 !important;
+
+    /* Large button */
+    &.fuse-mat-button-large {
+        height: 48px;
+        min-height: 48px;
+        max-height: 48px;
+    }
+
+    /* Lower the icon opacity on disabled buttons */
+    &[disabled='true'] {
+        .mat-icon {
+            opacity: 0.38 !important;
+        }
+    }
+}
+
+/* Icon buttons */
+.mat-mdc-icon-button {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 40px !important;
+    padding: 0 !important;
+
+    svg,
+    img {
+        height: auto !important;
+    }
+}
+
+/* FAB buttons */
+.mat-mdc-fab {
+    max-height: 56px;
+    border-radius: 16px !important;
+
+    &:not(.mdc-fab--extended) .mdc-fab__ripple {
+        border-radius: 16px !important;
+    }
+}
+
+/* Mini FAB buttons */
+.mat-mdc-mini-fab {
+    border-radius: 12px !important;
+
+    &:not(.mdc-fab--extended) .mdc-fab__ripple {
+        border-radius: 12px !important;
+    }
+}
+
+/* Rounded design */
+.mat-mdc-button,
+.mat-mdc-raised-button,
+.mat-mdc-outlined-button,
+.mat-mdc-unelevated-button {
+    padding: 0 20px !important;
+    border-radius: 9999px !important;
+}
+
+/* Fix the alignment of icons when used within buttons */
+.mat-mdc-button,
+.mat-mdc-raised-button,
+.mat-mdc-outlined-button,
+.mat-mdc-unelevated-button {
+    & > .mat-icon {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+}
+
+/* Adjust the color of mat-progress-spinner when used within buttons */
+.mat-mdc-button,
+.mat-mdc-raised-button,
+.mat-mdc-outlined-button,
+.mat-mdc-unelevated-button,
+.mat-mdc-icon-button,
+.mat-mdc-fab,
+.mat-mdc-mini-fab {
+    .mat-mdc-progress-spinner {
+        .mdc-circular-progress__indeterminate-container {
+            circle {
+                stroke: currentColor !important;
+                animation-duration: 6000ms;
+            }
+        }
+    }
+}
+
+/* Adjust the focus, ripple and icon colors of colored background buttons */
+.mat-mdc-raised-button,
+.mat-mdc-unelevated-button,
+.mat-mdc-fab,
+.mat-mdc-mini-fab {
+    --mat-mdc-button-persistent-ripple-color: theme(
+        'colors.gray[400]'
+    ) !important;
+    --mat-mdc-button-ripple-color: rgba(0, 0, 0, 0.1) !important;
+
+    .dark & {
+        --mat-mdc-button-persistent-ripple-color: theme(
+            'colors.black'
+        ) !important;
+        --mat-mdc-button-ripple-color: rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .mat-icon {
+        color: currentColor !important;
+    }
+
+    .mat-ripple-element {
+        @apply bg-black/10 #{'!important'};
+    }
+}
+
+/* Color the icons of transparent background buttons */
+.mat-mdc-button,
+.mat-mdc-icon-button,
+.mat-mdc-outlined-button {
+    &:not([disabled='true']) {
+        /* Apply primary color */
+        &.mat-primary {
+            .mat-icon {
+                @apply text-primary #{'!important'};
+            }
+        }
+
+        /* Apply accent color */
+        &.mat-accent {
+            .mat-icon {
+                @apply text-accent #{'!important'};
+            }
+        }
+
+        /* Apply warn color */
+        &.mat-warn {
+            .mat-icon {
+                @apply text-warn #{'!important'};
+            }
+        }
+    }
+}
+
+/* Adjust the border color of outlined buttons */
+.mat-mdc-outlined-button {
+    /* Not disabled */
+    &:not([disabled='true']) {
+        @apply border-gray-300 dark:border-gray-500 #{'!important'};
+    }
+
+    /* Disabled */
+    &[disabled='true'] {
+        @apply border-gray-300/70 dark:border-gray-600 #{'!important'};
+    }
+}
+
+/* Don't wrap the button label text */
+.mdc-button {
+    .mdc-button__label {
+        white-space: nowrap;
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Button Toggle
+/* -------------------------------------------------------------------------- */
+.mat-button-toggle-group {
+    border: none !important;
+    @apply space-x-1;
+
+    &.mat-button-toggle-group-appearance-standard {
+        .mat-button-toggle + .mat-button-toggle {
+            background-clip: padding-box;
+        }
+    }
+
+    .mat-button-toggle {
+        border-radius: 9999px;
+        overflow: hidden;
+        border: none !important;
+        font-weight: 500;
+
+        &.mat-button-toggle-checked {
+            .mat-button-toggle-label-content {
+                @apply text-default #{'!important'};
+            }
+        }
+
+        .mat-button-toggle-label-content {
+            padding: 0 20px;
+            line-height: 40px !important;
+            @apply text-secondary;
+        }
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Checkbox
+/* -------------------------------------------------------------------------- */
+.mat-mdc-checkbox {
+    display: inline-flex !important;
+
+    .mdc-form-field {
+        padding-right: 12px;
+    }
+}
+
+.mdc-checkbox__native-control {
+    opacity: 0 !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Chip
+/* -------------------------------------------------------------------------- */
+.mat-mdc-chip {
+    font-weight: 500 !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Dialog
+/* -------------------------------------------------------------------------- */
+.mat-mdc-dialog-container {
+    .mdc-dialog__surface {
+        border-radius: 16px !important;
+        padding: 24px;
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Drawer
+/* -------------------------------------------------------------------------- */
+.mat-drawer-backdrop.mat-drawer-shown {
+    background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Form fields
+/* -------------------------------------------------------------------------- */
+
+/* "fill" appearance */
+.mat-mdc-form-field.mat-form-field-appearance-fill {
+    /* Disabled */
+    &.mat-form-field-disabled {
+        opacity: 0.7 !important;
+    }
+
+    /* Invalid */
+    &.mat-form-field-invalid {
+        /* Border color */
+        .mat-mdc-text-field-wrapper {
+            @apply border-warn dark:border-warn #{'!important'};
+        }
+
+        /* Select */
+        .mat-mdc-select {
+            /* Placeholder color */
+            .mat-mdc-select-placeholder {
+                @apply text-warn #{'!important'};
+            }
+        }
+    }
+
+    /* Hover */
+    &:hover {
+        .mat-mdc-form-field-focus-overlay {
+            opacity: 0 !important;
+        }
+    }
+
+    /* Focused */
+    &.mat-focused {
+        .mat-mdc-form-field-focus-overlay {
+            opacity: 0 !important;
+        }
+    }
+
+    /* Focused and valid fields */
+    &.mat-focused:not(.mat-form-field-invalid) {
+        /* Border color */
+        .mat-mdc-text-field-wrapper {
+            @apply border-primary dark:border-primary #{'!important'};
+        }
+    }
+
+    /* Remove the default arrow for native select */
+    &.mat-mdc-form-field-type-mat-native-select {
+        .mat-mdc-form-field-infix {
+            select {
+                top: auto;
+                margin-top: 0;
+                margin-bottom: 0;
+                padding-top: 0;
+                padding-right: 18px;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2364748B' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5H7z'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right -7px center;
+                background-size: 24px;
+
+                .dark & {
+                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2397a6ba' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5H7z'/%3E%3C/svg%3E");
+                }
+            }
+
+            &:after {
+                display: none;
+            }
+        }
+    }
+
+    /* Default style tweaks and enhancements */
+    .mat-mdc-text-field-wrapper {
+        padding: 0;
+        border-radius: 6px;
+        border-width: 1px;
+        border-style: solid;
+        @apply border-gray-300 bg-white shadow-sm dark:border-gray-500 dark:bg-black dark:bg-opacity-5 #{'!important'};
+
+        /* Adjust the top spacing and overflow when mat-label present */
+        &:not(.mdc-text-field--no-label) {
+            margin-top: 24px;
+            overflow: visible;
+        }
+
+        .mat-mdc-form-field-focus-overlay {
+            border-radius: 6px;
+        }
+
+        /* Form field */
+        .mat-mdc-form-field-flex {
+            position: relative;
+            display: flex;
+            align-items: stretch;
+            border-radius: 6px;
+            padding: 0 16px;
+
+            .mat-mdc-form-field-icon-prefix,
+            .mat-mdc-form-field-text-prefix {
+                padding: 0 !important;
+
+                > .mat-icon {
+                    margin-right: 12px;
+                    padding: 0 !important;
+                }
+
+                > .mat-mdc-icon-button {
+                    margin: 0 4px 0 -10px;
+                }
+
+                > .mat-mdc-select {
+                    margin-right: 10px;
+                }
+
+                > .mat-datepicker-toggle {
+                    margin-left: -8px;
+                }
+            }
+
+            .mat-mdc-form-field-icon-suffix,
+            .mat-mdc-form-field-text-suffix {
+                padding: 0 !important;
+
+                > .mat-icon {
+                    margin-left: 12px;
+                    padding: 0 !important;
+                }
+
+                > .mat-mdc-icon-button {
+                    margin: 0 -10px 0 4px;
+                }
+
+                > .mat-mdc-select {
+                    margin-left: 10px;
+                }
+
+                > .mat-datepicker-toggle {
+                    margin-right: -8px;
+                }
+            }
+
+            .mat-mdc-form-field-icon-prefix,
+            .mat-mdc-form-field-text-prefix,
+            .mat-mdc-form-field-icon-suffix,
+            .mat-mdc-form-field-text-suffix {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                @apply text-hint #{'!important'};
+
+                .mat-mdc-icon-button {
+                    width: 40px;
+                    min-width: 40px;
+                    height: 40px;
+                    min-height: 40px;
+                }
+
+                .mat-icon,
+                .mat-mdc-icon-button:not([disabled]),
+                .mat-mdc-select-value {
+                    @apply text-hint;
+                }
+
+                /* Datepicker default icon size */
+                .mat-datepicker-toggle-default-icon {
+                    @apply icon-size-6;
+                }
+
+                /* Make mat-select usable as prefix and suffix */
+                .mat-mdc-select {
+                    display: flex;
+                    align-items: center;
+
+                    &:focus {
+                        .mat-mdc-select-trigger {
+                            .mat-mdc-select-value {
+                                @apply text-primary #{'!important'};
+                            }
+
+                            .mat-mdc-select-arrow-wrapper {
+                                .mat-mdc-select-arrow {
+                                    border-top-color: var(
+                                        --fuse-primary
+                                    ) !important;
+                                }
+                            }
+                        }
+                    }
+
+                    .mat-mdc-select-trigger {
+                        display: flex;
+                        align-items: center;
+
+                        .mat-mdc-select-value {
+                            display: flex;
+                            max-width: none;
+
+                            mat-mdc-select-trigger {
+                                .mat-icon {
+                                    margin: 0 !important;
+                                }
+                            }
+                        }
+
+                        .mat-mdc-select-arrow-wrapper {
+                            display: flex;
+                            align-items: center;
+                            transform: none;
+                            margin-left: 4px;
+
+                            .mat-mdc-select-arrow {
+                                min-height: 0;
+                                @apply text-gray-500 dark:text-gray-400 #{'!important'};
+                            }
+                        }
+                    }
+                }
+            }
+
+            /* Infix */
+            .mat-mdc-form-field-infix {
+                position: static;
+                display: flex;
+                align-items: center;
+                width: 88px;
+                min-height: 48px;
+                padding: 0;
+                border: 0;
+
+                /* Floating label - disable floating action */
+                .mat-mdc-floating-label {
+                    top: -25px !important;
+                    left: 0 !important;
+                    width: 100% !important;
+                    transform: none !important;
+                    pointer-events: auto;
+                    font-weight: 500;
+                    @apply text-default #{'!important'};
+                }
+
+                /* Textarea */
+                textarea.mat-mdc-input-element {
+                    margin: 12px 0;
+                    padding: 0 6px 0 0;
+                }
+
+                /* Chips */
+                .mat-mdc-chip-set {
+                    width: 100%;
+                    margin: 0 -8px;
+                }
+            }
+        }
+
+        /* Remove the underline */
+        .mdc-line-ripple {
+            display: none;
+        }
+    }
+
+    /* Subscript tweaks */
+    .mat-mdc-form-field-subscript-wrapper {
+        font-size: 12px;
+        font-weight: 500;
+
+        .mat-mdc-form-field-hint-wrapper,
+        .mat-mdc-form-field-error-wrapper {
+            padding: 0;
+        }
+
+        .mat-mdc-form-field-hint {
+            @apply text-hint #{'!important'};
+        }
+    }
+
+    /* Adds better alignment for textarea inputs */
+    &:has(textarea.mat-mdc-input-element) {
+        .mat-mdc-text-field-wrapper {
+            .mat-mdc-form-field-flex {
+                .mat-mdc-form-field-icon-prefix,
+                .mat-mdc-form-field-text-prefix,
+                .mat-mdc-form-field-icon-suffix,
+                .mat-mdc-form-field-text-suffix {
+                    align-self: flex-start;
+                    padding-top: 14px !important;
+                }
+            }
+        }
+    }
+
+    /* Rounded */
+    &.fuse-mat-rounded {
+        .mat-mdc-text-field-wrapper {
+            border-radius: 24px;
+        }
+
+        /* Emphasized affix */
+        &.fuse-mat-emphasized-affix {
+            .mat-mdc-text-field-wrapper {
+                .mat-mdc-form-field-flex {
+                    .mat-mdc-form-field-icon-prefix,
+                    .mat-mdc-form-field-text-prefix {
+                        border-radius: 24px 0 0 24px;
+
+                        > .mat-icon {
+                            margin-right: 12px;
+                        }
+
+                        > .mat-mdc-icon-button {
+                            margin: 0 2px 0 -10px !important;
+                        }
+
+                        > .mat-mdc-select {
+                            margin-right: 8px;
+                        }
+
+                        > .mat-datepicker-toggle {
+                            margin-right: 4px;
+                        }
+
+                        > *:not(.mat-icon):not(.mat-mdc-icon-button):not(
+                                .mat-mdc-select
+                            ):not(.mat-datepicker-toggle) {
+                            margin-right: 12px;
+                        }
+                    }
+
+                    .mat-mdc-form-field-icon-suffix,
+                    .mat-mdc-form-field-text-suffix {
+                        border-radius: 0 24px 24px 0;
+
+                        > .mat-icon {
+                            margin-left: 12px !important;
+                        }
+
+                        > .mat-mdc-icon-button {
+                            margin: 0 -10px 0 2px !important;
+                        }
+
+                        > .mat-mdc-select {
+                            margin-left: 12px !important;
+                        }
+
+                        > .mat-datepicker-toggle {
+                            margin-left: 4px !important;
+                        }
+
+                        > *:not(.mat-icon):not(.mat-mdc-icon-button):not(
+                                .mat-mdc-select
+                            ):not(.mat-datepicker-toggle) {
+                            margin-left: 12px !important;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /* Dense */
+    &.fuse-mat-dense {
+        .mat-mdc-text-field-wrapper {
+            .mat-mdc-form-field-flex {
+                .mat-mdc-form-field-icon-prefix,
+                .mat-mdc-form-field-text-prefix,
+                .mat-mdc-form-field-icon-suffix,
+                .mat-mdc-form-field-text-suffix {
+                    .mat-mdc-icon-button {
+                        width: 32px !important;
+                        min-width: 32px;
+                        height: 32px;
+                        min-height: 32px;
+                    }
+                }
+
+                .mat-mdc-form-field-icon-prefix,
+                .mat-mdc-form-field-text-prefix {
+                    > .mat-mdc-icon-button {
+                        margin-left: -6px;
+                        margin-right: 12px;
+                    }
+                }
+
+                .mat-mdc-form-field-icon-suffix,
+                .mat-mdc-form-field-text-suffix {
+                    > .mat-mdc-icon-button {
+                        margin-left: 12px;
+                        margin-right: -6px;
+                    }
+                }
+
+                .mat-mdc-form-field-infix {
+                    min-height: 40px;
+
+                    /* Textarea */
+                    textarea.mat-mdc-input-element {
+                        margin: 8px 0;
+                    }
+                }
+            }
+        }
+
+        /* Adds better alignment for textarea inputs */
+        &:has(textarea.mat-mdc-input-element) {
+            .mat-mdc-text-field-wrapper {
+                .mat-mdc-form-field-flex {
+                    .mat-mdc-form-field-icon-prefix,
+                    .mat-mdc-form-field-text-prefix,
+                    .mat-mdc-form-field-icon-suffix,
+                    .mat-mdc-form-field-text-suffix {
+                        padding-top: 10px !important;
+                    }
+                }
+            }
+        }
+
+        /* Rounded */
+        &.fuse-mat-rounded {
+            .mat-mdc-text-field-wrapper {
+                border-radius: 20px;
+            }
+
+            /* Emphasized affix */
+            &.fuse-mat-emphasized-affix {
+                .mat-mdc-text-field-wrapper {
+                    .mat-mdc-form-field-flex {
+                        .mat-mdc-form-field-icon-prefix,
+                        .mat-mdc-form-field-text-prefix {
+                            border-radius: 20px 0 0 20px !important;
+                        }
+
+                        .mat-mdc-form-field-icon-suffix,
+                        .mat-mdc-form-field-text-suffix {
+                            border-radius: 0 20px 20px 0 !important;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /* Emphasized affix */
+    &.fuse-mat-emphasized-affix {
+        .mat-mdc-text-field-wrapper {
+            .mat-mdc-form-field-flex {
+                .mat-mdc-form-field-icon-prefix,
+                .mat-mdc-form-field-text-prefix {
+                    align-self: stretch !important;
+                    margin: 0 16px 0 -16px !important;
+                    padding-left: 16px !important;
+                    border-radius: 6px 0 0 6px;
+                    border-right-width: 1px;
+                    border-style: solid;
+
+                    > .mat-icon {
+                        margin-right: 16px;
+                    }
+
+                    > .mat-mdc-icon-button {
+                        margin: 0 6px 0 -10px !important;
+                    }
+
+                    > .mat-mdc-select {
+                        margin-right: 12px !important;
+                    }
+
+                    > .mat-datepicker-toggle {
+                        margin-right: 8px;
+                    }
+
+                    > *:not(.mat-icon):not(.mat-mdc-icon-button):not(
+                            .mat-mdc-select
+                        ):not(.mat-datepicker-toggle) {
+                        margin-right: 16px;
+                    }
+                }
+
+                .mat-mdc-form-field-icon-suffix,
+                .mat-mdc-form-field-text-suffix {
+                    align-self: stretch !important;
+                    margin: 0 -16px 0 16px !important;
+                    padding-right: 16px !important;
+                    border-radius: 0 6px 6px 0;
+                    border-left-width: 1px;
+                    border-style: solid;
+
+                    > .mat-icon {
+                        margin-left: 16px;
+                    }
+
+                    > .mat-mdc-icon-button {
+                        margin: 0 -10px 0 6px !important;
+                    }
+
+                    > .mat-mdc-select {
+                        margin: 0 -4px 0 16px !important;
+                    }
+
+                    > .mat-datepicker-toggle {
+                        margin-left: 8px;
+                    }
+
+                    > *:not(.mat-icon):not(.mat-mdc-icon-button):not(
+                            .mat-mdc-select
+                        ):not(.mat-datepicker-toggle) {
+                        margin-left: 16px;
+                    }
+                }
+
+                .mat-mdc-form-field-icon-prefix,
+                .mat-mdc-form-field-text-prefix,
+                .mat-mdc-form-field-icon-suffix,
+                .mat-mdc-form-field-text-suffix {
+                    @apply bg-default border-gray-300 dark:border-gray-500 #{'!important'};
+                }
+            }
+        }
+
+        /* with Textarea */
+        &:has(textarea.mat-mdc-input-element) {
+            .mat-mdc-text-field-wrapper {
+                .mat-mdc-form-field-flex {
+                    .mat-mdc-form-field-icon-prefix,
+                    .mat-mdc-form-field-text-prefix,
+                    .mat-mdc-form-field-icon-suffix,
+                    .mat-mdc-form-field-text-suffix {
+                        align-items: flex-start;
+                    }
+                }
+            }
+        }
+    }
+
+    /* Bolder border width */
+    &.fuse-mat-bold {
+        .mat-mdc-text-field-wrapper {
+            border-width: 2px !important;
+        }
+    }
+}
+
+/* "outline" appearance */
+.mat-mdc-form-field.mat-form-field-appearance-outline {
+    /* Invalid */
+    &.mat-form-field-invalid {
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+            border-color: var(--fuse-warn) !important;
+        }
+    }
+
+    /* Focused */
+    &.mat-focused:not(.mat-form-field-invalid) {
+        /* Primary */
+        &.mat-primary {
+            .mdc-notched-outline__leading,
+            .mdc-notched-outline__notch,
+            .mdc-notched-outline__trailing {
+                border-color: var(--fuse-primary) !important;
+            }
+        }
+
+        /* Accent */
+        &.mat-accent {
+            .mdc-notched-outline__leading,
+            .mdc-notched-outline__notch,
+            .mdc-notched-outline__trailing {
+                border-color: var(--fuse-accent) !important;
+            }
+        }
+    }
+
+    &:not(.mat-focused):not(.mat-form-field-invalid) {
+        .mat-mdc-text-field-wrapper {
+            .mat-mdc-form-field-flex {
+                .mdc-notched-outline {
+                    .mdc-notched-outline__leading,
+                    .mdc-notched-outline__notch,
+                    .mdc-notched-outline__trailing {
+                        @apply border-slate-300 dark:border-slate-500 #{'!important'};
+                    }
+                }
+            }
+        }
+    }
+
+    /* Remove the extra border on the right side of the notch */
+    /* Tailwind's global border setter causes this issue */
+    .mat-mdc-text-field-wrapper {
+        .mat-mdc-form-field-flex {
+            .mdc-notched-outline {
+                .mdc-notched-outline__notch {
+                    border-right-style: none !important;
+                }
+            }
+        }
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Datepicker
+/* -------------------------------------------------------------------------- */
+
+/* -------------------------------------------------------------------------- */
+/*  @ Icon
+/* -------------------------------------------------------------------------- */
+.mat-icon {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    min-height: 24px;
+    font-size: 24px;
+    line-height: 24px;
+    -webkit-appearance: none !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Inputs
+/* -------------------------------------------------------------------------- */
+.mat-mdc-input-element {
+    &::placeholder {
+        transition: none !important;
+        @apply text-hint #{'!important'};
+    }
+
+    &::-moz-placeholder {
+        transition: none !important;
+        @apply text-hint #{'!important'};
+    }
+
+    &::-webkit-input-placeholder {
+        transition: none !important;
+        @apply text-hint #{'!important'};
+    }
+
+    &:-ms-input-placeholder {
+        transition: none !important;
+        @apply text-hint #{'!important'};
+    }
+}
+
+/* Invalid */
+.mat-form-field-invalid {
+    .mat-mdc-input-element {
+        /* Placeholder color */
+        &::placeholder {
+            @apply text-warn #{'!important'};
+        }
+
+        &::-moz-placeholder {
+            @apply text-warn #{'!important'};
+        }
+
+        &::-webkit-input-placeholder {
+            @apply text-warn #{'!important'};
+        }
+
+        &:-ms-input-placeholder {
+            @apply text-warn #{'!important'};
+        }
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Menu
+/* -------------------------------------------------------------------------- */
+.mat-mdc-menu-panel {
+    min-width: 144px !important;
+
+    .mat-mdc-menu-content {
+        .mat-mdc-menu-item {
+            .mat-mdc-menu-item-text {
+                display: flex;
+                align-items: center;
+                padding-right: 16px;
+            }
+
+            .mat-icon-no-color {
+                --tw-text-opacity: 1;
+                color: rgba(var(--fuse-mat-icon-rgb), var(--tw-text-opacity));
+            }
+        }
+
+        /* Divider within mat-menu */
+        mat-divider {
+            margin: 8px 0;
+        }
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Paginator
+/* -------------------------------------------------------------------------- */
+.mat-mdc-paginator {
+    .mat-mdc-paginator-container {
+        padding: 8px 16px;
+        justify-content: space-between;
+
+        @screen sm {
+            justify-content: normal;
+        }
+
+        /* Page size select */
+        .mat-mdc-paginator-page-size {
+            align-items: center;
+            min-height: 40px;
+            margin: 8px;
+
+            .mat-mdc-paginator-page-size-label {
+                display: none;
+                margin-right: 12px;
+
+                @screen sm {
+                    display: block;
+                }
+            }
+
+            .mat-mdc-paginator-page-size-select {
+                margin: 0;
+
+                .mat-mdc-text-field-wrapper {
+                    padding: 0 10px;
+
+                    .mat-form-field-flex {
+                        min-height: 32px;
+                    }
+                }
+            }
+        }
+
+        /* Range actions */
+        .mat-mdc-paginator-range-actions {
+            margin: 8px 0;
+
+            .mat-mdc-paginator-range-label {
+                margin-right: 16px;
+            }
+        }
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Select
+/* -------------------------------------------------------------------------- */
+.mat-mdc-select {
+    display: inline-flex !important;
+
+    .mat-mdc-select-placeholder {
+        transition: none !important;
+        @apply text-hint #{'!important'};
+    }
+
+    .mat-mdc-select-trigger {
+        .mat-mdc-select-value {
+            position: relative;
+            display: flex;
+            max-width: none;
+
+            .mat-mdc-select-value-text {
+                display: inline-flex;
+
+                > * {
+                    overflow: hidden;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                }
+            }
+        }
+    }
+
+    .mat-mdc-select-arrow-wrapper {
+        transform: translateY(0) !important;
+
+        .mat-mdc-select-arrow {
+            margin: 0 0 0 8px;
+            @apply text-secondary #{!important};
+        }
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Slide Toggle
+/* -------------------------------------------------------------------------- */
+
+/* -------------------------------------------------------------------------- */
+/*  @ Snack bar
+/* -------------------------------------------------------------------------- */
+.mat-mdc-snack-bar-container {
+    .mat-mdc-button.mat-mdc-snack-bar-action:not(:disabled) {
+        color: #ffffff !important;
+
+        .dark & {
+            color: #000000 !important;
+        }
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Stepper
+/* -------------------------------------------------------------------------- */
+.mat-step-icon {
+    /* Do not override the mat-icon color */
+    .mat-icon {
+        color: currentColor !important;
+    }
+}
+
+.mat-step-label,
+.mat-step-label-selected {
+    font-weight: 500 !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Table
+/* -------------------------------------------------------------------------- */
+.mat-mdc-table {
+    .mdc-data-table__row:not(.mdc-data-table__row--selected):hover {
+        background: none !important;
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Tabs
+/* -------------------------------------------------------------------------- */
+.mat-mdc-tab-group {
+    /* No header */
+    &.fuse-mat-no-header {
+        .mat-mdc-tab-header {
+            height: 0 !important;
+            max-height: 0 !important;
+            border: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+    }
+
+    &:not(.mat-background-primary):not(.mat-background-accent) {
+        .mat-mdc-tab-header {
+            .mat-mdc-tab-label-container {
+                box-shadow: inset 0 -1px var(--fuse-border);
+            }
+        }
+    }
+
+    .mat-mdc-tab-header {
+        .mat-mdc-tab-label-container {
+            margin: 0 24px;
+        }
+    }
+
+    .mat-mdc-tab-body-content {
+        padding: 24px;
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Textarea
+/* -------------------------------------------------------------------------- */
+textarea.mat-mdc-input-element {
+    box-sizing: content-box !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Toolbar
+/* -------------------------------------------------------------------------- */
+.mat-toolbar {
+    /* Apply primary contrast color */
+    &.mat-primary {
+        .mat-icon {
+            @apply text-on-primary #{'!important'};
+        }
+
+        .text-secondary {
+            @apply text-on-primary text-opacity-60 #{'!important'};
+        }
+
+        .text-hint {
+            @apply text-on-primary text-opacity-38 #{'!important'};
+        }
+
+        .text-disabled {
+            @apply text-on-primary text-opacity-38 #{'!important'};
+        }
+
+        .divider {
+            @apply text-on-primary text-opacity-12 #{'!important'};
+        }
+    }
+
+    /* Apply accent contrast color */
+    &.mat-accent {
+        .mat-icon {
+            @apply text-on-accent #{'!important'};
+        }
+
+        .text-secondary {
+            @apply text-on-accent text-opacity-60 #{'!important'};
+        }
+
+        .text-hint {
+            @apply text-on-accent text-opacity-38 #{'!important'};
+        }
+
+        .text-disabled {
+            @apply text-on-accent text-opacity-38 #{'!important'};
+        }
+
+        .divider {
+            @apply text-on-accent text-opacity-12 #{'!important'};
+        }
+    }
+
+    /* Apply warn contrast color */
+    &.mat-warn {
+        .mat-icon {
+            @apply text-on-warn #{'!important'};
+        }
+
+        .text-secondary {
+            @apply text-on-warn text-opacity-60 #{'!important'};
+        }
+
+        .text-hint {
+            @apply text-on-warn text-opacity-38 #{'!important'};
+        }
+
+        .text-disabled {
+            @apply text-on-warn text-opacity-38 #{'!important'};
+        }
+
+        .divider {
+            @apply text-on-warn text-opacity-12 #{'!important'};
+        }
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  @ Tooltip
+/* -------------------------------------------------------------------------- */
+
+.mat-mdc-tooltip .mdc-tooltip__surface {
+    background-color: var(--fuse-text-default) !important;
+    color: white;
+
+    .dark & {
+        background-color: var(--fuse-text-secondary) !important;
+        color: var(--fuse-bg-default) !important;
+    }
+}

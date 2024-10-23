@@ -1,27 +1,60 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <!-- needs to be right at the top to prevent Chrome from reloading favicon on every route change -->
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
-    <title>sophia  |  ai</title>
-    <base href="/" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- add to homescreen for ios -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
-  </head>
-  <body>
-    <!--[if lte IE 11]>
-      <p>
-        You are using an <strong>outdated</strong> browser. Please
-        <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.
-      </p>
-    <![endif]-->
-    <noscript>
-      <p>This page requires JavaScript to work properly. Please enable JavaScript in your browser.</p>
-    </noscript>
-    <app-root></app-root>
-  </body>
+    <head>
+        <title>SOPHIA | AI</title>
+        <meta charset="utf-8" />
+        <meta
+            name="description"
+            content="Sophia AI platform"
+        />
+        <meta
+            name="keywords"
+            content="AI, LLM, GenAI, vertex, openai, chatgpt, gpt, anthropic, claude, deepseek, groq, llama"
+        />
+        <meta
+            name="viewport"
+            content="width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0"
+        />
+
+        <base href="/" />
+
+        <!-- Favicon -->
+        <link rel="icon" type="image/png" href="favicon-16x16.png" />
+        <link rel="icon" type="image/png" href="favicon-32x32.png" />
+
+        <!-- Fonts -->
+        <link href="fonts/inter/inter.css" rel="stylesheet" />
+        <link href="https://fonts.gstatic.com" rel="preconnect" />
+
+        <link
+            href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+            rel="stylesheet"
+        />
+
+        <!-- Icon fonts -->
+        <link
+            href="https://fonts.googleapis.com/icon?family=Material+Icons"
+            rel="stylesheet"
+        />
+
+        <!-- Splash screen styles -->
+        <link href="styles/splash-screen.css" rel="stylesheet" />
+    </head>
+
+    <body>
+        <!-- Splash screen -->
+        <fuse-splash-screen>
+            <!--
+            <img src="images/sophia.png" alt="Sophia logo" />
+            -->
+            <div class="spinner">
+                <div class="bounce1"></div>
+                <div class="bounce2"></div>
+                <div class="bounce3"></div>
+            </div>
+        </fuse-splash-screen>
+
+        <!-- App root -->
+        <app-root></app-root>
+    </body>
 </html>

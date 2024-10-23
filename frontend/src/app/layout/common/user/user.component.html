@@ -1,0 +1,82 @@
+<button mat-icon-button [routerLink]="['/profile']">
+    <span class="relative">
+        @if (showAvatar && user.avatar) {
+            <img class="h-7 w-7 rounded-full" [src]="user.avatar" />
+        }
+        @if (!showAvatar || !user.avatar) {
+            <mat-icon [svgIcon]="'heroicons_outline:user-circle'"></mat-icon>
+        }
+    </span>
+</button>
+<!-- Button
+<button mat-icon-button [matMenuTriggerFor]="userActions">
+    <span class="relative">
+        @if (showAvatar && user.avatar) {
+            <img class="h-7 w-7 rounded-full" [src]="user.avatar" />
+        }
+        @if (!showAvatar || !user.avatar) {
+            <mat-icon [svgIcon]="'heroicons_outline:user-circle'"></mat-icon>
+        }
+        <span
+            class="absolute bottom-0 right-0 h-2 w-2 rounded-full"
+            [ngClass]="{
+                'mb-px mr-px': !showAvatar || !user.avatar,
+                'bg-green-500': user.status === 'online',
+                'bg-amber-500': user.status === 'away',
+                'bg-red-500': user.status === 'busy',
+                'bg-gray-400': user.status === 'not-visible',
+            }"
+        ></span>
+    </span>
+</button>
+
+<mat-menu [xPosition]="'before'" #userActions="matMenu">
+    <button mat-menu-item>
+        <span class="flex flex-col leading-none">
+            <span>Signed in as</span>
+            <span class="mt-1.5 text-md font-medium">{{ user.email }}</span>
+        </span>
+    </button>
+    <mat-divider class="my-2"></mat-divider>
+    <button mat-menu-item>
+        <mat-icon [svgIcon]="'heroicons_outline:user-circle'"></mat-icon>
+        <span>Profile</span>
+    </button>
+    <button mat-menu-item>
+        <mat-icon [svgIcon]="'heroicons_outline:cog-8-tooth'"></mat-icon>
+        <span>Settings</span>
+    </button>
+    <button mat-menu-item [matMenuTriggerFor]="userStatus">
+        <mat-icon
+            [svgIcon]="'heroicons_outline:ellipsis-horizontal-circle'"
+        ></mat-icon>
+        <span>Status</span>
+    </button>
+    <mat-divider class="my-2"></mat-divider>
+    <button mat-menu-item (click)="signOut()">
+        <mat-icon
+            [svgIcon]="'heroicons_outline:arrow-right-on-rectangle'"
+        ></mat-icon>
+        <span>Sign out</span>
+    </button>
+</mat-menu>
+
+<mat-menu class="user-status-menu" #userStatus="matMenu">
+    <button mat-menu-item (click)="updateUserStatus('online')">
+        <span class="mr-3 inline-flex h-4 w-4 rounded-full bg-green-500"></span>
+        <span>Online</span>
+    </button>
+    <button mat-menu-item (click)="updateUserStatus('away')">
+        <span class="mr-3 inline-flex h-4 w-4 rounded-full bg-amber-500"></span>
+        <span>Away</span>
+    </button>
+    <button mat-menu-item (click)="updateUserStatus('busy')">
+        <span class="mr-3 inline-flex h-4 w-4 rounded-full bg-red-500"></span>
+        <span>Busy</span>
+    </button>
+    <button mat-menu-item (click)="updateUserStatus('not-visible')">
+        <span class="mr-3 inline-flex h-4 w-4 rounded-full bg-gray-400"></span>
+        <span>Invisible</span>
+    </button>
+</mat-menu>
+-->

@@ -1,0 +1,44 @@
+/* ----------------------------------------------------------------------------------------------------- */
+/*  @ Example viewer
+/* ----------------------------------------------------------------------------------------------------- */
+.example-viewer {
+    display: flex;
+    flex-direction: column;
+    margin: 32px 0;
+    overflow: hidden;
+    @apply bg-card rounded-2xl shadow;
+
+    .title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 88px;
+        min-height: 88px;
+        max-height: 88px;
+        padding: 0 40px;
+
+        h6 {
+            font-weight: 700;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+
+            > * + * {
+                margin-left: 8px;
+            }
+        }
+    }
+
+    mat-tab-group {
+        .mat-tab-body-content {
+            .fuse-highlight {
+                pre {
+                    margin: 0;
+                    border-radius: 0;
+                }
+            }
+        }
+    }
+}

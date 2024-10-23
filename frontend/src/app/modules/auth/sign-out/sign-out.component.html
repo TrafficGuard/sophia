@@ -1,0 +1,41 @@
+<div class="flex min-w-0 flex-auto flex-col items-center sm:justify-center">
+    <div
+        class="w-full px-4 py-6 sm:bg-card sm:w-auto sm:rounded-2xl sm:p-12 sm:shadow"
+    >
+        <div class="mx-auto w-full max-w-80 sm:mx-0 sm:w-80">
+            <!-- Logo -->
+            <div class="mx-auto w-12">
+                <img src="images/logo/logo.svg" />
+            </div>
+
+            <!-- Title -->
+            <div
+                class="mt-8 text-center text-3xl font-medium leading-tight tracking-tight"
+            >
+                You have signed out!
+            </div>
+            <div class="mt-0.5 flex justify-center font-medium">
+                <!-- Redirect countdown -->
+                @if (countdown > 0) {
+                    Redirecting in
+                    {{ countdown | i18nPlural: countdownMapping }}
+                }
+
+                <!-- Redirect message -->
+                @if (countdown === 0) {
+                    You are now being redirected!
+                }
+            </div>
+
+            <!-- Form footer -->
+            <div class="text-secondary mt-8 text-center text-md font-medium">
+                <span>Go to</span>
+                <a
+                    class="ml-1 text-primary-500 hover:underline"
+                    [routerLink]="['/sign-in']"
+                    >sign in
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
