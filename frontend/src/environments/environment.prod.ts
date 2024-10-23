@@ -9,7 +9,7 @@ import { env } from './.env';
 
 export const environment = {
   production: true,
-  serverUrl: env['SERVER_URL'] || 'http://localhost:3000/api',
+  serverUrl: env['SERVER_URL'] || 'http://localhost:3000/api/',
   gcpProject: env['GCLOUD_PROJECT'],
   firestoreDb: env['FIRESTORE_DATABASE'],
   auth: env['AUTH'],
