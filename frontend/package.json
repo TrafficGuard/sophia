@@ -12,6 +12,7 @@
     "build": "npm run write:env -s && ng build --base-href=/ui/",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadless",
     "lint": "ng lint",
     "lint:ci": "echo skipping",
     "write:env": "ngx-scripts env npm_package_version SERVER_URL GCLOUD_PROJECT FIRESTORE_DATABASE AUTH"

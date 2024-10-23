@@ -167,7 +167,7 @@ export class OpenAI extends BaseLLM {
 				stream: false,
 			});
 			const responseText = stream.choices[0].message.content;
-			let timeToFirstToken = Date.now();
+			const timeToFirstToken = Date.now();
 			const finishTime = Date.now();
 
 			const llmCall: LlmCall = await llmCallSave;

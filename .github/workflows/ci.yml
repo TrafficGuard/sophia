@@ -45,6 +45,11 @@ jobs:
         working-directory: ./frontend
         run: npm ci
 
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@latest
+
       - name: Run tests (frontend)
         working-directory: ./frontend
         run: npm run test:ci
+        env:
+          CHROME_BIN: /usr/bin/google-chrome-stable
