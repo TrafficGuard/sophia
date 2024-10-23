@@ -164,14 +164,10 @@ export class OpenAI extends BaseLLM {
 				model: this.model,
 				response_format: { type: opts?.type === 'json' ? 'json_object' : 'text' },
 				messages,
-				stream: true,
+				stream: false,
 			});
-			let responseText = '';
-			let timeToFirstToken = null;
-			for await (const chunk of stream) {
-				responseText += chunk.choices[0]?.delta?.content || '';
-				if (!timeToFirstToken) timeToFirstToken = Date.now() - requestTime;
-			}
+			const responseText = stream.choices[0].message.content;
+			let timeToFirstToken = Date.now();
 			const finishTime = Date.now();
 
 			const llmCall: LlmCall = await llmCallSave;
