@@ -66,10 +66,10 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
 				'The following message is the first message in a new chat conversation. Your task is to create a short title for the conversation. Respond only with the title, nothing else',
 			);
 
-			chat.messages.push({ role: 'user', text: text, time: Date.now() }); //, cache: cache ? 'ephemeral' : undefined // remove any previous cache marker
+			chat.messages.push({ role: 'user', content: text, time: Date.now() }); //, cache: cache ? 'ephemeral' : undefined // remove any previous cache marker
 
 			const generatedMessage = await llm.generateTextFromMessages(chat.messages);
-			chat.messages.push({ role: 'assistant', text: generatedMessage, llmId: llmId, time: Date.now() });
+			chat.messages.push({ role: 'assistant', content: generatedMessage, llmId: llmId, time: Date.now() });
 
 			if (titlePromise) chat.title = await titlePromise;
 
@@ -107,10 +107,10 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
 			}
 			if (!llm.isConfigured()) return sendBadRequest(reply, `LLM ${llm.getId()} is not configured`);
 
-			chat.messages.push({ role: 'user', text: text, time: Date.now() }); //, cache: cache ? 'ephemeral' : undefined // remove any previous cache marker
+			chat.messages.push({ role: 'user', content: text, time: Date.now() }); //, cache: cache ? 'ephemeral' : undefined // remove any previous cache marker
 
 			const generatedMessage = await llm.generateTextFromMessages(chat.messages);
-			chat.messages.push({ role: 'assistant', text: generatedMessage, llmId, time: Date.now() });
+			chat.messages.push({ role: 'assistant', content: generatedMessage, llmId, time: Date.now() });
 
 			await fastify.chatService.saveChat(chat);
 

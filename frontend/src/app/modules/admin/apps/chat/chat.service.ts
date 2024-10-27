@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Chat, LlmMessage } from 'app/modules/admin/apps/chat/chat.types';
+import {Chat, ChatMessage, LlmMessage} from 'app/modules/admin/apps/chat/chat.types';
 import {
     BehaviorSubject,
     Observable,
@@ -10,7 +10,7 @@ import {
     switchMap,
     take,
     tap,
-    throwError,
+    throwError, catchError,
 } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -21,7 +21,10 @@ export class ChatService {
     /**
      * Constructor
      */
-    constructor(private _httpClient: HttpClient) {}
+    constructor(private _httpClient: HttpClient) {
+        console.log('ChatService')
+        this.getChats();
+    }
 
     // -----------------------------------------------------------------------------------------------------
     // @ Accessors
@@ -73,6 +76,9 @@ export class ChatService {
             tap(() => {
                 const currentChats = this._chats.value || [];
                 this._chats.next(currentChats.filter(chat => chat.id !== chatId));
+                if (this._chat.getValue().id === chatId) {
+                    this._chat.next(null);
+                }
             })
         );
     }
@@ -85,7 +91,7 @@ export class ChatService {
     getChatById(id: string): Observable<any> {
         if(!id?.trim()) {
             console.log(`nullish chat id "${id}"`)
-            const chat: Chat = {messages:[], id: null, title: ''}
+            const chat: Chat = {messages:[], id: null, title: '', updatedAt: Date.now() }
             this._chat.next(chat);
             return this._chats
         }
@@ -104,12 +110,18 @@ export class ChatService {
                             const llmMsg = msg as LlmMessage
                             return {
                                 ...msg,
-                                value: llmMsg.text,
+                                value: llmMsg.content,
                                 isMine: llmMsg.role === 'user'
                             }
-                        })
+                        }),
+                        updatedAt: chat.updatedAt
                     }
-                    console.log(chat)
+                    // this._chats doesn't have the messages, so we need to update it when we load a chat
+                    const chats = this._chats.getValue()
+                    const chatIndex = chats.findIndex(chat => chat.id === id);
+                    chats[chatIndex] = chat;
+                    this._chats.next(chats);
+
                     this._chat.next(chat);
 
                     // Return the chat
@@ -177,50 +189,12 @@ export class ChatService {
         );
     }
 
-    /**
-     * Update chat
-     *
-     * @param id
-     * @param chat
-     */
-    updateChat2(id: string, chat: Chat): Observable<Chat> {
-        return this.chats$.pipe(
-            take(1),
-            switchMap((chats) =>
-                this._httpClient
-                    .patch<Chat>('api/apps/chat/chat', {
-                        id,
-                        chat,
-                    })
-                    .pipe(
-                        map((updatedChat) => {
-                            // Find the index of the updated chat
-                            const index = chats.findIndex(
-                                (item) => item.id === id
-                            );
-
-                            // Update the chat
-                            chats[index] = updatedChat;
-
-                            // Update the chats
-                            this._chats.next(chats);
-
-                            // Update the chat if it's selected
-                            this._chat.next(updatedChat);
-
-                            // Return the updated chat
-                            return updatedChat;
-                        })
-                    )
-            )
-        );
-    }
 
     /**
      * Reset the selected chat
      */
     resetChat(): void {
-        this._chat.next({ id: '', messages: [], title: '' });
+        this._chat.next({ id: '', messages: [], title: '', updatedAt: Date.now() });
     }
 
 
@@ -241,31 +215,43 @@ export class ChatService {
                         map((data: any) => {
                             const llmMessage = data.data;
 
-                            const newMessages = [
+                            const newMessages: ChatMessage[] = [
                                 {
-                                    value: message,
+                                    content: message,
                                     isMine: true,
                                 },
                                 {
-                                    value: llmMessage,
+                                    content: llmMessage,
                                     isMine: false,
                                 },
                             ]
-                            // // Find the index of the updated chat
+                            // Find the index of the updated chat
                             const index = chats.findIndex(
                                 (item) => item.id === chatId
                             );
-                            //
-                            // // Update the chat
-                            const chat =  chats[index];
+                            if(index < 0) {
+                                console.log(`Couldn't find chat with id ${chatId} from ${chats.length} chats`);
+                            }
+
+                            // Update the chat
+                            const chat = chats[index];
+                            if(chat.messages === null || chat.messages === undefined) {
+                                console.log(`nullish messages for ${JSON.stringify(chat)} at index ${index}`)
+                                chat.messages = []
+                            }
                             chat.messages.push(...newMessages);
-                            // // Update the chats
+
+                            // Move the chat to the top of the list
+                            chats.splice(index, 1);
+                            chats.unshift(chat);
+
+                            // Update the chats
                             this._chats.next(chats);
-                            //
-                            // // Update the chat if it's selected
+
+                            // Update the chat if it's selected
                             this._chat.next(chat);
-                            //
-                            // // Return the updated chat
+
+                            // Return the updated chat
                             return chat;
                         })
                     )
@@ -274,12 +260,54 @@ export class ChatService {
     }
 
     /**
-     * Send an audio message
      *
      * @param chatId
+     * @param message
      * @param llmId
-     * @param audio
      */
+    regenerateMessage(chatId: string, message: string, llmId: string): Observable<Chat> {
+        if (!chatId?.trim() || !message?.trim() || !llmId?.trim()) {
+            return throwError(() => new Error('Invalid parameters for regeneration'));
+        }
+
+        return this.chats$.pipe(
+            take(1),
+            switchMap((chats) => {
+                const chatIndex = chats.findIndex(item => item.id === chatId);
+                if (chatIndex === -1) {
+                    return throwError(() => new Error(`Chat not found: ${chatId}`));
+                }
+
+                return this._httpClient
+                    .post<Chat>(`api/chat/${chatId}/regenerate`, { text: message, llmId })
+                    .pipe(
+                        map((data: any) => {
+                            const llmMessage = data.data;
+                            const newMessage = {
+                                value: llmMessage,
+                                isMine: false,
+                                llmId: llmId,
+                            };
+
+                            const chat = chats[chatIndex];
+                            chat.messages.push(newMessage);
+                            chat.lastMessage = llmMessage;
+
+                            // Update states
+                            this._chats.next(chats);
+                            this._chat.next(chat);
+
+                            return chat;
+                        }),
+                        catchError(error => {
+                            console.error('Error regenerating message:', error);
+                            return throwError(() => new Error('Failed to regenerate message'));
+                        })
+                    );
+            })
+        );
+    }
+
     sendAudioMessage(chatId: string, llmId: string, audio: Blob): Observable<Chat> {
         return this.chats$.pipe(
             take(1),

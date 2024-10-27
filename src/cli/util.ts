@@ -7,7 +7,7 @@ import { GitLab } from '#functions/scm/gitlab';
 
 import { FileSystemService } from '#functions/storage/fileSystemService';
 import { Claude3_Opus, ClaudeLLMs } from '#llm/models/anthropic';
-import { Claude3_5_Sonnet_Vertex, Claude3_Haiku_Vertex, Claude3_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
+import { Claude3_5_Sonnet_Vertex, Claude3_Haiku_Vertex, ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
 import { GPT4o } from '#llm/models/openai';
 import { Gemini_1_5_Pro } from '#llm/models/vertexai';
 import { MultiLLM } from '#llm/multi-llm';

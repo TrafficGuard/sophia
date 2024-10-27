@@ -15,8 +15,8 @@ export function runChatServiceTests(createService: () => ChatService, beforeEach
 		const sampleChat: Chat = {
 			id: 'test-chat-id',
 			messages: [
-				{ role: 'user', text: 'Hello' },
-				{ role: 'assistant', text: 'Hi there! How can I help you?' },
+				{ role: 'user', content: 'Hello' },
+				{ role: 'assistant', content: 'Hi there! How can I help you?' },
 			],
 			updatedAt: Date.now(),
 			userId: SINGLE_USER_ID,
@@ -63,7 +63,7 @@ export function runChatServiceTests(createService: () => ChatService, beforeEach
 			userId: SINGLE_USER_ID,
 			visibility: 'private',
 			title: 'test',
-			messages: [{ role: 'user', text: 'Parent message' }],
+			messages: [{ role: 'user', content: 'Parent message' }],
 			updatedAt: Date.now(),
 			parentId: undefined,
 			rootId: undefined,
@@ -77,7 +77,7 @@ export function runChatServiceTests(createService: () => ChatService, beforeEach
 			rootId: parentChat.id,
 			title: 'test',
 			updatedAt: Date.now(),
-			messages: [{ role: 'assistant', text: 'Child message' }],
+			messages: [{ role: 'assistant', content: 'Child message' }],
 		};
 
 		await service.saveChat(parentChat);

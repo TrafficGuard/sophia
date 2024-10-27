@@ -22,6 +22,7 @@
                 *ngIf="call.systemPrompt"
                 (opened)="call.systemPromptExpanded = true"
                 (closed)="call.systemPromptExpanded = false"
+                class="mb-1"
         >
             <mat-expansion-panel-header>
                 <mat-panel-title [ngClass]="{ 'hidden-title': call.systemPromptExpanded }">

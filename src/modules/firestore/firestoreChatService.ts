@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { Firestore } from '@google-cloud/firestore';
-import { Chat, ChatPreview, ChatService } from '#chat/chatTypes';
+import { CHAT_PREVIEW_KEYS, Chat, ChatPreview, ChatService } from '#chat/chatTypes';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
@@ -38,6 +38,13 @@ export class FirestoreChatService implements ChatService {
 				rootId: data.rootId,
 				messages: data.messages,
 			};
+
+			// Backwards compatability
+			for (const message of chat.messages) {
+				const oldMessage = message as any;
+				if (oldMessage.text) message.content = oldMessage.text;
+			}
+
 			if (chat.visibility !== 'private' && chat.userId !== currentUser().id) {
 				throw new Error('Chat not visible.');
 			}
@@ -70,12 +77,14 @@ export class FirestoreChatService implements ChatService {
 	}
 
 	@span()
-	async listChats(startAfterId?: string, limit = 50): Promise<{ chats: ChatPreview[]; hasMore: boolean }> {
+	async listChats(startAfterId?: string, limit = 100): Promise<{ chats: ChatPreview[]; hasMore: boolean }> {
 		try {
 			const userId = currentUser().id;
+
 			logger.info(`list ${limit} chats for ${userId} ${startAfterId ? `after ${startAfterId}` : ''}`);
 			let query = this.db
 				.collection('Chats')
+				.select(...CHAT_PREVIEW_KEYS)
 				.where('userId', '==', userId)
 				.orderBy('updatedAt', 'desc')
 				.limit(limit + 1);

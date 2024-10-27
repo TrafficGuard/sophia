@@ -1,11 +1,15 @@
 <div class="flex min-w-0 flex-auto flex-col">
-    <!-- Main -->
-    <div class="flex-auto p-6 sm:p-10">
-        <div class="max-w-3xl">
 
-            <div class="mb-5 text-3xl">
-                New Autonomous Agent
-            </div>
+    <!-- Header -->
+    <div class="bg-card flex flex-0 flex-col border-b p-6 dark:bg-transparent sm:flex-row sm:items-center sm:justify-between sm:px-10 sm:py-6">
+        <div class="min-w-0 flex-1">
+            <div class="text-3xl font-medium tracking-tight">New Autonomous Agent</div>
+        </div>
+    </div>
+
+    <!-- Main -->
+    <mat-card class="code-card mat-elevation-z8 m-5 p-5 max-w-200">
+        <mat-card-content>
 
             <form [formGroup]="runAgentForm" (ngSubmit)="onSubmit()" class="flex flex-col">
                 <!-- Name Field -->
@@ -109,6 +113,6 @@
                     </button>
                 </div>
             </form>
-        </div>
-    </div>
+        </mat-card-content>
+    </mat-card>
 </div>

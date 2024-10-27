@@ -55,46 +55,53 @@
             <div class="text-3xl">LLM API Keys</div>
         </div>
         <div [formGroupName]="'llmConfig'" class="mt-8 grid w-full gap-6 sm:grid-cols-2">
-            <!-- Anthropic Key -->
+            <!-- Anthropic -->
             <div class="sm:col-span-1">
                 <mat-form-field class="w-full">
                     <mat-label>Anthropic</mat-label>
                     <input matInput formControlName="anthropicKey" />
                 </mat-form-field>
             </div>
-            <!-- OpenAI Key -->
+            <!-- OpenAI -->
             <div class="sm:col-span-1">
                 <mat-form-field class="w-full">
                     <mat-label>OpenAI</mat-label>
                     <input matInput formControlName="openaiKey" />
                 </mat-form-field>
             </div>
-            <!-- Groq Key -->
+            <!-- Groq -->
             <div class="sm:col-span-1">
                 <mat-form-field class="w-full">
                     <mat-label>Groq</mat-label>
                     <input matInput formControlName="groqKey" />
                 </mat-form-field>
             </div>
-            <!-- TogetherAI Key -->
+            <!-- TogetherAI -->
             <div class="sm:col-span-1">
                 <mat-form-field class="w-full">
                     <mat-label>TogetherAI</mat-label>
                     <input matInput formControlName="togetheraiKey" />
                 </mat-form-field>
             </div>
-            <!-- Fireworks Key -->
+            <!-- Fireworks -->
             <div class="sm:col-span-1">
                 <mat-form-field class="w-full">
                     <mat-label>Fireworks</mat-label>
                     <input matInput formControlName="fireworksKey" />
                 </mat-form-field>
             </div>
-            <!-- DeepSeek Key -->
+            <!-- DeepSeek -->
             <div class="sm:col-span-1">
                 <mat-form-field class="w-full">
                     <mat-label>DeepSeek</mat-label>
                     <input matInput formControlName="deepseekKey" />
+                </mat-form-field>
+            </div>
+            <!-- Cerebras -->
+            <div class="sm:col-span-1">
+                <mat-form-field class="w-full">
+                    <mat-label>Cerebras</mat-label>
+                    <input matInput formControlName="cerebrasKey" />
                 </mat-form-field>
             </div>
         </div>

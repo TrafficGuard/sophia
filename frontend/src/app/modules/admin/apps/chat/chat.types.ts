@@ -33,14 +33,27 @@ export interface Contact {
     };
 }
 
+
+
 export interface LlmMessage {
     role: 'system' | 'user' | 'assistant';
-    text: string;
+    content: string;
     /** The LLM which generated the text (only when role=assistant) */
     llmId?: string;
     /** Set the cache_control flag with Claude models */
     cache?: 'ephemeral';
     time?: number;
+}
+
+export interface ChatMessage {
+    id?: string;
+    chatId?: string;
+    contactId?: string;
+    isMine?: boolean;
+    content?: string;
+    llmId?: string;
+    createdAt?: string;
+    generating?: boolean;
 }
 
 export interface Chat {
@@ -51,13 +64,6 @@ export interface Chat {
     unreadCount?: number;
     lastMessage?: string;
     lastMessageAt?: string;
-    messages?: {
-        id?: string;
-        chatId?: string;
-        contactId?: string;
-        isMine?: boolean;
-        value?: string;
-        llmId?: string;
-        createdAt?: string;
-    }[];
+    updatedAt: number;
+    messages?: ChatMessage[];
 }

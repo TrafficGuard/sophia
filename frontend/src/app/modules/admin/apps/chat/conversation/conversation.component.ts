@@ -1,4 +1,4 @@
-import { TextFieldModule } from '@angular/cdk/text-field';
+import {TextFieldModule} from '@angular/cdk/text-field';
 import {AsyncPipe, DatePipe, NgClass, NgTemplateOutlet} from '@angular/common';
 import {
     ChangeDetectionStrategy,
@@ -12,19 +12,19 @@ import {
     ViewChild,
     ViewEncapsulation,
 } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import {Router, RouterLink, RouterModule, ActivatedRoute} from '@angular/router';
-import { FuseMediaWatcherService } from '@fuse/services/media-watcher';
-import { ChatService } from 'app/modules/admin/apps/chat/chat.service';
-import { Chat } from 'app/modules/admin/apps/chat/chat.types';
-import { ChatInfoComponent } from 'app/modules/admin/apps/chat/chat-info/chat-info.component';
-import { LLM, LlmService } from "app/modules/agents/services/llm.service";
-import {BehaviorSubject, Observable, Subject, takeUntil} from 'rxjs';
+import {MatButtonModule} from '@angular/material/button';
+import {MatFormFieldModule} from '@angular/material/form-field';
+import {MatIconModule} from '@angular/material/icon';
+import {MatInputModule} from '@angular/material/input';
+import {MatMenuModule} from '@angular/material/menu';
+import {MatSidenavModule} from '@angular/material/sidenav';
+import {ActivatedRoute, Router, RouterLink, RouterModule} from '@angular/router';
+import {FuseMediaWatcherService} from '@fuse/services/media-watcher';
+import {ChatService} from 'app/modules/admin/apps/chat/chat.service';
+import {Chat, ChatMessage} from 'app/modules/admin/apps/chat/chat.types';
+import {ChatInfoComponent} from 'app/modules/admin/apps/chat/chat-info/chat-info.component';
+import {LLM, LlmService} from "app/modules/agents/services/llm.service";
+import {BehaviorSubject, Subject, takeUntil} from 'rxjs';
 import {
     CLIPBOARD_OPTIONS,
     ClipboardButtonComponent,
@@ -35,7 +35,6 @@ import {
 import {MatOption} from "@angular/material/core";
 import {MatSelect} from "@angular/material/select";
 import {ReactiveFormsModule} from "@angular/forms";
-import {MatCheckbox} from "@angular/material/checkbox";
 import {MatTooltipModule} from "@angular/material/tooltip";
 
 
@@ -94,9 +93,13 @@ export class ConversationComponent implements OnInit, OnDestroy {
     private mediaRecorder: MediaRecorder;
     private audioChunks: Blob[] = [];
     recording: boolean = false;
+    /** If we're waiting for a response from the LLM after sending a message */
+    generating: boolean = false;
+    generatingTimer = null;
 
     /**
-     * Constructor
+     * For the Markdown component, the syntax highlighting support has the plugins defined
+     * in the angular.json file. Currently just a select few languages are included.
      */
     constructor(
         private _changeDetectorRef: ChangeDetectorRef,
@@ -157,9 +160,6 @@ export class ConversationComponent implements OnInit, OnDestroy {
                 if (chatId === 'new' || !chatId) {
                     // If 'new' or no ID, reset the chat
                     this.resetChat();
-                } else {
-                    // Load the chat by ID
-                    this._chatService.getChatById(chatId).subscribe();
                 }
             });
 
@@ -167,7 +167,15 @@ export class ConversationComponent implements OnInit, OnDestroy {
         this._chatService.chat$
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((chat: Chat) => {
-                this.chat = chat || { id: '', messages: [], title: '' };
+                console.log(chat)
+                if(chat === null) {
+                    // This chat was deleted
+                    this.router.navigate(['/apps/chat/new']).catch(console.error);
+                    return;
+                }
+                this.chat = clone(chat) || { id: '', messages: [], title: '', updatedAt: Date.now() };
+                console.log('this._chatService.chat$.subscribe')
+                console.log(chat);
                 if(chat.messages.length > 0) {
                     // Set the LLM selector as the LLM used to send the last message
                     const lastMessageLlmId = chat.messages.at(-1).llmId
@@ -178,7 +186,6 @@ export class ConversationComponent implements OnInit, OnDestroy {
                         // TODO default to user profile default chat LLM
                     }
                 }
-                // Mark for check
                 this._changeDetectorRef.markForCheck();
             });
 
@@ -211,13 +218,10 @@ export class ConversationComponent implements OnInit, OnDestroy {
     // -----------------------------------------------------------------------------------------------------
 
     /**
-     * Open the contact info
+     * Open the chat info drawer
      */
     openChatInfo(): void {
-        // Open the drawer
         this.drawerOpened = true;
-
-        // Mark for check
         this._changeDetectorRef.markForCheck();
     }
 
@@ -225,8 +229,7 @@ export class ConversationComponent implements OnInit, OnDestroy {
      * Reset the chat
      */
     resetChat(): void {
-        const newChat: Chat = { id: '', messages: [], title: '' };
-        this.chat = newChat;
+        this.chat = {id: '', messages: [], title: '', updatedAt: Date.now()};
         this._chatService.resetChat();
 
         // TODO set LLM field to the user profile default chat LLM
@@ -274,21 +277,45 @@ export class ConversationComponent implements OnInit, OnDestroy {
         // If this is a new chat, then redirect to the created chat
         if (!this.chat.id) {
             this.chat.messages.push({
-                value: message,
+                content: message,
                 isMine: true,
             })
             this.messageInput.nativeElement.value = '';
+            this.generating = true;
             this._changeDetectorRef.markForCheck();
             // TODO handle error, set the message back to the messageInput and remove from chat.messages
             this._chatService.createChat(message, this.llmId).subscribe(async (chat: Chat) => {
                 this.router.navigate([`/apps/chat/${chat.id}`]).catch(console.error);
             });
+            // TODO catch errors and set this.generating=false
 
             return;
         }
 
         this.sendIcon = 'heroicons_outline:stop-circle'
-        this._chatService.sendMessage(this.chat.id, message, this.llmId).subscribe(() => {
+        this.generating = true;
+        this.chat.messages.push({
+            content: message,
+            isMine: true,
+        })
+        const generatingMessage: ChatMessage = {
+            content: '',
+            isMine: false,
+            generating: true
+        }
+        this.chat.messages.push(generatingMessage)
+        this.generatingTimer = setInterval(() => {
+            generatingMessage.content = generatingMessage.content.length === 3 ? '.' : generatingMessage.content + '.'
+            this._changeDetectorRef.markForCheck();
+        }, 800)
+
+        this._scrollToBottom();
+        this._chatService.sendMessage(this.chat.id, message, this.llmId).subscribe((chat: Chat) => {
+            console.log(`message sent`)
+            console.log(chat)
+            this.chat = clone(chat);
+            clearInterval(this.generatingTimer)
+            this.generating = false;
             this.sendIcon = 'heroicons_outline:paper-airplane'
             // Clear the input
             this.messageInput.nativeElement.value = '';
@@ -298,6 +325,7 @@ export class ConversationComponent implements OnInit, OnDestroy {
             // Mark for check
             this._changeDetectorRef.markForCheck();
         });
+        // TODO catch errors and set this.generating=false
     }
 
     private _scrollToBottom(): void {
@@ -358,6 +386,48 @@ export class ConversationComponent implements OnInit, OnDestroy {
         this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
     }
 
+    /**
+     * Regenerates an AI message and removes all subsequent messages.
+     * Uses the last user message before the selected AI message as the prompt.
+     * 
+     * @param messageIndex - The index of the AI message to regenerate
+     * @throws Error if no user message is found before the AI message
+     */
+    regenerateMessage(messageIndex: number): void {
+        if (!this.chat?.messages) {
+            console.warn('No chat or messages found');
+            return;
+        }
+
+        // Find the last user message before the AI message we want to regenerate
+        let lastUserMessage: string;
+        for (let i = messageIndex; i >= 0; i--) {
+            if (this.chat.messages[i].isMine) {
+                lastUserMessage = this.chat.messages[i].content;
+                break;
+            }
+        }
+
+        if (!lastUserMessage) {
+            return;
+        }
+
+        // Remove all messages from the regeneration point onwards
+        this.chat.messages = this.chat.messages.slice(0, messageIndex);
+        
+        // Call sendMessage with the last user message
+        this.sendIcon = 'heroicons_outline:stop-circle';
+        this.generating = true;
+        this._chatService.regenerateMessage(this.chat.id, lastUserMessage, this.llmId)
+            .subscribe(() => {
+                this.generating = false;
+                this.sendIcon = 'heroicons_outline:paper-airplane';
+                this._scrollToBottom();
+                this._changeDetectorRef.markForCheck();
+            });
+        // TODO catch errors and set this.generating=false
+    }
+
     sendAudioMessage(audioBlob: Blob): void {
         this._chatService.sendAudioMessage(this.chat.id, this.llmId, audioBlob).subscribe(
             () => {
@@ -370,4 +440,8 @@ export class ConversationComponent implements OnInit, OnDestroy {
             }
         );
     }
+}
+
+function clone<T>(obj: T): T {
+    return JSON.parse(JSON.stringify(obj));
 }

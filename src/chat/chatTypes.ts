@@ -15,6 +15,8 @@ export interface Chat {
 
 export type ChatPreview = Omit<Chat, 'messages'>;
 
+export const CHAT_PREVIEW_KEYS: Array<keyof ChatPreview> = ['id', 'userId', 'visibility', 'title', 'updatedAt', 'parentId', 'rootId'];
+
 export interface ChatList {
 	chats: ChatPreview[];
 	hasMore: boolean;

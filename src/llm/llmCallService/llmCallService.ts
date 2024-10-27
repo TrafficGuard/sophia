@@ -1,4 +1,4 @@
-import { CreateLlmRequest, LlmCall, LlmRequest } from '#llm/llmCallService/llmCall';
+import { CreateLlmRequest, LlmCall } from '#llm/llmCallService/llmCall';
 
 export interface CallerId {
 	agentId?: string;

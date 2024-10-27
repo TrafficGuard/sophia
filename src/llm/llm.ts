@@ -1,5 +1,5 @@
 // https://github.com/AgentOps-AI/tokencost/blob/main/tokencost/model_prices.json
-import { StreamTextResult } from 'ai';
+import { CoreAssistantMessage, CoreMessage, CoreSystemMessage, CoreToolMessage, CoreUserMessage, FilePart, ImagePart, StreamTextResult, TextPart } from 'ai';
 
 export interface GenerateTextOptions {
 	type?: 'text' | 'json';
@@ -31,21 +31,27 @@ export type GenerateJsonOptions = Omit<GenerateTextOptions, 'type'>;
  */
 export type GenerateFunctionOptions = Omit<GenerateTextOptions, 'type'>;
 
-export interface LlmMessage {
-	role: 'system' | 'user' | 'assistant';
-	text: string;
+type AiMessage = CoreSystemMessage | CoreUserMessage | CoreAssistantMessage | CoreToolMessage;
+
+export type LlmMessage = AiMessage & {
+	// /**
+	//  * TextPart  { type: "text" , text: string }
+	//  * ImagePart { type: "image", image: string | Uint8Array | ArrayBuffer | Buffer | URL, mimeType?: string }
+	//  * FilePart  { type: "file", data: string | Uint8Array | ArrayBuffer | Buffer | URL, mimeType: string }
+	//  */
+	// content: string | Array<TextPart | ImagePart | FilePart>;
 	/** The LLM which generated the text (only when role=assistant) */
 	llmId?: string;
 	/** Set the cache_control flag with Claude models */
 	cache?: 'ephemeral';
 	/** Time the message was sent */
 	time?: number;
-}
+};
 
 export function system(text: string, cache = false): LlmMessage {
 	return {
 		role: 'system',
-		text: text,
+		content: text,
 		cache: cache ? 'ephemeral' : undefined,
 	};
 }
@@ -53,7 +59,7 @@ export function system(text: string, cache = false): LlmMessage {
 export function user(text: string, cache = false): LlmMessage {
 	return {
 		role: 'user',
-		text: text,
+		content: text,
 		cache: cache ? 'ephemeral' : undefined,
 	};
 }
@@ -66,7 +72,7 @@ export function user(text: string, cache = false): LlmMessage {
 export function assistant(text: string): LlmMessage {
 	return {
 		role: 'assistant',
-		text: text,
+		content: text,
 	};
 }
 

@@ -211,12 +211,12 @@ class AnthropicVertexLLM extends BaseLLM {
 
 			let systemPrompt: string | undefined;
 			if (messages[0].role === 'system') {
-				systemPrompt = messages[0].text;
+				systemPrompt = messages[0].content as string;
 				span.setAttribute('systemPrompt', systemPrompt);
 				messages = messages.slice(1);
 			}
 
-			const userPrompt = messages.map((msg) => msg.text).join('\n');
+			const userPrompt = messages.map((msg) => msg.content).join('\n');
 
 			span.setAttributes({
 				userPrompt,
@@ -240,13 +240,79 @@ class AnthropicVertexLLM extends BaseLLM {
 				let systemMessage: Anthropic.Messages.TextBlockParam[] | undefined = undefined;
 				if (messages[0].role === 'system') {
 					const message = messages.splice(0, 1)[0];
-					systemMessage = [{ type: 'text', text: message.text }];
+					systemMessage = [{ type: 'text', text: message.content as string }];
 					// if(source.cache)
 					// 	systemMessage[0].cacheControl = 'ephemeral'
 				}
 
+				/*
+				 The Anthropic types are
+				 export interface MessageParam {
+				  content: string | Array<TextBlockParam | ImageBlockParam | ToolUseBlockParam | ToolResultBlockParam>;
+
+				  role: 'user' | 'assistant';
+				}
+				export interface TextBlockParam {
+				  text: string;
+
+				  type: 'text';
+				}
+				export interface ImageBlockParam {
+				  source: ImageBlockParam.Source;
+
+				  type: 'image';
+				}
+
+				export namespace ImageBlockParam {
+				  export interface Source {
+					data: string;
+
+					media_type: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
+
+					type: 'base64';
+				  }
+				}
+				 */
+
 				const anthropicMessages: Anthropic.Messages.MessageParam[] = messages.map((message) => {
-					return { role: message.role as 'user' | 'assistant', content: message.text };
+					let content: string | Array<Anthropic.Messages.TextBlockParam | Anthropic.Messages.ImageBlockParam>;
+
+					if (typeof message.content === 'string') {
+						content = message.content;
+					} else if (Array.isArray(message.content)) {
+						content = message.content.map((part) => {
+							if (part.type === 'text') {
+								return {
+									type: 'text',
+									text: part.text,
+								} as Anthropic.Messages.TextBlockParam;
+							}
+							if (part.type === 'image') {
+								return {
+									type: 'image',
+									source: {
+										type: 'base64',
+										data: part.image.toString(),
+										media_type: part.mimeType || 'image/png',
+									},
+								} as Anthropic.Messages.ImageBlockParam;
+								// } else if (part.type === 'file') {
+								// 	// Convert files to text representation since Anthropic doesn't support files
+								// 	return {
+								// 		type: 'text',
+								// 		text: `[File attachment]`,
+								// 	} as Anthropic.Messages.TextBlockParam;
+							}
+							throw new Error(`Unsupported message type ${part.type}`);
+						});
+					} else {
+						content = '[No content]';
+					}
+
+					return {
+						role: message.role as 'user' | 'assistant',
+						content,
+					};
 				});
 				message = await this.api().messages.create({
 					system: systemMessage,

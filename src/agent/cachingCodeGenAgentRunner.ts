@@ -128,13 +128,13 @@ export async function runCachingCodegenAgent(agent: AgentContext): Promise<Agent
 					const functionsXml = convertJsonToPythonDeclaration(getAllFunctionSchemas(agent.functions.getFunctionInstances()));
 					const systemPromptWithFunctions = updateFunctionSchemas(systemPrompt, functionsXml);
 
-					agent.messages[0] = { role: 'system', text: systemPromptWithFunctions, cache: 'ephemeral' };
+					agent.messages[0] = { role: 'system', content: systemPromptWithFunctions, cache: 'ephemeral' };
 
 					// User request. The functions and user request are unlikely to change, so we will use a cache marker
-					agent.messages[1] = { role: 'user', text: userRequestXml, cache: 'ephemeral' };
+					agent.messages[1] = { role: 'user', content: userRequestXml, cache: 'ephemeral' };
 
 					// Memory output
-					agent.messages[2] = { role: 'assistant', text: `This is my current memory items:\n${buildMemoryPrompt()}`, cache: 'ephemeral' };
+					agent.messages[2] = { role: 'assistant', content: `This is my current memory items:\n${buildMemoryPrompt()}`, cache: 'ephemeral' };
 
 					// Function history and tool state
 					const toolStatePrompt = await buildToolStatePrompt();
@@ -147,8 +147,8 @@ export async function runCachingCodegenAgent(agent: AgentContext): Promise<Agent
 					}
 					const oldFunctionCallHistory = buildFunctionCallHistoryPrompt('history', 10000, 0, historyToIndex);
 
-					agent.messages[3] = { role: 'user', text: `State your recent function call history${toolStatePrompt ? ' and functions/tool state.' : ''}` };
-					agent.messages[4] = { role: 'assistant', text: `${oldFunctionCallHistory}\n${toolStatePrompt}` };
+					agent.messages[3] = { role: 'user', content: `State your recent function call history${toolStatePrompt ? ' and functions/tool state.' : ''}` };
+					agent.messages[4] = { role: 'assistant', content: `${oldFunctionCallHistory}\n${toolStatePrompt}` };
 
 					const isNewAgent = agent.iterations === 0 && agent.functionCallHistory.length === 0;
 					// // For the initial prompt we create the empty memory, functional calls and default tool state content. Subsequent iterations already have it
@@ -160,31 +160,31 @@ export async function runCachingCodegenAgent(agent: AgentContext): Promise<Agent
 
 					agent.messages[5] = {
 						role: 'user',
-						text: planningPrompt, // 'Generate a <planning-response> response as per the system instructions provided given the user request, available functions, memory items and recent function call history'
+						content: planningPrompt, // 'Generate a <planning-response> response as per the system instructions provided given the user request, available functions, memory items and recent function call history'
 					};
-					agent.messages[6] = { role: 'assistant', text: '<planning-response>' };
+					agent.messages[6] = { role: 'assistant', content: '<planning-response>' };
 					agent.messages.length = 7; // If we've restarted remove any extra messages
 					const agentPlanResponse: string = `<planning-response>\n${await agentLLM.generateTextFromMessages(agent.messages, {
 						id: 'dynamicAgentPlan',
 						stopSequences,
 						temperature: 0.6,
 					})}`;
-					agent.messages[6] = { role: 'assistant', text: agentPlanResponse };
+					agent.messages[6] = { role: 'assistant', content: agentPlanResponse };
 
 					// Code gen for function calling -----------
 
 					agent.messages[7] = {
 						role: 'user',
-						text: codingPrompt, // 'Generate a coding response as per the system instructions provided given the user request, memory items, recent function call history and plan'
+						content: codingPrompt, // 'Generate a coding response as per the system instructions provided given the user request, memory items, recent function call history and plan'
 					};
-					agent.messages[8] = { role: 'assistant', text: '<python-code>' };
+					agent.messages[8] = { role: 'assistant', content: '<python-code>' };
 					const agentCodeResponse: string = `<python-code>\n${await agentLLM.generateTextFromMessages(agent.messages, {
 						id: 'dynamicAgentCode',
 						stopSequences,
 						temperature: 0.7,
 					})}`;
 					console.log(agentCodeResponse);
-					agent.messages[8] = { role: 'assistant', text: agentCodeResponse };
+					agent.messages[8] = { role: 'assistant', content: agentCodeResponse };
 					const llmPythonCode = extractPythonCode(agentCodeResponse);
 
 					// Function calling ----------------
@@ -327,7 +327,7 @@ main()`.trim();
 					// TODO output any saved memory items
 					agent.messages[9] = {
 						role: 'user',
-						text: `<script-result>${pythonScriptResult}</script-result>\nReview the results of the scripts and make any observations about the output/errors, then provide an updated planning response.`,
+						content: `<script-result>${pythonScriptResult}</script-result>\nReview the results of the scripts and make any observations about the output/errors, then provide an updated planning response.`,
 					};
 
 					currentFunctionHistorySize = agent.functionCallHistory.length;

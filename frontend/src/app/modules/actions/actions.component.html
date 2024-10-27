@@ -1,22 +1,13 @@
 <div class="flex min-w-0 flex-auto flex-col">
 
     <!-- Header -->
-    <div
-            class="bg-card flex flex-0 flex-col border-b p-6 dark:bg-transparent sm:flex-row sm:items-center sm:justify-between sm:px-10 sm:py-6"
-    >
+    <div class="bg-card flex flex-0 flex-col border-b p-6 dark:bg-transparent sm:flex-row sm:items-center sm:justify-between sm:px-10 sm:py-6">
         <div class="min-w-0 flex-1">
-            <!-- Title -->
-            <div class="mt-2">
-                <h2
-                        class="truncate text-3xl font-medium leading-7 tracking-tight sm:leading-10"
-                >
-                    Actions
-                </h2>
-            </div>
+            <div class="text-3xl font-medium tracking-tight">Actions</div>
         </div>
     </div>
 
-<mat-card class="code-card mat-elevation-z8">
+<mat-card class="code-card mat-elevation-z8 m-5 p-5 max-w-200">
   <mat-card-content>
     <form [formGroup]="codeForm" (ngSubmit)="onSubmit()">
       <mat-form-field appearance="fill">
