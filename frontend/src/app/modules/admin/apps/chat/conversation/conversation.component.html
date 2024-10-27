@@ -115,9 +115,9 @@
                                 <div
                                     class="relative max-w-3/4 rounded-lg px-3 py-2"
                                     [ngClass]="{
-                                        'bg-blue-500 text-blue-50':
+                                        'bg-gray-200 text-black-50':
                                             message.isMine,
-                                        'bg-gray-500 text-gray-50':
+                                        'bg-gray-50 text-black-50':
                                             !message.isMine,
                                     }"
                                 >
@@ -130,9 +130,9 @@
                                         <div
                                             class="absolute bottom-0 w-3"
                                             [ngClass]="{
-                                                '-right-1 -mr-px mb-px text-blue-500':
+                                                '-right-1 -mr-px mb-px text-gray-200':
                                                     message.isMine,
-                                                '-left-1 -ml-px mb-px -scale-x-1 text-gray-500':
+                                                '-left-1 -ml-px mb-px -scale-x-1 text-gray-50':
                                                     !message.isMine,
                                             }"
                                         >
@@ -143,12 +143,41 @@
                                             ></ng-container>
                                         </div>
                                     }
-                                    <!-- Message -->
-                                    <div
-                                        class="min-w-4 leading-5"
 
-                                    >
-                                        <markdown [data]="message.value" ngPreserveWhitespaces> </markdown>
+
+                                    <!-- Message -->
+                                    <div class="min-w-4 leading-5">
+                                        <markdown [data]="message.content" ngPreserveWhitespaces> </markdown>
+
+                                        <!-- Regenerate button for AI messages -->
+                                        @if (!message.isMine) {
+                                            <!--
+                                            <button mat-icon-button
+                                                    class="regenerate-button mat-primary"
+                                                    matTooltip="Tokens in: Tokens out: Latency: Cost:"
+                                                    aria-label="Message generation information">
+                                                <mat-icon [svgIcon]="'info'" class="icon-size-4"></mat-icon>
+                                            </button>
+                                            -->
+                                            <!--
+                                            <button mat-icon-button
+                                                    class="regenerate-button mat-primary"
+                                                    matTooltip="Regenerate response"
+                                                    aria-label="Regenerate AI response"
+                                                    (click)="regenerateMessage(i)">
+                                                <mat-icon [svgIcon]="'heroicons_outline:arrow-path'" class="icon-size-4"></mat-icon>
+                                            </button>
+                                            -->
+                                            <!--
+                                            <button mat-icon-button
+                                                    class="regenerate-button mat-primary"
+                                                    matTooltip="Branch chat"
+                                                    aria-label="Branch chat"
+                                                    (click)="branchChat(i)">
+                                                <mat-icon [svgIcon]="'account_tree'" class="icon-size-4"></mat-icon>
+                                            </button>
+                                            -->
+                                        }
                                     </div>
                                 </div>
                                 <!-- Time -->
@@ -180,22 +209,25 @@
                     <!-- Left Side: Buttons and mat-select -->
                     <div class="flex flex-col items-start mr-4 -mt-2">
                         <!-- Buttons -->
+
                         <div class="flex items-center">
+                            <!--
                             <button mat-icon-button>
                                 <mat-icon [svgIcon]="'heroicons_outline:face-smile'"></mat-icon>
                             </button>
-                            <button class="ml-0.5" mat-icon-button>
+                            -->
+                            <button class="ml-0.5" mat-icon-button [disabled]="true" [matTooltip]="'Attach a file. You can also drag a file onto the message field.'">
                                 <mat-icon [svgIcon]="'heroicons_outline:paper-clip'"></mat-icon>
                             </button>
-
                           <button class="ml-0.5"
                                   mat-icon-button
                                   matTooltip="Hold to record"
+                                  [disabled]="true"
                                   [ngClass]="{ 'recording-button': recording }"
                                   (mousedown)="startRecording()"
                                   (mouseup)="stopRecording()"
                                   (mouseleave)="stopRecording()">
-                            <mat-icon [svgIcon]="'mic'"></mat-icon>
+                            <mat-icon [svgIcon]="'mic'"></mat-icon> <!-- When recording alternate with the icon settings_voice and set the selected-button class -->
                           </button>
                             <button class="ml-0.5"
                                     mat-icon-button

@@ -17,11 +17,11 @@ describe('LLMs', () => {
 		const SKY_MESSAGES: LlmMessage[] = [
 			{
 				role: 'system',
-				text: 'Answer in one word.',
+				content: 'Answer in one word.',
 			},
 			{
 				role: 'user',
-				text: 'What colour is the day sky? (Hint: starts with b)',
+				content: 'What colour is the day sky? (Hint: starts with b)',
 			},
 		];
 

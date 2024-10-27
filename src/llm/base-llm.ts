@@ -100,11 +100,10 @@ export abstract class BaseLLM implements LLM {
 	async generateTextFromMessages(llmMessages: LlmMessage[], opts?: GenerateTextOptions): Promise<string> {
 		return withActiveSpan(`generateTextFromMessages ${opts?.id ?? ''}`, async (span) => {
 			const messages: CoreMessage[] = llmMessages.map((msg) => {
-				const coreMsg: CoreMessage = { role: msg.role, content: msg.text };
 				if (msg.cache === 'ephemeral') {
-					coreMsg.experimental_providerMetadata = { anthropic: { cacheControl: { type: 'ephemeral' } } };
+					msg.experimental_providerMetadata = { anthropic: { cacheControl: { type: 'ephemeral' } } };
 				}
-				return coreMsg;
+				return msg;
 			});
 
 			const prompt = messages.map((m) => m.content).join('\n');
@@ -177,11 +176,10 @@ export abstract class BaseLLM implements LLM {
 	async streamText(llmMessages: LlmMessage[], onChunk: ({ string }) => void, opts?: GenerateTextOptions): Promise<StreamTextResult<any>> {
 		return withActiveSpan(`streamText ${opts?.id ?? ''}`, async (span) => {
 			const messages: CoreMessage[] = llmMessages.map((msg) => {
-				const coreMsg: CoreMessage = { role: msg.role, content: msg.text };
 				if (msg.cache === 'ephemeral') {
-					coreMsg.experimental_providerMetadata = { anthropic: { cacheControl: { type: 'ephemeral' } } };
+					msg.experimental_providerMetadata = { anthropic: { cacheControl: { type: 'ephemeral' } } };
 				}
-				return coreMsg;
+				return msg;
 			});
 
 			const prompt = messages.map((m) => m.content).join('\n');

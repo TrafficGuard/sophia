@@ -17,22 +17,25 @@ import {MatButtonModule} from "@angular/material/button";
 import {MatFormFieldModule} from "@angular/material/form-field";
 import {MatIconModule} from "@angular/material/icon";
 import {MatInputModule} from "@angular/material/input";
+import {MatCard, MatCardContent} from "@angular/material/card";
 
 @Component({
   selector: 'app-code-review-edit',
   templateUrl: './code-review-edit.component.html',
   standalone: true,
-  imports: [
-    CommonModule,
-    MatSnackBarModule,
-    ReactiveFormsModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatChipsModule,
-    MatIconModule,
-    MatFormFieldModule, // Add this line
-    MatInputModule,     // Add this line
-  ],
+    imports: [
+        CommonModule,
+        MatSnackBarModule,
+        ReactiveFormsModule,
+        MatButtonModule,
+        MatFormFieldModule,
+        MatChipsModule,
+        MatIconModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatCard,
+        MatCardContent,
+    ],
 })
 export class CodeReviewEditComponent implements OnInit {
   editForm: FormGroup;

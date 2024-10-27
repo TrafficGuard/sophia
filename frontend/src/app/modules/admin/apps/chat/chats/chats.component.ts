@@ -17,6 +17,7 @@ import { RouterLink, RouterOutlet } from '@angular/router';
 import { ChatService } from 'app/modules/admin/apps/chat/chat.service';
 import { Chat } from 'app/modules/admin/apps/chat/chat.types';
 import { Subject, takeUntil } from 'rxjs';
+import { FuseConfirmationService } from '@fuse/services/confirmation';
 
 @Component({
     selector: 'chat-chats',
@@ -49,6 +50,7 @@ export class ChatsComponent implements OnInit, OnDestroy {
     constructor(
         private _chatService: ChatService,
         private _changeDetectorRef: ChangeDetectorRef,
+        private confirmationService: FuseConfirmationService,
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -111,6 +113,23 @@ export class ChatsComponent implements OnInit, OnDestroy {
         this.filteredChats = this.chats.filter((chat) =>
             chat.title.toLowerCase().includes(query.toLowerCase())
         );
+    }
+
+    /**
+     * Delete the current chat
+     */
+    deleteChat(event: MouseEvent, chat: Chat): void {
+        // event.stopPropagation();
+        this.confirmationService.open({
+            message: 'Are you sure you want to delete this chat?',
+        }).afterClosed().subscribe((result) => {
+            console.log(result);
+            if(result === 'confirmed') {
+                this._chatService.deleteChat(chat.id).subscribe(() => {
+                    // Do we need to handle if it's the currently selected chat?
+                });
+            }
+        });
     }
 
     /**

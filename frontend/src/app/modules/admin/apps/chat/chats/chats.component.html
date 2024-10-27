@@ -92,6 +92,7 @@
                                     >
                                         {{ chat.title }}
                                     </div>
+                                    <!--
                                     <div
                                         class="text-secondary truncate leading-5"
                                         [class.text-primary]="
@@ -103,20 +104,25 @@
                                     >
                                         {{ chat.lastMessage }}
                                     </div>
+                                    -->
                                 </div>
                                 <div
                                     class="ml-auto flex flex-col items-end self-start pl-2"
                                 >
+                                    <!--
                                     <div
                                         class="text-secondary text-sm leading-5"
                                     >
                                         {{ chat.lastMessageAt }}
                                     </div>
+                                    -->
                                     @if (hoveredChatId === chat.id) {
-                                        <mat-icon
-                                                class="text-hint icon-size-5 mr-1"
-                                                [svgIcon]="'heroicons_solid:trash'"
-                                        ></mat-icon>
+                                        <button (click)="deleteChat($event, chat)">
+                                            <mat-icon
+                                                    class="text-hint icon-size-5 mr-1"
+                                                    [svgIcon]="'heroicons_solid:trash'"
+                                            ></mat-icon>
+                                        </button>
                                     }
                                 </div>
                             </a>

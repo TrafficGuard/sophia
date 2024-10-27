@@ -1,18 +1,15 @@
 <div class="flex min-w-0 flex-auto flex-col">
-  <!-- Header -->
-  <div class="bg-card flex flex-0 flex-col border-b p-6 dark:bg-transparent sm:flex-row sm:items-center sm:justify-between sm:px-10 sm:py-6">
-    <div class="min-w-0 flex-1">
-      <div class="mt-2">
-        <h2 class="truncate text-3xl font-medium leading-7 tracking-tight sm:leading-10">
-          {{ configId ? 'Edit' : 'Create' }} Code Review Configuration
-        </h2>
-      </div>
+
+    <!-- Header -->
+    <div class="bg-card flex flex-0 flex-col border-b p-6 dark:bg-transparent sm:flex-row sm:items-center sm:justify-between sm:px-10 sm:py-6">
+        <div class="min-w-0 flex-1">
+            <div class="text-3xl font-medium tracking-tight">{{ configId ? 'Edit' : 'Create' }} Code Review Configuration</div>
+        </div>
     </div>
-  </div>
 
   <!-- Main -->
-  <div class="flex-auto p-6 sm:p-10">
-      <div class="max-w-3xl">
+    <mat-card class="code-card mat-elevation-z8 m-5 p-5 max-w-200">
+        <mat-card-content>
         <form [formGroup]="editForm" (ngSubmit)="onSubmit()" class="flex flex-col">
           <mat-form-field [ngClass]="['fuse-mat-dense', 'w-full']">
             <mat-label>Description</mat-label>
@@ -137,6 +134,6 @@
             </button>
           </div>
         </form>
-      </div>
-  </div>
+        </mat-card-content>
+    </mat-card>
 </div>

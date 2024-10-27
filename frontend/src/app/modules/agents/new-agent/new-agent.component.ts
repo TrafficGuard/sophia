@@ -24,6 +24,7 @@ import { LlmService } from "../services/llm.service";
 import { map } from "rxjs";
 import { MatProgressSpinner } from "@angular/material/progress-spinner";
 import { MatCheckboxModule } from "@angular/material/checkbox";
+import {MatCard, MatCardContent} from "@angular/material/card";
 
 interface StartAgentResponse {
   data: {
@@ -38,23 +39,25 @@ const defaultType/*: AgentType*/ = 'codegen';
   templateUrl: './new-agent.component.html',
   encapsulation: ViewEncapsulation.None,
   standalone: true,
-  imports: [
-    MatIconModule,
-    FormsModule,
-    MatFormFieldModule,
-    NgClass,
-    MatInputModule,
-    TextFieldModule,
-    ReactiveFormsModule,
-    MatButtonToggleModule,
-    MatButtonModule,
-    MatSelectModule,
-    MatOptionModule,
-    MatCheckboxModule,
-    MatChipsModule,
-    MatDatepickerModule,
-    MatProgressSpinner,
-  ],
+    imports: [
+        MatIconModule,
+        FormsModule,
+        MatFormFieldModule,
+        NgClass,
+        MatInputModule,
+        TextFieldModule,
+        ReactiveFormsModule,
+        MatButtonToggleModule,
+        MatButtonModule,
+        MatSelectModule,
+        MatOptionModule,
+        MatCheckboxModule,
+        MatChipsModule,
+        MatDatepickerModule,
+        MatProgressSpinner,
+        MatCard,
+        MatCardContent,
+    ],
 })
 export class NewAgentComponent implements OnInit {
   functions: string[] = [];

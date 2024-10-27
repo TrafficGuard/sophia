@@ -2,6 +2,7 @@ import { AgentLLMs } from '#agent/agentContextTypes';
 import { LLM } from '#llm/llm';
 import { anthropicLLMRegistry } from '#llm/models/anthropic';
 import { anthropicVertexLLMRegistry } from '#llm/models/anthropic-vertex';
+import { cerebrasLLMRegistry } from '#llm/models/cerebras';
 import { deepseekLLMRegistry } from '#llm/models/deepseek';
 import { fireworksLLMRegistry } from '#llm/models/fireworks';
 import { groqLLMRegistry } from '#llm/models/groq';
@@ -23,6 +24,7 @@ export const LLM_FACTORY: Record<string, () => LLM> = {
 	...togetherLLMRegistry(),
 	...vertexLLMRegistry(),
 	...deepseekLLMRegistry(),
+	...cerebrasLLMRegistry(),
 	...ollamaLLMRegistry(),
 	...blueberryLLMRegistry(),
 	...{ 'mock:mock': () => mockLLM },

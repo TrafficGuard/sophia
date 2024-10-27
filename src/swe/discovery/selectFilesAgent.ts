@@ -165,7 +165,7 @@ export async function selectFilesAgent(requirements: string, projectInfo?: Proje
         ${requirements}
         </requirements>`;
 
-		messages.push({ role: 'user', text: initialPrompt });
+		messages.push({ role: 'user', content: initialPrompt });
 
 		const maxIterations = 5;
 		let iterationCount = 0;
@@ -207,19 +207,19 @@ ${stageInstructions}
 </task>`;
 
 			// Add the current prompt to messages
-			messages.push({ role: 'user', text: currentPrompt });
+			messages.push({ role: 'user', content: currentPrompt });
 
 			// Call the LLM with the current messages
 			const assistantResponse = await llms().medium.generateJsonFromMessages<AssistantAction>(messages);
 
 			// Add the assistant's response to the conversation history
-			messages.push({ role: 'assistant', text: JSON.stringify(assistantResponse) });
+			messages.push({ role: 'assistant', content: JSON.stringify(assistantResponse) });
 
 			// Handle the assistant's response based on the current stage
 			if (currentStage === 'initial' && assistantResponse.inspectFiles) {
 				// Read and provide the contents of the requested files
 				const fileContents = await readFileContents(assistantResponse.inspectFiles);
-				messages.push({ role: 'user', text: fileContents });
+				messages.push({ role: 'user', content: fileContents });
 				stagedFiles = assistantResponse.inspectFiles;
 			} else if (currentStage === 'post_inspect' && (assistantResponse.selectFiles || assistantResponse.ignoreFiles)) {
 				// Process selected files and remove ignored files from staging
@@ -232,7 +232,7 @@ ${stageInstructions}
 				// Ensure all staged files have been processed
 				if (stagedFiles.length > 0) {
 					const message = `Please respond with select or ignore for the remaining files in the same JSON format as before.\n${JSON.stringify(stagedFiles)}`;
-					messages.push({ role: 'user', text: message });
+					messages.push({ role: 'user', content: message });
 				} else {
 					// Move to next stage
 					stagedFiles = [];
@@ -241,7 +241,7 @@ ${stageInstructions}
 				if (assistantResponse.inspectFiles) {
 					// Read and provide the contents of the requested files
 					const fileContents = await readFileContents(assistantResponse.inspectFiles);
-					messages.push({ role: 'user', text: fileContents });
+					messages.push({ role: 'user', content: fileContents });
 					stagedFiles = assistantResponse.inspectFiles;
 				} else if (assistantResponse.complete) {
 					// Mark the selection process as complete
