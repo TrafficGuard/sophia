@@ -231,6 +231,7 @@ export class ConversationComponent implements OnInit, OnDestroy {
     resetChat(): void {
         this.chat = {id: '', messages: [], title: '', updatedAt: Date.now()};
         this._chatService.resetChat();
+        this.generating = false
 
         // TODO set LLM field to the user profile default chat LLM
 
@@ -274,26 +275,9 @@ export class ConversationComponent implements OnInit, OnDestroy {
             return;
         }
 
-        // If this is a new chat, then redirect to the created chat
-        if (!this.chat.id) {
-            this.chat.messages.push({
-                content: message,
-                isMine: true,
-            })
-            this.messageInput.nativeElement.value = '';
-            this.generating = true;
-            this._changeDetectorRef.markForCheck();
-            // TODO handle error, set the message back to the messageInput and remove from chat.messages
-            this._chatService.createChat(message, this.llmId).subscribe(async (chat: Chat) => {
-                this.router.navigate([`/apps/chat/${chat.id}`]).catch(console.error);
-            });
-            // TODO catch errors and set this.generating=false
-
-            return;
-        }
-
-        this.sendIcon = 'heroicons_outline:stop-circle'
         this.generating = true;
+        this.sendIcon = 'heroicons_outline:stop-circle'
+
         this.chat.messages.push({
             content: message,
             isMine: true,
@@ -304,10 +288,27 @@ export class ConversationComponent implements OnInit, OnDestroy {
             generating: true
         }
         this.chat.messages.push(generatingMessage)
+        // Animate the typing/generating indicator
         this.generatingTimer = setInterval(() => {
             generatingMessage.content = generatingMessage.content.length === 3 ? '.' : generatingMessage.content + '.'
             this._changeDetectorRef.markForCheck();
         }, 800)
+        // Clear the input
+        this.messageInput.nativeElement.value = '';
+
+        // If this is a new chat, then redirect to the created chat
+        if (!this.chat.id) {
+
+            this._changeDetectorRef.markForCheck();
+            // TODO handle error, set the message back to the messageInput and remove from chat.messages
+            this._chatService.createChat(message, this.llmId).subscribe(async (chat: Chat) => {
+                clearInterval(this.generatingTimer)
+                this.generating = false;
+                this.router.navigate([`/apps/chat/${chat.id}`]).catch(console.error);
+            });
+            // TODO catch errors
+            return;
+        }
 
         this._scrollToBottom();
         this._chatService.sendMessage(this.chat.id, message, this.llmId).subscribe((chat: Chat) => {
@@ -317,8 +318,6 @@ export class ConversationComponent implements OnInit, OnDestroy {
             clearInterval(this.generatingTimer)
             this.generating = false;
             this.sendIcon = 'heroicons_outline:paper-airplane'
-            // Clear the input
-            this.messageInput.nativeElement.value = '';
             this._resizeMessageInput();
             this._scrollToBottom();
 

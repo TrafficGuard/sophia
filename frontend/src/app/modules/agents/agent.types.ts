@@ -123,12 +123,26 @@ export interface AgentContext {
     output: string;
 }
 
+interface TextPart  { type: "text" , text: string }
+interface ImagePart { type: "image", image: string | URL, mimeType?: string }
+interface FilePart  { type: "file", data: string | URL, mimeType: string }
+export type LlmMessage = {
+
+    content: string | Array<TextPart | ImagePart | FilePart>;
+    /** The LLM which generated the text (only when role=assistant) */
+    llmId?: string;
+    /** Set the cache_control flag with Claude models */
+    cache?: 'ephemeral';
+    /** Time the message was sent */
+    time?: number;
+};
 
 export interface LlmCall {
     id: string;
     description?: string;
     systemPrompt?: string;
     userPrompt: string;
+    messages: LlmMessage[];
     agentId?: string;
     userId?: string;
     callStack?: string;

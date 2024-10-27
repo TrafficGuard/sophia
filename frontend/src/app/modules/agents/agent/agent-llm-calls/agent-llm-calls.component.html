@@ -18,6 +18,21 @@
             }}
         </div>
 
+        @for (message of call.messages; track message.id) {
+            <mat-expansion-panel class="mb-1"
+            >
+                <mat-expansion-panel-header>
+                    <mat-panel-title [ngClass]="{ 'hidden-title': call.systemPromptExpanded }">
+                        <span>{{ message.role | titlecase }}</span>
+                        <span *ngIf="!call.systemPromptExpanded" class="expansion-preview">
+                            {{ message.content | slice : 0 : 50 }} ...
+                    </span>
+                    </mat-panel-title>
+                </mat-expansion-panel-header>
+                <div style="white-space: pre-wrap">{{ message.content }}</div>
+            </mat-expansion-panel>
+        }
+
         <mat-expansion-panel
                 *ngIf="call.systemPrompt"
                 (opened)="call.systemPromptExpanded = true"
@@ -68,7 +83,7 @@
             <div style="white-space: pre-wrap">{{ extractMemoryContent(call.userPrompt) }}</div>
         </mat-expansion-panel>
 
-        <mat-expansion-panel (opened)="call.userPromptExpanded = true" (closed)="call.userPromptExpanded = false" class="mb-1">
+        <mat-expansion-panel *ngIf="call.userPrompt" (opened)="call.userPromptExpanded = true" (closed)="call.userPromptExpanded = false" class="mb-1">
             <mat-expansion-panel-header>
                 <mat-panel-title [ngClass]="{ 'hidden-title': call.userPromptExpanded }">
                     <span>User Prompt: </span>

@@ -37,17 +37,20 @@ export abstract class BaseLLM implements LLM {
 		let messages: LlmMessage[];
 		let options: GenerateTextOptions | undefined;
 
+		// Args: messages, opts
 		if (Array.isArray(userOrSystemOrMessages)) {
 			messages = userOrSystemOrMessages;
 			options = userOrOptions as GenerateTextOptions;
 		} else {
-			const userPrompt = userOrSystemOrMessages;
+			let userPrompt: string;
 			let systemPrompt: string | undefined;
+			// Args: system, user, opts
 			if (typeof userOrOptions === 'string') {
-				systemPrompt = userOrOptions;
+				systemPrompt = userOrSystemOrMessages;
+				userPrompt = userOrOptions as string;
 				options = opts;
-			} else {
-				systemPrompt = undefined;
+			} else { // Args: user, opts
+				userPrompt = userOrSystemOrMessages;
 				options = userOrOptions;
 			}
 
