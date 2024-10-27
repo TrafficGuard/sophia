@@ -65,7 +65,7 @@ export async function analyzeCompileErrors(
 
 	// ${fileList}\n
 	const prompt = `${fileContents}\n${compileErrorHistory}\n${compileOutputXml}\n${currentFileList}\n${instructions}`;
-	const analysis: CompileErrorAnalysis = await llms().hard.generateJson(prompt, null, {
+	const analysis: CompileErrorAnalysis = await llms().hard.generateJson(prompt, {
 		id: 'analyzeCompileErrors',
 	});
 	analysis.compilerOutput = compilerOutput;

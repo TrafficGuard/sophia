@@ -37,7 +37,7 @@ export class TestFunctions {
 	 */
 	@func()
 	async skyColour(): Promise<string> {
-		const response = await llms().easy.generateText('What colour is the clear daytime sky? Respond with a single word.', null, { id: 'skyColour' });
+		const response = await llms().easy.generateText('What colour is the clear daytime sky? Respond with a single word.', { id: 'skyColour' });
 		return response.trim().toLowerCase();
 	}
 

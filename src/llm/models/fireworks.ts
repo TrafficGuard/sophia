@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import { addCost, agentContext } from '#agent/agentContextLocalStorage';
 import { LlmCall } from '#llm/llmCallService/llmCall';
-import { withSpan } from '#o11y/trace';
+import { withActiveSpan, withSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { sleep } from '#utils/async-utils';
 import { envVar } from '#utils/env-var';
@@ -42,8 +42,8 @@ export class FireworksLLM extends BaseLLM {
 		super(displayName, FIREWORKS_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
 	}
 
-	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
-		return withSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
+	async _generateText(systemPrompt: string | undefined, userPrompt: string, opts?: GenerateTextOptions): Promise<string> {
+		return withActiveSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);

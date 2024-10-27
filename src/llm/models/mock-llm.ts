@@ -46,7 +46,7 @@ export class MockLLM extends BaseLLM {
 	}
 
 	// @logTextGeneration
-	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
+	async _generateText(systemPrompt: string | undefined, userPrompt: string, opts?: GenerateTextOptions): Promise<string> {
 		logger.info(`MockLLM ${opts?.id ?? '<no id>'} ${userPrompt}`);
 
 		if (!opts?.id) logger.info(new Error(`No id set for prompt ${userPrompt}`));

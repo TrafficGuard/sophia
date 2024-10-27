@@ -10,8 +10,8 @@ export async function getTestRequirements(requirements: string, implementationRe
 	});
 
 	return llms().hard.generateJson(
-		prompt,
 		'You are an experienced software engineer with an eye for detail and robust software engineering practices, design and styles',
+		prompt,
 		{ id: 'reviewChanges' },
 	);
 }

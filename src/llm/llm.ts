@@ -83,24 +83,28 @@ export interface LLM {
 	generateJsonFromMessages<T>(messages: LlmMessage[], opts?: GenerateJsonOptions): Promise<T>;
 
 	/* Generates text from a LLM */
-	generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string>;
+	// generateText(userPrompt: string): Promise<string>;
+	generateText(userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
+	generateText(systemPrompt: string, userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
 
 	/* Generates a response that is expected to be in JSON format, and returns the object */
-	generateJson<T>(userPrompt: string, systemPrompt?: string, opts?: GenerateJsonOptions): Promise<T>;
+	generateJson<T>(userPrompt: string, opts?: GenerateJsonOptions): Promise<T>;
+	generateJson<T>(systemPrompt: string, userPrompt: string, opts?: GenerateJsonOptions): Promise<T>;
 
 	/**
 	 * Generates a response that is expected to have the <result></result> element, and returns the text inside it.
 	 * This useful when you want to LLM to output discovery, reasoning, etc. to improve the answer, and only want the final result returned.
 	 */
-	generateTextWithResult(prompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string>;
+	generateTextWithResult(prompt: string, opts?: GenerateTextOptions): Promise<string>;
+	generateTextWithResult(systemPrompt: string, prompt: string, opts?: GenerateTextOptions): Promise<string>;
 
 	/**
 	 * Generates a response expecting to contain the <function_call> element matching the FunctionResponse type
-	 * @param prompt
 	 * @param systemPrompt
+	 * @param userPrompt
 	 * @param opts
 	 */
-	generateFunctionResponse(prompt: string, systemPrompt?: string, opts?: GenerateFunctionOptions): Promise<FunctionResponse>;
+	generateFunctionResponse(systemPrompt: string, userPrompt: string, opts?: GenerateFunctionOptions): Promise<FunctionResponse>;
 
 	/**
 	 * Streams text from the LLM

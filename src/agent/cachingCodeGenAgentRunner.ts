@@ -293,7 +293,7 @@ main()`.trim();
 
 							// Fix the compile issues in the script
 							const prompt = `${functionsXml}\n<python>\n${pythonScript}</python>\n<error>${e.message}</error>\nPlease adjust/reformat the Python script to fix the issue. Output only the updated code. Do no chat, do not output markdown ticks. Only the updated code.`;
-							pythonScript = await llms().hard.generateText(prompt, null, { id: 'Fix python script error' });
+							pythonScript = await llms().hard.generateText(prompt, { id: 'Fix python script error' });
 
 							// Re-try execution of fixed syntax/indentation error
 							const result = await pyodide.runPythonAsync(pythonScript, { globals });

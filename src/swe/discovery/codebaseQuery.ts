@@ -121,5 +121,5 @@ async function synthesiseResult(query: string, filePaths: string[]): Promise<str
 	3. Output your final query response within <result></result> tags
 	`;
 
-	return await llms().medium.generateTextWithResult(resultPrompt, null, { id: 'codebase query synthesis' });
+	return await llms().medium.generateTextWithResult(resultPrompt, { id: 'codebase query synthesis' });
 }

@@ -1,7 +1,7 @@
 import { llms } from '#agent/agentContextLocalStorage';
 import { logger } from '#o11y/logger';
 import { BaseLLM } from './base-llm';
-import { GenerateTextOptions, LLM } from './llm';
+import { GenerateJsonOptions, GenerateTextOptions, LLM } from './llm';
 
 /*
 https://news.ycombinator.com/item?id=39955725
@@ -33,11 +33,11 @@ export class MultiLLM extends BaseLLM {
 		this.maxTokens = Math.min(...llms.map((llm) => llm.getMaxInputTokens()));
 	}
 
-	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
+	async _generateText(systemPrompt: string | undefined, userPrompt: string, opts?: GenerateTextOptions): Promise<string> {
 		const calls: Array<{ model: string; call: Promise<string> }> = [];
 		for (const llm of this.llms) {
 			for (let i = 0; i < this.callsPerLLM; i++) {
-				calls.push({ model: llm.getModel(), call: llm.generateText(userPrompt, systemPrompt) });
+				calls.push({ model: llm.getModel(), call: llm.generateText(systemPrompt, userPrompt, opts) });
 			}
 		}
 		const settled = await Promise.allSettled(calls.map((call) => call.call));

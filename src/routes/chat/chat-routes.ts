@@ -62,8 +62,8 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
 			if (!llm.isConfigured()) return sendBadRequest(reply, `LLM ${llm.getId()} is not configured`);
 
 			const titlePromise: Promise<string> | undefined = llm.generateText(
-				text,
 				'The following message is the first message in a new chat conversation. Your task is to create a short title for the conversation. Respond only with the title, nothing else',
+				text,
 			);
 
 			chat.messages.push({ role: 'user', content: text, time: Date.now() }); //, cache: cache ? 'ephemeral' : undefined // remove any previous cache marker

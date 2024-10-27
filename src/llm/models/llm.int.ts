@@ -42,7 +42,7 @@ describe('LLMs', () => {
 			const llm = Claude3_Haiku();
 
 			it('should generateText', async () => {
-				const response = await llm.generateText(SKY_PROMPT, null, { temperature: 0 });
+				const response = await llm.generateText(SKY_PROMPT, { temperature: 0 });
 				expect(response.toLowerCase()).to.include('blue');
 			});
 		});
@@ -51,7 +51,7 @@ describe('LLMs', () => {
 			const llm = Claude3_Haiku_Vertex();
 
 			it('should generateText', async () => {
-				const response = await llm.generateText(SKY_PROMPT, null, { temperature: 0 });
+				const response = await llm.generateText(SKY_PROMPT, { temperature: 0 });
 				expect(response.toLowerCase()).to.include('blue');
 			});
 		});
@@ -60,7 +60,7 @@ describe('LLMs', () => {
 			const llm = cerebrasLlama3_8b();
 
 			it('should generateText', async () => {
-				const response = await llm.generateText(SKY_PROMPT, null, { temperature: 0 });
+				const response = await llm.generateText(SKY_PROMPT, { temperature: 0 });
 				expect(response.toLowerCase()).to.include('blue');
 			});
 		});
@@ -69,7 +69,7 @@ describe('LLMs', () => {
 			const llm = deepseekChat();
 
 			it('should generateText', async () => {
-				const response = await llm.generateText(SKY_PROMPT, null, { temperature: 0 });
+				const response = await llm.generateText(SKY_PROMPT, { temperature: 0 });
 				expect(response.toLowerCase()).to.include('blue');
 			});
 		});
@@ -78,7 +78,7 @@ describe('LLMs', () => {
 			const llm = fireworksLlama3_70B();
 
 			it('should generateText', async () => {
-				const response = await llm.generateText(SKY_PROMPT, null, { temperature: 0 });
+				const response = await llm.generateText(SKY_PROMPT, { temperature: 0 });
 				expect(response.toLowerCase()).to.include('blue');
 			});
 		});
@@ -87,7 +87,7 @@ describe('LLMs', () => {
 			const llm = groqLlama3_1_8b();
 
 			it('should generateText', async () => {
-				const response = await llm.generateText(SKY_PROMPT, null, { temperature: 0 });
+				const response = await llm.generateText(SKY_PROMPT, { temperature: 0 });
 				expect(response.toLowerCase()).to.include('blue');
 			});
 		});
@@ -96,7 +96,7 @@ describe('LLMs', () => {
 			const llm = Ollama_Phi3();
 
 			it('should generateText', async () => {
-				const response = await llm.generateText(SKY_PROMPT, null, { temperature: 0 });
+				const response = await llm.generateText(SKY_PROMPT, { temperature: 0 });
 				expect(response.toLowerCase()).to.include('blue');
 			});
 		});
@@ -105,7 +105,7 @@ describe('LLMs', () => {
 			const llm = GPT4oMini();
 
 			it('should generateText', async () => {
-				const response = await llm.generateText(SKY_PROMPT, null, { temperature: 0 });
+				const response = await llm.generateText(SKY_PROMPT, { temperature: 0 });
 				expect(response.toLowerCase()).to.include('blue');
 			});
 		});
@@ -114,7 +114,7 @@ describe('LLMs', () => {
 			const llm = togetherLlama3_70B();
 
 			it('should generateText', async () => {
-				const response = await llm.generateText(SKY_PROMPT, null, { temperature: 0 });
+				const response = await llm.generateText(SKY_PROMPT, { temperature: 0 });
 				expect(response.toLowerCase()).to.include('blue');
 			});
 		});
@@ -123,7 +123,7 @@ describe('LLMs', () => {
 			const llm = Gemini_1_5_Flash();
 
 			it('should generateText', async () => {
-				const response = await llm.generateText(SKY_PROMPT, null, { temperature: 0 });
+				const response = await llm.generateText(SKY_PROMPT, { temperature: 0 });
 				expect(response.toLowerCase()).to.include('blue');
 			});
 		});

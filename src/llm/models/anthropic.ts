@@ -3,7 +3,7 @@ import { addCost, agentContext } from '#agent/agentContextLocalStorage';
 import { envVar } from '#utils/env-var';
 import { BaseLLM } from '../base-llm';
 import { MaxTokensError } from '../errors';
-import { GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../llm';
+import { GenerateJsonOptions, GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../llm';
 import { MultiLLM } from '../multi-llm';
 import Message = AnthropicSdk.Message;
 import { LlmCall } from '#llm/llmCallService/llmCall';
@@ -89,8 +89,7 @@ export class Anthropic extends BaseLLM {
 		return Boolean(currentUser().llmConfig.anthropicKey || process.env.ANTHROPIC_API_KEY);
 	}
 
-	@logTextGeneration
-	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
+	async _generateText(systemPrompt: string | undefined, userPrompt: string, opts?: GenerateTextOptions): Promise<string> {
 		return withActiveSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 

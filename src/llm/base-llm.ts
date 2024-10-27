@@ -36,25 +36,64 @@ export abstract class BaseLLM implements LLM {
 		public readonly calculateOutputCost: (output: string) => number,
 	) {}
 
-	async generateFunctionResponse(prompt: string, systemPrompt?: string, opts?: GenerateFunctionOptions): Promise<FunctionResponse> {
-		const response = await this.generateText(prompt, systemPrompt, opts);
+	abstract _generateText(systemPrompt: string | undefined, userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
+
+	generateText(userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
+	generateText(systemPrompt: string, userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
+	async generateText(userPromptOrSystemPrompt: string, userPromptOrOpts?: string | GenerateTextOptions, opts?: GenerateTextOptions): Promise<string> {
+		const { userPrompt, systemPrompt, options } = this.parsePromptParameters<GenerateTextOptions>(userPromptOrSystemPrompt, userPromptOrOpts, opts);
+		return this._generateText(systemPrompt, userPrompt, options);
+	}
+
+	async generateFunctionResponse(systemPrompt: string, prompt: string, opts?: GenerateFunctionOptions): Promise<FunctionResponse> {
+		const response = await this._generateText(systemPrompt, prompt, opts);
 		return {
 			textResponse: response,
 			functions: parseFunctionCallsXml(response),
 		};
 	}
 
-	async generateTextWithResult(prompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
-		const response = await this.generateText(prompt, systemPrompt, opts);
+	async generateTextWithResult(userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
+	async generateTextWithResult(systemPrompt: string, userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
+
+	async generateTextWithResult(userPromptOrSystemPrompt: string, userPromptOrOpts?: string | GenerateTextOptions, opts?: GenerateTextOptions): Promise<string> {
+		const { userPrompt, systemPrompt, options } = this.parsePromptParameters<GenerateTextOptions>(userPromptOrSystemPrompt, userPromptOrOpts, opts);
+		const response = await this._generateText(systemPrompt, userPrompt, options);
 		return extractStringResult(response);
 	}
 
-	async generateJson(prompt: string, systemPrompt?: string, opts?: GenerateJsonOptions): Promise<any> {
-		const response = await this.generateText(prompt, systemPrompt, opts ? { type: 'json', ...opts } : { type: 'json' });
+	async generateJson<T>(userPrompt: string, opts?: GenerateJsonOptions): Promise<T>;
+	async generateJson<T>(systemPrompt: string, userPrompt: string, opts?: GenerateJsonOptions): Promise<T>;
+	async generateJson(userPromptOrSystemPrompt: string, userPromptOrOpts?: string | GenerateJsonOptions, opts?: GenerateJsonOptions): Promise<string> {
+		const { userPrompt, systemPrompt, options } = this.parsePromptParameters<GenerateJsonOptions>(userPromptOrSystemPrompt, userPromptOrOpts, opts);
+		const response = await this.generateText(systemPrompt, userPrompt, options ? { type: 'json', ...options } : { type: 'json' });
 		return extractJsonResult(response);
 	}
 
-	abstract generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string>;
+	/** Handles extracting the args from the overloaded generateXXX functions */
+	private parsePromptParameters<GenerateOptions>(
+		userPromptOrSystemPrompt: string,
+		userPromptOrOpts?: string | GenerateOptions,
+		opts?: GenerateOptions,
+	): { userPrompt: string; systemPrompt?: string; options?: GenerateOptions } {
+		let systemPrompt: string | undefined;
+		let userPrompt: string;
+		let options: GenerateOptions | undefined;
+
+		if (typeof userPromptOrOpts === 'string') {
+			// Three arguments: systemPrompt, userPrompt, opts
+			systemPrompt = userPromptOrSystemPrompt;
+			userPrompt = userPromptOrOpts;
+			options = opts;
+		} else {
+			// Two arguments: userPrompt, opts
+			systemPrompt = undefined;
+			userPrompt = userPromptOrSystemPrompt;
+			options = userPromptOrOpts;
+		}
+
+		return { userPrompt, systemPrompt, options };
+	}
 
 	getMaxInputTokens(): number {
 		return this.maxInputTokens;

@@ -83,7 +83,7 @@ export class CodeEditingAgent {
 		Check if any of the requirements have already been correctly implemented in the code as to not duplicate work.
 		Look at the existing style of the code when producing the requirements.
 		`;
-		let implementationRequirements = await llms().hard.generateText(implementationDetailsPrompt, null, { id: 'implementationSpecification' });
+		let implementationRequirements = await llms().hard.generateText(implementationDetailsPrompt, { id: 'implementationSpecification' });
 
 		const searchPrompt = `${repositoryOverview}${installedPackages}\n<requirement>\n${implementationRequirements}\n</requirement>
 Given the requirements, if there are any changes which require using open source libraries, provide search queries to look up the API usage online.
@@ -99,7 +99,7 @@ Then respond in following format:
 </json> 
 `;
 		try {
-			const queries = (await llms().medium.generateJson(searchPrompt, null, { id: 'online queries from requirements' })) as { searchQueries: string[] };
+			const queries = (await llms().medium.generateJson(searchPrompt, { id: 'online queries from requirements' })) as { searchQueries: string[] };
 			if (queries.searchQueries.length > 0) {
 				logger.info(`Researching ${queries.searchQueries.join(', ')}`);
 				const perplexity = new Perplexity();
@@ -393,7 +393,7 @@ Then respond in following format:
 			action:
 				'You will respond ONLY in JSON. From the requirements quietly consider which the files may be required to complete the task. You MUST output your answer ONLY as JSON in the format of this example:\n<example>\n{\n files: ["file1", "file2", "file3"]\n}\n</example>',
 		});
-		const response: any = await llms().medium.generateJson(prompt, null, { id: 'extractFilenames' });
+		const response: any = await llms().medium.generateJson(prompt, { id: 'extractFilenames' });
 		return response.files;
 	}
 }

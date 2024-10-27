@@ -29,8 +29,7 @@ export class OllamaLLM extends BaseLLM {
 		return process.env.OLLAMA_API_URL;
 	}
 
-	@logTextGeneration
-	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
+	async _generateText(systemPrompt: string | undefined, userPrompt: string, opts?: GenerateTextOptions): Promise<string> {
 		console.log('generateText');
 		return withActiveSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
