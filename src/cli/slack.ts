@@ -1,5 +1,5 @@
-import { ClaudeLLMs } from '#llm/models/anthropic';
-import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
+import { ClaudeLLMs } from '#llm/services/anthropic';
+import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { SlackChatBotService } from '#modules/slack/slackChatBotService';
 import { sleep } from '#utils/async-utils';
 import { initFirestoreApplicationContext } from '../app';

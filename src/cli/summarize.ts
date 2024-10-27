@@ -6,8 +6,8 @@ import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { shutdownTrace } from '#fastify/trace-init/trace-init';
 import { SummarizerAgent } from '#functions/text/summarizer';
-import { ClaudeLLMs } from '#llm/models/anthropic';
-import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
+import { ClaudeLLMs } from '#llm/services/anthropic';
+import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { initFirestoreApplicationContext } from '../app';
 import { parseProcessArgs, saveAgentId } from './cli';
 

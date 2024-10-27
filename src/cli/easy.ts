@@ -4,9 +4,9 @@ import { readFileSync, writeFileSync } from 'fs';
 import { appendFileSync } from 'node:fs';
 import { agentContext, agentContextStorage, createContext } from '#agent/agentContextLocalStorage';
 import { AgentContext } from '#agent/agentContextTypes';
-import { mockLLMs } from '#llm/models/mock-llm';
-import { Gemini_1_5_Flash } from '#llm/models/vertexai';
 import { Blueberry } from '#llm/multi-agent/blueberry';
+import { mockLLMs } from '#llm/services/mock-llm';
+import { Gemini_1_5_Flash } from '#llm/services/vertexai';
 import { initFirestoreApplicationContext } from '../app';
 import { parseProcessArgs } from './cli';
 

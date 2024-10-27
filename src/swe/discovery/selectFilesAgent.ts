@@ -210,7 +210,7 @@ ${stageInstructions}
 			messages.push({ role: 'user', content: currentPrompt });
 
 			// Call the LLM with the current messages
-			const assistantResponse = await llms().medium.generateJsonFromMessages<AssistantAction>(messages);
+			const assistantResponse = await llms().medium.generateJson<AssistantAction>(messages);
 
 			// Add the assistant's response to the conversation history
 			messages.push({ role: 'assistant', content: JSON.stringify(assistantResponse) });

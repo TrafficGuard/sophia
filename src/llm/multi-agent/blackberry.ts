@@ -1,9 +1,9 @@
 import { BaseLLM } from '#llm/base-llm';
 import { GenerateTextOptions, LLM } from '#llm/llm';
-import { Claude3_5_Sonnet_Vertex } from '#llm/models/anthropic-vertex';
-import { fireworksLlama3_405B } from '#llm/models/fireworks';
-import { GPT4o } from '#llm/models/openai';
-import { Gemini_1_5_Pro } from '#llm/models/vertexai';
+import { Claude3_5_Sonnet_Vertex } from '#llm/services/anthropic-vertex';
+import { fireworksLlama3_405B } from '#llm/services/fireworks';
+import { GPT4o } from '#llm/services/openai';
+import { Gemini_1_5_Pro } from '#llm/services/vertexai';
 import { logger } from '#o11y/logger';
 
 const MIND_OVER_DATA_SYS_PROMPT = `When addressing a problem, employ "Comparative Problem Analysis and Direct Reasoning" as follows:

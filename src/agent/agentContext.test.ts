@@ -8,7 +8,7 @@ import { deserializeAgentContext, serializeContext } from '#agent/agentSerializa
 import { FileSystemRead } from '#functions/storage/FileSystemRead';
 import { FileSystemService } from '#functions/storage/fileSystemService';
 import { LlmTools } from '#functions/util';
-import { GPT4o } from '#llm/models/openai';
+import { GPT4o } from '#llm/services/openai';
 import { appContext } from '../app';
 import { functionRegistry } from '../functionRegistry';
 

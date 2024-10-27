@@ -11,7 +11,7 @@ import { currentUser } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
 import { appContext } from '../../app';
 import { BaseLLM } from '../base-llm';
-import { GenerateJsonOptions, GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../llm';
+import { GenerateTextOptions, LLM, combinePrompts } from '../llm';
 import { MultiLLM } from '../multi-llm';
 
 export function GEMINI_1_5_PRO_LLMS(): AgentLLMs {
@@ -187,7 +187,7 @@ class VertexLLM extends BaseLLM {
 				systemPrompt,
 				llmId: this.getId(),
 				agentId: agentContext()?.agentId,
-				callStack: agentContext()?.callStack.join(' > '),
+				callStack: this.callStack(agentContext()),
 			});
 			const requestTime = Date.now();
 

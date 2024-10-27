@@ -164,7 +164,7 @@ export async function runCachingCodegenAgent(agent: AgentContext): Promise<Agent
 					};
 					agent.messages[6] = { role: 'assistant', content: '<planning-response>' };
 					agent.messages.length = 7; // If we've restarted remove any extra messages
-					const agentPlanResponse: string = `<planning-response>\n${await agentLLM.generateTextFromMessages(agent.messages, {
+					const agentPlanResponse: string = `<planning-response>\n${await agentLLM.generateText(agent.messages, {
 						id: 'dynamicAgentPlan',
 						stopSequences,
 						temperature: 0.6,
@@ -178,7 +178,7 @@ export async function runCachingCodegenAgent(agent: AgentContext): Promise<Agent
 						content: codingPrompt, // 'Generate a coding response as per the system instructions provided given the user request, memory items, recent function call history and plan'
 					};
 					agent.messages[8] = { role: 'assistant', content: '<python-code>' };
-					const agentCodeResponse: string = `<python-code>\n${await agentLLM.generateTextFromMessages(agent.messages, {
+					const agentCodeResponse: string = `<python-code>\n${await agentLLM.generateText(agent.messages, {
 						id: 'dynamicAgentCode',
 						stopSequences,
 						temperature: 0.7,

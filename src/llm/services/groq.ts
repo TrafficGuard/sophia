@@ -1,7 +1,6 @@
 import Groq from 'groq-sdk';
 import { agentContext } from '#agent/agentContextLocalStorage';
 import { addCost } from '#agent/agentContextLocalStorage';
-import { AgentLLMs } from '#agent/agentContextTypes';
 import { LlmCall } from '#llm/llmCallService/llmCall';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
@@ -91,7 +90,7 @@ export class GroqLLM extends BaseLLM {
 				systemPrompt,
 				llmId: this.getId(),
 				agentId: agentContext()?.agentId,
-				callStack: agentContext()?.callStack.join(' > '),
+				callStack: this.callStack(agentContext()),
 			});
 			const requestTime = Date.now();
 

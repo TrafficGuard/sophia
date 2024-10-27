@@ -1,7 +1,7 @@
 import { getFileSystem } from '#agent/agentContextLocalStorage';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { GitHub } from '#functions/scm/github';
-import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
+import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { countTokens } from '#llm/tokens';
 import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';

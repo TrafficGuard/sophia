@@ -1,7 +1,6 @@
 import Cerebras from '@cerebras/cerebras_cloud_sdk';
 import { CompletionCreateParams, CompletionCreateParamsNonStreaming } from '@cerebras/cerebras_cloud_sdk/src/resources/chat/completions';
 import { addCost, agentContext } from '#agent/agentContextLocalStorage';
-import { AgentLLMs } from '#agent/agentContextTypes';
 import { LlmCall } from '#llm/llmCallService/llmCall';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
@@ -45,19 +44,9 @@ export function cerebrasLlama3_70b(): LLM {
 		8_192,
 		(input: string) => 0, //(input.length * 0.05) / (1_000_000 * 4),
 		(output: string) => 0, //(output.length * 0.08) / (1_000_000 * 4),
-		0,
-		0,
+		0.6,
+		0.6,
 	);
-}
-
-export function cerebrasLLMs(): AgentLLMs {
-	const llama70b = cerebrasLlama3_70b();
-	return {
-		easy: cerebrasLlama3_8b(),
-		medium: llama70b,
-		hard: llama70b,
-		xhard: llama70b,
-	};
 }
 
 /**
@@ -88,6 +77,10 @@ export class CerebrasLLM extends BaseLLM {
 			});
 		}
 		return this._client;
+	}
+
+	protected supportsGenerateTextFromMessages(): boolean {
+		return true;
 	}
 
 	async generateTextFromMessages(llmMessages: LlmMessage[], opts?: GenerateTextOptions): Promise<string> {
@@ -133,7 +126,7 @@ export class CerebrasLLM extends BaseLLM {
 				messages: llmMessages,
 				llmId: this.getId(),
 				agentId: agentContext()?.agentId,
-				callStack: agentContext()?.callStack.join(' > '),
+				callStack: this.callStack(agentContext()),
 			});
 			const requestTime = Date.now();
 
@@ -153,9 +146,8 @@ export class CerebrasLLM extends BaseLLM {
 
 				const inputTokens = completion.usage.prompt_tokens;
 				const outputTokens = completion.usage.completion_tokens;
-				const prompt = messages.map((m) => m.content).join('\n');
-				const inputCost = this.calculateInputCost(prompt);
-				const outputCost = this.calculateOutputCost(responseText);
+				const inputCost = (inputTokens * this.costPerMillionInputTokens) / 1_000_1000;
+				const outputCost = (outputTokens * this.costPerMillionOutputTokens) / 1_000_1000;
 				const cost = inputCost + outputCost;
 				addCost(cost);
 
@@ -174,7 +166,7 @@ export class CerebrasLLM extends BaseLLM {
 					outputCost: outputCost.toFixed(4),
 					cost: cost.toFixed(4),
 					outputChars: responseText.length,
-					callStack: agentContext()?.callStack.join(' > '),
+					callStack: this.callStack(agentContext()),
 				});
 
 				try {
@@ -186,92 +178,6 @@ export class CerebrasLLM extends BaseLLM {
 				return responseText;
 			} catch (e) {
 				if (this.isRetryableError(e)) throw new RetryableError(e);
-				throw e;
-			}
-		});
-	}
-
-	async _generateText(systemPrompt: string | undefined, userPrompt: string, opts?: GenerateTextOptions): Promise<string> {
-		return withActiveSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
-			const prompt = combinePrompts(userPrompt, systemPrompt);
-			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
-			span.setAttributes({
-				userPrompt,
-				inputChars: prompt.length,
-				model: this.model,
-				service: this.service,
-			});
-			span.setAttribute('userPrompt', userPrompt);
-			span.setAttribute('inputChars', prompt.length);
-
-			const llmCallSave: Promise<LlmCall> = appContext().llmCallService.saveRequest({
-				userPrompt,
-				systemPrompt,
-				llmId: this.getId(),
-				agentId: agentContext()?.agentId,
-				callStack: agentContext()?.callStack.join(' > '),
-			});
-			const requestTime = Date.now();
-
-			const messages = [];
-			if (systemPrompt) {
-				messages.push({
-					role: 'system',
-					content: systemPrompt,
-				});
-			}
-			messages.push({
-				role: 'user',
-				content: userPrompt,
-			});
-
-			try {
-				// https://inference-docs.cerebras.ai/api-reference/chat-completions
-				const completion = await this.client().chat.completions.create({
-					messages,
-					model: this.model,
-					temperature: opts?.temperature ?? undefined,
-					top_p: opts?.topP ?? undefined,
-					stop: opts?.stopSequences, // Cerebras uses 'stop' instead of 'stop_sequences'
-				});
-				const responseText = completion.choices[0]?.message?.content || '';
-
-				const timeToFirstToken = Date.now() - requestTime;
-				const finishTime = Date.now();
-				const llmCall: LlmCall = await llmCallSave;
-
-				const inputTokens = completion.usage.prompt_tokens;
-				const outputTokens = completion.usage.completion_tokens;
-
-				const inputCost = this.calculateInputCost(prompt);
-				const outputCost = this.calculateOutputCost(responseText);
-				const cost = inputCost + outputCost;
-				addCost(cost);
-
-				llmCall.responseText = responseText;
-				llmCall.timeToFirstToken = timeToFirstToken;
-				llmCall.totalTime = finishTime - requestTime;
-				llmCall.cost = cost;
-
-				try {
-					await appContext().llmCallService.saveResponse(llmCall);
-				} catch (e) {
-					// queue to save
-					console.error(e);
-				}
-
-				span.setAttributes({
-					response: responseText,
-					inputCost,
-					outputCost,
-					cost,
-					outputChars: responseText.length,
-				});
-
-				return responseText;
-			} catch (e) {
-				// TODO find out the actual codes
-				if (e.error?.code === 'rate_limit_exceeded') throw new RetryableError(e);
 				throw e;
 			}
 		});

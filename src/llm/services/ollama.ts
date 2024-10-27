@@ -5,7 +5,7 @@ import { LlmCall } from '#llm/llmCallService/llmCall';
 import { withActiveSpan } from '#o11y/trace';
 import { appContext } from '../../app';
 import { BaseLLM } from '../base-llm';
-import { GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../llm';
+import { GenerateTextOptions, LLM, combinePrompts } from '../llm';
 
 export const OLLAMA_SERVICE = 'ollama';
 
@@ -47,7 +47,7 @@ export class OllamaLLM extends BaseLLM {
 				systemPrompt,
 				llmId: this.getId(),
 				agentId: agentContext()?.agentId,
-				callStack: agentContext()?.callStack.join(' > '),
+				callStack: this.callStack(agentContext()),
 			});
 			const requestTime = Date.now();
 

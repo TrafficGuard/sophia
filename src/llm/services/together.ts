@@ -1,6 +1,4 @@
-import { createOpenAI } from '@ai-sdk/openai';
-import { LanguageModel } from 'ai';
-import axios from 'axios';
+import OpenAI from 'openai';
 import { addCost, agentContext } from '#agent/agentContextLocalStorage';
 import { LlmCall } from '#llm/llmCallService/llmCall';
 import { withSpan } from '#o11y/trace';
@@ -10,58 +8,43 @@ import { envVar } from '#utils/env-var';
 import { appContext } from '../../app';
 import { RetryableError } from '../../cache/cacheRetry';
 import { BaseLLM } from '../base-llm';
-import { GenerateTextOptions, LLM, combinePrompts, logTextGeneration } from '../llm';
+import { GenerateTextOptions, LLM, combinePrompts } from '../llm';
 
-export const DEEPSEEK_SERVICE = 'deepseek';
+export const TOGETHER_SERVICE = 'together';
 
-export function deepseekLLMRegistry(): Record<string, () => LLM> {
+export function togetherLLMRegistry(): Record<string, () => LLM> {
 	return {
-		[`${DEEPSEEK_SERVICE}:deepseek-chat`]: () => deepseekChat(),
+		[`${TOGETHER_SERVICE}:meta-llama/Llama-3-70b-chat-hf`]: () => togetherLlama3_70B(),
 	};
 }
 
-export function deepseekChat(): LLM {
-	return new DeepseekLLM(
-		'DeepSeek Chat',
-		'deepseek-chat',
-		32000,
-		(input: string) => (input.length * 0.14) / (1_000_000 * 3.5),
-		(output: string) => (output.length * 0.28) / (1_000_000 * 3.5),
+export function togetherLlama3_70B(): LLM {
+	return new TogetherLLM(
+		'Llama3 70b (Together)',
+		'meta-llama/Llama-3-70b-chat-hf',
+		8000,
+		(input: string) => (input.length * 0.9) / 1_000_000,
+		(output: string) => (output.length * 0.9) / 1_000_000,
 	);
 }
-
 /**
- * Deepseek models
- * @see https://platform.deepseek.com/api-docs/api/create-chat-completion
+ * Together AI models
  */
-export class DeepseekLLM extends BaseLLM {
-	_client: any;
-	aimodel: LanguageModel;
+export class TogetherLLM extends BaseLLM {
+	_client: OpenAI;
 
-	client() {
+	client(): OpenAI {
 		if (!this._client) {
-			this._client = axios.create({
-				baseURL: 'https://api.deepseek.com',
-				headers: {
-					Authorization: `Bearer ${currentUser().llmConfig.deepseekKey || envVar('DEEPSEEK_API_KEY')}`,
-				},
+			this._client = new OpenAI({
+				apiKey: currentUser().llmConfig.togetheraiKey || envVar('TOGETHERAI_KEY'),
+				baseURL: 'https://api.together.xyz/v1',
 			});
 		}
 		return this._client;
 	}
 
 	isConfigured(): boolean {
-		return Boolean(currentUser().llmConfig.deepseekKey || process.env.DEEPSEEK_API_KEY);
-	}
-
-	aiModel(): LanguageModel {
-		if (!this.aimodel) {
-			this.aimodel = createOpenAI({
-				baseURL: 'https://api.deepseek.com',
-				apiKey: currentUser().llmConfig.deepseekKey || envVar('DEEPSEEK_API_KEY'),
-			})('deepseek-coder');
-		}
-		return this.aimodel;
+		return Boolean(currentUser().llmConfig.togetheraiKey || process.env.TOGETHERAI_KEY);
 	}
 
 	constructor(
@@ -71,7 +54,7 @@ export class DeepseekLLM extends BaseLLM {
 		inputCostPerToken: (input: string) => number,
 		outputCostPerToken: (output: string) => number,
 	) {
-		super(displayName, DEEPSEEK_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
+		super(displayName, TOGETHER_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
 	}
 
 	async _generateText(systemPrompt: string | undefined, userPrompt: string, opts?: GenerateTextOptions): Promise<string> {
@@ -91,7 +74,7 @@ export class DeepseekLLM extends BaseLLM {
 				systemPrompt,
 				llmId: this.getId(),
 				agentId: agentContext()?.agentId,
-				callStack: agentContext()?.callStack.join(' > '),
+				callStack: this.callStack(agentContext()),
 			});
 			const requestTime = Date.now();
 
@@ -108,26 +91,20 @@ export class DeepseekLLM extends BaseLLM {
 			});
 
 			try {
-				const response = await this.client().post('/chat/completions', {
+				const completion: OpenAI.ChatCompletion = await this.client().chat.completions.create({
 					messages,
 					model: this.model,
 				});
 
-				const responseText = response.data.choices[0].message.content;
-
-				const inputCacheHitTokens = response.data.prompt_cache_hit_tokens;
-				const inputCacheMissTokens = response.data.prompt_cache_miss_tokens;
-				const outputTokens = response.data.completion_tokens;
-
-				console.log(response.data);
+				const responseText = completion.choices[0].message.content;
 
 				const timeToFirstToken = Date.now() - requestTime;
 				const finishTime = Date.now();
+
 				const llmCall: LlmCall = await llmCallSave;
 
-				const inputCost = (inputCacheHitTokens * 0.014) / 1_000_000 + (inputCacheMissTokens * 0.14) / 1_000_000;
-
-				const outputCost = (outputTokens * 0.28) / 1_000_000;
+				const inputCost = this.calculateInputCost(prompt);
+				const outputCost = this.calculateOutputCost(responseText);
 				const cost = inputCost + outputCost;
 				addCost(cost);
 
@@ -146,9 +123,6 @@ export class DeepseekLLM extends BaseLLM {
 				span.setAttributes({
 					response: responseText,
 					timeToFirstToken,
-					inputCacheHitTokens,
-					inputCacheMissTokens,
-					outputTokens,
 					inputCost,
 					outputCost,
 					cost,
@@ -165,9 +139,5 @@ export class DeepseekLLM extends BaseLLM {
 				throw e;
 			}
 		});
-	}
-
-	isRetryableError(e: any): boolean {
-		return e.message.includes('rate limiting');
 	}
 }

@@ -8,7 +8,7 @@ import { GoogleCloud } from '#functions/cloud/google-cloud';
 import { GitLab } from '#functions/scm/gitlab';
 import { LlmTools } from '#functions/util';
 import { Perplexity } from '#functions/web/perplexity';
-import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
+import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { logger } from '#o11y/logger';
 import { sleep } from '#utils/async-utils';
 import { appContext } from '../../app';

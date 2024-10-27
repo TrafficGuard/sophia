@@ -1,5 +1,5 @@
 // https://github.com/AgentOps-AI/tokencost/blob/main/tokencost/model_prices.json
-import { CoreAssistantMessage, CoreMessage, CoreSystemMessage, CoreToolMessage, CoreUserMessage, FilePart, ImagePart, StreamTextResult, TextPart } from 'ai';
+import { CoreAssistantMessage, CoreSystemMessage, CoreToolMessage, CoreUserMessage, StreamTextResult } from 'ai';
 
 export interface GenerateTextOptions {
 	type?: 'text' | 'json';
@@ -77,26 +77,22 @@ export function assistant(text: string): LlmMessage {
 }
 
 export interface LLM {
-	generateTextFromMessages(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string>;
-
-	/* Generates a response that is expected to be in JSON format, or end with a JSON object wrapped in <json> tags or Markdown triple ticks, and returns the object */
-	generateJsonFromMessages<T>(messages: LlmMessage[], opts?: GenerateJsonOptions): Promise<T>;
-
 	/* Generates text from a LLM */
-	// generateText(userPrompt: string): Promise<string>;
 	generateText(userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
 	generateText(systemPrompt: string, userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
+	generateText(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string>;
 
 	/* Generates a response that is expected to be in JSON format, and returns the object */
 	generateJson<T>(userPrompt: string, opts?: GenerateJsonOptions): Promise<T>;
 	generateJson<T>(systemPrompt: string, userPrompt: string, opts?: GenerateJsonOptions): Promise<T>;
-
+	generateJson<T>(messages: LlmMessage[], opts?: GenerateJsonOptions): Promise<T>;
 	/**
 	 * Generates a response that is expected to have the <result></result> element, and returns the text inside it.
 	 * This useful when you want to LLM to output discovery, reasoning, etc. to improve the answer, and only want the final result returned.
 	 */
 	generateTextWithResult(prompt: string, opts?: GenerateTextOptions): Promise<string>;
 	generateTextWithResult(systemPrompt: string, prompt: string, opts?: GenerateTextOptions): Promise<string>;
+	generateTextWithResult<T>(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<T>;
 
 	/**
 	 * Generates a response expecting to contain the <function_call> element matching the FunctionResponse type
@@ -189,38 +185,4 @@ export interface FunctionCallResult extends FunctionCall {
 export function combinePrompts(userPrompt: string, systemPrompt?: string): string {
 	systemPrompt = systemPrompt ? `${systemPrompt}\n` : '';
 	return `${systemPrompt}${userPrompt}`;
-}
-
-/**
- * Decorator to log the prompt and response
- * @param originalMethod
- * @param context
- * @returns
- */
-export function logTextGeneration(originalMethod: any, context: ClassMethodDecoratorContext): any {
-	return async function replacementMethod(this: any, ...args: any[]) {
-		// system prompt
-		// if (args.length > 1 && args[1]) {
-		// 	logger.info(`= SYSTEM PROMPT ===================================================\n${args[1]}`);
-		// }
-		console.log();
-		console.log(`= USER PROMPT =================================================================\n${args[0]}`);
-		console.log(args[0]);
-		// const start = Date.now();
-		const result = await originalMethod.call(this, ...args);
-		// logger.info(`= RESPONSE ${this.model} ==========================================================\n${JSON.stringify(result)}`);
-		// const duration = `${((Date.now() - start) / 1000).toFixed(1)}s`;
-		// logger.info(`${duration}  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<`);
-		return result;
-	};
-}
-
-export function logDuration(originalMethod: any, context: ClassMethodDecoratorContext): any {
-	const functionName = String(context.name);
-	return async function replacementMethod(this: any, ...args: any[]) {
-		const start = Date.now();
-		const result = await originalMethod.call(this, ...args);
-		console.log(`${functionName} took ${Date.now() - start}ms`);
-		return result;
-	};
 }

@@ -15,7 +15,7 @@ import {
 } from '#agent/agentRunner';
 import { XML_AGENT_SPAN } from '#agent/xmlAgentRunner';
 import { TEST_FUNC_NOOP, TEST_FUNC_SKY_COLOUR, TEST_FUNC_SUM, THROW_ERROR_TEXT, TestFunctions } from '#functions/testFunctions';
-import { MockLLM } from '#llm/models/mock-llm';
+import { MockLLM } from '#llm/services/mock-llm';
 import { setTracer } from '#o11y/trace';
 import { User } from '#user/user';
 import { sleep } from '#utils/async-utils';

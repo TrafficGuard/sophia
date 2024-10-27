@@ -70,7 +70,7 @@ export class MockLLM extends BaseLLM {
 				systemPrompt,
 				llmId: this.getId(),
 				agentId: agentContext()?.agentId,
-				callStack: agentContext()?.callStack.join(' > '),
+				callStack: this.callStack(agentContext()),
 			});
 			const requestTime = Date.now();
 

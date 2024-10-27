@@ -1,15 +1,15 @@
 import { expect } from 'chai';
 import { LlmMessage } from '#llm/llm';
-import { Claude3_Haiku } from '#llm/models/anthropic';
-import { Claude3_Haiku_Vertex } from '#llm/models/anthropic-vertex';
-import { cerebrasLlama3_8b } from '#llm/models/cerebras';
-import { deepseekChat } from '#llm/models/deepseek';
-import { fireworksLlama3_70B } from '#llm/models/fireworks';
-import { groqLlama3_1_8b } from '#llm/models/groq';
-import { Ollama_Phi3 } from '#llm/models/ollama';
-import { GPT4oMini } from '#llm/models/openai';
-import { togetherLlama3_70B } from '#llm/models/together';
-import { Gemini_1_5_Flash } from '#llm/models/vertexai';
+import { Claude3_Haiku } from '#llm/services/anthropic';
+import { Claude3_Haiku_Vertex } from '#llm/services/anthropic-vertex';
+import { cerebrasLlama3_8b } from '#llm/services/cerebras';
+import { deepseekChat } from '#llm/services/deepseek';
+import { fireworksLlama3_70B } from '#llm/services/fireworks';
+import { groqLlama3_1_8b } from '#llm/services/groq';
+import { Ollama_Phi3 } from '#llm/services/ollama';
+import { GPT4oMini } from '#llm/services/openai';
+import { togetherLlama3_70B } from '#llm/services/together';
+import { Gemini_1_5_Flash } from '#llm/services/vertexai';
 
 // Skip until API keys are configured in CI
 describe('LLMs', () => {
@@ -29,7 +29,7 @@ describe('LLMs', () => {
 			const llm = Claude3_Haiku_Vertex();
 
 			it('should generateText', async () => {
-				const response = await llm.generateTextFromMessages(SKY_MESSAGES, { temperature: 0 });
+				const response = await llm.generateText(SKY_MESSAGES, { temperature: 0 });
 				expect(response.toLowerCase()).to.include('blue');
 			});
 		});
