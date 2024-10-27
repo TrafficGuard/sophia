@@ -49,7 +49,8 @@ export abstract class BaseLLM implements LLM {
 				systemPrompt = userOrSystemOrMessages;
 				userPrompt = userOrOptions as string;
 				options = opts;
-			} else { // Args: user, opts
+			} else {
+				// Args: user, opts
 				userPrompt = userOrSystemOrMessages;
 				options = userOrOptions;
 			}

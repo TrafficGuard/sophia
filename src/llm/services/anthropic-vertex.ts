@@ -113,7 +113,7 @@ class AnthropicVertexLLM extends BaseLLM {
 		return await withActiveSpan(`generateTextFromMessages ${opts?.id ?? ''}`, async (span) => {
 			const maxOutputTokens = this.model.includes('3-5') ? 8192 : 4096;
 
-			const userMsg = messages.findLast(message => message.role === 'user')
+			const userMsg = messages.findLast((message) => message.role === 'user');
 
 			span.setAttributes({
 				userPrompt: userMsg.content.toString(),
@@ -138,7 +138,7 @@ class AnthropicVertexLLM extends BaseLLM {
 				if (messages[0].role === 'system') {
 					const message = messages.splice(0, 1)[0];
 					// systemMessage = [{ type: 'text', text: message.content as string }];
-					systemMessage = message.content.toString()
+					systemMessage = message.content.toString();
 					// if(source.cache)
 					// 	systemMessage[0].cacheControl = 'ephemeral'
 				}
@@ -274,8 +274,7 @@ class AnthropicVertexLLM extends BaseLLM {
 
 			try {
 				// Need to re-add the system message as we sliced it off earlier
-				if(systemMessage)
-					llmCall.messages.unshift({role: 'system', content: systemMessage})
+				if (systemMessage) llmCall.messages.unshift({ role: 'system', content: systemMessage });
 				await appContext()?.llmCallService.saveResponse(llmCall);
 			} catch (e) {
 				// queue to save
