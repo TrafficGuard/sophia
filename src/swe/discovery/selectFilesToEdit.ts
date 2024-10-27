@@ -71,7 +71,7 @@ The file paths MUST exist in the <project_map /> file_contents path attributes.
 </example>
 </task>
 `;
-	let selectedFiles = (await llms().medium.generateJson(prompt, null, { id: 'selectFilesToEdit' })) as SelectFilesResponse;
+	let selectedFiles = (await llms().medium.generateJson(prompt, { id: 'selectFilesToEdit' })) as SelectFilesResponse;
 
 	selectedFiles = removeLockFiles(selectedFiles);
 
@@ -216,9 +216,12 @@ export async function removeUnrelatedFiles(requirements: string, fileSelection: 
 		const prompt = keepOrRemoveFileAnalysisPrompt(requirements, file, fileContents);
 
 		const jsonResult = await llms().easy.generateJson(
-			prompt,
 			'You are an expert software developer tasked with identifying relevant files for a coding task.',
-			{ temperature: 0.5, id: 'Select files to edit - Remove unrelated files' },
+			prompt,
+			{
+				temperature: 0.5,
+				id: 'Select files to edit - Remove unrelated files',
+			},
 		);
 
 		return {

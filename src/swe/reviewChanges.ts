@@ -33,8 +33,8 @@ export async function reviewChanges(requirements: string, sourceBranchOrCommit: 
 	logger.info(`Reviewing diff from ${sourceBranchOrCommit}`);
 
 	const reviewItems = (await llms().hard.generateJson(
-		prompt,
 		'You are an experienced software engineer with an eye for detail and robust software engineering practices, design and styles across security, observability, reliability, object-orientated design, functional programming and performance.',
+		prompt,
 		{ id: 'review-code-changes' },
 	)) as string[];
 	logger.info(reviewItems);

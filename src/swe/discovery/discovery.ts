@@ -51,7 +51,7 @@ async function initialAssessment(task: string): Promise<string[]> {
   `;
 
 	try {
-		const informationNeeds = await llms().medium.generateJson<string[]>(prompt, null, {
+		const informationNeeds = await llms().medium.generateJson<string[]>(prompt, {
 			id: 'initialAssessment',
 			temperature: 0.7,
 		});
@@ -73,7 +73,7 @@ async function determineSource(need: string): Promise<'codebase' | 'online'> {
   `;
 
 	try {
-		const result = await llms().easy.generateJson<{ source: 'codebase' | 'online'; reasoning: string }>(prompt, null, {
+		const result = await llms().easy.generateJson<{ source: 'codebase' | 'online'; reasoning: string }>(prompt, {
 			id: 'determineSource',
 			temperature: 0.3,
 		});
@@ -100,7 +100,7 @@ async function analyzeFiles(files: SelectedFile[]): Promise<string> {
         Provide a concise summary of the relevant information in the file.
       `;
 
-			const summary = await llms().medium.generateText(prompt, null, {
+			const summary = await llms().medium.generateText(prompt, {
 				id: 'analyzeFiles',
 				temperature: 0.5,
 			});
@@ -127,7 +127,7 @@ async function performOnlineSearch(need: string): Promise<string> {
       Provide a summary of the key information from the search results.
     `;
 
-		const summary = await llms().medium.generateText(prompt, null, {
+		const summary = await llms().medium.generateText(prompt, {
 			id: 'performOnlineSearch',
 			temperature: 0.6,
 		});
@@ -156,7 +156,7 @@ async function reassessNeeds(gatheredInfo: string, task: string): Promise<string
   `;
 
 	try {
-		const newNeeds = await llms().medium.generateJson<string[]>(prompt, null, {
+		const newNeeds = await llms().medium.generateJson<string[]>(prompt, {
 			id: 'reassessNeeds',
 			temperature: 0.7,
 		});
@@ -178,7 +178,7 @@ async function synthesizeInformation(gatheredInfo: string): Promise<string> {
   `;
 
 	try {
-		const summary = await llms().medium.generateText(prompt, null, {
+		const summary = await llms().medium.generateText(prompt, {
 			id: 'synthesizeInformation',
 			temperature: 0.5,
 		});
@@ -209,7 +209,7 @@ async function makeDecision(synthesizedInfo: string, task: string): Promise<{ re
 			readyForExecution: boolean;
 			reasoning: string;
 			nextSteps: string[];
-		}>(prompt, null, {
+		}>(prompt, {
 			id: 'makeDecision',
 			temperature: 0.3,
 		});

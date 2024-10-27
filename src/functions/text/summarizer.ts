@@ -42,7 +42,7 @@ Format your response as follows:
 </result>
 </response>`;
 
-		let currentSummary = await llms().medium.generateText(initialPrompt, null, { id: 'Summarize initial' });
+		let currentSummary = await llms().medium.generateText(initialPrompt, { id: 'Summarize initial' });
 
 		// Step 2: Expand on the summary for the specified number of iterations
 		for (let i = 0; i < expandIterations; i++) {
@@ -86,7 +86,7 @@ Respond in the following format:
 </result>
 </response>`;
 
-			currentSummary = await llms().medium.generateTextWithResult(expandPrompt, null, { id: 'Summarize expand' });
+			currentSummary = await llms().medium.generateTextWithResult(expandPrompt, { id: 'Summarize expand' });
 		}
 
 		return currentSummary;

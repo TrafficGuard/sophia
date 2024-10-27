@@ -9,6 +9,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatButtonModule } from '@angular/material/button';
+import {MatOption} from "@angular/material/core";
 
 @Component({
     selector: 'agent-llm-calls',
@@ -45,10 +46,15 @@ export class AgentLlmCallsComponent implements OnInit {
             .subscribe(
                 (calls) => {
                     this.llmCalls = calls.data;
+                    console.log(calls.data);
                     this.llmCalls.forEach((call) => {
-                        call.userPrompt = call.userPrompt.replace('\\n', '<br/>');
+                        call.userPrompt = call.userPrompt?.replace('\\n', '<br/>');
                         if (call.systemPrompt) {
                             call.systemPrompt = call.systemPrompt.replace('\\n', '<br/>');
+                        }
+                        for (const msg of call.messages) {
+                            if(typeof msg.content === 'string')
+                                msg.content = msg.content.replace('\\n', '<br/>');
                         }
                     });
                 },
@@ -84,7 +90,7 @@ export class AgentLlmCallsComponent implements OnInit {
     }
 
     removeMemoryContent(text: string): string {
-        return text.replace(/<memory>.*?<\/memory>/gs, '');
+        return text?.replace(/<memory>.*?<\/memory>/gs, '') ?? '';
     }
 
     convertNewlinesToHtml(text: string): SafeHtml {

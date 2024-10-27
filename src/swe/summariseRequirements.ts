@@ -14,5 +14,5 @@ export async function summariseRequirements(requirements: string): Promise<strin
 		
 		Do not provide implementation details, only a summary`,
 	});
-	return llms().hard.generateText(prompt, null, { id: 'summariseRequirements' });
+	return llms().hard.generateText(prompt, { id: 'summariseRequirements' });
 }

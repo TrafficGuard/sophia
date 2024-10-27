@@ -17,6 +17,7 @@ export class FirestoreLlmCallService implements LlmCallService {
 			cost: data.cost,
 			userPrompt: data.userPrompt,
 			systemPrompt: data.systemPrompt,
+			messages: data.messages,
 			description: data.description,
 			responseText: data.responseText,
 			llmId: data.llmId,

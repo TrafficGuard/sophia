@@ -386,7 +386,7 @@ Instructions:
 
 Response only in JSON format. Do not wrap the JSON in any tags.
 `;
-		const reviewComments = (await llms().medium.generateJson(prompt, null, { id: 'reviewDiff', temperature: 0.5 })) as {
+		const reviewComments = (await llms().medium.generateJson(prompt, { id: 'reviewDiff', temperature: 0.5 })) as {
 			violations: Array<{ lineNumber: number; comment: string }>;
 		};
 

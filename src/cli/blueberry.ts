@@ -3,8 +3,8 @@ import '#fastify/trace-init/trace-init'; // leave an empty line next so this doe
 import { writeFileSync } from 'fs';
 import { agentContext, agentContextStorage, createContext } from '#agent/agentContextLocalStorage';
 import { AgentContext } from '#agent/agentContextTypes';
-import { mockLLMs } from '#llm/models/mock-llm';
 import { Blueberry } from '#llm/multi-agent/blueberry';
+import { mockLLMs } from '#llm/services/mock-llm';
 import { initFirestoreApplicationContext } from '../app';
 import { parseProcessArgs, saveAgentId } from './cli';
 

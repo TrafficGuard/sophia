@@ -1,7 +1,6 @@
 import Groq from 'groq-sdk';
 import { agentContext } from '#agent/agentContextLocalStorage';
 import { addCost } from '#agent/agentContextLocalStorage';
-import { AgentLLMs } from '#agent/agentContextTypes';
 import { LlmCall } from '#llm/llmCallService/llmCall';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
@@ -73,7 +72,7 @@ export class GroqLLM extends BaseLLM {
 		return Boolean(currentUser().llmConfig.groqKey || process.env.GROQ_API_KEY);
 	}
 
-	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
+	async _generateText(systemPrompt: string | undefined, userPrompt: string, opts?: GenerateTextOptions): Promise<string> {
 		return withActiveSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
@@ -91,7 +90,7 @@ export class GroqLLM extends BaseLLM {
 				systemPrompt,
 				llmId: this.getId(),
 				agentId: agentContext()?.agentId,
-				callStack: agentContext()?.callStack.join(' > '),
+				callStack: this.callStack(agentContext()),
 			});
 			const requestTime = Date.now();
 

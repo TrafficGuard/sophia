@@ -125,7 +125,7 @@ export async function runCodeGenAgent(agent: AgentContext): Promise<AgentExecuti
 					let agentPlanResponse: string;
 					let llmPythonCode: string;
 					try {
-						agentPlanResponse = await agentLLM.generateText(initialPrompt, systemPromptWithFunctions, {
+						agentPlanResponse = await agentLLM.generateText(systemPromptWithFunctions, initialPrompt, {
 							id: 'Codegen agent plan',
 							stopSequences,
 							temperature: 0.5,
@@ -134,7 +134,7 @@ export async function runCodeGenAgent(agent: AgentContext): Promise<AgentExecuti
 					} catch (e) {
 						logger.warn(e, 'Error with Codegen agent plan');
 						// One re-try if the generate fails or the code can't be extracted
-						agentPlanResponse = await agentLLM.generateText(initialPrompt, systemPromptWithFunctions, {
+						agentPlanResponse = await agentLLM.generateText(systemPromptWithFunctions, initialPrompt, {
 							id: 'Codegen agent plan',
 							stopSequences,
 							temperature: 0.5,
@@ -248,7 +248,7 @@ main()`.trim();
 							if (e.type === 'IndentationError' || e.type !== 'SyntaxError') {
 								// Fix the compile issues in the script
 								const prompt = `${functionsXml}\n<python>\n${pythonScript}</python>\n<error>${e.message}</error>\nPlease adjust/reformat the Python script to fix the issue. Output only the updated code. Do no chat, do not output markdown ticks. Only the updated code.`;
-								pythonScript = await llms().hard.generateText(prompt, null, { id: 'Fix python script error' });
+								pythonScript = await llms().hard.generateText(prompt, { id: 'Fix python script error' });
 
 								// Re-try execution of fixed syntax/indentation error
 								const result = await pyodide.runPythonAsync(pythonScript, { globals });

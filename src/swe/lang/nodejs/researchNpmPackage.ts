@@ -58,7 +58,6 @@ export class NpmPackages {
 
 		const response: any = await llm.generateJson(
 			`${html}\n\nExtract the URL from this html document at https://npmjs.com/package/${npmPackageName} that looks like it will be the main site which contains the documentation for the package ${npmPackageName}, and the link to the GitHub repo if it exists. Return your answer as JSON in the format {"docUrl":"", "gitHubUrl":""}`,
-			null,
 			{ id: 'getPackageInfo' },
 		);
 		let docUrl = response.docUrl as string | null;

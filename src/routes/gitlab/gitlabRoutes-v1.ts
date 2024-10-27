@@ -4,7 +4,7 @@ import { AgentContext } from '#agent/agentContextTypes';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { send, sendSuccess } from '#fastify/index';
 import { GitLab } from '#functions/scm/gitlab';
-import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
+import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { logger } from '#o11y/logger';
 import { envVar } from '#utils/env-var';
 import { AppFastifyInstance, appContext } from '../../app';

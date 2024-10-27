@@ -111,14 +111,14 @@ export async function runXmlAgent(agent: AgentContext): Promise<AgentExecution> 
 
 					let functionResponse: FunctionResponse;
 					try {
-						functionResponse = await agentLLM.generateFunctionResponse(currentPrompt, systemPromptWithFunctions, {
+						functionResponse = await agentLLM.generateFunctionResponse(systemPromptWithFunctions, currentPrompt, {
 							id: 'generateFunctionCalls',
 							stopSequences,
 						});
 					} catch (e) {
 						// Should just catch parse error
 						const retryPrompt = `${currentPrompt}\nNote: Your previous response did not contain the response in the required format of <response><function_calls>...</function_calls></response>. You must reply in the correct response format.`;
-						functionResponse = await agentLLM.generateFunctionResponse(retryPrompt, systemPromptWithFunctions, {
+						functionResponse = await agentLLM.generateFunctionResponse(systemPromptWithFunctions, retryPrompt, {
 							id: 'generateFunctionCalls-retryError',
 							stopSequences,
 						});
@@ -132,7 +132,7 @@ export async function runXmlAgent(agent: AgentContext): Promise<AgentExecution> 
 						const retryPrompt = `${currentPrompt}
 						Note: Your previous response did not contain a function call.  If you are able to answer/complete the question/task, then call the ${AGENT_COMPLETED_NAME} function with the appropriate response.
 						If you are unsure what to do next then call the ${AGENT_REQUEST_FEEDBACK} function with a clarifying question.`;
-						const functionCallResponse: FunctionResponse = await agentLLM.generateFunctionResponse(retryPrompt, systemPromptWithFunctions, {
+						const functionCallResponse: FunctionResponse = await agentLLM.generateFunctionResponse(systemPromptWithFunctions, retryPrompt, {
 							id: 'generateFunctionCalls-retryNoFunctions',
 							stopSequences,
 						});

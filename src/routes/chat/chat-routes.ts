@@ -4,7 +4,7 @@ import { Chat, ChatList } from '#chat/chatTypes';
 import { send, sendBadRequest } from '#fastify/index';
 import { LLM } from '#llm/llm';
 import { getLLM } from '#llm/llmFactory';
-import { Claude3_5_Sonnet_Vertex } from '#llm/models/anthropic-vertex';
+import { Claude3_5_Sonnet_Vertex } from '#llm/services/anthropic-vertex';
 import { logger } from '#o11y/logger';
 import { currentUser } from '#user/userService/userContext';
 import { AppFastifyInstance } from '../../app';
@@ -62,13 +62,13 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
 			if (!llm.isConfigured()) return sendBadRequest(reply, `LLM ${llm.getId()} is not configured`);
 
 			const titlePromise: Promise<string> | undefined = llm.generateText(
-				text,
 				'The following message is the first message in a new chat conversation. Your task is to create a short title for the conversation. Respond only with the title, nothing else',
+				text,
 			);
 
 			chat.messages.push({ role: 'user', content: text, time: Date.now() }); //, cache: cache ? 'ephemeral' : undefined // remove any previous cache marker
 
-			const generatedMessage = await llm.generateTextFromMessages(chat.messages);
+			const generatedMessage = await llm.generateText(chat.messages);
 			chat.messages.push({ role: 'assistant', content: generatedMessage, llmId: llmId, time: Date.now() });
 
 			if (titlePromise) chat.title = await titlePromise;
@@ -109,7 +109,7 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
 
 			chat.messages.push({ role: 'user', content: text, time: Date.now() }); //, cache: cache ? 'ephemeral' : undefined // remove any previous cache marker
 
-			const generatedMessage = await llm.generateTextFromMessages(chat.messages);
+			const generatedMessage = await llm.generateText(chat.messages);
 			chat.messages.push({ role: 'assistant', content: generatedMessage, llmId, time: Date.now() });
 
 			await fastify.chatService.saveChat(chat);

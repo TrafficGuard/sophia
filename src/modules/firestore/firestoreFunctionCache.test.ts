@@ -2,7 +2,7 @@ import axios from 'axios';
 import { expect } from 'chai';
 import * as fs from 'fs/promises';
 import { agentContext, agentContextStorage, createContext } from '#agent/agentContextLocalStorage';
-import { mockLLMs } from '#llm/models/mock-llm';
+import { mockLLMs } from '#llm/services/mock-llm';
 import { logger } from '#o11y/logger';
 import { currentUser } from '#user/userService/userContext';
 import { initInMemoryApplicationContext } from '../../app';

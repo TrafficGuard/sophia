@@ -1,11 +1,13 @@
 import { BaseLLM } from '#llm/base-llm';
 import { GenerateTextOptions, LLM } from '#llm/llm';
 import { getLLM } from '#llm/llmFactory';
-import { Claude3_5_Sonnet_Vertex } from '#llm/models/anthropic-vertex';
-import { fireworksLlama3_405B } from '#llm/models/fireworks';
-import { GPT4o } from '#llm/models/openai';
-import { Gemini_1_5_Pro } from '#llm/models/vertexai';
+import { Claude3_5_Sonnet_Vertex } from '#llm/services/anthropic-vertex';
+import { cerebrasLlama3_70b } from '#llm/services/cerebras';
+import { fireworksLlama3_405B } from '#llm/services/fireworks';
+import { GPT4o } from '#llm/services/openai';
+import { Gemini_1_5_Flash, Gemini_1_5_Pro } from '#llm/services/vertexai';
 import { logger } from '#o11y/logger';
+import { withActiveSpan } from '#o11y/trace';
 
 // sparse multi-agent debate https://arxiv.org/abs/2406.11776
 // self-refine https://arxiv.org/pdf/2303.17651
@@ -105,15 +107,19 @@ export class Blueberry extends BaseLLM {
 				logger.error(e, `Invalid model string format for Blueberry ${model}`);
 			}
 		}
-		if (!this.llms) this.llms = [Claude3_5_Sonnet_Vertex(), GPT4o(), Gemini_1_5_Pro(), Claude3_5_Sonnet_Vertex(), fireworksLlama3_405B()];
-		if (!this.mediator) this.mediator = Claude3_5_Sonnet_Vertex();
+		// if (!this.llms) this.llms = [Claude3_5_Sonnet_Vertex(), GPT4o(), Gemini_1_5_Pro(), Claude3_5_Sonnet_Vertex(), fireworksLlama3_405B()];
+		let llm = cerebrasLlama3_70b();
+		// llm = groqLlama3_1_70B();
+		llm = Gemini_1_5_Flash();
+		if (!this.llms) this.llms = [llm, llm, llm, llm, llm];
+		if (!this.mediator) this.mediator = llm;
 	}
 
 	getModel(): string {
 		return `${this.mediator.getId()}|${this.llms.map((llm) => llm.getId()).join('|')}`;
 	}
 
-	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
+	async _generateText(systemPrompt: string | undefined, userPrompt: string, opts?: GenerateTextOptions): Promise<string> {
 		if (systemPrompt) {
 			logger.error('system prompt not available for Blueberry');
 			// prepend to the user prompt?
@@ -126,10 +132,10 @@ export class Blueberry extends BaseLLM {
 	}
 
 	private async generateInitialResponses(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string[]> {
-		return Promise.all(this.llms.map((llm) => llm.generateText(userPrompt, systemPrompt, { ...opts, temperature: 0.8 })));
+		return Promise.all(this.llms.map((llm) => llm.generateText(systemPrompt, userPrompt, { ...opts, temperature: 1 })));
 	}
 
-	private async multiAgentDebate(responses: string[], systemPromptSrc?: string, opts?: GenerateTextOptions, rounds = 3): Promise<string[]> {
+	private async multiAgentDebate(responses: string[], systemPromptSrc?: string, opts?: GenerateTextOptions, rounds = 4): Promise<string[]> {
 		let debatedResponses = responses;
 
 		for (let round = 1; round < rounds; round++) {
@@ -139,7 +145,7 @@ export class Blueberry extends BaseLLM {
 					const leftNeighborIndex = (index - 1 + this.llms.length) % this.llms.length;
 					const rightNeighborIndex = (index + 1) % this.llms.length;
 					const newUserPrompt = `${responses[index]}\n\nBelow are responses from two other agents:\n<response-1>\n${responses[leftNeighborIndex]}\n</response-1>\n\n<response-2>\n${responses[rightNeighborIndex]}\n</response-2>\n\nUse the insights from all the responses to refine and update your answer in the same format.`;
-					return llm.generateText(newUserPrompt, systemPromptSrc, opts);
+					return llm.generateText(systemPromptSrc, newUserPrompt, opts);
 				}),
 			);
 		}
@@ -147,7 +153,7 @@ export class Blueberry extends BaseLLM {
 		return debatedResponses;
 	}
 
-	private async mergeBestResponses(userPrompt: string, responses: string[], systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
+	private async mergeBestResponses(userPrompt: string, responses: string[], systemPrompt?: string): Promise<string> {
 		const mergePrompt = `
 User's Question: ${userPrompt}
 
@@ -181,6 +187,6 @@ Guidelines:
 - Ensure your final answer directly addresses the user's original question
         `;
 
-		return await this.mediator.generateText(mergePrompt, systemPrompt, opts);
+		return await this.mediator.generateText(systemPrompt, mergePrompt, { temperature: 0.6 });
 	}
 }

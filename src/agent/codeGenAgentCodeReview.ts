@@ -81,5 +81,5 @@ ${agentPlanResponse}
 
 First detail your review of the code, then output the updated code wrapped in <result></result> tags. If there are no changes to make then output the existing code as is in the result tags.
 `;
-	return await llms().medium.generateTextWithResult(prompt, null, { id: 'Review agent python code', temperature: 0.8 });
+	return await llms().medium.generateTextWithResult(prompt, { id: 'Review agent python code', temperature: 0.8 });
 }

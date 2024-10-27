@@ -3,7 +3,7 @@ import '#fastify/trace-init/trace-init'; // leave an empty line next so this doe
 import { writeFileSync } from 'node:fs';
 import { agentContextStorage, createContext } from '#agent/agentContextLocalStorage';
 import { PublicWeb } from '#functions/web/web';
-import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
+import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 
 // npm run scrape <URL> <filename(optional)>
 

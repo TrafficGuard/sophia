@@ -146,7 +146,7 @@ Then the output would be:
 </output>
 </example>
 </task_requirements>`;
-	const projectDetections: ProjectDetections = await llms().medium.generateJson(prompt, null, { id: 'projectInfoFileSelection' });
+	const projectDetections: ProjectDetections = await llms().medium.generateJson(prompt, { id: 'projectInfoFileSelection' });
 	logger.info(projectDetections, 'Project detections');
 	if (!projectDetections.projects.length) throw new Error(`Could not detect a software project within ${fileSystem.getWorkingDirectory()}`);
 
@@ -158,23 +158,23 @@ Then the output would be:
 	const projectDetectionFileContents = await fileSystem.readFilesAsXml(projectDetectionFiles);
 
 	const projectScripts: ProjectScripts = await llms().medium.generateJson(
+		null,
 		`${projectDetectionFileContents}.\n 
-		Your task is to determine the shell commands to compile, lint/format, and unit test the ${projectDetection.language} project from the files provided.
-		There may be multiple shell commands to chain together, eg. To lint and format the project might require "npm run prettier && npm run eslint".
-		
-		
+    Your task is to determine the shell commands to compile, lint/format, and unit test the ${projectDetection.language} project from the files provided.
+    There may be multiple shell commands to chain together, eg. To lint and format the project might require "npm run prettier && npm run eslint".
+    
+    
 Explain your reasoning, then output a Markdown JSON block, with the JSON formatted in the following example:
 <example>
 {
-	"initialise": "",
-	"compile": "",
-	"format": "",
-	"staticAnalysis": "",
-	"test": ""
+"initialise": "",
+"compile": "",
+"format": "",
+"staticAnalysis": "",
+"test": ""
 }
 </example>
 `,
-		null,
 		{ id: 'detectProjectInfo' },
 	);
 	projectDetection.files = undefined;

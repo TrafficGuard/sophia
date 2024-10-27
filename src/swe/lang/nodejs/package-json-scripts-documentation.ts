@@ -19,5 +19,5 @@ export async function documentPackageJsonScripts(llm: LLM): Promise<string> {
 		2,
 	)}`;
 
-	return llm.generateText(prompt, null, { id: 'documentPackageJsonScripts' });
+	return llm.generateText(prompt, { id: 'documentPackageJsonScripts' });
 }

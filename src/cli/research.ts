@@ -6,11 +6,11 @@ import { AgentLLMs } from '#agent/agentContextTypes';
 import { startAgentAndWait } from '#agent/agentRunner';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
-import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
-import { fireworksLlama3_70B } from '#llm/models/fireworks';
+import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
+import { fireworksLlama3_70B } from '#llm/services/fireworks';
 
-import { Ollama_LLMs } from '#llm/models/ollama';
-import { togetherLlama3_70B } from '#llm/models/together';
+import { Ollama_LLMs } from '#llm/services/ollama';
+import { togetherLlama3_70B } from '#llm/services/together';
 import { parseProcessArgs, saveAgentId } from './cli';
 
 // Usage:

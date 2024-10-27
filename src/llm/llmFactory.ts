@@ -1,18 +1,18 @@
 import { AgentLLMs } from '#agent/agentContextTypes';
 import { LLM } from '#llm/llm';
-import { anthropicLLMRegistry } from '#llm/models/anthropic';
-import { anthropicVertexLLMRegistry } from '#llm/models/anthropic-vertex';
-import { cerebrasLLMRegistry } from '#llm/models/cerebras';
-import { deepseekLLMRegistry } from '#llm/models/deepseek';
-import { fireworksLLMRegistry } from '#llm/models/fireworks';
-import { groqLLMRegistry } from '#llm/models/groq';
-import { MockLLM, mockLLM } from '#llm/models/mock-llm';
-import { ollamaLLMRegistry } from '#llm/models/ollama';
-import { openAiLLMRegistry } from '#llm/models/openai';
-import { togetherLLMRegistry } from '#llm/models/together';
-import { vertexLLMRegistry } from '#llm/models/vertexai';
 import { blueberryLLMRegistry } from '#llm/multi-agent/blueberry';
 import { MultiLLM } from '#llm/multi-llm';
+import { anthropicLLMRegistry } from '#llm/services/anthropic';
+import { anthropicVertexLLMRegistry } from '#llm/services/anthropic-vertex';
+import { cerebrasLLMRegistry } from '#llm/services/cerebras';
+import { deepseekLLMRegistry } from '#llm/services/deepseek';
+import { fireworksLLMRegistry } from '#llm/services/fireworks';
+import { groqLLMRegistry } from '#llm/services/groq';
+import { MockLLM, mockLLM } from '#llm/services/mock-llm';
+import { ollamaLLMRegistry } from '#llm/services/ollama';
+import { openAiLLMRegistry } from '#llm/services/openai';
+import { togetherLLMRegistry } from '#llm/services/together';
+import { vertexLLMRegistry } from '#llm/services/vertexai';
 import { logger } from '#o11y/logger';
 
 export const LLM_FACTORY: Record<string, () => LLM> = {

@@ -71,7 +71,6 @@ export class Perplexity {
 			if (saveToMemory) {
 				const summary = await llms().easy.generateText(
 					`<query>${researchQuery}</query>\nGenerate a summarised version of the research key in one short sentence at most, with only alphanumeric with underscores for spaces. Answer concisely with only the summary.`,
-					null,
 					{ id: 'summarisePerplexityQuery' },
 				);
 				const key = `Perplexity-${summary}`;

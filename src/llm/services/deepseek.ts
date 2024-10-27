@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import axios from 'axios';
 import { addCost, agentContext } from '#agent/agentContextLocalStorage';
 import { LlmCall } from '#llm/llmCallService/llmCall';
 import { withSpan } from '#o11y/trace';
@@ -10,26 +10,45 @@ import { RetryableError } from '../../cache/cacheRetry';
 import { BaseLLM } from '../base-llm';
 import { GenerateTextOptions, LLM, combinePrompts } from '../llm';
 
-export const FIREWORKS_SERVICE = 'fireworks';
+export const DEEPSEEK_SERVICE = 'deepseek';
+
+export function deepseekLLMRegistry(): Record<string, () => LLM> {
+	return {
+		[`${DEEPSEEK_SERVICE}:deepseek-chat`]: () => deepseekChat(),
+	};
+}
+
+export function deepseekChat(): LLM {
+	return new DeepseekLLM(
+		'DeepSeek Chat',
+		'deepseek-chat',
+		32000,
+		(input: string) => (input.length * 0.14) / (1_000_000 * 3.5),
+		(output: string) => (output.length * 0.28) / (1_000_000 * 3.5),
+	);
+}
 
 /**
- * Fireworks AI models
+ * Deepseek models
+ * @see https://platform.deepseek.com/api-docs/api/create-chat-completion
  */
-export class FireworksLLM extends BaseLLM {
-	_client: OpenAI;
+export class DeepseekLLM extends BaseLLM {
+	_client: any;
 
-	client(): OpenAI {
+	client() {
 		if (!this._client) {
-			this._client = new OpenAI({
-				apiKey: currentUser().llmConfig.fireworksKey || envVar('FIREWORKS_KEY'),
-				baseURL: 'https://api.fireworks.ai/inference/v1',
+			this._client = axios.create({
+				baseURL: 'https://api.deepseek.com',
+				headers: {
+					Authorization: `Bearer ${currentUser().llmConfig.deepseekKey || envVar('DEEPSEEK_API_KEY')}`,
+				},
 			});
 		}
 		return this._client;
 	}
 
 	isConfigured(): boolean {
-		return Boolean(currentUser().llmConfig.fireworksKey || process.env.FIREWORKS_KEY);
+		return Boolean(currentUser().llmConfig.deepseekKey || process.env.DEEPSEEK_API_KEY);
 	}
 
 	constructor(
@@ -39,10 +58,10 @@ export class FireworksLLM extends BaseLLM {
 		inputCostPerToken: (input: string) => number,
 		outputCostPerToken: (output: string) => number,
 	) {
-		super(displayName, FIREWORKS_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
+		super(displayName, DEEPSEEK_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
 	}
 
-	async generateText(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string> {
+	async _generateText(systemPrompt: string | undefined, userPrompt: string, opts?: GenerateTextOptions): Promise<string> {
 		return withSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
 			const prompt = combinePrompts(userPrompt, systemPrompt);
 
@@ -59,7 +78,7 @@ export class FireworksLLM extends BaseLLM {
 				systemPrompt,
 				llmId: this.getId(),
 				agentId: agentContext()?.agentId,
-				callStack: agentContext()?.callStack.join(' > '),
+				callStack: this.callStack(agentContext()),
 			});
 			const requestTime = Date.now();
 
@@ -76,23 +95,26 @@ export class FireworksLLM extends BaseLLM {
 			});
 
 			try {
-				const completion: OpenAI.ChatCompletion = await this.client().chat.completions.create({
+				const response = await this.client().post('/chat/completions', {
 					messages,
 					model: this.model,
-					max_tokens: 4094,
 				});
 
-				const responseText = completion.choices[0].message.content;
+				const responseText = response.data.choices[0].message.content;
 
-				const llmCall: LlmCall = await llmCallSave;
-
-				const inputCost = this.calculateInputCost(prompt);
-				const outputCost = this.calculateOutputCost(responseText);
-				const cost = inputCost + outputCost;
-				addCost(cost);
+				const inputCacheHitTokens = response.data.prompt_cache_hit_tokens;
+				const inputCacheMissTokens = response.data.prompt_cache_miss_tokens;
+				const outputTokens = response.data.completion_tokens;
 
 				const timeToFirstToken = Date.now() - requestTime;
 				const finishTime = Date.now();
+				const llmCall: LlmCall = await llmCallSave;
+
+				const inputCost = (inputCacheHitTokens * 0.014) / 1_000_000 + (inputCacheMissTokens * 0.14) / 1_000_000;
+
+				const outputCost = (outputTokens * 0.28) / 1_000_000;
+				const cost = inputCost + outputCost;
+				addCost(cost);
 
 				llmCall.responseText = responseText;
 				llmCall.timeToFirstToken = timeToFirstToken;
@@ -108,6 +130,10 @@ export class FireworksLLM extends BaseLLM {
 
 				span.setAttributes({
 					response: responseText,
+					timeToFirstToken,
+					inputCacheHitTokens,
+					inputCacheMissTokens,
+					outputTokens,
 					inputCost,
 					outputCost,
 					cost,
@@ -116,6 +142,7 @@ export class FireworksLLM extends BaseLLM {
 
 				return responseText;
 			} catch (e) {
+				// Free accounts are limited to 1 query/second
 				if (e.message.includes('rate limiting')) {
 					await sleep(1000);
 					throw new RetryableError(e);
@@ -124,45 +151,8 @@ export class FireworksLLM extends BaseLLM {
 			}
 		});
 	}
-}
 
-export function fireworksLLMRegistry(): Record<string, () => LLM> {
-	return {
-		[`${FIREWORKS_SERVICE}:accounts/fireworks/models/llama-v3p1-70b-instruct`]: fireworksLlama3_70B,
-		[`${FIREWORKS_SERVICE}:accounts/fireworks/models/llama-v3p1-405b-instruct`]: fireworksLlama3_405B,
-	};
+	isRetryableError(e: any): boolean {
+		return e.message.includes('rate limiting');
+	}
 }
-
-export function fireworksLlama3_70B(): LLM {
-	return new FireworksLLM(
-		'LLama3 70b-i (Fireworks)',
-		'accounts/fireworks/models/llama-v3p1-70b-instruct',
-		131_072,
-		(input: string) => (input.length * 0.9) / 1_000_000 / 4,
-		(output: string) => (output.length * 0.9) / 1_000_000 / 4,
-	);
-}
-
-export function fireworksLlama3_405B(): LLM {
-	return new FireworksLLM(
-		'LLama3 405b-i (Fireworks)',
-		'accounts/fireworks/models/llama-v3p1-405b-instruct',
-		131_072,
-		(input: string) => (input.length * 3) / 1_000_000 / 4,
-		(output: string) => (output.length * 3) / 1_000_000 / 4,
-	);
-}
-
-/*
-  error: {
-    message: 'Invalid API key provided. You can find your API key at https://api.together.xyz/settings/api-keys.',
-    type: 'invalid_request_error',
-    param: null,
-    code: 'invalid_api_key'
-  },
-  code: 'invalid_api_key',
-  param: null,
-  type: 'invalid_request_error'
-}
-
- */

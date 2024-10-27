@@ -4,8 +4,8 @@ import { provideFeedback, resumeCompleted, resumeError, resumeHil, startAgentAnd
 import { FileSystemRead } from '#functions/storage/FileSystemRead';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
-import { ClaudeLLMs } from '#llm/models/anthropic';
-import { ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
+import { ClaudeLLMs } from '#llm/services/anthropic';
+import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
