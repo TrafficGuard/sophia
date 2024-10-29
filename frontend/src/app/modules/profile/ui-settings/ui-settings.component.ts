@@ -1,5 +1,6 @@
 import { NgClass } from '@angular/common';
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { LocalStorageService } from 'app/core/services/local-storage.service';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -39,8 +40,11 @@ export class UiSettingsComponent implements OnInit, OnDestroy {
      */
     constructor(
         private _router: Router,
-        private _fuseConfigService: FuseConfigService
-    ) {}
+        private _fuseConfigService: FuseConfigService,
+        private _localStorageService: LocalStorageService
+    ) {
+        this._unsubscribeAll = new Subject();
+    }
 
     // -----------------------------------------------------------------------------------------------------
     // @ Lifecycle hooks
@@ -97,8 +101,10 @@ export class UiSettingsComponent implements OnInit, OnDestroy {
      *
      * @param scheme
      */
+
     setScheme(scheme: Scheme): void {
         this._fuseConfigService.config = { scheme };
+        this._localStorageService.setScheme(scheme);
     }
 
     /**

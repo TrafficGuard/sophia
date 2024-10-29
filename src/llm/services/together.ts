@@ -36,7 +36,7 @@ export class TogetherLLM extends BaseLLM {
 	client(): OpenAI {
 		if (!this._client) {
 			this._client = new OpenAI({
-				apiKey: currentUser().llmConfig.togetheraiKey || envVar('TOGETHERAI_KEY'),
+				apiKey: currentUser().llmConfig.togetheraiKey || envVar('TOGETHERAI_API_KEY'),
 				baseURL: 'https://api.together.xyz/v1',
 			});
 		}

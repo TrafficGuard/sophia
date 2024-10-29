@@ -1,5 +1,6 @@
 import {provideHttpClient, HTTP_INTERCEPTORS, withInterceptorsFromDi} from '@angular/common/http';
 import { APP_INITIALIZER, ApplicationConfig, inject } from '@angular/core';
+import { LocalStorageService } from './core/services/local-storage.service';
 import { BaseUrlInterceptor } from './core/interceptors/base-url.interceptor';
 import { LuxonDateAdapter } from '@angular/material-luxon-adapter';
 import { DateAdapter, MAT_DATE_FORMATS } from '@angular/material/core';
@@ -90,6 +91,7 @@ export const appConfig: ApplicationConfig = {
         // Fuse
         provideAuth(),
         provideIcons(),
+        LocalStorageService,
         provideFuse({
             mockApi: {
                 delay: 0,
@@ -98,7 +100,7 @@ export const appConfig: ApplicationConfig = {
             fuse: {
                 // Default UI settings
                 layout: 'modern',
-                scheme: 'light',
+                scheme: 'dark',
                 screens: {
                     sm: '600px',
                     md: '960px',

@@ -115,36 +115,12 @@
                                 <div
                                     class="relative max-w-3/4 rounded-lg px-3 py-2"
                                     [ngClass]="{
-                                        'bg-gray-200 text-black-50':
+                                        'bg-gray-200 text-black-50 dark:bg-primary-600':
                                             message.isMine,
-                                        'bg-gray-50 text-black-50':
+                                        'bg-gray-50 text-black-50 dark:bg-gray-700':
                                             !message.isMine,
                                     }"
                                 >
-                                    <!-- Speech bubble tail -->
-                                    @if (
-                                        last ||
-                                        chat.messages[i + 1].isMine !==
-                                            message.isMine
-                                    ) {
-                                        <div
-                                            class="absolute bottom-0 w-3"
-                                            [ngClass]="{
-                                                '-right-1 -mr-px mb-px text-gray-200':
-                                                    message.isMine,
-                                                '-left-1 -ml-px mb-px -scale-x-1 text-gray-50':
-                                                    !message.isMine,
-                                            }"
-                                        >
-                                            <ng-container
-                                                *ngTemplateOutlet="
-                                                    speechBubbleExtension
-                                                "
-                                            ></ng-container>
-                                        </div>
-                                    }
-
-
                                     <!-- Message -->
                                     <div class="min-w-4 leading-5">
                                         <markdown [data]="message.content" ngPreserveWhitespaces> </markdown>
@@ -215,6 +191,10 @@
                             <button mat-icon-button>
                                 <mat-icon [svgIcon]="'heroicons_outline:face-smile'"></mat-icon>
                             </button>
+
+                            <button class="ml-0.5" [matTooltip]="'Temperature'">
+                                <mat-icon [svgIcon]="'device_thermostat'"></mat-icon>
+                            </button>
                             -->
                             <button class="ml-0.5" mat-icon-button [disabled]="true" [matTooltip]="'Attach a file. You can also drag a file onto the message field.'">
                                 <mat-icon [svgIcon]="'heroicons_outline:paper-clip'"></mat-icon>
@@ -241,7 +221,7 @@
                         </div>
                         <!-- mat-select -->
                         <mat-form-field appearance="fill" class="w-20 mt-2" style="min-width: 200px" subscriptSizing="dynamic">
-                            <mat-select placeholder="LLM" [(value)]="llmId">
+                            <mat-select #llmSelect (keydown)="handleLlmKeydown($event)" placeholder="LLM" [(value)]="llmId">
                                 @for (llm of $llms | async; track llm.id) {
                                     <mat-option [value]="llm.id">
                                         {{ llm.name }}
@@ -280,14 +260,4 @@
     }
 
     <!-- Select chat or start new template -->
-
-    <!-- Speech bubble tail SVG -->
-    <!-- prettier-ignore -->
-    <ng-template #speechBubbleExtension>
-        <svg width="100%" height="100%" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
-            <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                <path d="M1.01522827,0.516204834 C-8.83532715,54.3062744 61.7609863,70.5215302 64.8009949,64.3061218 C68.8074951,54.8859711 30.1663208,52.9997559 37.5036011,0.516204834 L1.01522827,0.516204834 Z" fill="currentColor" fill-rule="nonzero"></path>
-            </g>
-        </svg>
-    </ng-template>
 </div>

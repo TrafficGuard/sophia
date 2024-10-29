@@ -13,6 +13,7 @@ import { ollamaLLMRegistry } from '#llm/services/ollama';
 import { openAiLLMRegistry } from '#llm/services/openai';
 import { togetherLLMRegistry } from '#llm/services/together';
 import { vertexLLMRegistry } from '#llm/services/vertexai';
+import { xaiLLMRegistry } from '#llm/services/xai';
 import { logger } from '#o11y/logger';
 
 export const LLM_FACTORY: Record<string, () => LLM> = {
@@ -25,6 +26,7 @@ export const LLM_FACTORY: Record<string, () => LLM> = {
 	...vertexLLMRegistry(),
 	...deepseekLLMRegistry(),
 	...cerebrasLLMRegistry(),
+	...xaiLLMRegistry(),
 	...ollamaLLMRegistry(),
 	...blueberryLLMRegistry(),
 	...{ 'mock:mock': () => mockLLM },

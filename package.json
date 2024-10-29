@@ -53,6 +53,7 @@
     "@ai-sdk/anthropic": "^0.0.50",
     "@ai-sdk/azure": "^0.0.39",
     "@ai-sdk/google-vertex": "^0.0.37",
+    "@ai-sdk/groq": "^0.0.3",
     "@ai-sdk/openai": "^0.0.61",
     "@anthropic-ai/sdk": "^0.27.1",
     "@anthropic-ai/vertex-sdk": "^0.4.1",

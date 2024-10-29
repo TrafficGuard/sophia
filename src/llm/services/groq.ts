@@ -1,7 +1,9 @@
+import { GroqProvider, createGroq } from '@ai-sdk/groq';
 import Groq from 'groq-sdk';
 import { agentContext } from '#agent/agentContextLocalStorage';
 import { addCost } from '#agent/agentContextLocalStorage';
 import { LlmCall } from '#llm/llmCallService/llmCall';
+import { AiLLM } from '#llm/services/ai-llm';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
@@ -52,6 +54,28 @@ export function groqLlama3_1_70B(): LLM {
 		(output: string) => (output.length * 0.79) / (1_000_000 * 4),
 	);
 }
+
+/*
+export class GroqLLM extends AiLLM<GroqProvider> {
+
+	constructor(displayName: string, model: string, maxTokens: number, calculateInputCost: (input: string) => number, calculateOutputCost: (output: string) => number) {
+		super(displayName, GROQ_SERVICE, model, maxTokens, calculateInputCost, calculateOutputCost);
+	}
+
+	protected apiKey(): string {
+		return currentUser().llmConfig.groqKey || process.env.GROQ_API_KEY;
+	}
+
+	provider(): GroqProvider {
+		if (!this.aiProvider) {
+			this.aiProvider = createGroq({
+				apiKey: this.apiKey() ?? '',
+			});
+		}
+		return this.aiProvider;
+	}
+}
+*/
 
 /**
  * https://wow.groq.com/

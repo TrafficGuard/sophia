@@ -1,21 +1,22 @@
 {
   "name": "@sophia/ui",
-  "version": "20.0.0",
+  "version": "1.0.0",
   "description": "Sophia AI platform",
   "author": "https://themeforest.net/user/srcn, Daniel Campagnoli, TrafficGuard Pty Ltd, and contributors",
   "license": "https://themeforest.net/licenses/standard",
   "private": true,
   "scripts": {
     "ng": "ng",
-    "start": "npm run write:env -s && ng serve --host 0.0.0.0",
-    "start:local": "dotenv -e ../variables/local.env -- npm run start",
-    "build": "npm run write:env -s && ng build --base-href=/ui/",
+    "start": "ng serve --host 0.0.0.0",
+    "start:local": "node --env-file=../variables/local.env scripts/env.js && npm run start",
+    "build": "      node --env-file=../variables/local.env scripts/env.js && ng build",
+    "build:stage": "node --env-file=../variables/stage.env scripts/env.js && ng build",
+    "build:prod": " node --env-file=../variables/prod.env  scripts/env.js && ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test",
+    "test": "   ng test",
     "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadless",
     "lint": "ng lint",
-    "lint:ci": "echo skipping",
-    "write:env": "ngx-scripts env npm_package_version SERVER_URL GCLOUD_PROJECT FIRESTORE_DATABASE AUTH"
+    "lint:ci": "echo skipping"
   },
   "dependencies": {
     "@angular/animations": "18.0.1",

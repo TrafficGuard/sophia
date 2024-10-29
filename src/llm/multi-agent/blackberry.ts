@@ -65,7 +65,7 @@ const MIND_OVER_DATA_SYS_PROMPT = `When addressing a problem, employ "Comparativ
 	c) Identify any additional information or expertise that could enhance the solution.
 `;
 
-export class Blueberry extends BaseLLM {
+export class Blackberry extends BaseLLM {
 	llms: LLM[] = [Claude3_5_Sonnet_Vertex(), GPT4o(), Gemini_1_5_Pro(), Claude3_5_Sonnet_Vertex(), fireworksLlama3_405B()];
 	mediator: LLM = Claude3_5_Sonnet_Vertex();
 

@@ -63,27 +63,21 @@ export function ClaudeLLMs(): AgentLLMs {
 	};
 }
 
-export class Anthropic extends AiLLM {
-	anthropic: AnthropicProvider | undefined;
-
+export class Anthropic extends AiLLM<AnthropicProvider> {
 	constructor(displayName: string, model: string, calculateInputCost: (input: string) => number, calculateOutputCost: (output: string) => number) {
 		super(displayName, ANTHROPIC_SERVICE, model, 200_000, calculateInputCost, calculateOutputCost);
 	}
 
-	private sdk(): AnthropicProvider {
-		if (!this.anthropic) {
-			this.anthropic = createAnthropic({
-				apiKey: currentUser().llmConfig.anthropicKey || envVar('ANTHROPIC_API_KEY'),
+	protected apiKey(): string {
+		return currentUser().llmConfig.anthropicKey || process.env.ANTHROPIC_API_KEY;
+	}
+
+	provider(): AnthropicProvider {
+		if (!this.aiProvider) {
+			this.aiProvider = createAnthropic({
+				apiKey: this.apiKey(),
 			});
 		}
-		return this.anthropic;
-	}
-
-	aiModel(): LanguageModelV1 {
-		return this.sdk()(this.getModel());
-	}
-
-	isConfigured(): boolean {
-		return Boolean(currentUser().llmConfig.anthropicKey || process.env.ANTHROPIC_API_KEY);
+		return this.aiProvider;
 	}
 }

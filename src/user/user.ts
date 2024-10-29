@@ -9,6 +9,7 @@ export interface LLMServicesConfig {
 	deepseekKey?: string;
 	fireworksKey?: string;
 	cerebrasKey?: string;
+	xaiKey?: string;
 }
 
 export interface User {

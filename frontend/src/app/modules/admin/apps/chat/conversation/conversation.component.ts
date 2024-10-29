@@ -1,6 +1,7 @@
 import {TextFieldModule} from '@angular/cdk/text-field';
 import {AsyncPipe, DatePipe, NgClass, NgTemplateOutlet} from '@angular/common';
 import {
+    AfterViewInit,
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
@@ -79,9 +80,10 @@ import {MatTooltipModule} from "@angular/material/tooltip";
         })
     ]
 })
-export class ConversationComponent implements OnInit, OnDestroy {
+export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
 
     @ViewChild('messageInput') messageInput: ElementRef;
+    @ViewChild('llmSelect') llmSelect: MatSelect;
     chat: Chat;
     drawerMode: 'over' | 'side' = 'side';
     drawerOpened: boolean = false;
@@ -204,13 +206,15 @@ export class ConversationComponent implements OnInit, OnDestroy {
         });
     }
 
-    /**
-     * On destroy
-     */
     ngOnDestroy(): void {
-        // Unsubscribe from all subscriptions
         this._unsubscribeAll.next(null);
         this._unsubscribeAll.complete();
+    }
+
+    ngAfterViewInit() {
+        setTimeout(() => {
+            this.messageInput.nativeElement.focus();
+        }, 100); // Small delay to ensure its displayed
     }
 
     // -----------------------------------------------------------------------------------------------------
@@ -334,11 +338,24 @@ export class ConversationComponent implements OnInit, OnDestroy {
         });
     }
 
+    handleLlmKeydown(event: KeyboardEvent) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            event.stopPropagation();
+            this.messageInput.nativeElement.focus();
+        }
+    }
+
     @HostListener('keydown', ['$event'])
     handleKeyboardEvent(event: KeyboardEvent): void {
         if (this.sendOnEnter && event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
             this.sendMessage();
+        }
+
+        if (event.key === 'm' && event.ctrlKey) {
+            this.llmSelect.open();
+            this.llmSelect.focus();
         }
     }
 

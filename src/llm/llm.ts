@@ -77,17 +77,26 @@ export function assistant(text: string): LlmMessage {
 }
 
 export interface LLM {
-	/* Generates text from a LLM */
+	/** Generates text from a LLM */
 	generateText(userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
 	generateText(systemPrompt: string, userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
 	generateText(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string>;
 
-	/* Generates a response that is expected to be in JSON format, and returns the object */
+	/**
+	 * Generates a response that ends with a JSON object wrapped in either <json></json> tags or Markdown triple ticks.
+	 * This allows the LLM to generate reasoning etc before the JSON object. However, it's not possible to use structured outputs
+	 * which restrict the response to a schema.
+	 */
+	generateTextWithJson(userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
+	generateTextWithJson(systemPrompt: string, userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
+	generateTextWithJson(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string>;
+
+	/** Generates a response which only returns a JSON object. */
 	generateJson<T>(userPrompt: string, opts?: GenerateJsonOptions): Promise<T>;
 	generateJson<T>(systemPrompt: string, userPrompt: string, opts?: GenerateJsonOptions): Promise<T>;
 	generateJson<T>(messages: LlmMessage[], opts?: GenerateJsonOptions): Promise<T>;
 	/**
-	 * Generates a response that is expected to have the <result></result> element, and returns the text inside it.
+	 * Generates a response that is expected to have a <result></result> element, and returns the text inside it.
 	 * This useful when you want to LLM to output discovery, reasoning, etc. to improve the answer, and only want the final result returned.
 	 */
 	generateTextWithResult(prompt: string, opts?: GenerateTextOptions): Promise<string>;

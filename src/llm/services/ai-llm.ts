@@ -1,9 +1,10 @@
+import { ProviderV1 } from '@ai-sdk/provider';
 import {
 	CoreMessage,
 	FinishReason,
 	GenerateTextResult,
-	LanguageModel,
 	LanguageModelUsage,
+	LanguageModelV1,
 	StreamTextResult,
 	generateText as aiGenerateText,
 	streamText as aiStreamText,
@@ -19,9 +20,35 @@ import { appContext } from '../../app';
 /**
  * Base class for LLM implementations using the Vercel ai package
  */
-export abstract class AiLLM extends BaseLLM {
+export abstract class AiLLM<Provider extends ProviderV1> extends BaseLLM {
+	protected aiProvider: Provider | undefined;
+
 	/** Model id form the Vercel AI package */
-	abstract aiModel(): LanguageModel;
+
+	constructor(
+		readonly displayName: string,
+		readonly service: string,
+		readonly model: string,
+		maxInputTokens: number,
+		/** Needed for Aider when we only have the text size */
+		readonly calculateInputCost: (input: string) => number,
+		/** Needed for Aider when we only have the text size */
+		readonly calculateOutputCost: (output: string) => number,
+	) {
+		super(displayName, service, model, maxInputTokens, calculateInputCost, calculateOutputCost);
+	}
+
+	protected abstract provider(): Provider;
+
+	protected abstract apiKey(): string | undefined;
+
+	isConfigured(): boolean {
+		return Boolean(this.apiKey());
+	}
+
+	aiModel(): LanguageModelV1 {
+		return this.provider().languageModel(this.getModel());
+	}
 
 	protected supportsGenerateTextFromMessages(): boolean {
 		return true;

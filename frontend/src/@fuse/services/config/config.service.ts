@@ -2,10 +2,22 @@ import { inject, Injectable } from '@angular/core';
 import { FUSE_CONFIG } from '@fuse/services/config/config.constants';
 import { merge } from 'lodash-es';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { LocalStorageService } from 'app/core/services/local-storage.service';
 
 @Injectable({ providedIn: 'root' })
 export class FuseConfigService {
-    private _config = new BehaviorSubject(inject(FUSE_CONFIG));
+    private _config: BehaviorSubject<any>;
+
+    constructor(private _localStorageService: LocalStorageService) {
+        const baseConfig = inject(FUSE_CONFIG);
+        const storedScheme = this._localStorageService.getScheme();
+        
+        this._config = new BehaviorSubject(
+            storedScheme 
+                ? merge({}, baseConfig, { scheme: storedScheme })
+                : baseConfig
+        );
+    }
 
     // -----------------------------------------------------------------------------------------------------
     // @ Accessors

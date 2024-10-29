@@ -8,7 +8,7 @@ import { envVar } from '#utils/env-var';
 import { appContext } from '../../app';
 import { RetryableError } from '../../cache/cacheRetry';
 import { BaseLLM } from '../base-llm';
-import { GenerateTextOptions, LLM, combinePrompts } from '../llm';
+import { GenerateTextOptions, LLM, LlmMessage, combinePrompts } from '../llm';
 
 export const DEEPSEEK_SERVICE = 'deepseek';
 
@@ -61,42 +61,39 @@ export class DeepseekLLM extends BaseLLM {
 		super(displayName, DEEPSEEK_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
 	}
 
-	async _generateText(systemPrompt: string | undefined, userPrompt: string, opts?: GenerateTextOptions): Promise<string> {
-		return withSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
-			const prompt = combinePrompts(userPrompt, systemPrompt);
+	protected supportsGenerateTextFromMessages(): boolean {
+		return true;
+	}
 
-			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
+	protected generateTextFromMessages(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string> {
+		return withSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
+			// Get system prompt and user prompt for logging
+			const systemMessage = messages.find((m) => m.role === 'system');
+			const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user');
+
+			if (systemMessage) span.setAttribute('systemPrompt', systemMessage.content as string);
 			span.setAttributes({
-				userPrompt,
-				inputChars: prompt.length,
+				userPrompt: lastUserMessage?.content as string,
+				inputChars: messages.reduce((acc, m) => acc + (m.content as string).length, 0),
 				model: this.model,
 				service: this.service,
 			});
 
 			const llmCallSave: Promise<LlmCall> = appContext().llmCallService.saveRequest({
-				userPrompt,
-				systemPrompt,
+				userPrompt: lastUserMessage?.content as string,
+				systemPrompt: systemMessage?.content as string,
 				llmId: this.getId(),
 				agentId: agentContext()?.agentId,
 				callStack: this.callStack(agentContext()),
 			});
 			const requestTime = Date.now();
 
-			const messages = [];
-			if (systemPrompt) {
-				messages.push({
-					role: 'system',
-					content: systemPrompt,
-				});
-			}
-			messages.push({
-				role: 'user',
-				content: userPrompt,
-			});
-
 			try {
 				const response = await this.client().post('/chat/completions', {
-					messages,
+					messages: messages.map((m) => ({
+						role: m.role,
+						content: m.content,
+					})),
 					model: this.model,
 				});
 
@@ -111,7 +108,6 @@ export class DeepseekLLM extends BaseLLM {
 				const llmCall: LlmCall = await llmCallSave;
 
 				const inputCost = (inputCacheHitTokens * 0.014) / 1_000_000 + (inputCacheMissTokens * 0.14) / 1_000_000;
-
 				const outputCost = (outputTokens * 0.28) / 1_000_000;
 				const cost = inputCost + outputCost;
 				addCost(cost);

@@ -4,14 +4,15 @@ import { AgentLLMs } from '#agent/agentContextTypes';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { shutdownTrace } from '#fastify/trace-init/trace-init';
-import { ClaudeLLMs } from '#llm/models/anthropic';
-import { Claude3_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/models/anthropic-vertex';
-import { cerebrasLlama3_70b } from '#llm/models/cerebras';
-import { deepseekChat } from '#llm/models/deepseek';
-import { groqLlama3_1_70B } from '#llm/models/groq';
-import { GPT4oMini, openAIo1, openAIo1mini } from '#llm/models/openai';
-import { Gemini_1_5_Flash } from '#llm/models/vertexai';
-import { codebaseQuery } from '#swe/codebaseQuery';
+import { Blueberry } from '#llm/multi-agent/blueberry';
+import { ClaudeLLMs } from '#llm/services/anthropic';
+import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
+import { cerebrasLlama3_70b } from '#llm/services/cerebras';
+import { deepseekChat } from '#llm/services/deepseek';
+import { groqLlama3_1_70B } from '#llm/services/groq';
+import { GPT4oMini, openAIo1, openAIo1mini } from '#llm/services/openai';
+import { Gemini_1_5_Flash } from '#llm/services/vertexai';
+import { codebaseQuery } from '#swe/discovery/codebaseQuery';
 import { initFirestoreApplicationContext } from '../app';
 import { parseProcessArgs, saveAgentId } from './cli';
 
@@ -23,9 +24,10 @@ async function main() {
 	}
 	// agentLlms.easy = Gemini_1_5_Flash();
 	// agentLlms.medium = groqLlama3_1_70B();
-	agentLlms.medium = deepseekChat();
-	agentLlms.medium = openAIo1mini();
-	agentLlms.medium = GPT4oMini();
+	// agentLlms.medium = deepseekChat();
+	// agentLlms.medium = openAIo1mini();
+	// agentLlms.medium = GPT4oMini();
+	// agentLlms.medium = new Blueberry();
 
 	const { initialPrompt, resumeAgentId } = parseProcessArgs();
 
