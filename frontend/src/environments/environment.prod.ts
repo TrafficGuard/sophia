@@ -12,5 +12,5 @@ export const environment = {
   gcpProject: env['GCLOUD_PROJECT'],
   firestoreDb: env['FIRESTORE_DATABASE'],
   auth: env['AUTH'],
-  apiBaseUrl: env['SERVER_URL'] || 'http://localhost:3000/api/', // Adjust this URL for production
+  apiBaseUrl: env['API_BASE_URL'],
 };

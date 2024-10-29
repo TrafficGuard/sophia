@@ -292,7 +292,7 @@ async function restCall(userPrompt: string, systemPrompt: string): Promise<strin
 
 	const REGION = 'us-central1';
 	const ENDPOINT = `${REGION}-aiplatform.googleapis.com`;
-	const PROJECT_ID = 'tg-infra-dev';
+	const PROJECT_ID = currentUser().llmConfig.vertexProjectId ?? envVar('GCLOUD_PROJECT');
 	try {
 		const url = `https://${ENDPOINT}/v1beta1/projects/${PROJECT_ID}/locations/${REGION}/endpoints/openapi/chat/completions`;
 		const response: any = await axios.post(url, payload, config);

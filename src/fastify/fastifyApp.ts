@@ -104,7 +104,7 @@ function listen(port: number): void {
 
 async function loadPlugins(config: FastifyConfig) {
 	await fastifyInstance.register(import('@fastify/cors'), {
-		origin: '*', // TODO restrict to UI domain
+		origin: new URL(process.env.UI_URL).origin,
 		methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow these HTTP methods
 		allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers
 		credentials: true,
