@@ -100,7 +100,7 @@ export const appConfig: ApplicationConfig = {
             fuse: {
                 // Default UI settings
                 layout: 'modern',
-                scheme: 'dark',
+                scheme: 'light',
                 screens: {
                     sm: '600px',
                     md: '960px',
