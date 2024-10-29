@@ -3,4 +3,5 @@ dist
 bin
 .venv
 .sophia/
+frontend
 
