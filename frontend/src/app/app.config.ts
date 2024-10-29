@@ -97,6 +97,7 @@ export const appConfig: ApplicationConfig = {
                 delay: 0,
                 services: mockApiServices,
             },
+            // Provides this as inject(FUSE_CONFIG)
             fuse: {
                 // Default UI settings
                 layout: 'modern',
