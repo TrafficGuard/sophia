@@ -13,11 +13,12 @@
     "build:stage": "npm run env:stage && ng build",
     "build:prod": " npm run env:prod  && ng build",
     "env:local": "node --env-file=../variables/local.env scripts/env.js",
+    "env:test": " node --env-file=../variables/test.env  scripts/env.js",
     "env:stage": "node --env-file=../variables/stage.env scripts/env.js",
     "env:prod": " node --env-file=../variables/prod.env  scripts/env.js",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "test:ci": "npm run env:local && ng test --no-watch --no-progress --browsers=ChromeHeadless",
+    "test:ci": "npm run env:test && ng test --no-watch --no-progress --browsers=ChromeHeadless",
     "lint": "ng lint",
     "lint:ci": "echo skipping"
   },
