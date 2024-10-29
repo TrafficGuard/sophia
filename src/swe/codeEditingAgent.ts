@@ -84,7 +84,7 @@ export class CodeEditingAgent {
 		Look at the existing style of the code when producing the requirements.
 		`;
 		let implementationRequirements = await llms().hard.generateText(implementationDetailsPrompt, { id: 'implementationSpecification' });
-		implementationRequirements += '\nEnsure new code is well commented.'
+		implementationRequirements += '\nEnsure new code is well commented.';
 
 		const searchPrompt = `${repositoryOverview}${installedPackages}\n<requirement>\n${implementationRequirements}\n</requirement>
 Given the requirements, if there are any changes which require using open source libraries, provide search queries to look up the API usage online.
