@@ -71,6 +71,14 @@ export async function initFastify(config: FastifyConfig): Promise<void> {
 		// constraints: { host: 'example.com' } // optional: default {}
 	});
 	setErrorHandler();
+	fastifyInstance.setNotFoundHandler({}, (request, reply) => {
+		logger.error(`404 ${request.url}`);
+		reply.code(404).send({
+			error: 'Not Found',
+			message: 'Route not found',
+			code: 404,
+		});
+	});
 	let port = config.port;
 	// If not provided autodetect from PORT or SERVER_PORT
 	// https://cloud.google.com/run/docs/container-contract#port
