@@ -6,7 +6,8 @@ import { environment } from '../../../environments/environment';
 @Injectable()
 export class BaseUrlInterceptor implements HttpInterceptor {
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    // console.log(`BaseUrlInterceptor ${request.url}`);
+    // api/common/ api/apps/ and api/auth/ are from the mocked services from the demo pages
+    // The real backend ULR from ${environment.apiBaseUrl} is https://domain.com/api/
     let url = request.url.startsWith('api/') && !request.url.startsWith('api/common/') && !request.url.startsWith('api/apps/') && !request.url.startsWith('api/auth/') ?
         `${environment.apiBaseUrl}${request.url.substring(4)}` :
         request.url;

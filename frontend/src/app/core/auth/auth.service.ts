@@ -2,7 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { AuthUtils } from 'app/core/auth/auth.utils';
 import { UserService } from 'app/core/user/user.service';
-import { catchError, Observable, of, switchMap, throwError } from 'rxjs';
+import {catchError, map, Observable, of, switchMap, tap, throwError} from 'rxjs';
+import {environment} from "../../../environments/environment";
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -164,6 +165,24 @@ export class AuthService {
 
         // Check the access token availability
         if (!this.accessToken) {
+            if (environment.auth === 'google_iap') {
+                return this._httpClient.get<any>('/api/profile/view').pipe(
+
+                    tap((user) => {
+                        console.log('tap')
+                    }),
+                    map((result) => {
+                        console.log('map')
+                        console.log(result)
+                        return true
+                    }),
+                    catchError(() => {
+                        this._authenticated = false;
+                        // this._user = null;
+                        return of(false);
+                    })
+                );
+            }
             return of(false);
         }
 
