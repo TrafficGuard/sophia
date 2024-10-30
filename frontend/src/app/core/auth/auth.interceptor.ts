@@ -86,7 +86,7 @@ export class AuthStrategyFactory {
 
     getStrategy(): AuthStrategy {
         return environment.auth === 'google_iap'
-            ? new GoogleIAPStrategy()
+            ? new GoogleIAPStrategy(this.authService)
             : new TokenAuthStrategy(this.authService);
     }
 }

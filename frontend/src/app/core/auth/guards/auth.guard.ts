@@ -9,6 +9,7 @@ export const AuthGuard: CanActivateFn | CanActivateChildFn = (route, state) => {
 
     // For IAP, we assume the backend will handle authentication
     if (environment.auth === 'google_iap') {
+        // TODO if not authenticated ping the profile endpoint
         return of(true);
     }
 
