@@ -134,14 +134,14 @@ function loadHooks() {
 
 	// Authentication hook
 	let authenticationMiddleware = null;
-	if (process.env.AUTH === 'gcloud_iap') {
+	if (process.env.AUTH === 'google_iap') {
 		authenticationMiddleware = googleIapMiddleware;
 		logger.info('Configured Google IAP authentication middleware');
 	} else if (process.env.AUTH === 'single_user') {
 		authenticationMiddleware = singleUserMiddleware;
 		logger.info('Configured Single User authentication middleware');
 	} else {
-		throw new Error('No valid authentication configured. Set AUTH to single_user or gcloud_iap');
+		throw new Error('No valid authentication configured. Set AUTH to single_user or google_iap');
 	}
 	fastifyInstance.addHook('onRequest', authenticationMiddleware);
 }

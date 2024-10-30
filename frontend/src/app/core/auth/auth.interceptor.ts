@@ -58,6 +58,7 @@ class GoogleIAPStrategy implements AuthStrategy {
     constructor(private authService: AuthService) {}
 
     handleAuth(request: HttpRequest<any>): HttpRequest<any> {
+        console.log('GoogleIAPStrategy handleAuth')
         return request.clone({
             headers: request.headers.set(
                 'Authorization',
@@ -67,10 +68,12 @@ class GoogleIAPStrategy implements AuthStrategy {
     }
 
     handleAuthError(error: any): Observable<any> {
+        console.log(`GoogleIAPStrategy handleAuthError ${JSON.stringify(error)}`)
         if (error instanceof HttpErrorResponse) {
             // Check for 302 redirect to Google OAuth
             const location = error.headers.get('Location');
             if (error.status === 302 && location?.startsWith(this.GOOGLE_AUTH_URL)) {
+                console.log(`Redirecting to ${location}`)
                 // Redirect to Google auth
                 window.location.href = location;
                 return EMPTY; // Stop the error propagation
