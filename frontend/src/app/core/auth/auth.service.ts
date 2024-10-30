@@ -159,6 +159,7 @@ export class AuthService {
      */
     check(): Observable<boolean> {
         // Check if the user is logged in
+        console.log('check')
         if (this._authenticated) {
             return of(true);
         }
@@ -166,13 +167,14 @@ export class AuthService {
         // Check the access token availability
         if (!this.accessToken) {
             if (environment.auth === 'google_iap') {
+                console.log('check calling profile routes')
                 return this._httpClient.get<any>('/api/profile/view').pipe(
 
                     tap((user) => {
-                        console.log('tap')
+                        console.log('check tap')
                     }),
                     map((result) => {
-                        console.log('map')
+                        console.log('check map')
                         console.log(result)
                         return true
                     }),

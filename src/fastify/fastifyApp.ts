@@ -114,7 +114,7 @@ async function loadPlugins(config: FastifyConfig) {
 	await fastifyInstance.register(import('@fastify/cors'), {
 		origin: [new URL(process.env.UI_URL).origin, 'accounts.google.com'],
 		methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow these HTTP methods
-		allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers
+		allowedHeaders: ['Content-Type', 'Authorization', 'X-Goog-Iap-Jwt-Assertion'], // Allow these headers
 		credentials: true,
 	});
 	fastifyInstance.register(require('fastify-healthcheck'), {
