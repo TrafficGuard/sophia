@@ -28,7 +28,14 @@ export const DEFAULT_HEALTHCHECK = '/health-check';
 const DIST_PATH = './public';
 // const DIST_PATH = 'frontend/dist/fuse/browser'
 
-const indexHtml = readFileSync(join(DIST_PATH, 'index.html')).toString();
+const indexHtmlPath = join(DIST_PATH, 'index.html')
+let indexHtml;
+try {
+	indexHtml = readFileSync(indexHtmlPath).toString();
+} catch(e) {
+	logger.info(`${indexHtmlPath} not found`)
+}
+
 
 export type TypeBoxFastifyInstance = FastifyInstance<
 	http.Server,

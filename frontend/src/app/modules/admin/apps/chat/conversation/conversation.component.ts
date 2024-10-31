@@ -308,7 +308,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
             this._chatService.createChat(message, this.llmId).subscribe(async (chat: Chat) => {
                 clearInterval(this.generatingTimer)
                 this.generating = false;
-                this.router.navigate([`/apps/chat/${chat.id}`]).catch(console.error);
+                this.router.navigate([`/ui/apps/chat/${chat.id}`]).catch(console.error);
             });
             // TODO catch errors
             return;
