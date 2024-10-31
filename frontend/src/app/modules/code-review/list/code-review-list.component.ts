@@ -65,9 +65,9 @@ export class CodeReviewListComponent implements OnInit {
 
   openEditPage(id?: string) {
     if (id) {
-      this.router.navigate(['/code-reviews/edit', id]).catch(console.error);
+      this.router.navigate(['/ui/code-reviews/edit', id]).catch(console.error);
     } else {
-      this.router.navigate(['/code-reviews/new']).catch(console.error);
+      this.router.navigate(['/ui/code-reviews/new']).catch(console.error);
     }
   }
 

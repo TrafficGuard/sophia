@@ -1,10 +1,6 @@
-<div
-        class="bg-card flex min-w-0 flex-auto flex-col dark:bg-transparent sm:absolute sm:inset-0 sm:overflow-hidden"
->
+<div class="bg-card flex min-w-0 flex-auto flex-col dark:bg-transparent sm:absolute sm:inset-0 sm:overflow-hidden">
     <!-- Header -->
-    <div
-            class="relative flex flex-0 flex-col border-b px-6 py-6 sm:flex-row sm:items-center sm:justify-between md:px-8"
-    >
+    <div class="relative flex flex-0 flex-col border-b px-6 py-6 sm:flex-row sm:items-center sm:justify-between md:px-8">
         <!-- Loader -->
         @if (isLoading) {
             <div class="absolute inset-x-0 bottom-0">
@@ -37,7 +33,7 @@
                     class="ml-4"
                     mat-flat-button
                     [color]="'primary'"
-                    [routerLink]="['/agents/new']"
+                    [routerLink]="['/ui/agents/new']"
             >
                 <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
                 <span class="ml-2 mr-1">Add</span>
@@ -47,18 +43,14 @@
 
     <!-- Main -->
     <div class="flex flex-auto overflow-hidden">
-        <div
-                class="flex flex-auto flex-col overflow-hidden sm:mb-18 sm:overflow-y-auto"
-        >
+        <div class="flex flex-auto flex-col overflow-hidden sm:mb-18 sm:overflow-y-auto">
             @if (agents$ | async; as products) {
                 @if (products.length > 0) {
                     <div class="grid">
                         <!-- Header -->
-                        <div
-                                class="inventory-grid text-secondary sticky top-0 z-10 grid gap-4 bg-gray-50 px-6 py-4 text-md font-semibold shadow dark:bg-black dark:bg-opacity-5 md:px-8"
-                                matSort
-                                matSortDisableClear
-                        >
+                        <div class="inventory-grid text-secondary sticky top-0 z-10 grid gap-4 bg-gray-50 px-6 py-4 text-md font-semibold shadow dark:bg-black dark:bg-opacity-5 md:px-8"
+                             matSort
+                             matSortDisableClear>
                             <!-- Select -->
                             <div></div>
 
@@ -95,7 +87,7 @@
 
                                     <!-- Name -->
                                     <div class="truncate">
-                                        <a [routerLink]="['/agents', agent.agentId]">{{ agent.name }}</a>
+                                        <a [routerLink]="['/ui/agents', agent.agentId]">{{ agent.name }}</a>
                                     </div>
 
                                     <!-- State -->
@@ -130,9 +122,7 @@
                     ></mat-paginator>
                     -->
                 } @else {
-                    <div
-                            class="border-t p-8 text-center text-3xl font-medium tracking-tight sm:p-16"
-                    >
+                    <div class="border-t p-8 text-center text-3xl font-medium tracking-tight sm:p-16">
                         <div>There are no agents!</div>
 
                         <button

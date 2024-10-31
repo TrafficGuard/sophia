@@ -14,6 +14,7 @@ import { User } from '#user/user';
 interface FastifyRequest extends FastifyRequestBase {
 	currentUser?: User;
 }
+import { readFileSync } from 'fs';
 import fastifyPlugin from 'fastify-plugin';
 import * as HttpStatus from 'http-status-codes';
 import { googleIapMiddleware, singleUserMiddleware } from '#fastify/userMiddleware';
@@ -24,8 +25,10 @@ const NODE_ENV = process.env.NODE_ENV ?? 'local';
 
 export const DEFAULT_HEALTHCHECK = '/health-check';
 
-/** Path prefix that the Angular app is served on. */
-const UI_PREFIX = '/ui/';
+const DIST_PATH = './public';
+// const DIST_PATH = 'frontend/dist/fuse/browser'
+
+const indexHtml = readFileSync(join(DIST_PATH, 'index.html')).toString();
 
 export type TypeBoxFastifyInstance = FastifyInstance<
 	http.Server,
@@ -65,20 +68,29 @@ export async function initFastify(config: FastifyConfig): Promise<void> {
 	if (config.instanceDecorators) registerInstanceDecorators(config.instanceDecorators);
 	if (config.requestDecorators) registerRequestDecorators(config.requestDecorators);
 	registerRoutes(config.routes);
+
+	// All backend API routes start with /api/ so any unmatched at this point is a 404
+	fastifyInstance.get('/api/*', async (request, reply) => {
+		return reply.code(404).send({ error: 'Not Found' });
+	});
+	fastifyInstance.post('/api/*', async (request, reply) => {
+		return reply.code(404).send({ error: 'Not Found' });
+	});
+
+	// When the user has refreshed the page at an Angular route URL, serve the index.html
+	fastifyInstance.get('/ui/*', async (request, reply) => {
+		// TODO serve this compressed when possible
+		return reply.header('Cache-Control', 'no-store, no-cache, must-revalidate').code(200).send(indexHtml);
+	});
+
+	// TODO precompress https://github.com/fastify/fastify-static?tab=readme-ov-file#precompressed
 	fastifyInstance.register(require('@fastify/static'), {
-		root: join(process.cwd(), 'public'),
-		prefix: UI_PREFIX, // optional: default '/'
-		// constraints: { host: 'example.com' } // optional: default {}
+		root: join(process.cwd(), DIST_PATH),
+		prefix: '/',
 	});
+
 	setErrorHandler();
-	fastifyInstance.setNotFoundHandler({}, (request, reply) => {
-		logger.error(`404 ${request.url}`);
-		reply.code(404).send({
-			error: 'Not Found',
-			message: 'Route not found',
-			code: 404,
-		});
-	});
+
 	let port = config.port;
 	// If not provided autodetect from PORT or SERVER_PORT
 	// https://cloud.google.com/run/docs/container-contract#port
@@ -112,7 +124,7 @@ function listen(port: number): void {
 
 async function loadPlugins(config: FastifyConfig) {
 	await fastifyInstance.register(import('@fastify/cors'), {
-		origin: [new URL(process.env.UI_URL).origin, 'accounts.google.com'],
+		origin: [new URL(process.env.UI_URL).origin],
 		methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow these HTTP methods
 		allowedHeaders: ['Content-Type', 'Authorization', 'X-Goog-Iap-Jwt-Assertion'], // Allow these headers
 		credentials: true,
