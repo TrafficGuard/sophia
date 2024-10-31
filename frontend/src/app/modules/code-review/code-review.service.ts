@@ -11,7 +11,7 @@ interface Data<T> {
   providedIn: 'root',
 })
 export class CodeReviewService {
-  private apiUrl = 'api/code-review-configs';
+  private apiUrl = '/api/code-review-configs';
 
   constructor(private http: HttpClient) {}
 

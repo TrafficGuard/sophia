@@ -172,7 +172,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
                 console.log(chat)
                 if(chat === null) {
                     // This chat was deleted
-                    this.router.navigate(['/apps/chat/new']).catch(console.error);
+                    this.router.navigate(['/ui/apps/chat/new']).catch(console.error);
                     return;
                 }
                 this.chat = clone(chat) || { id: '', messages: [], title: '', updatedAt: Date.now() };
@@ -233,7 +233,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
      * Reset the chat
      */
     resetChat(): void {
-        this.chat = {id: '', messages: [], title: '', updatedAt: Date.now()};
+        this.chat = { id: '', messages: [], title: '', updatedAt: Date.now() };
         this._chatService.resetChat();
         this.generating = false
 
@@ -258,7 +258,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
         if (this.chat && this.chat.id) {
             this._chatService.deleteChat(this.chat.id).subscribe(() => {
                 this.resetChat();
-                this.router.navigate(['/apps/chat']).catch(console.error);
+                this.router.navigate(['/ui/apps/chat']).catch(console.error);
             });
         }
     }

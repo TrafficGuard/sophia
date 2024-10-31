@@ -91,7 +91,7 @@ export class ChatService {
     getChatById(id: string): Observable<any> {
         if(!id?.trim()) {
             console.log(`nullish chat id "${id}"`)
-            const chat: Chat = {messages:[], id: null, title: '', updatedAt: Date.now() }
+            const chat: Chat = {messages:[], id: '', title: '', updatedAt: Date.now() }
             this._chat.next(chat);
             return this._chats
         }
@@ -210,7 +210,7 @@ export class ChatService {
             take(1),
             switchMap((chats) =>
                 this._httpClient
-                    .post<Chat>(`api/chat/${chatId}/send`, { text: message, llmId })
+                    .post<Chat>(`/api/chat/${chatId}/send`, { text: message, llmId })
                     .pipe(
                         map((data: any) => {
                             const llmMessage = data.data;
@@ -279,7 +279,7 @@ export class ChatService {
                 }
 
                 return this._httpClient
-                    .post<Chat>(`api/chat/${chatId}/regenerate`, { text: message, llmId })
+                    .post<Chat>(`/api/chat/${chatId}/regenerate`, { text: message, llmId })
                     .pipe(
                         map((data: any) => {
                             const llmMessage = data.data;
@@ -313,7 +313,7 @@ export class ChatService {
             take(1),
             switchMap((chats) =>
                 this._httpClient
-                    .post<Chat>(`api/chat/${chatId}/send`, { audio: audio, llmId })
+                    .post<Chat>(`/api/chat/${chatId}/send`, { audio: audio, llmId })
                     .pipe(
                         map((data: any) => {
                             const llmMessage = data.data;

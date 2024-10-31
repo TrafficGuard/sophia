@@ -58,7 +58,7 @@ class GoogleIAPStrategy implements AuthStrategy {
     constructor(private authService: AuthService) {}
 
     handleAuth(request: HttpRequest<any>): HttpRequest<any> {
-        console.log('GoogleIAPStrategy handleAuth')
+        console.log(`GoogleIAPStrategy handleAuth ${request.urlWithParams}`)
         return request.clone({
             headers: request.headers.set(
                 'Authorization',

@@ -111,7 +111,7 @@ export class NewAgentComponent implements OnInit {
 
   ngOnInit(): void {
     this.http
-        .get<{ data: string[] }>(`http://localhost:3000/api/agent/v1/functions`)
+        .get<{ data: string[] }>(`api/agent/v1/functions`)
         .pipe(
             map((response) => {
               console.log(response);
@@ -140,7 +140,7 @@ export class NewAgentComponent implements OnInit {
   }
 
   private loadUserProfile(): void {
-    const profileUrl = `http://localhost:3000/api/profile/view`;
+    const profileUrl = `/api/profile/view`;
     this.http.get(profileUrl).subscribe(
         (response: any) => {
           console.log(response.data);
@@ -163,7 +163,7 @@ export class NewAgentComponent implements OnInit {
         .filter((_, index) => this.runAgentForm.value['function' + index])
         .map((tool, _) => tool);
     this.http
-        .post<StartAgentResponse>(`http://localhost:3000/api/agent/v1/start`, {
+        .post<StartAgentResponse>(`/api/agent/v1/start`, {
           name: this.runAgentForm.value.name,
           userPrompt: this.runAgentForm.value.userPrompt,
           type: this.runAgentForm.value.type,
@@ -178,7 +178,7 @@ export class NewAgentComponent implements OnInit {
         .subscribe({
           next: (response) => {
             this.snackBar.open('Agent started', 'Close', { duration: 3000 });
-            this.router.navigate(['/agent', response.data.agentId]).catch((e) => console.error); // Assuming the response contains the agentId
+            this.router.navigate(['/ui/agent', response.data.agentId]).catch((e) => console.error); // Assuming the response contains the agentId
           },
           error: (error) => {
             this.snackBar.open(`Error ${error.message}`, 'Close', { duration: 3000 });

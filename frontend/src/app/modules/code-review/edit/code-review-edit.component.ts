@@ -130,7 +130,7 @@ export class CodeReviewEditComponent implements OnInit {
         this.codeReviewService.updateCodeReviewConfig(this.configId, formData).subscribe(
           () => {
             this.isLoading = false;
-            this.router.navigate(['/code-reviews']).catch(console.error);
+            this.router.navigate(['/ui/code-reviews']).catch(console.error);
           },
           (error) => {
             this.errorMessage = 'Error updating config';
@@ -141,7 +141,7 @@ export class CodeReviewEditComponent implements OnInit {
         this.codeReviewService.createCodeReviewConfig(formData).subscribe(
           () => {
             this.isLoading = false;
-            this.router.navigate(['/code-reviews']).catch(console.error);
+            this.router.navigate(['/ui/code-reviews']).catch(console.error);
           },
           (error) => {
             this.errorMessage = 'Error creating config';

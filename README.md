@@ -51,7 +51,7 @@ Key features include:
 - Function callable integrations:
   - Filesystem, Jira, Slack, Perplexity, Gitlab, GitHub and more
 - Supports multiple LLMs/Services:
-  - OpenAI, Anthropic (native & Vertex), Gemini, Groq, Fireworks, Together.ai, DeepSeek, Ollama
+  - OpenAI, Anthropic (native & Vertex), Gemini, Groq, Fireworks, Together.ai, DeepSeek, Ollama, Cerebras, X.ai
 - CLI and Web interface
 - Human-in-the-loop for:
   - Budget control
