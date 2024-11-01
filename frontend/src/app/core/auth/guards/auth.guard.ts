@@ -7,29 +7,23 @@ import { environment } from "../../../../environments/environment";
 export const AuthGuard: CanActivateFn | CanActivateChildFn = (route, state) => {
     const router: Router = inject(Router);
 
-    // For IAP, we assume the backend will handle authentication
-    if (environment.auth === 'google_iap') {
-        console.log('AuthGuard google_iap')
-        // TODO if not authenticated ping the profile endpoint
-        return of(true);
-    }
-
-    // Check the authentication status
     return inject(AuthService)
         .check()
         .pipe(
             switchMap((authenticated) => {
-                // If the user is not authenticated...
                 if (!authenticated) {
-                    // Redirect to the sign-in page with a redirectUrl param
-                    const redirectURL =
-                        state.url === '/sign-out' ? '' : `redirectURL=${state.url}`;
-                    const urlTree = router.parseUrl(`sign-in?${redirectURL}`);
-
-                    return of(urlTree);
+                    if (environment.auth === 'google_iap') {
+                        // Redirect to root to trigger IAP authentication
+                        window.location.href = '/';
+                        return of(false);
+                    } else {
+                        // Redirect to the sign-in page with a redirectURL param
+                        const redirectURL =
+                            state.url === '/sign-out' ? '' : `redirectURL=${state.url}`;
+                        const urlTree = router.parseUrl(`sign-in?${redirectURL}`);
+                        return of(urlTree);
+                    }
                 }
-
-                // Allow the access
                 return of(true);
             })
         );

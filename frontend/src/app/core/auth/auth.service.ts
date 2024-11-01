@@ -158,42 +158,30 @@ export class AuthService {
      * Check the authentication status
      */
     check(): Observable<boolean> {
-        // Check if the user is logged in
-        console.log('check')
         if (this._authenticated) {
             return of(true);
         }
 
-        // Check the access token availability
-        if (!this.accessToken) {
-            if (environment.auth === 'google_iap') {
-                console.log('check calling profile routes')
-                return this._httpClient.get<any>('/api/profile/view').pipe(
+        if (environment.auth === 'google_iap') {
+            // For IAP, fetch user info from the backend
+            return this._httpClient.get<any>('/api/profile/view').pipe(
+                tap((user) => {
+                    this._authenticated = true;
+                    this._userService.user = user;
+                }),
+                map(() => true),
+                catchError(() => {
+                    this._authenticated = false;
+                    return of(false);
+                })
+            );
+        }
 
-                    tap((user) => {
-                        console.log('check tap')
-                    }),
-                    map((result) => {
-                        console.log('check map')
-                        console.log(result)
-                        return true
-                    }),
-                    catchError(() => {
-                        this._authenticated = false;
-                        // this._user = null;
-                        return of(false);
-                    })
-                );
-            }
+        // For non-IAP auth modes
+        if (!this.accessToken || AuthUtils.isTokenExpired(this.accessToken)) {
             return of(false);
         }
 
-        // Check the access token expire date
-        if (AuthUtils.isTokenExpired(this.accessToken)) {
-            return of(false);
-        }
-
-        // If the access token exists, and it didn't expire, sign in using it
         return this.signInUsingToken();
     }
 }
