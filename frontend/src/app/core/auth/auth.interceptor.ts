@@ -33,7 +33,7 @@ export const authInterceptor = (
             });
         }
     } else {
-        // For IAP, do not modify the request headers
+        // For IAP, do not modify the request headers, the token is sent as a cookie.
         newReq = req.clone();
     }
 
@@ -43,8 +43,8 @@ export const authInterceptor = (
             // Handle "401 Unauthorized" responses
             if (error instanceof HttpErrorResponse && error.status === 401) {
                 if (environment.auth === 'google_iap') {
-                    // Redirect to root to trigger IAP authentication
-                    window.location.href = '/';
+                    // Refresh to trigger IAP authentication
+                    window.location.reload();
                     return throwError(() => new Error('Redirecting to IAP authentication'));
                 } else {
                     // Sign out and reload the app for other auth modes

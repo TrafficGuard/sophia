@@ -38,7 +38,6 @@ import {MatSelect} from "@angular/material/select";
 import {ReactiveFormsModule} from "@angular/forms";
 import {MatTooltipModule} from "@angular/material/tooltip";
 
-
 @Component({
     selector: 'chat-conversation',
     templateUrl: './conversation.component.html',
@@ -85,6 +84,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
     @ViewChild('messageInput') messageInput: ElementRef;
     @ViewChild('llmSelect') llmSelect: MatSelect;
     chat: Chat;
+    chats: Chat[];
     drawerMode: 'over' | 'side' = 'side';
     drawerOpened: boolean = false;
     private _unsubscribeAll: Subject<any> = new Subject<any>();
@@ -161,7 +161,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
 
                 if (chatId === 'new' || !chatId) {
                     // If 'new' or no ID, reset the chat
-                    this.resetChat();
+                    this.goBack();
                 }
             });
 
@@ -176,19 +176,24 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
                     return;
                 }
                 this.chat = clone(chat) || { id: '', messages: [], title: '', updatedAt: Date.now() };
-                console.log('this._chatService.chat$.subscribe')
-                console.log(chat);
+
                 if(chat.messages.length > 0) {
                     // Set the LLM selector as the LLM used to send the last message
                     const lastMessageLlmId = chat.messages.at(-1).llmId
                     if (lastMessageLlmId) { // TODO check the llmId is in the $llm list
                         this.llmId = lastMessageLlmId;
-                        console.log(`last message llm ${this.llmId}`)
                     } else {
                         // TODO default to user profile default chat LLM
                     }
                 }
                 this._changeDetectorRef.markForCheck();
+            });
+
+        // Chats observable
+        this._chatService.chats$
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe((chats: Chat[]) => {
+                this.chats = chats;
             });
 
         // Media watcher (unchanged)
@@ -232,23 +237,9 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
     /**
      * Reset the chat
      */
-    resetChat(): void {
-        this.chat = { id: '', messages: [], title: '', updatedAt: Date.now() };
+    goBack(): void {
         this._chatService.resetChat();
-        this.generating = false
-
-        // TODO set LLM field to the user profile default chat LLM
-
-        // Close the contact info in case it's opened
-        this.drawerOpened = false;
-
-        // Clear the input field
-        if (this.messageInput) {
-            this.messageInput.nativeElement.value = '';
-        }
-
-        // Mark for check
-        this._changeDetectorRef.markForCheck();
+        this.router.navigate(['/ui/apps/chat']).catch(console.error);
     }
 
     /**
@@ -257,8 +248,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
     deleteChat(): void {
         if (this.chat && this.chat.id) {
             this._chatService.deleteChat(this.chat.id).subscribe(() => {
-                this.resetChat();
-                this.router.navigate(['/ui/apps/chat']).catch(console.error);
+                this.goBack();
             });
         }
     }
@@ -301,8 +291,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
         this.messageInput.nativeElement.value = '';
 
         // If this is a new chat, then redirect to the created chat
-        if (!this.chat.id) {
-
+        if (!this.chat.id || this.chat.id === 'new') {
             this._changeDetectorRef.markForCheck();
             // TODO handle error, set the message back to the messageInput and remove from chat.messages
             this._chatService.createChat(message, this.llmId).subscribe(async (chat: Chat) => {

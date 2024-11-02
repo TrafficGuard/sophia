@@ -194,7 +194,7 @@ export class ChatService {
      * Reset the selected chat
      */
     resetChat(): void {
-        this._chat.next({ id: '', messages: [], title: '', updatedAt: Date.now() });
+        this._chat.next(null);
     }
 
 

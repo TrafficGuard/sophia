@@ -26,16 +26,18 @@
                     class="flex h-18 flex-0 items-center border-b bg-gray-50 px-4 dark:bg-transparent md:px-6"
                 >
                     <!-- Back button -->
-                    <a
-                        class="md:-ml-2 lg:hidden"
-                        mat-icon-button
-                        [routerLink]="['./']"
-                        (click)="resetChat()"
-                    >
-                        <mat-icon
-                            [svgIcon]="'heroicons_outline:arrow-long-left'"
-                        ></mat-icon>
-                    </a>
+                    @if (chats.length) {
+                        <a
+                                class="md:-ml-2 lg:hidden"
+                                mat-icon-button
+                                [routerLink]="['./']"
+                                (click)="goBack()"
+                        >
+                            <mat-icon
+                                    [svgIcon]="'heroicons_outline:arrow-long-left'"
+                            ></mat-icon>
+                        </a>
+                    }
 
                     <button
                         class="ml-auto"
