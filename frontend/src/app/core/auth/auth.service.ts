@@ -164,11 +164,11 @@ export class AuthService {
             return of(true);
         }
 
-        if (environment.auth === 'google_iap') {
+        if (environment.auth === 'google_iap' || environment.auth === 'single_user') {
             return of(true);
         }
 
-        // For non-IAP auth modes
+        // For non-IAP/single-user auth modes
         if (!this.accessToken || AuthUtils.isTokenExpired(this.accessToken)) {
             return of(false);
         }
