@@ -5,8 +5,8 @@ import { userToJwtPayload } from '#fastify/jwt';
 import { logger } from '#o11y/logger';
 import { User } from '#user/user';
 import { currentUser } from '#user/userService/userContext';
-import { env } from '../../../frontend/src/environments/.env';
 import { ROUTES } from '../../../frontend/src/app/routes';
+import { env } from '../../../frontend/src/environments/.env';
 import { AppFastifyInstance } from '../../app';
 
 const AUTH_ERRORS = {
