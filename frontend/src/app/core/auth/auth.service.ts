@@ -165,18 +165,7 @@ export class AuthService {
         }
 
         if (environment.auth === 'google_iap') {
-            // For IAP, fetch user info from the backend
-            return this._httpClient.get<any>('/api/profile/view').pipe(
-                tap((user) => {
-                    this._authenticated = true;
-                    this._userService.user = user;
-                }),
-                map(() => true),
-                catchError(() => {
-                    this._authenticated = false;
-                    return of(false);
-                })
-            );
+            return of(true);
         }
 
         // For non-IAP auth modes
