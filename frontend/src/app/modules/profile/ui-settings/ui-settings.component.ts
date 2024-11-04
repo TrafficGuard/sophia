@@ -94,7 +94,7 @@ export class UiSettingsComponent implements OnInit, OnDestroy {
                 // Set the config
                 this._fuseConfigService.config = { layout };
                 this._localStorageService.setLayout(layout);
-            });
+            }).catch(console.error);
     }
 
     /**

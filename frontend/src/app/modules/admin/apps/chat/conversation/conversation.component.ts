@@ -1,5 +1,6 @@
 import {TextFieldModule} from '@angular/cdk/text-field';
 import {AsyncPipe, DatePipe, NgClass, NgTemplateOutlet} from '@angular/common';
+import { UserService } from 'app/core/user/user.service';
 import {
     AfterViewInit,
     ChangeDetectionStrategy,
@@ -90,6 +91,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
     private _unsubscribeAll: Subject<any> = new Subject<any>();
     $llms: BehaviorSubject<LLM[]> = new BehaviorSubject(null);
     llmId: string;
+    defaultChatLlmId: string;
     sendIcon: string = 'heroicons_outline:paper-airplane'
     sendOnEnter: boolean = true;
     private mediaRecorder: MediaRecorder;
@@ -112,7 +114,8 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
         private _markdown: MarkdownService,
         private llmService: LlmService,
         private router: Router,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
+        private userService: UserService
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -161,31 +164,23 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
 
                 if (chatId === 'new' || !chatId) {
                     // If 'new' or no ID, reset the chat
-                    this.goBack();
+                    this.resetChat();
                 }
             });
+
+        this.userService.user$.subscribe(user => {
+            this.defaultChatLlmId = user.defaultChatLlmId;
+            this.setLlmSelector();
+        });
 
         // Chat observable
         this._chatService.chat$
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((chat: Chat) => {
                 console.log(chat)
-                if(chat === null) {
-                    // This chat was deleted
-                    this.router.navigate(['/ui/apps/chat/new']).catch(console.error);
-                    return;
-                }
-                this.chat = clone(chat) || { id: '', messages: [], title: '', updatedAt: Date.now() };
+                this.chat = clone(chat) || { id: 'new', messages: [], title: '', updatedAt: Date.now() };
 
-                if(chat.messages.length > 0) {
-                    // Set the LLM selector as the LLM used to send the last message
-                    const lastMessageLlmId = chat.messages.at(-1).llmId
-                    if (lastMessageLlmId) { // TODO check the llmId is in the $llm list
-                        this.llmId = lastMessageLlmId;
-                    } else {
-                        // TODO default to user profile default chat LLM
-                    }
-                }
+                this.setLlmSelector();
                 this._changeDetectorRef.markForCheck();
             });
 
@@ -204,10 +199,10 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
                 this._changeDetectorRef.markForCheck();
             });
 
-        // Load LLMs (unchanged)
+        // Load LLMs and set default
         this.llmService.getLlms().subscribe(llms => {
           this.$llms.next(llms);
-          this.llmId = llms[0]?.id;
+          this.setLlmSelector();
         });
     }
 
@@ -219,12 +214,30 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
     ngAfterViewInit() {
         setTimeout(() => {
             this.messageInput.nativeElement.focus();
-        }, 100); // Small delay to ensure its displayed
+        }, 500); // Small delay to ensure its displayed
     }
 
     // -----------------------------------------------------------------------------------------------------
     // @ Public methods
     // -----------------------------------------------------------------------------------------------------
+
+
+    setLlmSelector() {
+        if ((!this.chat || this.chat.id === 'new') && this.defaultChatLlmId) {
+            this.llmId = this.defaultChatLlmId;
+        } else if (this.chat?.messages.length > 0) {
+            // Set the LLM selector as the LLM used to send the last message
+            const lastMessageLlmId = this.chat.messages.at(-1).llmId
+            if (lastMessageLlmId) { // TODO check the llmId is in the $llm list
+                this.llmId = lastMessageLlmId;
+            } else {
+                if (!this.llmId && this.defaultChatLlmId) {
+                    this.llmId = this.defaultChatLlmId;
+                }
+            }
+        }
+        this._changeDetectorRef.markForCheck();
+    }
 
     /**
      * Open the chat info drawer
@@ -237,9 +250,8 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
     /**
      * Reset the chat
      */
-    goBack(): void {
+    resetChat(): void {
         this._chatService.resetChat();
-        this.router.navigate(['/ui/apps/chat']).catch(console.error);
     }
 
     /**
@@ -248,7 +260,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
     deleteChat(): void {
         if (this.chat && this.chat.id) {
             this._chatService.deleteChat(this.chat.id).subscribe(() => {
-                this.goBack();
+                this.resetChat();
             });
         }
     }

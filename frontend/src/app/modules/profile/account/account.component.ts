@@ -5,6 +5,8 @@ import {
     OnInit,
     ViewEncapsulation,
 } from '@angular/core';
+import { LlmService, LLM } from 'app/modules/agents/services/llm.service';
+import { BehaviorSubject } from 'rxjs';
 import {
     FormGroup,
     FormControl,
@@ -16,6 +18,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import {MatSelectModule} from "@angular/material/select";
+import {CommonModule} from "@angular/common";
 
 @Component({
     selector: 'settings-account',
@@ -24,9 +28,11 @@ import { MatSnackBar } from '@angular/material/snack-bar';
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
     imports: [
+        CommonModule,
         MatFormFieldModule,
         MatInputModule,
         MatButtonModule,
+        MatSelectModule,
         ReactiveFormsModule,
     ],
 })
@@ -36,9 +42,12 @@ export class SettingsAccountComponent implements OnInit {
     /**
      * Constructor
      */
+    $llms = new BehaviorSubject<LLM[]>([]);
+
     constructor(
         private http: HttpClient,
-        private snackBar: MatSnackBar
+        private snackBar: MatSnackBar,
+        private llmService: LlmService
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -55,6 +64,7 @@ export class SettingsAccountComponent implements OnInit {
             username: new FormControl(''),
             email: new FormControl('', [Validators.required, Validators.email]),
             enabled: new FormControl(false),
+            defaultChatLlmId: new FormControl(''),
             hilBudget: new FormControl(0),
             hilCount: new FormControl(0),
             llmConfig: new FormGroup({
@@ -94,6 +104,12 @@ export class SettingsAccountComponent implements OnInit {
 
         // Load the user profile data
         this.loadUserProfile();
+        
+        // Load available LLMs
+        this.llmService.getLlms().subscribe(
+            llms => this.$llms.next(llms),
+            error => console.error('Error loading LLMs:', error)
+        );
     }
 
     // Load user profile data
@@ -118,6 +134,16 @@ export class SettingsAccountComponent implements OnInit {
         }
 
         const formData = this.accountForm.getRawValue();
+        
+        // Validate defaultChatLlmId exists in available LLMs
+        const defaultLlmId = formData.defaultChatLlmId;
+        if (defaultLlmId) {
+            const availableLlms = this.$llms.getValue();
+            if (!availableLlms.some(llm => llm.id === defaultLlmId)) {
+                this.snackBar.open('Selected default LLM is not available', 'Close', { duration: 3000 });
+                return;
+            }
+        }
 
         this.http.post('/api/profile/update', { user: formData }).subscribe(
             () => {

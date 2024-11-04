@@ -67,8 +67,8 @@ export const appRoutes: Route[] = [
     // Admin routes
     {
         path: 'ui',
-        // canActivate: [AuthGuard], // AuthGuard
-        // canActivateChild: [AuthGuard], // AuthGuard
+        canActivate: [AuthGuard],
+        canActivateChild: [AuthGuard],
         component: LayoutComponent,
         resolve: {
             initialData: initialDataResolver

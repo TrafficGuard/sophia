@@ -89,9 +89,8 @@ export class ChatService {
      * @param id
      */
     getChatById(id: string): Observable<any> {
-        if(!id?.trim()) {
-            console.log(`nullish chat id "${id}"`)
-            const chat: Chat = {messages:[], id: '', title: '', updatedAt: Date.now() }
+        if(!id?.trim() || id === 'new') {
+            const chat: Chat = {messages:[], id: 'new', title: '', updatedAt: Date.now() }
             this._chat.next(chat);
             return this._chats
         }

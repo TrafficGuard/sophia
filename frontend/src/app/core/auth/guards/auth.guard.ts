@@ -12,7 +12,10 @@ export const AuthGuard: CanActivateFn | CanActivateChildFn = (route, state) => {
         .pipe(
             switchMap((authenticated) => {
                 if (!authenticated) {
-                    if (environment.auth === 'google_iap') {
+                    if (environment.auth === 'single_user') {
+                        return of(true);
+                    }
+                    else if (environment.auth === 'google_iap') {
                         // Redirect to root to trigger IAP authentication
                         window.location.href = '/';
                         return of(false);
@@ -20,7 +23,7 @@ export const AuthGuard: CanActivateFn | CanActivateChildFn = (route, state) => {
                         // Redirect to the sign-in page with a redirectURL param
                         const redirectURL =
                             state.url === '/sign-out' ? '' : `redirectURL=${state.url}`;
-                        const urlTree = router.parseUrl(`sign-in?${redirectURL}`);
+                        const urlTree = router.parseUrl(`/ui/sign-in?${redirectURL}`);
                         return of(urlTree);
                     }
                 }

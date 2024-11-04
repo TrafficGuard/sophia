@@ -34,7 +34,7 @@ export class UserService {
      * Get the current signed-in user data
      */
     get(): Observable<User> {
-        return this._httpClient.get<User>('api/common/user').pipe(
+        return this._httpClient.get<User>('/api/profile/view').pipe(
             tap((user) => {
                 this._user.next(user);
             })
@@ -47,7 +47,7 @@ export class UserService {
      * @param user
      */
     update(user: User): Observable<any> {
-        return this._httpClient.patch<User>('api/common/user', { user }).pipe(
+        return this._httpClient.patch<User>('/api/profile/update', { user }).pipe(
             map((response) => {
                 this._user.next(response);
             })
