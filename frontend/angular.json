@@ -20,6 +20,11 @@
             "outputPath": "dist/fuse",
             "index": "src/index.html",
             "browser": "src/main.ts",
+            "sourceMap": {
+              "scripts": true,
+              "hidden": true,
+              "vendor": true
+            },
             "polyfills": [
               "zone.js"
             ],
@@ -71,7 +76,6 @@
           },
           "configurations": {
             "production": {
-              "sourceMap": true,
               "budgets": [
                 {
                   "type": "initial",
