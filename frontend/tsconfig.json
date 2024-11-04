@@ -17,5 +17,6 @@
     },
     "angularCompilerOptions": {
         "enableI18nLegacyMessageIdFormat": false
-    }
+    },
+    "include": ["src", "../shared"]
 }

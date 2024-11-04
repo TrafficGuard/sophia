@@ -161,7 +161,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe(params => {
                 const chatId = params['id'];
-
+                console.log(`route param id: ${chatId}`)
                 if (chatId === 'new' || !chatId) {
                     // If 'new' or no ID, reset the chat
                     this.resetChat();
@@ -169,6 +169,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
             });
 
         this.userService.user$.subscribe(user => {
+            console.log(`$user ${user.defaultChatLlmId}`)
             this.defaultChatLlmId = user.defaultChatLlmId;
             this.setLlmSelector();
         });
@@ -178,6 +179,11 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((chat: Chat) => {
                 console.log(chat)
+                // if(chat === null) {
+                //     // This chat was deleted
+                //     this.router.navigate(['/ui/apps/chat/new']).catch(console.error);
+                //     return;
+                // }
                 this.chat = clone(chat) || { id: 'new', messages: [], title: '', updatedAt: Date.now() };
 
                 this.setLlmSelector();
@@ -223,7 +229,9 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
 
 
     setLlmSelector() {
+        console.log(this.chat, this.defaultChatLlmId)
         if ((!this.chat || this.chat.id === 'new') && this.defaultChatLlmId) {
+            console.log('setting default llm')
             this.llmId = this.defaultChatLlmId;
         } else if (this.chat?.messages.length > 0) {
             // Set the LLM selector as the LLM used to send the last message
@@ -251,7 +259,9 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
      * Reset the chat
      */
     resetChat(): void {
+        console.log('resetChat')
         this._chatService.resetChat();
+        // this.router.navigate(['/ui/apps/chat']).catch(console.error);
     }
 
     /**
@@ -309,7 +319,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
             this._chatService.createChat(message, this.llmId).subscribe(async (chat: Chat) => {
                 clearInterval(this.generatingTimer)
                 this.generating = false;
-                this.router.navigate([`/ui/apps/chat/${chat.id}`]).catch(console.error);
+                this.router.navigate([`/ui/chat/${chat.id}`]).catch(console.error);
             });
             // TODO catch errors
             return;

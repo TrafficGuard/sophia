@@ -19,6 +19,7 @@ describe('InMemoryUserService', () => {
 				togetheraiKey: '',
 			},
 			functionConfig: {},
+			createdAt: new Date(),
 			// gitlabConfig: {
 			// 	host: '',
 			// 	token: '',
@@ -77,6 +78,7 @@ describe('InMemoryUserService', () => {
 					togetheraiKey: '',
 				},
 				functionConfig: {},
+				createdAt: new Date(),
 			};
 			await inMemoryUserService.createUser(user);
 			await inMemoryUserService.updateUser({ email: 'updated@example.com' }, '2');
@@ -100,6 +102,7 @@ describe('InMemoryUserService', () => {
 					togetheraiKey: '',
 				},
 				functionConfig: {},
+				createdAt: new Date(),
 			};
 			await inMemoryUserService.createUser(user);
 			await inMemoryUserService.disableUser('3');
@@ -123,6 +126,7 @@ describe('InMemoryUserService', () => {
 					togetheraiKey: '',
 				},
 				functionConfig: {},
+				createdAt: new Date(),
 			};
 			const user2: User = {
 				id: '5',
@@ -137,6 +141,7 @@ describe('InMemoryUserService', () => {
 					togetheraiKey: '',
 				},
 				functionConfig: {},
+				createdAt: new Date(),
 			};
 			await inMemoryUserService.createUser(user1);
 			await inMemoryUserService.createUser(user2);

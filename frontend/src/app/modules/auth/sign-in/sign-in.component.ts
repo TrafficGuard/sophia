@@ -12,7 +12,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { RouterLink } from '@angular/router';
+import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import { fuseAnimations } from '@fuse/animations';
 import { FuseAlertComponent, FuseAlertType } from '@fuse/components/alert';
 import { AuthService } from 'app/core/auth/auth.service';
@@ -49,8 +49,10 @@ export class AuthSignInComponent implements OnInit {
      * Constructor
      */
     constructor(
+        private _activatedRoute: ActivatedRoute,
         private _authService: AuthService,
-        private _formBuilder: UntypedFormBuilder
+        private _formBuilder: UntypedFormBuilder,
+        private _router: Router,
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -79,5 +81,47 @@ export class AuthSignInComponent implements OnInit {
     signIn(): void {
         if (this.signInForm.invalid) return;
 
+        // Disable the form
+        this.signInForm.disable();
+
+        // Hide the alert
+        this.showAlert = false;
+
+        // Sign in
+        this._authService.signIn(this.signInForm.value).subscribe({
+            next: () =>
+            {
+                // Set the redirect url.
+                // The '/signed-in-redirect' is a dummy url to catch the request and redirect the user
+                // to the correct page after a successful sign in. This way, that url can be set via
+                // routing file and we don't have to touch here.
+                const redirectURL =
+                    this._activatedRoute.snapshot.queryParamMap.get(
+                        'redirectURL'
+                    ) || '/ui/signed-in-redirect';
+
+                // Navigate to the redirect url
+                this._router.navigateByUrl(redirectURL).catch(console.error);
+            },
+            error: (response) => {
+                console.log(`_authService.signIn error ${JSON.stringify(response)}`)
+                // TODO Auth service should map to return the data
+                const message = response.error?.data?.error;
+                // Re-enable the form
+                this.signInForm.enable();
+
+                // Reset the form
+                this.signInForm.reset();
+
+                // Set the alert
+                this.alert = {
+                    type: 'error',
+                    message: message || 'Wrong email or password',
+                };
+
+                // Show the alert
+                this.showAlert = true;
+            }
+        });
     }
 }

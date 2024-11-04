@@ -7,7 +7,7 @@ import { DateAdapter, MAT_DATE_FORMATS } from '@angular/material/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import {
     PreloadAllModules,
-    provideRouter,
+    provideRouter, withDebugTracing,
     withInMemoryScrolling,
     withPreloading,
 } from '@angular/router';
@@ -31,6 +31,7 @@ export const appConfig: ApplicationConfig = {
         },
         provideRouter(
             appRoutes,
+            // withDebugTracing(),
             withPreloading(PreloadAllModules),
             withInMemoryScrolling({ scrollPositionRestoration: 'enabled' })
         ),

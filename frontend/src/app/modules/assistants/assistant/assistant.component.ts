@@ -239,7 +239,7 @@ export class AssistantComponent implements OnInit, OnDestroy {
         if (this.chat && this.chat.id) {
             this._assistantService.deleteChat(this.chat.id).subscribe(() => {
                 this.resetChat();
-                this.router.navigate(['/ui/apps/chat']).catch(console.error);
+                this.router.navigate(['/ui/chat']).catch(console.error);
             });
         }
     }
@@ -270,7 +270,7 @@ export class AssistantComponent implements OnInit, OnDestroy {
             this._changeDetectorRef.markForCheck();
             // TODO handle error, set the message back to the messageInput and remove from chat.messages
             this._assistantService.createChat(message, this.llmId).subscribe(async (chat: AssistantChat) => {
-                this.router.navigate([`/ui/apps/chat/${chat.id}`]).catch(console.error);
+                this.router.navigate([`/ui/chat/${chat.id}`]).catch(console.error);
             });
 
             return;

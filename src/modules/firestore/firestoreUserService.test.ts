@@ -13,6 +13,7 @@ describe('FirestoreUserService', () => {
 			enabled: true,
 			hilBudget: 0,
 			hilCount: 0,
+			createdAt: new Date(),
 			llmConfig: {
 				anthropicKey: '',
 				openaiKey: '',
@@ -48,6 +49,7 @@ describe('FirestoreUserService', () => {
 			let user = createUserWithDefaults({
 				email: 'test@example.com',
 				hilBudget: 100,
+				createdAt: new Date(),
 			});
 			user = await firestoreUserService.createUser(user);
 			const retrievedUser = await firestoreUserService.getUser(user.id);

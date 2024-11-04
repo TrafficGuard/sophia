@@ -7,7 +7,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
         title: 'Chat',
         type: 'basic',
         icon: 'heroicons_outline:chat-bubble-bottom-center-text',
-        link: '/ui/apps/chat',
+        link: '/ui/chat',
     },
     // {
     //     id: 'assistants',

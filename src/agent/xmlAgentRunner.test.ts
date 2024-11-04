@@ -60,6 +60,7 @@ describe.skip('xmlAgentRunner', () => {
 			id: '',
 			llmConfig: {},
 			functionConfig: {},
+			createdAt: new Date(),
 		};
 		return user ? { ...defaults, ...user } : defaults;
 	}

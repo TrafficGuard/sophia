@@ -121,7 +121,7 @@ export class AuthUnlockSessionComponent implements OnInit {
                         ) || '/signed-in-redirect';
 
                     // Navigate to the redirect url
-                    this._router.navigateByUrl(redirectURL);
+                    this._router.navigateByUrl(redirectURL).catch(console.error);
                 },
                 (response) => {
                     // Re-enable the form

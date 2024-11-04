@@ -2,14 +2,16 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { AuthUtils } from 'app/core/auth/auth.utils';
 import { UserService } from 'app/core/user/user.service';
-import {catchError, map, Observable, of, switchMap, tap, throwError} from 'rxjs';
-import {environment} from "../../../environments/environment";
+import { catchError, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
+import { environment} from "../../../environments/environment";
+import { SharedTypes } from "../../shared";
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
     private _authenticated: boolean = false;
     private _httpClient = inject(HttpClient);
     private _userService = inject(UserService);
+    private sharedtypes = inject(SharedTypes);
 
     // -----------------------------------------------------------------------------------------------------
     // @ Accessors
@@ -56,10 +58,12 @@ export class AuthService {
     signIn(credentials: { email: string; password: string }): Observable<any> {
         // Throw error, if the user is already logged in
         if (this._authenticated) {
+            // TODO check if logging in as the same user, if so redirect to home
+            console.log('already authenticated')
             return throwError('User is already logged in.');
         }
 
-        return this._httpClient.post('api/auth/sign-in', credentials).pipe(
+        return this._httpClient.post('/api/auth/signin', credentials).pipe( //
             switchMap((response: any) => {
                 // Store the access token in the local storage
                 this.accessToken = response.accessToken;
@@ -134,12 +138,10 @@ export class AuthService {
      * @param user
      */
     signUp(user: {
-        name: string;
         email: string;
         password: string;
-        company: string;
     }): Observable<any> {
-        return this._httpClient.post('api/auth/sign-up', user);
+        return this._httpClient.post('/api/auth/signup', user); // this.sharedtypes.routes.AUTH_SIGNUP
     }
 
     /**
