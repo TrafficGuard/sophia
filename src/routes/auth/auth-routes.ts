@@ -1,12 +1,8 @@
 import { Type } from '@sinclair/typebox';
-import { FastifyReply } from 'fastify';
-import { send, sendSuccess } from '#fastify/index';
+import { send } from '#fastify/index';
 import { userToJwtPayload } from '#fastify/jwt';
 import { logger } from '#o11y/logger';
-import { User } from '#user/user';
-import { currentUser } from '#user/userService/userContext';
-import { ROUTES } from '../../../frontend/src/app/routes';
-import { env } from '../../../frontend/src/environments/.env';
+import { ROUTES } from '../../../shared/routes';
 import { AppFastifyInstance } from '../../app';
 
 const AUTH_ERRORS = {
@@ -19,7 +15,7 @@ const basePath = '/api/auth';
 export async function authRoutes(fastify: AppFastifyInstance) {
 	// Authentication routes
 	fastify.post(
-		ROUTES.AUTH_SIGNIN,
+		ROUTES.AUTH_SIGN_IN,
 		{
 			schema: {
 				body: Type.Object({

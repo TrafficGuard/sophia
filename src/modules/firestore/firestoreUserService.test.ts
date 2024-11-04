@@ -22,19 +22,6 @@ describe('FirestoreUserService', () => {
 			},
 			functionConfig: {},
 			// gitlabConfig: {
-			// 	host: '',
-			// 	token: '',
-			// 	topLevelGroups: [],
-			// },
-			// githubConfig: {
-			// 	token: '',
-			// },
-			// jiraConfig: {
-			// 	baseUrl: '',
-			// 	email: '',
-			// 	token: '',
-			// },
-			// perplexityKey: '',
 		};
 		return { ...defaultUser, ...overrides };
 	}
