@@ -18,13 +18,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import {Router, RouterLink, RouterModule, ActivatedRoute} from '@angular/router';
+import { Router, RouterLink, RouterModule, ActivatedRoute } from '@angular/router';
 import { FuseMediaWatcherService } from '@fuse/services/media-watcher';
 import { AssistantsService } from 'app/modules/assistants/assistants.service';
 import { AssistantChat } from '../assistant.types';
 import { AssistantInfoComponent } from 'app/modules/assistants/assistant-info/assistant-info.component';
 import { LLM, LlmService } from "app/modules/agents/services/llm.service";
-import {BehaviorSubject, Subject, takeUntil} from 'rxjs';
+import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import {
     CLIPBOARD_OPTIONS,
     ClipboardButtonComponent,
@@ -32,9 +32,9 @@ import {
     MarkdownService,
     provideMarkdown
 } from "ngx-markdown";
-import {MatOption} from "@angular/material/core";
-import {MatSelect} from "@angular/material/select";
-import {ReactiveFormsModule} from "@angular/forms";
+import { MatOption } from "@angular/material/core";
+import { MatSelect } from "@angular/material/select";
+import { ReactiveFormsModule } from "@angular/forms";
 
 
 @Component({

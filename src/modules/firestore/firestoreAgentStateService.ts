@@ -6,6 +6,7 @@ import { AgentStateService } from '#agent/agentStateService/agentStateService';
 import { functionFactory } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
+import { currentUser } from '#user/userService/userContext';
 import { firestoreDb } from './firestore';
 
 /**
@@ -52,6 +53,7 @@ export class FirestoreAgentStateService implements AgentStateService {
 		const keys: Array<keyof AgentContext> = ['agentId', 'name', 'state', 'cost', 'error', 'lastUpdate', 'userPrompt', 'inputPrompt'];
 		const querySnapshot = await this.db
 			.collection('AgentContext')
+			.where('userId', '==', currentUser().id)
 			.select(...keys)
 			.orderBy('lastUpdate', 'desc')
 			.get();
