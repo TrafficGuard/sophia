@@ -7,7 +7,7 @@ import { GitLab } from '#functions/scm/gitlab';
 
 import { FileSystemService } from '#functions/storage/fileSystemService';
 import { MultiLLM } from '#llm/multi-llm';
-import { Claude3_Opus, ClaudeLLMs } from '#llm/services/anthropic';
+import { ClaudeLLMs } from '#llm/services/anthropic';
 import { Claude3_5_Haiku_Vertex, Claude3_5_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { GPT4o } from '#llm/services/openai';
 import { Gemini_1_5_Pro } from '#llm/services/vertexai';
@@ -23,7 +23,6 @@ import { envVarHumanInLoopSettings } from './cliHumanInLoop';
 // Usage:
 // npm run util
 
-const opus = Claude3_Opus();
 const sonnet = Claude3_5_Sonnet_Vertex();
 const gemini = Gemini_1_5_Pro();
 
