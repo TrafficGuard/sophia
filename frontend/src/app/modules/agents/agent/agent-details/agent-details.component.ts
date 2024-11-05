@@ -48,10 +48,10 @@ export class AgentDetailsComponent implements OnInit {
     feedbackForm!: FormGroup;
     hilForm!: FormGroup;
     errorForm!: FormGroup;
-    isSubmitting: boolean = false;
-    isResumingError: boolean = false;
-    userPromptExpanded: boolean = false;
-    outputExpanded: boolean = false;
+    isSubmitting = false;
+    isResumingError = false;
+    userPromptExpanded = false;
+    outputExpanded = false;
     allAvailableFunctions: string[] = []; // Initialize with an empty array or fetch from a service
     llmNameMap: Map<string, string> = new Map();
 

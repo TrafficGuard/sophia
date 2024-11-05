@@ -34,10 +34,10 @@ import { UiSettingsComponent } from './ui-settings/ui-settings.component';
 export class ProfileComponent implements OnInit, OnDestroy {
     @ViewChild('drawer') drawer: MatDrawer;
     drawerMode: 'over' | 'side' = 'side';
-    drawerOpened: boolean = true;
+    drawerOpened = true;
     panels: any[] = [];
-    selectedPanel: string = 'account';
-    private _unsubscribeAll: Subject<any> = new Subject<any>();
+    selectedPanel = 'account';
+    private _unsubscribeAll: Subject<any> = new Subject();
 
     /**
      * Constructor

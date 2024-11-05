@@ -8,7 +8,7 @@ import { SharedTypes } from "../../shared";
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-    private _authenticated: boolean = false;
+    private _authenticated = false;
     private _httpClient = inject(HttpClient);
     private _userService = inject(UserService);
     private sharedtypes = inject(SharedTypes);
@@ -153,7 +153,7 @@ export class AuthService {
         email: string;
         password: string;
     }): Observable<any> {
-        return this._httpClient.post('api/auth/unlock-session', credentials);
+        return this._httpClient.post('/api/auth/unlock-session', credentials);
     }
 
     /**

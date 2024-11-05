@@ -2,7 +2,6 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { AgentContext, AgentPagination, LlmCall } from '../agent.types';
-import { environment } from 'environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AgentService {

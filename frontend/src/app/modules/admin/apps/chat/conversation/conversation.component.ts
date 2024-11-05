@@ -87,18 +87,18 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
     chat: Chat;
     chats: Chat[];
     drawerMode: 'over' | 'side' = 'side';
-    drawerOpened: boolean = false;
+    drawerOpened = false;
     private _unsubscribeAll: Subject<any> = new Subject<any>();
     $llms: BehaviorSubject<LLM[]> = new BehaviorSubject(null);
     llmId: string;
     defaultChatLlmId: string;
     sendIcon: string = 'heroicons_outline:paper-airplane'
-    sendOnEnter: boolean = true;
+    sendOnEnter = true;
     private mediaRecorder: MediaRecorder;
     private audioChunks: Blob[] = [];
-    recording: boolean = false;
+    recording = false;
     /** If we're waiting for a response from the LLM after sending a message */
-    generating: boolean = false;
+    generating = false;
     generatingTimer = null;
 
     /**

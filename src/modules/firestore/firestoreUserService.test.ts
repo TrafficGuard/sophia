@@ -101,6 +101,18 @@ describe('FirestoreUserService', () => {
 			expect(createdUser.email).to.equal(newUser.email);
 			const retrievedUser = await firestoreUserService.getUser(createdUser.id);
 			expect(retrievedUser.email).to.equal(newUser.email);
+			expect(retrievedUser.llmConfig).to.exist;
+		});
+
+		it('should create a minimal new user', async () => {
+			const newUser: Partial<User> = {
+				email: 'create@example.com',
+			};
+			const createdUser = await firestoreUserService.createUser(newUser);
+			expect(createdUser.email).to.equal(newUser.email);
+			const retrievedUser = await firestoreUserService.getUser(createdUser.id);
+			expect(retrievedUser.email).to.equal(newUser.email);
+			expect(retrievedUser.llmConfig).to.exist;
 		});
 	});
 });

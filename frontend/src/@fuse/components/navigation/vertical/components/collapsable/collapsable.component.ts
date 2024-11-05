@@ -56,8 +56,8 @@ export class FuseVerticalNavigationCollapsableItemComponent
     @Input() item: FuseNavigationItem;
     @Input() name: string;
 
-    isCollapsed: boolean = true;
-    isExpanded: boolean = false;
+    isCollapsed = true;
+    isExpanded = false;
     private _fuseVerticalNavigationComponent: FuseVerticalNavigationComponent;
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 

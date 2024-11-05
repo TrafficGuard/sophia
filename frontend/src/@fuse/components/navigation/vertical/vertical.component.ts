@@ -95,14 +95,14 @@ export class FuseVerticalNavigationComponent
     private _fuseUtilsService = inject(FuseUtilsService);
 
     @Input() appearance: FuseVerticalNavigationAppearance = 'default';
-    @Input() autoCollapse: boolean = true;
-    @Input() inner: boolean = false;
+    @Input() autoCollapse = true;
+    @Input() inner = false;
     @Input() mode: FuseVerticalNavigationMode = 'side';
     @Input() name: string = this._fuseUtilsService.randomId();
     @Input() navigation: FuseNavigationItem[];
-    @Input() opened: boolean = true;
+    @Input() opened = true;
     @Input() position: FuseVerticalNavigationPosition = 'left';
-    @Input() transparentOverlay: boolean = false;
+    @Input() transparentOverlay = false;
     @Output()
     readonly appearanceChanged: EventEmitter<FuseVerticalNavigationAppearance> =
         new EventEmitter<FuseVerticalNavigationAppearance>();
@@ -121,11 +121,11 @@ export class FuseVerticalNavigationComponent
     onCollapsableItemExpanded: ReplaySubject<FuseNavigationItem> =
         new ReplaySubject<FuseNavigationItem>(1);
     onRefreshed: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
-    private _animationsEnabled: boolean = false;
+    private _animationsEnabled = false;
     private _asideOverlay: HTMLElement;
     private readonly _handleAsideOverlayClick: any;
     private readonly _handleOverlayClick: any;
-    private _hovered: boolean = false;
+    private _hovered = false;
     private _mutationObserver: MutationObserver;
     private _overlay: HTMLElement;
     private _player: AnimationPlayer;

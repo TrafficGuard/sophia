@@ -66,7 +66,7 @@ export class FirestoreUserService implements UserService {
 	}
 
 	@span({ email: 0 })
-	async getUserByEmail(email: string): Promise<User> {
+	async getUserByEmail(email: string): Promise<User | null> {
 		const querySnapshot = await this.db.collection('Users').where('email', '==', email).get();
 		const users = querySnapshot.docs.map((doc) => {
 			const data = doc.data();
@@ -75,7 +75,7 @@ export class FirestoreUserService implements UserService {
 				id: doc.id,
 			} as User;
 		});
-		if (users.length === 0) null;
+		if (users.length === 0) return null;
 		if (users.length > 1) throw new Error(`More than one user with email ${email} found`);
 		return users[0];
 	}
@@ -83,7 +83,7 @@ export class FirestoreUserService implements UserService {
 	@span({ email: 0 })
 	async createUser(user: Partial<User>): Promise<User> {
 		const docRef = this.db.collection('Users').doc();
-		// const userId = docRef.id;
+		user.llmConfig ??= {};
 		try {
 			await docRef.set({ ...user });
 			return this.getUser(docRef.id);

@@ -21,7 +21,7 @@ export const ANTHROPIC_VERTEX_SERVICE = 'anthropic-vertex';
 
 export function anthropicVertexLLMRegistry(): Record<string, () => LLM> {
 	return {
-		[`${ANTHROPIC_VERTEX_SERVICE}:claude-3-haiku`]: Claude3_Haiku_Vertex,
+		[`${ANTHROPIC_VERTEX_SERVICE}:claude-3-5-haiku`]: Claude3_5_Haiku_Vertex,
 		[`${ANTHROPIC_VERTEX_SERVICE}:claude-3-5-sonnet`]: Claude3_5_Sonnet_Vertex,
 	};
 }
@@ -37,12 +37,12 @@ export function Claude3_5_Sonnet_Vertex() {
 	);
 }
 
-export function Claude3_Haiku_Vertex() {
+export function Claude3_5_Haiku_Vertex() {
 	return new AnthropicVertexLLM(
-		'Claude 3 Haiku (Vertex)',
-		'claude-3-haiku@20240307',
-		0.25,
-		1.25,
+		'Claude 3.5 Haiku (Vertex)',
+		'claude-3-5-haiku@20241022',
+		1,
+		5,
 		(input: string) => (input.length * 0.25) / (1_000_000 * 3.5),
 		(output: string) => (output.length * 1.25) / (1_000_000 * 3.5),
 	);
@@ -60,7 +60,7 @@ export function Claude3_Haiku_Vertex() {
 export function ClaudeVertexLLMs(): AgentLLMs {
 	const hard = Claude3_5_Sonnet_Vertex();
 	return {
-		easy: Claude3_Haiku_Vertex(),
+		easy: Claude3_5_Haiku_Vertex(),
 		medium: hard,
 		hard: hard,
 		xhard: hard,

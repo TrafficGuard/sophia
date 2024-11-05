@@ -12,7 +12,7 @@ import { Subject, finalize, takeUntil, takeWhile, tap, timer } from 'rxjs';
     imports: [RouterLink, I18nPluralPipe],
 })
 export class AuthSignOutComponent implements OnInit, OnDestroy {
-    countdown: number = 5;
+    countdown = 5;
     countdownMapping: any = {
         '=1': '# second',
         other: '# seconds',

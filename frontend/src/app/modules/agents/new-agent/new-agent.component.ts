@@ -5,7 +5,6 @@ import {
   FormControl, FormGroup,
   FormsModule,
   ReactiveFormsModule,
-  UntypedFormBuilder,
   Validators,
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -63,7 +62,7 @@ export class NewAgentComponent implements OnInit {
   functions: string[] = [];
   llms: any[] = [];
   runAgentForm: FormGroup;
-  isSubmitting: boolean = false;
+  isSubmitting = false;
 
   constructor(
       private http: HttpClient,

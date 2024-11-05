@@ -24,7 +24,7 @@ import { AssistantsService } from 'app/modules/assistants/assistants.service';
 import { AssistantChat } from '../assistant.types';
 import { AssistantInfoComponent } from 'app/modules/assistants/assistant-info/assistant-info.component';
 import { LLM, LlmService } from "app/modules/agents/services/llm.service";
-import {BehaviorSubject, Observable, Subject, takeUntil} from 'rxjs';
+import {BehaviorSubject, Subject, takeUntil} from 'rxjs';
 import {
     CLIPBOARD_OPTIONS,
     ClipboardButtonComponent,
@@ -82,7 +82,7 @@ export class AssistantComponent implements OnInit, OnDestroy {
     @ViewChild('messageInput') messageInput: ElementRef;
     chat: AssistantChat;
     drawerMode: 'over' | 'side' = 'side';
-    drawerOpened: boolean = false;
+    drawerOpened = false;
     private _unsubscribeAll: Subject<any> = new Subject<any>();
     $llms: BehaviorSubject<LLM[]> = new BehaviorSubject(null);
     llmId: string;

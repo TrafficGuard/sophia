@@ -117,11 +117,11 @@ export class AgentListComponent
     agentTypes: AgentType[];
     filteredTags: AgentTag[];
     flashMessage: 'success' | 'error' | null = null;
-    isLoading: boolean = false;
+    isLoading = false;
     pagination: AgentPagination;
     searchInputControl: UntypedFormControl = new UntypedFormControl();
     tags: AgentTag[];
-    tagsEditMode: boolean = false;
+    tagsEditMode = false;
 
     selection = new SelectionModel<AgentContext>(true, []);
 

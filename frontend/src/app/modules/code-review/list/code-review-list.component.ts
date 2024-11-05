@@ -56,7 +56,7 @@ export class CodeReviewListComponent implements OnInit {
         this.isLoading = false;
         this.selection.clear();
       },
-      (error) => {
+      () => {
         this.errorMessage = 'Error loading configurations';
         this.isLoading = false;
       }
@@ -114,7 +114,7 @@ export class CodeReviewListComponent implements OnInit {
               this.snackBar.open('Configurations deleted successfully', 'Close', { duration: 3000 });
               this.loadConfigs();
             },
-            (error) => {
+            () => {
               this.errorMessage = 'Error deleting configurations';
               this.snackBar.open('Error deleting configurations', 'Close', { duration: 3000 });
             }

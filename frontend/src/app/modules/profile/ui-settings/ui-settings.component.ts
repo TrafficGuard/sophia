@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { LocalStorageService } from 'app/core/services/local-storage.service';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';

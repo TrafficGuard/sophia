@@ -10,9 +10,4 @@ import { RouterLink } from '@angular/router';
     standalone: true,
     imports: [MatButtonModule, RouterLink, MatIconModule],
 })
-export class LandingHomeComponent {
-    /**
-     * Constructor
-     */
-    constructor() {}
-}
+export class LandingHomeComponent {}

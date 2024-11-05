@@ -43,7 +43,7 @@ export class AuthSignInComponent implements OnInit {
         message: '',
     };
     signInForm: UntypedFormGroup;
-    showAlert: boolean = false;
+    showAlert = false;
 
     /**
      * Constructor

@@ -72,7 +72,7 @@ export class SearchComponent implements OnChanges, OnInit, OnDestroy {
     @Input() minLength: number = 2;
     @Output() search: EventEmitter<any> = new EventEmitter<any>();
 
-    opened: boolean = false;
+    opened = false;
     resultSets: any[];
     searchControl: UntypedFormControl = new UntypedFormControl();
     private _matAutocomplete: MatAutocomplete;

@@ -13,9 +13,4 @@ import { RouterOutlet } from '@angular/router';
     standalone: true,
     imports: [RouterOutlet],
 })
-export class CodeReviewComponent {
-    /**
-     * Constructor
-     */
-    constructor() {}
-}
+export class CodeReviewComponent {}

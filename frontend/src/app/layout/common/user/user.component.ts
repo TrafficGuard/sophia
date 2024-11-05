@@ -39,7 +39,7 @@ export class UserComponent implements OnInit, OnDestroy {
     static ngAcceptInputType_showAvatar: BooleanInput;
     /* eslint-enable @typescript-eslint/naming-convention */
 
-    @Input() showAvatar: boolean = true;
+    @Input() showAvatar = true;
     user: User = {
         name: '',
         email: '',

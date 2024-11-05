@@ -49,10 +49,10 @@ export class FuseAlertComponent implements OnChanges, OnInit, OnDestroy {
     private _fuseUtilsService = inject(FuseUtilsService);
 
     @Input() appearance: FuseAlertAppearance = 'soft';
-    @Input() dismissed: boolean = false;
-    @Input() dismissible: boolean = false;
+    @Input() dismissed = false;
+    @Input() dismissible = false;
     @Input() name: string = this._fuseUtilsService.randomId();
-    @Input() showIcon: boolean = true;
+    @Input() showIcon = true;
     @Input() type: FuseAlertType = 'primary';
     @Output() readonly dismissedChanged: EventEmitter<boolean> =
         new EventEmitter<boolean>();

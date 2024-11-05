@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { LlmMessage } from '#llm/llm';
-import { Claude3_Haiku } from '#llm/services/anthropic';
-import { Claude3_Haiku_Vertex } from '#llm/services/anthropic-vertex';
+import { Claude3_5_Haiku } from '#llm/services/anthropic';
+import { Claude3_5_Haiku_Vertex } from '#llm/services/anthropic-vertex';
 import { cerebrasLlama3_8b } from '#llm/services/cerebras';
 import { deepseekChat } from '#llm/services/deepseek';
 import { fireworksLlama3_70B } from '#llm/services/fireworks';
@@ -26,7 +26,7 @@ describe('LLMs', () => {
 		];
 
 		describe('Anthropic Vertex', () => {
-			const llm = Claude3_Haiku_Vertex();
+			const llm = Claude3_5_Haiku_Vertex();
 
 			it('should generateText', async () => {
 				const response = await llm.generateText(SKY_MESSAGES, { temperature: 0 });
@@ -39,7 +39,7 @@ describe('LLMs', () => {
 		const SKY_PROMPT = 'What colour is the day sky? Answer in one word. (Hint: starts with b)';
 
 		describe('Anthropic', () => {
-			const llm = Claude3_Haiku();
+			const llm = Claude3_5_Haiku();
 
 			it('should generateText', async () => {
 				const response = await llm.generateText(SKY_PROMPT, { temperature: 0 });
@@ -48,7 +48,7 @@ describe('LLMs', () => {
 		});
 
 		describe('Anthropic Vertex', () => {
-			const llm = Claude3_Haiku_Vertex();
+			const llm = Claude3_5_Haiku_Vertex();
 
 			it('should generateText', async () => {
 				const response = await llm.generateText(SKY_PROMPT, { temperature: 0 });

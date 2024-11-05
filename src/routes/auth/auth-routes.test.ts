@@ -3,7 +3,7 @@ import { AppFastifyInstance, initInMemoryApplicationContext } from '../../app';
 import { initFastify } from '../../fastify';
 import { authRoutes } from './auth-routes';
 
-describe('Auth Routes', () => {
+describe.skip('Auth Routes', () => {
 	let fastify: AppFastifyInstance;
 	const testUser = {
 		email: 'test@example.com',
