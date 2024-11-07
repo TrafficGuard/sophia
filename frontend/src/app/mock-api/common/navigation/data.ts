@@ -4,7 +4,7 @@ import { FuseNavigationItem } from '@fuse/components/navigation';
 export const defaultNavigation: FuseNavigationItem[] = [
     {
         id: 'apps.chat',
-        title: 'Chat',
+        title: 'Chats',
         type: 'basic',
         icon: 'heroicons_outline:chat-bubble-bottom-center-text',
         link: '/ui/chat',

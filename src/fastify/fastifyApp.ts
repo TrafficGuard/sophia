@@ -23,10 +23,9 @@ const NODE_ENV = process.env.NODE_ENV ?? 'local';
 
 export const DEFAULT_HEALTHCHECK = '/health-check';
 
-const DIST_PATH = './public';
-// const DIST_PATH = 'frontend/dist/fuse/browser'
+const STATIC_PATH = process.env.STATIC_PATH || 'frontend/dist/fuse/browser'
 
-const indexHtmlPath = join(DIST_PATH, 'index.html');
+const indexHtmlPath = join(STATIC_PATH, 'index.html');
 let indexHtml: string;
 try {
 	indexHtml = readFileSync(indexHtmlPath).toString();
@@ -94,7 +93,7 @@ export async function initFastify(config: FastifyConfig): Promise<AppFastifyInst
 
 	// TODO precompress https://github.com/fastify/fastify-static?tab=readme-ov-file#precompressed
 	fastifyInstance.register(require('@fastify/static'), {
-		root: join(process.cwd(), DIST_PATH),
+		root: join(process.cwd(), STATIC_PATH),
 		prefix: '/',
 	});
 
