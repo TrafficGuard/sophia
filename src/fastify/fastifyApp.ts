@@ -88,7 +88,7 @@ export async function initFastify(config: FastifyConfig): Promise<AppFastifyInst
 	// When the user has refreshed the page at an Angular route URL, serve the index.html
 	fastifyInstance.get('/ui/*', async (request, reply) => {
 		// TODO serve this compressed when possible
-		return reply.header('Cache-Control', 'no-store, no-cache, must-revalidate').code(200).send(indexHtml);
+		return reply.header('Content-Type', 'text/html').header('Cache-Control', 'no-store, no-cache, must-revalidate').code(200).send(indexHtml);
 	});
 
 	// TODO precompress https://github.com/fastify/fastify-static?tab=readme-ov-file#precompressed
