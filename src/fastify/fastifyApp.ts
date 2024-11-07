@@ -23,7 +23,7 @@ const NODE_ENV = process.env.NODE_ENV ?? 'local';
 
 export const DEFAULT_HEALTHCHECK = '/health-check';
 
-const STATIC_PATH = process.env.STATIC_PATH || 'frontend/dist/fuse/browser'
+const STATIC_PATH = process.env.STATIC_PATH || 'frontend/dist/fuse/browser';
 
 const indexHtmlPath = join(STATIC_PATH, 'index.html');
 let indexHtml: string;

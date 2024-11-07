@@ -66,9 +66,6 @@ export class ModernLayoutComponent implements OnInit, OnDestroy {
     // @ Lifecycle hooks
     // -----------------------------------------------------------------------------------------------------
 
-    /**
-     * On init
-     */
     ngOnInit(): void {
         // Subscribe to navigation data
         this._navigationService.navigation$
@@ -86,9 +83,6 @@ export class ModernLayoutComponent implements OnInit, OnDestroy {
             });
     }
 
-    /**
-     * On destroy
-     */
     ngOnDestroy(): void {
         // Unsubscribe from all subscriptions
         this._unsubscribeAll.next(null);
@@ -100,20 +94,10 @@ export class ModernLayoutComponent implements OnInit, OnDestroy {
     // -----------------------------------------------------------------------------------------------------
 
     /**
-     * Toggle navigation
-     *
      * @param name
      */
     toggleNavigation(name: string): void {
-        // Get the navigation
-        const navigation =
-            this._fuseNavigationService.getComponent<FuseVerticalNavigationComponent>(
-                name
-            );
-
-        if (navigation) {
-            // Toggle the opened status
-            navigation.toggle();
-        }
+        const navigation = this._fuseNavigationService.getComponent<FuseVerticalNavigationComponent>(name);
+        navigation?.toggle();
     }
 }
