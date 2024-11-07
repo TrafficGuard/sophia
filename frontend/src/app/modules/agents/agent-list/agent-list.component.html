@@ -28,7 +28,6 @@
                         [placeholder]="'Search agents'"
                 />
             </mat-form-field>
-            <!-- Add product button -->
             <button
                     class="ml-4"
                     mat-flat-button
@@ -123,13 +122,13 @@
                     -->
                 } @else {
                     <div class="border-t p-8 text-center text-3xl font-medium tracking-tight sm:p-16">
-                        <div>There are no agents!</div>
+                        <div class="mb-1">There are no agents!</div>
 
                         <button
                                 class="ml-4"
                                 mat-flat-button
                                 [color]="'primary'"
-                                [routerLink]="['/agents/new']"
+                                [routerLink]="['/ui/agents/new']"
                         >
                             <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
                             <span class="ml-2 mr-1">Add</span>
