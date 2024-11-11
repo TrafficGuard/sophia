@@ -165,7 +165,10 @@ export class AuthService {
         }
 
         if (environment.auth === 'google_iap' || environment.auth === 'single_user') {
-            return of(true);
+            return this._userService.get().pipe(map(user => {
+                this._authenticated = true
+                return true;
+            }))
         }
 
         // For non-IAP/single-user auth modes

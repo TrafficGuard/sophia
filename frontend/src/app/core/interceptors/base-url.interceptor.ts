@@ -15,7 +15,7 @@ export class BaseUrlInterceptor implements HttpInterceptor {
       url =  `${environment.apiBaseUrl}${request.url.substring(5)}`
 
     const apiRequest = request.clone({ url });
-    console.log(`BaseUrlInterceptor ${apiRequest.url}`)
+
     return next.handle(apiRequest);
   }
 }

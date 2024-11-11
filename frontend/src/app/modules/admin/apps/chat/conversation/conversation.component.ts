@@ -1,5 +1,5 @@
-import {TextFieldModule} from '@angular/cdk/text-field';
-import {AsyncPipe, DatePipe, NgClass, NgTemplateOutlet} from '@angular/common';
+import { TextFieldModule } from '@angular/cdk/text-field';
+import { DatePipe, NgClass } from '@angular/common';
 import { UserService } from 'app/core/user/user.service';
 import {
     AfterViewInit,
@@ -26,7 +26,7 @@ import {ChatService} from 'app/modules/admin/apps/chat/chat.service';
 import {Chat, ChatMessage} from 'app/modules/admin/apps/chat/chat.types';
 import {ChatInfoComponent} from 'app/modules/admin/apps/chat/chat-info/chat-info.component';
 import {LLM, LlmService} from "app/modules/agents/services/llm.service";
-import {BehaviorSubject, Subject, takeUntil} from 'rxjs';
+import {combineLatest, Subject, takeUntil} from 'rxjs';
 import {
     CLIPBOARD_OPTIONS,
     ClipboardButtonComponent,
@@ -57,13 +57,11 @@ import {MatTooltipModule} from "@angular/material/tooltip";
     MatMenuModule,
     MatTooltipModule,
     NgClass,
-    NgTemplateOutlet,
     MatFormFieldModule,
     MatInputModule,
     TextFieldModule,
     DatePipe,
     MarkdownModule,
-    AsyncPipe,
     RouterModule,
     MatOption,
     MatSelect,
@@ -89,7 +87,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
     drawerMode: 'over' | 'side' = 'side';
     drawerOpened = false;
     private _unsubscribeAll: Subject<any> = new Subject<any>();
-    $llms: BehaviorSubject<LLM[]> = new BehaviorSubject(null);
+    llms: LLM[] = null;
     llmId: string;
     defaultChatLlmId: string;
     sendIcon: string = 'heroicons_outline:paper-airplane'
@@ -156,39 +154,30 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
      * On init
      */
     ngOnInit(): void {
-        // Subscribe to route parameters
-        this.route.params
-            .pipe(takeUntil(this._unsubscribeAll))
-            .subscribe(params => {
-                const chatId = params['id'];
-                console.log(`route param id: ${chatId}`)
-                if (chatId === 'new' || !chatId) {
-                    // If 'new' or no ID, reset the chat
-                    this.resetChat();
-                }
-            });
-
-        this.userService.user$.subscribe(user => {
-            console.log(`$user ${user.defaultChatLlmId}`)
-            this.defaultChatLlmId = user.defaultChatLlmId;
-            this.setLlmSelector();
+        // Handle route parameters
+        this.route.params.pipe(
+            takeUntil(this._unsubscribeAll)
+        ).subscribe(params => {
+            const chatId = params['id'];
+            if (chatId === 'new' || !chatId) {
+                this.resetChat();
+            }
         });
 
-        // Chat observable
-        this._chatService.chat$
-            .pipe(takeUntil(this._unsubscribeAll))
-            .subscribe((chat: Chat) => {
-                console.log(chat)
-                // if(chat === null) {
-                //     // This chat was deleted
-                //     this.router.navigate(['/ui/apps/chat/new']).catch(console.error);
-                //     return;
-                // }
-                this.chat = clone(chat) || { id: 'new', messages: [], title: '', updatedAt: Date.now() };
-
-                this.setLlmSelector();
-                this._changeDetectorRef.markForCheck();
-            });
+        // Combine user preferences and available LLMs streams
+        combineLatest([
+            this.userService.user$,
+            this.llmService.getLlms(),
+            this._chatService.chat$
+        ]).pipe(
+            takeUntil(this._unsubscribeAll)
+        ).subscribe(([user, llms, chat]) => {
+            this.defaultChatLlmId = user.defaultChatLlmId;
+            this.llms = llms;
+            this.chat = clone(chat) || { id: 'new', messages: [], title: '', updatedAt: Date.now() };
+            this.updateLlmSelector();
+            this._changeDetectorRef.markForCheck();
+        });
 
         // Chats observable
         this._chatService.chats$
@@ -205,11 +194,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
                 this._changeDetectorRef.markForCheck();
             });
 
-        // Load LLMs and set default
-        this.llmService.getLlms().subscribe(llms => {
-          this.$llms.next(llms);
-          this.setLlmSelector();
-        });
+
     }
 
     ngOnDestroy(): void {
@@ -227,24 +212,43 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
     // @ Public methods
     // -----------------------------------------------------------------------------------------------------
 
-
-    setLlmSelector() {
-        console.log(this.chat, this.defaultChatLlmId)
-        if ((!this.chat || this.chat.id === 'new') && this.defaultChatLlmId) {
-            console.log('setting default llm')
-            this.llmId = this.defaultChatLlmId;
-        } else if (this.chat?.messages.length > 0) {
-            // Set the LLM selector as the LLM used to send the last message
-            const lastMessageLlmId = this.chat.messages.at(-1).llmId
-            if (lastMessageLlmId) { // TODO check the llmId is in the $llm list
+    /**
+     * Sets the appropriate LLM ID based on context and available LLMs:
+     * - For new chats: Uses user's default LLM if available
+     * - For existing chats: Uses the LLM from the last message
+     * - Fallback to first available LLM if no other selection is valid
+     */
+    updateLlmSelector() {
+        if (!this.llms) return;
+        const llmIds = this.llms.map(llm => llm.id);
+        
+        // For existing chats with messages, use the last message's LLM if still available
+        if (this.chat?.messages?.length > 0) {
+            const lastMessageLlmId = this.chat.messages.at(-1).llmId;
+            if (lastMessageLlmId && llmIds.includes(lastMessageLlmId)) {
                 this.llmId = lastMessageLlmId;
-            } else {
-                if (!this.llmId && this.defaultChatLlmId) {
-                    this.llmId = this.defaultChatLlmId;
-                }
+                this._changeDetectorRef.markForCheck();
+                return;
             }
         }
-        this._changeDetectorRef.markForCheck();
+
+        // Try to use default LLM for new chats or when last message LLM unavailable
+        if (this.defaultChatLlmId && llmIds.includes(this.defaultChatLlmId)) {
+            this.llmId = this.defaultChatLlmId;
+            this._changeDetectorRef.markForCheck();
+            return;
+        }
+
+        // If default LLM is set but not available, log warning
+        if (this.defaultChatLlmId && !llmIds.includes(this.defaultChatLlmId)) {
+            console.warn(`Default LLM ${this.defaultChatLlmId} not found in available LLMs:`, llmIds);
+        }
+
+        // Fallback to first available LLM if no valid selection
+        if ((!this.llmId || !llmIds.includes(this.llmId)) && this.llms.length > 0) {
+            this.llmId = this.llms[0].id;
+            this._changeDetectorRef.markForCheck();
+        }
     }
 
     /**
@@ -261,7 +265,8 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
     resetChat(): void {
         console.log('resetChat')
         this._chatService.resetChat();
-        // this.router.navigate(['/ui/apps/chat']).catch(console.error);
+        // Ensure LLM selector is set when resetting
+        this.updateLlmSelector();
     }
 
     /**

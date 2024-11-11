@@ -22,7 +22,6 @@ export class ChatService {
      * Constructor
      */
     constructor(private _httpClient: HttpClient) {
-        console.log('ChatService')
         this.getChats();
     }
 

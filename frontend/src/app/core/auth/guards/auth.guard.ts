@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { CanActivateChildFn, CanActivateFn, Router } from '@angular/router';
 import { AuthService } from 'app/core/auth/auth.service';
 import { of, switchMap } from 'rxjs';
-import { environment } from "../../../../environments/environment";
+import { environment } from "environments/environment";
 
 export const AuthGuard: CanActivateFn | CanActivateChildFn = (route, state) => {
     const router: Router = inject(Router);
@@ -12,13 +12,7 @@ export const AuthGuard: CanActivateFn | CanActivateChildFn = (route, state) => {
         .pipe(
             switchMap((authenticated) => {
                 if (!authenticated) {
-                    if (environment.auth === 'single_user') {
-                        return of(true);
-                    }
-                    else if (environment.auth === 'google_iap') {
-                        // Reload to trigger IAP authentication
-                        // window.location.reload();
-                        // return of(false);
+                    if (environment.auth === 'single_user' || environment.auth === 'google_iap') {
                         return of(true);
                     } else {
                         // Redirect to the sign-in page with a redirectURL param

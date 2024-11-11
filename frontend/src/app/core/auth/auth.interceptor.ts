@@ -8,7 +8,7 @@ import { inject } from '@angular/core';
 import { AuthService } from 'app/core/auth/auth.service';
 import { AuthUtils } from 'app/core/auth/auth.utils';
 import { Observable, catchError, throwError } from 'rxjs';
-import { environment } from "../../../environments/environment";
+import { environment } from "environments/environment";
 
 export const authInterceptor = (
     req: HttpRequest<unknown>,
@@ -19,7 +19,10 @@ export const authInterceptor = (
     // Clone the request object
     let newReq = req;
 
-    if (environment.auth !== 'google_iap') {
+    if(environment.auth === 'single_user' || environment.auth === 'google_iap') {
+        // IAP, doesn't modify the request headers, the token is sent as a cookie.
+        newReq = req.clone();
+    } else {
         // For other authentication modes, add the Authorization header if the access token is available
         if (
             authService.accessToken &&
@@ -32,9 +35,6 @@ export const authInterceptor = (
                 ),
             });
         }
-    } else {
-        // For IAP, do not modify the request headers, the token is sent as a cookie.
-        newReq = req.clone();
     }
 
     // Response
