@@ -125,7 +125,7 @@
                                 >
                                     <!-- Message -->
                                     <div class="min-w-4 leading-5">
-                                        <markdown [data]="message.content" ngPreserveWhitespaces> </markdown>
+                                        <markdown mermaid clipboard [clipboardButtonComponent]="clipboardButton" [data]="message.content" ngPreserveWhitespaces> </markdown>
 
                                         <!-- Regenerate button for AI messages -->
                                         @if (!message.isMine) {
@@ -234,7 +234,7 @@
                     </div>
                     <!-- Message Input Field -->
                     <mat-form-field class="fuse-mat-dense fuse-mat-rounded fuse-mat-bold w-full" subscriptSizing="dynamic">
-                        <textarea matInput cdkTextareaAutosize #messageInput rows="3"></textarea>
+                        <textarea matInput cdkTextareaAutosize #messageInput rows="3" class="max-h-100"></textarea>
                     </mat-form-field>
                     <!-- Send Button -->
                     <div class="my-px ml-4 mt-2 flex h-11 items-center">

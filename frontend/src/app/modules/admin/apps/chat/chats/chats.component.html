@@ -73,7 +73,7 @@
                             track trackByFn($index, chat)
                         ) {
                             <a
-                                class="z-20 flex cursor-pointer items-center border-b px-0 py-2"
+                                class="z-20 flex cursor-pointer items-center border-b px-0 py-3"
                                 (mouseenter)="hoveredChatId = chat.id"
                                 (mouseleave)="hoveredChatId = null"
                                 [ngClass]="{
@@ -117,9 +117,9 @@
                                     </div>
                                     -->
                                     @if (hoveredChatId === chat.id) {
-                                        <button (click)="deleteChat($event, chat)">
+                                        <button (click)="deleteChat($event, chat)" class="absolute">
                                             <mat-icon
-                                                    class="text-hint icon-size-5 mr-1"
+                                                    class="text-hint icon-size-5 mr-1 p-0"
                                                     [svgIcon]="'heroicons_solid:trash'"
                                             ></mat-icon>
                                         </button>

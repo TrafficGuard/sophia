@@ -28,8 +28,6 @@ import {ChatInfoComponent} from 'app/modules/admin/apps/chat/chat-info/chat-info
 import {LLM, LlmService} from "app/modules/agents/services/llm.service";
 import {combineLatest, Subject, takeUntil} from 'rxjs';
 import {
-    CLIPBOARD_OPTIONS,
-    ClipboardButtonComponent,
     MarkdownModule,
     MarkdownService,
     provideMarkdown
@@ -38,6 +36,7 @@ import {MatOption} from "@angular/material/core";
 import {MatSelect} from "@angular/material/select";
 import {ReactiveFormsModule} from "@angular/forms";
 import {MatTooltipModule} from "@angular/material/tooltip";
+import {ClipboardButtonComponent} from "./clipboard-button.component";
 
 @Component({
     selector: 'chat-conversation',
@@ -68,14 +67,7 @@ import {MatTooltipModule} from "@angular/material/tooltip";
     ReactiveFormsModule,
   ],
     providers: [
-        provideMarkdown({
-            clipboardOptions: {
-                provide: CLIPBOARD_OPTIONS,
-                useValue: {
-                    buttonComponent: ClipboardButtonComponent,
-                },
-            },
-        })
+        provideMarkdown(),
     ]
 })
 export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -98,6 +90,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
     /** If we're waiting for a response from the LLM after sending a message */
     generating = false;
     generatingTimer = null;
+    readonly clipboardButton = ClipboardButtonComponent;
 
     /**
      * For the Markdown component, the syntax highlighting support has the plugins defined
