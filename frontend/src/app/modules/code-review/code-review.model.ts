@@ -1,14 +1,17 @@
 export interface CodeReviewConfig {
   id: string;
+  title: string;
   description: string;
-  file_extensions: {
+  fileExtensions: {
     include: string[];
   };
+  projectPaths: string;
+  tags: string[];
   requires: {
     text: string[];
   };
   examples: {
     code: string;
-    review_comment: string;
+    reviewComment: string;
   }[];
 }

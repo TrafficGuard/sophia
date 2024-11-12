@@ -288,12 +288,12 @@ export class GitLab implements SourceControlManagement {
 		const codeReviews: Promise<DiffReview>[] = [];
 		for (const diff of diffs) {
 			for (const codeReview of codeReviewConfigs) {
-				if (codeReview.projectPathGlobs.length && !micromatch.isMatch(projectPath, codeReview.projectPathGlobs)) {
-					logger.info(`Project path globs ${codeReview.projectPathGlobs} dont match ${projectPath}`);
+				if (codeReview.projectPaths.length && !micromatch.isMatch(projectPath, codeReview.projectPaths)) {
+					logger.info(`Project path globs ${codeReview.projectPaths} dont match ${projectPath}`);
 					continue;
 				}
 
-				const hasMatchingExtension = codeReview.file_extensions?.include.some((extension) => diff.new_path.endsWith(extension));
+				const hasMatchingExtension = codeReview.fileExtensions?.include.some((extension) => diff.new_path.endsWith(extension));
 				const hasRequiredText = codeReview.requires?.text.some((text) => diff.diff.includes(text));
 				logger.info(`hasMatchingExtension: ${hasMatchingExtension}. hasRequiredText: ${hasRequiredText}`);
 				if (hasMatchingExtension && hasRequiredText) {

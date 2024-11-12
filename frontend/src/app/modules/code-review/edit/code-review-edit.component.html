@@ -12,6 +12,11 @@
         <mat-card-content>
         <form [formGroup]="editForm" (ngSubmit)="onSubmit()" class="flex flex-col">
           <mat-form-field [ngClass]="['fuse-mat-dense', 'w-full']">
+            <mat-label>Title</mat-label>
+            <input matInput formControlName="title" required>
+          </mat-form-field>
+
+          <mat-form-field [ngClass]="['fuse-mat-dense', 'w-full']">
             <mat-label>Description</mat-label>
             <textarea matInput formControlName="description" required rows="4"></textarea>
           </mat-form-field>

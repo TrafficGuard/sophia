@@ -69,15 +69,16 @@ export class CodeReviewEditComponent implements OnInit {
 
   initForm(): FormGroup {
     return this.fb.group({
+      title: ['', Validators.required],
       description: ['', Validators.required],
-      file_extensions: this.fb.group({
+      fileExtensions: this.fb.group({
         include: [[], [Validators.required, this.arrayNotEmpty]],
       }),
       requires: this.fb.group({
         text: [[], [Validators.required, this.arrayNotEmpty]],
       }),
       tags: [[]],
-      project_paths: [[]],
+      projectPaths: [[]],
       examples: this.fb.array([], [Validators.required, this.arrayNotEmpty]),
     });
   }
