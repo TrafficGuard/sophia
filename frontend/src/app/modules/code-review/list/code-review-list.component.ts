@@ -33,7 +33,7 @@ import {MatProgressBar} from "@angular/material/progress-bar";
 export class CodeReviewListComponent implements OnInit {
   configs$: MatTableDataSource<CodeReviewConfig> = new MatTableDataSource<CodeReviewConfig>([]);
   selection = new SelectionModel<CodeReviewConfig>(true, []);
-  displayedColumns: string[] = ['select', 'title', 'description'];
+  displayedColumns: string[] = ['select', 'title', 'description', 'enabled'];
   isLoading = false;
   errorMessage = '';
 

@@ -1,6 +1,7 @@
 export interface CodeReviewConfig {
   id: string;
   title: string;
+  enabled: boolean;
   description: string;
   fileExtensions: {
     include: string[];

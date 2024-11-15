@@ -8,8 +8,8 @@ import {
   ValidationErrors,
   ReactiveFormsModule
 } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
-import { CodeReviewService } from '../code-review.service';
+import {ActivatedRoute, Router, RouterLink} from '@angular/router';
+import {CodeReviewService} from '../code-review.service';
 import {MatChipInputEvent, MatChipsModule} from '@angular/material/chips';
 import {CommonModule} from "@angular/common";
 import {MatSnackBarModule} from "@angular/material/snack-bar";
@@ -18,24 +18,27 @@ import {MatFormFieldModule} from "@angular/material/form-field";
 import {MatIconModule} from "@angular/material/icon";
 import {MatInputModule} from "@angular/material/input";
 import {MatCard, MatCardContent} from "@angular/material/card";
+import {MatCheckbox} from "@angular/material/checkbox";
 
 @Component({
   selector: 'app-code-review-edit',
   templateUrl: './code-review-edit.component.html',
   standalone: true,
-    imports: [
-        CommonModule,
-        MatSnackBarModule,
-        ReactiveFormsModule,
-        MatButtonModule,
-        MatFormFieldModule,
-        MatChipsModule,
-        MatIconModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatCard,
-        MatCardContent,
-    ],
+  imports: [
+    CommonModule,
+    MatSnackBarModule,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatChipsModule,
+    MatIconModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatCard,
+    MatCardContent,
+    MatCheckbox,
+    RouterLink,
+  ],
 })
 export class CodeReviewEditComponent implements OnInit {
   editForm: FormGroup;
@@ -61,15 +64,16 @@ export class CodeReviewEditComponent implements OnInit {
       this.addExample();
     }
 
-    this.editForm.valueChanges.subscribe(() => {
-      console.log('Form validity:', this.editForm.valid);
-      console.log('Form value:', this.editForm.value);
-    });
+    // this.editForm.valueChanges.subscribe(() => {
+    //   console.log('Form validity:', this.editForm.valid);
+    //   console.log('Form value:', this.editForm.value);
+    // });
   }
 
   initForm(): FormGroup {
     return this.fb.group({
       title: ['', Validators.required],
+      enabled: [true],
       description: ['', Validators.required],
       fileExtensions: this.fb.group({
         include: [[], [Validators.required, this.arrayNotEmpty]],
@@ -106,7 +110,7 @@ export class CodeReviewEditComponent implements OnInit {
             this.examples.push(
               this.fb.group({
                 code: [example.code, Validators.required],
-                review_comment: [example.review_comment, Validators.required],
+                reviewComment: [example.reviewComment, Validators.required],
               })
             );
           });
@@ -161,7 +165,7 @@ export class CodeReviewEditComponent implements OnInit {
     this.examples.push(
       this.fb.group({
         code: ['', Validators.required],
-        review_comment: ['', Validators.required],
+        reviewComment: ['', Validators.required],
       })
     );
   }
@@ -171,7 +175,7 @@ export class CodeReviewEditComponent implements OnInit {
   }
 
   removeExtension(ext: string) {
-    const include = this.editForm.get('file_extensions.include');
+    const include = this.editForm.get('fileExtensions.include');
     const currentExtensions = (include?.value as string[]) || [];
     const updatedExtensions = currentExtensions.filter((e) => e !== ext);
     include?.setValue(updatedExtensions);
@@ -183,7 +187,7 @@ export class CodeReviewEditComponent implements OnInit {
     const value = event.value;
 
     if ((value || '').trim()) {
-      const include = this.editForm.get('file_extensions.include');
+      const include = this.editForm.get('fileExtensions.include');
       const currentExtensions = (include?.value as string[]) || [];
       if (!currentExtensions.includes(value.trim())) {
         include?.setValue([...currentExtensions, value.trim()]);
@@ -243,7 +247,7 @@ export class CodeReviewEditComponent implements OnInit {
   }
 
   removeProjectPath(path: string) {
-    const projectPaths = this.editForm.get('project_paths');
+    const projectPaths = this.editForm.get('projectPaths');
     const currentPaths = (projectPaths?.value as string[]) || [];
     projectPaths?.setValue(currentPaths.filter((p) => p !== path));
     projectPaths?.updateValueAndValidity();
@@ -254,7 +258,7 @@ export class CodeReviewEditComponent implements OnInit {
     const value = event.value;
 
     if ((value || '').trim()) {
-      const projectPaths = this.editForm.get('project_paths');
+      const projectPaths = this.editForm.get('projectPaths');
       const currentPaths = (projectPaths?.value as string[]) || [];
       projectPaths?.setValue([...currentPaths, value.trim()]);
       projectPaths?.updateValueAndValidity();

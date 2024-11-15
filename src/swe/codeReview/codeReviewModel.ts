@@ -1,11 +1,12 @@
 interface IExample {
 	code: string;
-	review_comment: string;
+	reviewComment: string;
 }
 
 export interface CodeReviewConfig {
 	id: string;
 	title: string;
+	enabled: boolean;
 	description: string;
 	fileExtensions: {
 		include: string[];
@@ -28,7 +29,7 @@ export function codeReviewToXml(codeReview: CodeReviewConfig): string {
 	for (const example of codeReview.examples) {
 		xml += '<example>';
 		xml += `<code><![CDATA[\n${example.code}\n]]></code>`;
-		xml += `<review_comment><![CDATA[\n${example.review_comment}\n]]></review_comment>`;
+		xml += `<review_comment><![CDATA[\n${example.reviewComment}\n]]></review_comment>`;
 		xml += '</example>';
 	}
 	xml += '</examples>\n</code-review-config>';

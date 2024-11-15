@@ -83,6 +83,7 @@ describe('FirestoreCodeReviewService', () => {
 			const newConfig: Omit<CodeReviewConfig, 'id'> = {
 				title: 'Test Configuration',
 				description: 'New Config',
+				enabled: true,
 				fileExtensions: {
 					include: ['.ts', '.js'],
 				},
@@ -94,7 +95,7 @@ describe('FirestoreCodeReviewService', () => {
 				examples: [
 					{
 						code: 'console.log("Hello, world!");',
-						review_comment: 'Consider using a logging library for better control over log levels.',
+						reviewComment: 'Consider using a logging library for better control over log levels.',
 					},
 				],
 			};

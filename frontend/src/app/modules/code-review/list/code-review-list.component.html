@@ -59,6 +59,8 @@
             </td>
         </ng-container>
 
+        <!-- column matColumnDef values needs to be in the displayedColumns property on the component -->
+
         <ng-container matColumnDef="title">
             <th mat-header-cell *matHeaderCellDef>Title</th>
             <td mat-cell *matCellDef="let config">
@@ -70,6 +72,13 @@
             <th mat-header-cell *matHeaderCellDef>Description</th>
             <td mat-cell *matCellDef="let config">
                 <a (click)="openEditPage(config.id)">{{ config.description }}</a>
+            </td>
+        </ng-container>
+
+        <ng-container matColumnDef="enabled">
+            <th mat-header-cell *matHeaderCellDef>Enabled</th>
+            <td mat-cell *matCellDef="let config">
+                <mat-checkbox [disabled]="true" [value]="config.enabled"></mat-checkbox>
             </td>
         </ng-container>
 
