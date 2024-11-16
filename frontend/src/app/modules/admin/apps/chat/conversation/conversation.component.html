@@ -1,6 +1,4 @@
-<div
-    class="bg-card flex flex-auto flex-col overflow-y-auto dark:bg-default lg:overflow-hidden"
->
+<div class="bg-card flex flex-auto flex-col overflow-y-auto dark:bg-default lg:overflow-hidden">
     @if (chat) {
         <mat-drawer-container class="h-full flex-auto" [hasBackdrop]="false">
             <!-- Drawer -->
@@ -22,42 +20,36 @@
             <!-- Drawer content -->
             <mat-drawer-content class="flex flex-col overflow-hidden">
                 <!-- Header -->
-                <div
-                    class="flex h-18 flex-0 items-center border-b bg-gray-50 px-4 dark:bg-transparent md:px-6"
-                >
+                <div class="flex h-18 flex-0 items-center border-b bg-gray-50 px-4 dark:bg-transparent md:px-6">
                     <!-- Back button -->
                     @if (chats.length) {
                         <a
-                                class="md:-ml-2 lg:hidden"
-                                mat-icon-button
-                                [routerLink]="['./']"
-                                (click)="resetChat()"
+                            class="md:-ml-2 lg:hidden"
+                            mat-icon-button
+                            [routerLink]="['./']"
+                            (click)="resetChat()"
                         >
-                            <mat-icon
-                                    [svgIcon]="'heroicons_outline:arrow-long-left'"
-                            ></mat-icon>
+                            <mat-icon [svgIcon]="'heroicons_outline:arrow-long-left'"></mat-icon>
                         </a>
                     }
+
+                    <span class="font-semibold text-lg max-w-[calc(100%-120px)] absolute left-1/2 transform -translate-x-1/2 truncate text-ellipsis overflow-hidden whitespace-nowrap">
+                        {{ chat.title }}
+                    </span>
 
                     <button
                         class="ml-auto"
                         mat-icon-button
                         [matMenuTriggerFor]="conversationHeaderMenu"
                     >
-                        <mat-icon
-                            [svgIcon]="'heroicons_outline:ellipsis-vertical'"
-                        ></mat-icon>
+                        <mat-icon [svgIcon]="'heroicons_outline:ellipsis-vertical'"></mat-icon>
                         <mat-menu #conversationHeaderMenu>
                             <button mat-menu-item (click)="openChatInfo()">
-                                <mat-icon
-                                    [svgIcon]="'heroicons_outline:user-circle'"
-                                ></mat-icon>
+                                <mat-icon [svgIcon]="'heroicons_outline:user-circle'"></mat-icon>
                                 Chat info
                             </button>
                             <button mat-menu-item (click)="deleteChat()">
-                                <mat-icon
-                                    [svgIcon]="'heroicons_outline:trash'"
-                                ></mat-icon>
+                                <mat-icon [svgIcon]="'heroicons_outline:trash'"></mat-icon>
                                 Delete chat
                             </button>
                         </mat-menu>
@@ -66,9 +58,7 @@
 
                 <!-- Conversation -->
                 <div class="conversation-container flex flex-col-reverse flex-grow overflow-y-auto">
-                    <div
-                        class="bg-card flex flex-auto shrink flex-col p-6 dark:bg-transparent"
-                    >
+                    <div class="bg-card flex flex-auto shrink flex-col p-6 dark:bg-transparent">
                         @for (
                             message of chat.messages;
                             track trackByFn(i, message);
@@ -76,27 +66,6 @@
                             let first = $first;
                             let last = $last
                         ) {
-                            <!-- Start of the day
-                            @if (
-                                first ||
-                                (chat.messages[i - 1].createdAt | date: 'd') !==
-                                    (message.createdAt | date: 'd')
-                            ) {
-                                <div
-                                    class="-mx-6 my-3 flex items-center justify-center"
-                                >
-                                    <div class="flex-auto border-b"></div>
-                                    <div
-                                        class="text-secondary mx-4 flex-0 text-sm font-medium leading-5"
-                                    >
-                                        {{
-                                            message.createdAt | date: 'longDate'
-                                        }}
-                                    </div>
-                                    <div class="flex-auto border-b"></div>
-                                </div>
-                            }
-                            -->
                             <div
                                 class="flex flex-col"
                                 [ngClass]="{
@@ -125,7 +94,13 @@
                                 >
                                     <!-- Message -->
                                     <div class="min-w-4 leading-5">
-                                        <markdown mermaid clipboard [clipboardButtonComponent]="clipboardButton" [data]="message.content" ngPreserveWhitespaces> </markdown>
+                                        <markdown
+                                            mermaid
+                                            clipboard
+                                            [clipboardButtonComponent]="clipboardButton"
+                                            [data]="message.content"
+                                            ngPreserveWhitespaces
+                                        ></markdown>
 
                                         <!-- Regenerate button for AI messages -->
                                         @if (!message.isMine) {
@@ -160,12 +135,9 @@
                                 </div>
                                 <!-- Time -->
                                 @if (
-                                    first ||
-                                    last ||
-                                    chat.messages[i + 1].isMine !==
-                                        message.isMine ||
-                                    chat.messages[i + 1].createdAt !==
-                                        message.createdAt
+                                    first || last ||
+                                    chat.messages[i + 1].isMine !== message.isMine ||
+                                    chat.messages[i + 1].createdAt !== message.createdAt
                                 ) {
                                     <div
                                         class="text-secondary my-0.5 text-sm font-medium"
@@ -187,7 +159,6 @@
                     <!-- Left Side: Buttons and mat-select -->
                     <div class="flex flex-col items-start mr-4 -mt-2">
                         <!-- Buttons -->
-
                         <div class="flex items-center">
                             <!--
                             <button mat-icon-button>
@@ -201,7 +172,7 @@
                             <button class="ml-0.5" mat-icon-button [disabled]="true" [matTooltip]="'Attach a file. You can also drag a file onto the message field.'">
                                 <mat-icon [svgIcon]="'heroicons_outline:paper-clip'"></mat-icon>
                             </button>
-                          <button class="ml-0.5"
+                            <button class="ml-0.5"
                                   mat-icon-button
                                   matTooltip="Hold to record"
                                   [disabled]="true"
@@ -209,16 +180,14 @@
                                   (mousedown)="startRecording()"
                                   (mouseup)="stopRecording()"
                                   (mouseleave)="stopRecording()">
-                            <mat-icon [svgIcon]="'mic'"></mat-icon> <!-- When recording alternate with the icon settings_voice and set the selected-button class -->
-                          </button>
+                                <mat-icon [svgIcon]="'mic'"></mat-icon> <!-- When recording alternate with the icon settings_voice and set the selected-button class -->
+                            </button>
                             <button class="ml-0.5"
                                     mat-icon-button
                                     (click)="toggleSendOnEnter()"
                                     [ngClass]="{'selected-button': sendOnEnter}"
                                     [matTooltip]="sendOnEnter ? 'Send on Enter enabled. Press Shift-enter for new line' : 'Send on Enter disabled'">
-                                <mat-icon [svgIcon]="'keyboard_return'"
-                                         [ngClass]="{'text-primary': sendOnEnter}">
-                                </mat-icon>
+                                <mat-icon [svgIcon]="'keyboard_return'" [ngClass]="{'text-primary': sendOnEnter}"></mat-icon>
                             </button>
                         </div>
                         <!-- mat-select -->
@@ -246,16 +215,9 @@
             </mat-drawer-content>
         </mat-drawer-container>
     } @else {
-        <div
-            class="flex flex-auto flex-col items-center justify-center bg-gray-100 dark:bg-transparent"
-        >
-            <mat-icon
-                class="icon-size-24"
-                [svgIcon]="'heroicons_outline:chat-bubble-oval-left-ellipsis'"
-            ></mat-icon>
-            <div
-                class="text-secondary mt-4 text-2xl font-semibold tracking-tight"
-            >
+        <div class="flex flex-auto flex-col items-center justify-center bg-gray-100 dark:bg-transparent">
+            <mat-icon class="icon-size-24" [svgIcon]="'heroicons_outline:chat-bubble-oval-left-ellipsis'"></mat-icon>
+            <div class="text-secondary mt-4 text-2xl font-semibold tracking-tight">
                 Start a new chat
             </div>
         </div>

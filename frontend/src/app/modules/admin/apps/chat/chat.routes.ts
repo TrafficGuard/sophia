@@ -61,10 +61,6 @@ export default [
                         component: EmptyConversationComponent,
                     },
                     {
-                        path: 'new',
-                        component: ConversationComponent,
-                    },
-                    {
                         path: ':id',
                         component: ConversationComponent,
                         resolve: {

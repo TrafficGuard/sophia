@@ -89,8 +89,7 @@ export class ChatService {
      */
     getChatById(id: string): Observable<any> {
         if(!id?.trim() || id === 'new') {
-            console.log(`new or nullish chat id "${id}"`)
-            const chat: Chat = {messages:[], id: 'new', title: '', updatedAt: Date.now() }
+            const chat: Chat = { messages:[], id: 'new', title: '', updatedAt: Date.now() }
             this._chat.next(chat);
             return this._chats
         }
@@ -193,7 +192,6 @@ export class ChatService {
      * Reset the selected chat
      */
     resetChat(): void {
-        console.log('chat.service resetChat')
         this._chat.next(null);
     }
 

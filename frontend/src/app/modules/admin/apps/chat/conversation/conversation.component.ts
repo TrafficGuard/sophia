@@ -30,13 +30,15 @@ import {combineLatest, Subject, takeUntil} from 'rxjs';
 import {
     MarkdownModule,
     MarkdownService,
-    provideMarkdown
+    provideMarkdown,
+    MarkedRenderer
 } from "ngx-markdown";
 import {MatOption} from "@angular/material/core";
-import {MatSelect} from "@angular/material/select";
+import {MatSelect, MatSelectModule} from "@angular/material/select";
 import {ReactiveFormsModule} from "@angular/forms";
 import {MatTooltipModule} from "@angular/material/tooltip";
 import {ClipboardButtonComponent} from "./clipboard-button.component";
+import {FuseConfirmationService} from "../../../../../../@fuse/services/confirmation";
 
 @Component({
     selector: 'chat-conversation',
@@ -45,27 +47,26 @@ import {ClipboardButtonComponent} from "./clipboard-button.component";
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
-  imports: [
-    MatSidenavModule,
-    ChatInfoComponent,
-    MatButtonModule,
-    RouterLink,
-    MatIconModule,
-    MatMenuModule,
-    MatButtonModule,
-    MatMenuModule,
-    MatTooltipModule,
-    NgClass,
-    MatFormFieldModule,
-    MatInputModule,
-    TextFieldModule,
-    DatePipe,
-    MarkdownModule,
-    RouterModule,
-    MatOption,
-    MatSelect,
-    ReactiveFormsModule,
-  ],
+    imports: [
+        MatSidenavModule,
+        ChatInfoComponent,
+        MatButtonModule,
+        RouterLink,
+        MatIconModule,
+        MatMenuModule,
+        MatButtonModule,
+        MatMenuModule,
+        MatTooltipModule,
+        NgClass,
+        MatFormFieldModule,
+        MatInputModule,
+        TextFieldModule,
+        DatePipe,
+        MarkdownModule,
+        RouterModule,
+        MatSelectModule,
+        ReactiveFormsModule,
+    ],
     providers: [
         provideMarkdown(),
     ]
@@ -100,6 +101,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
         private _changeDetectorRef: ChangeDetectorRef,
         private _chatService: ChatService,
         private _fuseMediaWatcherService: FuseMediaWatcherService,
+        private _fuseConfirmationService: FuseConfirmationService,
         private _ngZone: NgZone,
         private _elementRef: ElementRef,
         private _markdown: MarkdownService,
@@ -143,16 +145,21 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
     // @ Lifecycle hooks
     // -----------------------------------------------------------------------------------------------------
 
-    /**
-     * On init
-     */
     ngOnInit(): void {
+        // Configure the Markdown parser options
+        this._markdown.options = {
+            renderer: new MarkedRenderer(),
+            gfm: true,
+            breaks: true,
+        };
+
         // Handle route parameters
         this.route.params.pipe(
             takeUntil(this._unsubscribeAll)
         ).subscribe(params => {
             const chatId = params['id'];
-            if (chatId === 'new' || !chatId) {
+            // Do we even need this?
+            if (!chatId) {
                 this.resetChat();
             }
         });
@@ -256,7 +263,6 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
      * Reset the chat
      */
     resetChat(): void {
-        console.log('resetChat')
         this._chatService.resetChat();
         // Ensure LLM selector is set when resetting
         this.updateLlmSelector();
@@ -267,8 +273,24 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
      */
     deleteChat(): void {
         if (this.chat && this.chat.id) {
-            this._chatService.deleteChat(this.chat.id).subscribe(() => {
-                this.resetChat();
+            const confirmation = this._fuseConfirmationService.open({
+                title: 'Delete chat',
+                message:
+                    'Are you sure you want to delete this chat?',
+                actions: {
+                    confirm: {
+                        label: 'Delete',
+                    },
+                },
+            });
+
+            confirmation.afterClosed().subscribe((result) => {
+                if (result === 'confirmed') {
+                    this._chatService.deleteChat(this.chat.id).subscribe(() => {
+                        this.router.navigate(['/ui/chat']).catch(console.error)
+                    });
+                    // TODO handle error - show toast
+                }
             });
         }
     }
@@ -284,7 +306,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     sendMessage(): void {
-        const message = this.messageInput.nativeElement.value.trim();
+        let message: string = this.messageInput.nativeElement.value.trim();
         if (message === '') {
             return;
         }
