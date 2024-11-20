@@ -8,7 +8,6 @@ import { getPayloadUserId } from './jwt';
 
 // Middleware function
 export function singleUserMiddleware(req: FastifyRequest, _res: any, next: () => void): void {
-	console.log('singleUserMiddleware');
 	const user = appContext().userService.getSingleUser();
 	req.user = { userId: user.id, email: user.email };
 	runWithUser(user, () => {

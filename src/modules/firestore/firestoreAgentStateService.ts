@@ -53,7 +53,7 @@ export class FirestoreAgentStateService implements AgentStateService {
 		const keys: Array<keyof AgentContext> = ['agentId', 'name', 'state', 'cost', 'error', 'lastUpdate', 'userPrompt', 'inputPrompt'];
 		const querySnapshot = await this.db
 			.collection('AgentContext')
-			.where('userId', '==', currentUser().id)
+			.where('user', '==', currentUser().id)
 			.select(...keys)
 			.orderBy('lastUpdate', 'desc')
 			.get();

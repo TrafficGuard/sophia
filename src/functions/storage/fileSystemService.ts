@@ -226,7 +226,7 @@ export class FileSystemService {
 	 * @returns the list of files
 	 */
 	async listFilesRecursively(dirPath = './', useGitIgnore = true): Promise<string[]> {
-		this.log.debug(`cwd: ${this.workingDirectory}`);
+		this.log.debug(`listFilesRecursively cwd: ${this.workingDirectory}`);
 
 		const startPath = path.join(this.getWorkingDirectory(), dirPath);
 		// TODO check isnt going higher than this.basePath
@@ -244,8 +244,6 @@ export class FileSystemService {
 		useGitIgnore = true,
 		filter: (file: string) => boolean = (name) => true,
 	): Promise<string[]> {
-		const relativeRoot = this.basePath;
-		this.log.debug(`listFilesRecurse dirPath: ${dirPath}`);
 		const files: string[] = [];
 
 		const ig = useGitIgnore ? await this.loadGitignoreRules(dirPath) : ignore();

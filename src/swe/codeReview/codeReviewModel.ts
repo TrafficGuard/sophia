@@ -3,6 +3,7 @@ interface IExample {
 	reviewComment: string;
 }
 
+// The code review fastify route schema and angular form group names must match the interface property names
 export interface CodeReviewConfig {
 	id: string;
 	title: string;

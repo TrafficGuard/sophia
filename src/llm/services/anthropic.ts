@@ -37,7 +37,7 @@ export function Claude3_5_Sonnet() {
 
 export function Claude3_5_Haiku() {
 	return new Anthropic(
-		'Claude 3 Haiku',
+		'Claude 3.5 Haiku',
 		'claude-3-5-haiku-20241022',
 		(input: string) => (input.length * 0.25) / (1_000_000 * 3.5),
 		(output: string) => (output.length * 1.25) / (1_000_000 * 3.5),

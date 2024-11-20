@@ -47,18 +47,18 @@ export async function codeReviewRoutes(fastify: FastifyInstance) {
 			schema: {
 				body: Type.Object({
 					description: Type.String(),
-					file_extensions: Type.Object({
+					fileExtensions: Type.Object({
 						include: Type.Array(Type.String()),
 					}),
 					requires: Type.Object({
 						text: Type.Array(Type.String()),
 					}),
 					tags: Type.Array(Type.String()),
-					project_paths: Type.Array(Type.String()),
+					projectPaths: Type.Array(Type.String()),
 					examples: Type.Array(
 						Type.Object({
 							code: Type.String(),
-							review_comment: Type.String(),
+							reviewComment: Type.String(),
 						}),
 					),
 				}),

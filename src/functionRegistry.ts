@@ -4,6 +4,7 @@ import { Jira } from '#functions/jira';
 import { GitHub } from '#functions/scm/github';
 import { GitLab } from '#functions/scm/gitlab';
 import { FileSystemRead } from '#functions/storage/FileSystemRead';
+import { FileSystemWrite } from '#functions/storage/FileSystemWrite';
 import { LocalFileStore } from '#functions/storage/localFileStore';
 import { LlmTools } from '#functions/util';
 import { Perplexity } from '#functions/web/perplexity';
@@ -20,7 +21,7 @@ export function functionRegistry(): Array<new () => any> {
 	return [
 		CodeEditingAgent,
 		FileSystemRead,
-		// FileSystemWrite,
+		FileSystemWrite,
 		LocalFileStore,
 		GitLab,
 		// GitHub, // Error: More than one function classes found implementing SourceControlManagement

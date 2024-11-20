@@ -56,30 +56,12 @@ import {
 } from 'rxjs';
 import {SelectionModel} from "@angular/cdk/collections";
 import {RouterModule} from "@angular/router";
+import {MatTooltipModule} from "@angular/material/tooltip";
 
 @Component({
     selector: 'inventory-list',
     templateUrl: './agent-list.component.html',
-    styles: [
-        /* language=SCSS */
-        `
-            .inventory-grid {
-                grid-template-columns: 48px auto 40px;
-
-                @screen sm {
-                    grid-template-columns: 48px auto 112px 72px;
-                }
-
-                @screen md {
-                    grid-template-columns: 48px 112px auto 112px 72px;
-                }
-
-                @screen lg {
-                    grid-template-columns: 48px 112px auto 112px 96px 96px 72px;
-                }
-            }
-        `,
-    ],
+    styleUrl: './agent-list.component.scss',
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
     animations: fuseAnimations,
@@ -89,19 +71,18 @@ import {RouterModule} from "@angular/router";
         MatFormFieldModule,
         MatIconModule,
         MatInputModule,
+        MatTooltipModule,
         FormsModule,
         ReactiveFormsModule,
         MatButtonModule,
         MatSortModule,
         MatPaginatorModule,
-        NgClass,
         MatSlideToggleModule,
         MatSelectModule,
         MatOptionModule,
         MatCheckboxModule,
         MatRippleModule,
         AsyncPipe,
-        SlicePipe,
         DecimalPipe,
         RouterModule,
     ],
@@ -238,6 +219,9 @@ export class AgentListComponent
     // @ Public methods
     // -----------------------------------------------------------------------------------------------------
 
+    getStateClass(state: string): string {
+        return `state-${state.toLowerCase()}`;
+    }
 
     isAllSelected(): boolean {
         // const numSelected = this.selection.selected.length;
