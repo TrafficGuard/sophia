@@ -4,7 +4,7 @@ import { LlmService, LLM } from './llm.service';
 import {environment} from "../../../../environments/environment";
 
 
-const LLM_LIST_API_URL = `${environment.serverUrl}llms/list`;
+const LLM_LIST_API_URL = `${environment.apiBaseUrl}llms/list`;
 
 describe('LlmService', () => {
   let service: LlmService;

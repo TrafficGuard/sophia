@@ -1,0 +1,14 @@
+<!-- Loading bar -->
+<fuse-loading-bar></fuse-loading-bar>
+
+<!-- Wrapper -->
+<div class="flex w-full flex-auto flex-col">
+    <!-- Content -->
+    <div class="flex flex-auto flex-col">
+        <!-- *ngIf="true" hack is required here for router-outlet to work correctly.
+             Otherwise, layout changes won't be registered and the view won't be updated! -->
+        @if (true) {
+            <router-outlet></router-outlet>
+        }
+    </div>
+</div>

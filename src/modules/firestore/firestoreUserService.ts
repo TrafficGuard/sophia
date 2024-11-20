@@ -1,4 +1,5 @@
 import { DocumentSnapshot, Firestore } from '@google-cloud/firestore';
+import * as bcrypt from 'bcrypt';
 import { LlmCall } from '#llm/llmCallService/llmCall';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
@@ -65,7 +66,7 @@ export class FirestoreUserService implements UserService {
 	}
 
 	@span({ email: 0 })
-	async getUserByEmail(email: string): Promise<User> {
+	async getUserByEmail(email: string): Promise<User | null> {
 		const querySnapshot = await this.db.collection('Users').where('email', '==', email).get();
 		const users = querySnapshot.docs.map((doc) => {
 			const data = doc.data();
@@ -74,7 +75,7 @@ export class FirestoreUserService implements UserService {
 				id: doc.id,
 			} as User;
 		});
-		if (users.length === 0) null;
+		if (users.length === 0) return null;
 		if (users.length > 1) throw new Error(`More than one user with email ${email} found`);
 		return users[0];
 	}
@@ -82,7 +83,7 @@ export class FirestoreUserService implements UserService {
 	@span({ email: 0 })
 	async createUser(user: Partial<User>): Promise<User> {
 		const docRef = this.db.collection('Users').doc();
-		// const userId = docRef.id;
+		user.llmConfig ??= {};
 		try {
 			await docRef.set({ ...user });
 			return this.getUser(docRef.id);
@@ -128,5 +129,61 @@ export class FirestoreUserService implements UserService {
 
 	getSingleUser(): User {
 		return this.singleUser;
+	}
+
+	@span({ email: 0 })
+	async authenticateUser(email: string, password: string): Promise<User> {
+		let user: User;
+		try {
+			user = await this.getUserByEmail(email);
+		} catch (e) {
+			throw new Error('Server error');
+		}
+
+		if (!user) {
+			throw new Error('Invalid credentials');
+		}
+
+		if (!user || !user.passwordHash) {
+			throw new Error('Invalid credentials (no hash)');
+		}
+
+		const isValid = await bcrypt.compare(password, user.passwordHash);
+		if (!isValid) {
+			throw new Error('Invalid credentials');
+		}
+		try {
+			await this.updateUser({ lastLoginAt: new Date() }, user.id);
+		} catch (e) {
+			logger.error('Error updating lastLoginAt in authenticateUser');
+		}
+		return user;
+	}
+
+	@span({ email: 0 })
+	async createUserWithPassword(email: string, password: string): Promise<User> {
+		const existingUser = await this.getUserByEmail(email);
+		if (existingUser) {
+			logger.debug(`User ${email} already exists`);
+			throw new Error('User already exists');
+		}
+
+		const passwordHash = await bcrypt.hash(password, 10);
+		return this.createUser({
+			email,
+			passwordHash,
+			enabled: true,
+			createdAt: new Date(),
+			hilCount: 5,
+			hilBudget: 1,
+			functionConfig: {},
+			llmConfig: {},
+		});
+	}
+
+	@span({ userId: 0 })
+	async updatePassword(userId: string, newPassword: string): Promise<void> {
+		const passwordHash = await bcrypt.hash(newPassword, 10);
+		await this.updateUser({ passwordHash }, userId);
 	}
 }

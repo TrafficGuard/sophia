@@ -17,6 +17,7 @@ import { ModernLayoutComponent } from './layouts/horizontal/modern/modern.compon
 import { CompactLayoutComponent } from './layouts/vertical/compact/compact.component';
 import { DenseLayoutComponent } from './layouts/vertical/dense/dense.component';
 import { ThinLayoutComponent } from './layouts/vertical/thin/thin.component';
+import {EmptyLayoutComponent} from "./empty/empty.component";
 
 @Component({
     selector: 'layout',
@@ -29,6 +30,7 @@ import { ThinLayoutComponent } from './layouts/vertical/thin/thin.component';
         CompactLayoutComponent,
         DenseLayoutComponent,
         ThinLayoutComponent,
+        EmptyLayoutComponent,
     ],
 })
 export class LayoutComponent implements OnInit, OnDestroy {

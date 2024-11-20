@@ -1,0 +1,276 @@
+<!-- Shortcuts toggle -->
+<button mat-icon-button (click)="openPanel()" #shortcutsOrigin>
+    <mat-icon [svgIcon]="'add'"></mat-icon>
+</button>
+
+<!-- Shortcuts panel -->
+<ng-template #shortcutsPanel>
+    <div
+        class="fixed inset-0 flex flex-col overflow-hidden shadow-lg sm:static sm:inset-auto sm:w-90 sm:min-w-90 sm:rounded-2xl"
+    >
+        <!-- Header -->
+        <div
+            class="flex shrink-0 items-center bg-primary py-4 pl-6 pr-4 text-on-primary"
+        >
+            <div class="-ml-1 mr-3 sm:hidden">
+                <button mat-icon-button (click)="closePanel()">
+                    <mat-icon
+                        class="text-current icon-size-5"
+                        [svgIcon]="'heroicons_solid:x-mark'"
+                    ></mat-icon>
+                </button>
+            </div>
+            <div class="flex items-center text-lg font-medium leading-10">
+                <span class="">Shortcuts</span>
+                @if (mode !== 'view') {
+                    <span class="ml-1">
+                        @if (mode === 'add') {
+                            - Add new
+                        }
+                        @if (mode === 'modify' || mode === 'edit') {
+                            - Editing
+                        }
+                    </span>
+                }
+            </div>
+            <div class="ml-auto">
+                <!-- View mode -->
+                @if (mode === 'view') {
+                    <!-- Enter 'modify' mode -->
+                    <!--
+                    <button
+                        mat-icon-button
+                        (click)="changeMode('modify')"
+                        [matTooltip]="'Enter edit mode'"
+                    >
+                        <mat-icon
+                            class="text-current icon-size-5"
+                            [svgIcon]="'heroicons_solid:pencil-square'"
+                        ></mat-icon>
+                    </button>
+                    -->
+                    <!-- Enter 'add' mode -->
+                    <!--
+                    <button
+                        mat-icon-button
+                        (click)="newShortcut()"
+                        [matTooltip]="'Add shortcut'"
+                    >
+                        <mat-icon
+                            class="text-current icon-size-5"
+                            [svgIcon]="'heroicons_solid:plus-circle'"
+                        ></mat-icon>
+                    </button>
+                    -->
+                }
+
+                <!-- Modify mode -->
+                @if (mode === 'modify') {
+                    <!-- Enter 'view' mode -->
+                    <button
+                        mat-icon-button
+                        (click)="changeMode('view')"
+                        [matTooltip]="'Exit edit mode'"
+                    >
+                        <mat-icon
+                            class="text-current icon-size-5"
+                            [svgIcon]="'heroicons_solid:check-circle'"
+                        ></mat-icon>
+                    </button>
+                }
+
+                <!-- Add mode -->
+                @if (mode === 'add') {
+                    <!-- Enter 'view' mode -->
+                    <button
+                        mat-icon-button
+                        (click)="changeMode('view')"
+                        [matTooltip]="'Cancel'"
+                    >
+                        <mat-icon
+                            class="text-current icon-size-5"
+                            [svgIcon]="'heroicons_solid:x-circle'"
+                        ></mat-icon>
+                    </button>
+                }
+
+                <!-- Edit mode -->
+                @if (mode === 'edit') {
+                    <!-- Enter 'modify' mode -->
+                    <button
+                        mat-icon-button
+                        (click)="changeMode('modify')"
+                        [matTooltip]="'Cancel'"
+                    >
+                        <mat-icon
+                            class="text-current icon-size-5"
+                            [svgIcon]="'heroicons_solid:x-circle'"
+                        ></mat-icon>
+                    </button>
+                }
+            </div>
+        </div>
+        <div
+            class="bg-card relative -mb-px flex flex-auto flex-col overflow-y-auto sm:max-h-120"
+        >
+            <!-- View mode -->
+            @if (mode === 'view' || mode === 'modify') {
+                <!-- Shortcuts -->
+                <div class="grid grid-flow-row grid-cols-2">
+                    <!-- Shortcut -->
+                    @for (
+                        shortcut of shortcuts;
+                        track trackByFn($index, shortcut)
+                    ) {
+                        <div
+                            class="group bg-card relative flex flex-col overflow-hidden border-b border-r even:border-r-0 hover:bg-gray-50 dark:hover:bg-black dark:hover:bg-opacity-5"
+                        >
+                            @if (mode === 'modify') {
+                                <div
+                                    class="absolute inset-0 z-99 cursor-pointer"
+                                    (click)="editShortcut(shortcut)"
+                                ></div>
+                            }
+                            <!-- Normal links -->
+                            @if (!shortcut.useRouter) {
+                                <a
+                                    class="flex h-full w-full flex-col items-center justify-center py-6 no-underline"
+                                    [ngClass]="{
+                                        'pointer-events-none':
+                                            mode === 'modify',
+                                    }"
+                                    [href]="shortcut.link"
+                                >
+                                    <ng-container
+                                        *ngTemplateOutlet="linkContent"
+                                    ></ng-container>
+                                </a>
+                            }
+                            <!-- Router links -->
+                            @if (shortcut.useRouter) {
+                                <a
+                                    class="flex h-full w-full flex-col items-center justify-center py-6 no-underline"
+                                    [ngClass]="{
+                                        'pointer-events-none':
+                                            mode === 'modify',
+                                    }"
+                                    [routerLink]="shortcut.link"
+                                >
+                                    <ng-container
+                                        *ngTemplateOutlet="linkContent"
+                                    ></ng-container>
+                                </a>
+                            }
+                            <!-- Link content template -->
+                            <ng-template #linkContent>
+                                <div
+                                    class="relative mb-3 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700"
+                                >
+                                    @if (mode === 'modify') {
+                                        <mat-icon
+                                            class="absolute z-20 opacity-0 icon-size-5 group-hover:opacity-100"
+                                            [svgIcon]="'heroicons_solid:pencil'"
+                                        ></mat-icon>
+                                    }
+                                    <mat-icon
+                                        class="z-10"
+                                        [ngClass]="{
+                                            'group-hover:opacity-0':
+                                                mode === 'modify',
+                                        }"
+                                        [svgIcon]="shortcut.icon"
+                                    ></mat-icon>
+                                </div>
+                                <div class="text-center font-medium">
+                                    {{ shortcut.label }}
+                                </div>
+                                <div class="text-secondary text-center text-md">
+                                    {{ shortcut.description }}
+                                </div>
+                            </ng-template>
+                        </div>
+                    }
+                </div>
+
+                <!-- No shortcuts -->
+                @if (!shortcuts || !shortcuts.length) {
+                    <div
+                        class="flex flex-auto flex-col items-center justify-center px-8 py-12 sm:justify-start"
+                    >
+                        <div
+                            class="flex h-14 w-14 flex-0 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-600"
+                        >
+                            <mat-icon
+                                class="text-primary-700 dark:text-primary-50"
+                                [svgIcon]="'heroicons_outline:bookmark'"
+                            ></mat-icon>
+                        </div>
+                        <div class="mt-5 text-2xl font-semibold tracking-tight">
+                            No shortcuts
+                        </div>
+                        <div
+                            class="text-secondary mt-1 w-full max-w-60 text-center text-md"
+                        >
+                            When you have shortcuts, they will appear here.
+                        </div>
+                    </div>
+                }
+            }
+
+            <!-- Add/Edit mode -->
+            @if (mode === 'add' || mode === 'edit') {
+                <form class="p-6" [formGroup]="shortcutForm">
+                    <mat-form-field class="w-full">
+                        <mat-label>Label</mat-label>
+                        <input matInput [formControlName]="'label'" required />
+                    </mat-form-field>
+                    <mat-form-field class="w-full">
+                        <mat-label>Description</mat-label>
+                        <input matInput [formControlName]="'description'" />
+                    </mat-form-field>
+                    <mat-form-field class="w-full">
+                        <mat-label>Icon</mat-label>
+                        <input matInput [formControlName]="'icon'" required />
+                    </mat-form-field>
+                    <mat-form-field class="w-full">
+                        <mat-label>Link</mat-label>
+                        <input matInput [formControlName]="'link'" required />
+                    </mat-form-field>
+                    <mat-slide-toggle
+                        [color]="'primary'"
+                        [formControlName]="'useRouter'"
+                    >
+                        Use router for the link
+                    </mat-slide-toggle>
+                    <!-- Actions -->
+                    <div class="mt-4 flex items-center justify-end">
+                        @if (mode === 'edit') {
+                            <button
+                                class="mr-2"
+                                mat-flat-button
+                                type="button"
+                                (click)="delete()"
+                            >
+                                Delete
+                            </button>
+                        }
+                        <button
+                            mat-flat-button
+                            [color]="'primary'"
+                            [disabled]="!shortcutForm.valid"
+                            type="button"
+                            (click)="save()"
+                        >
+                            @if (mode === 'add') {
+                                Add
+                            }
+                            @if (mode === 'edit') {
+                                Update
+                            }
+                        </button>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+</ng-template>

@@ -9,6 +9,7 @@ const instance = axios.create({
 });
 
 export async function resetFirestoreEmulator() {
+	if (!emulatorHost) console.error('FIRESTORE_EMULATOR_HOST not defined');
 	try {
 		const response = await instance.post('reset');
 		// Axios throws an error for responses outside the 2xx range, so the following check is optional

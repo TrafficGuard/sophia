@@ -1,3 +1,4 @@
+import * as bcrypt from 'bcrypt';
 import { User } from '../user';
 import { UserService } from './userService';
 
@@ -11,9 +12,53 @@ const singleUser: User = {
 	id: SINGLE_USER_ID,
 	email: 'user@domain.com',
 	functionConfig: {},
+	createdAt: new Date(),
 };
 
 export class InMemoryUserService implements UserService {
+	private passwordHashes: Map<string, string> = new Map();
+
+	async authenticateUser(email: string, password: string): Promise<User> {
+		const user = await this.getUserByEmail(email);
+		const hash = this.passwordHashes.get(user.id);
+		if (!hash) {
+			throw new Error('Invalid credentials');
+		}
+
+		const isValid = await bcrypt.compare(password, hash);
+		if (!isValid) {
+			throw new Error('Invalid credentials');
+		}
+
+		await this.updateUser({ lastLoginAt: new Date() }, user.id);
+		return user;
+	}
+
+	async createUserWithPassword(email: string, password: string): Promise<User> {
+		const existingUser = await this.getUserByEmail(email).catch(() => null);
+		if (existingUser) {
+			throw new Error('User already exists');
+		}
+
+		const passwordHash = await bcrypt.hash(password, 10);
+		const user = await this.createUser({
+			email,
+			enabled: true,
+			createdAt: new Date(),
+			hilCount: 5,
+			hilBudget: 1,
+			functionConfig: {},
+			llmConfig: {},
+		});
+
+		this.passwordHashes.set(user.id, passwordHash);
+		return user;
+	}
+
+	async updatePassword(userId: string, newPassword: string): Promise<void> {
+		const passwordHash = await bcrypt.hash(newPassword, 10);
+		this.passwordHashes.set(userId, passwordHash);
+	}
 	users: User[] = [singleUser];
 
 	async getUser(userId: string): Promise<User> {
@@ -52,6 +97,7 @@ export class InMemoryUserService implements UserService {
 			hilCount: user.hilCount ?? 0,
 			llmConfig: user.llmConfig ?? { anthropicKey: '', openaiKey: '', groqKey: '', togetheraiKey: '' },
 			functionConfig: {},
+			createdAt: new Date(),
 		};
 		this.users.push(newUser);
 		return Promise.resolve(newUser);

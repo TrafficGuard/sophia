@@ -9,12 +9,16 @@ export interface LLMServicesConfig {
 	deepseekKey?: string;
 	fireworksKey?: string;
 	cerebrasKey?: string;
+	xaiKey?: string;
 }
 
 export interface User {
 	id: string;
 	email: string;
 	enabled: boolean;
+	passwordHash?: string; // Stored hash, not exposed to frontend
+	createdAt: Date;
+	lastLoginAt?: Date;
 
 	hilBudget: number;
 	hilCount: number;

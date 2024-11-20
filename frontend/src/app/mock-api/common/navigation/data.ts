@@ -7,7 +7,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
         title: 'Chat',
         type: 'basic',
         icon: 'heroicons_outline:chat-bubble-bottom-center-text',
-        link: '/apps/chat',
+        link: '/ui/chat',
     },
     // {
     //     id: 'assistants',
@@ -21,28 +21,28 @@ export const defaultNavigation: FuseNavigationItem[] = [
         title: 'Agents',
         type: 'basic',
         icon: 'heroicons_outline:squares-2x2',
-        link: '/agents/list',
+        link: '/ui/agents/list',
     },
     {
         id: 'new-agent',
         title: 'New Agent',
         type: 'basic',
         icon: 'heroicons_outline:squares-plus',
-        link: '/agents/new',
+        link: '/ui/agents/new',
     },
     {
         id: 'actions',
         title: 'Actions',
         type: 'basic',
         icon: 'heroicons_outline:server-stack',
-        link: '/actions',
+        link: '/ui/actions',
     },
     {
         id: 'codereviews',
-        title: 'Code reviews',
+        title: 'Code review',
         type: 'basic',
         icon: 'heroicons_outline:code-bracket-square',
-        link: '/code-reviews',
+        link: '/ui/code-reviews',
     }
 ];
 export const compactNavigation: FuseNavigationItem[] = defaultNavigation;

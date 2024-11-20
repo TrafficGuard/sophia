@@ -1,10 +1,6 @@
-<div
-        class="bg-card flex min-w-0 flex-auto flex-col dark:bg-transparent sm:absolute sm:inset-0 sm:overflow-hidden"
->
+<div class="bg-card flex min-w-0 flex-auto flex-col dark:bg-transparent sm:absolute sm:inset-0 sm:overflow-hidden">
     <!-- Header -->
-    <div
-            class="relative flex flex-0 flex-col border-b px-6 py-6 sm:flex-row sm:items-center sm:justify-between md:px-8"
-    >
+    <div class="relative flex flex-0 flex-col border-b px-6 py-6 sm:flex-row sm:items-center sm:justify-between md:px-8">
         <!-- Loader -->
         @if (isLoading) {
             <div class="absolute inset-x-0 bottom-0">
@@ -32,12 +28,11 @@
                         [placeholder]="'Search agents'"
                 />
             </mat-form-field>
-            <!-- Add product button -->
             <button
                     class="ml-4"
                     mat-flat-button
                     [color]="'primary'"
-                    [routerLink]="['/agents/new']"
+                    [routerLink]="['/ui/agents/new']"
             >
                 <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
                 <span class="ml-2 mr-1">Add</span>
@@ -47,75 +42,64 @@
 
     <!-- Main -->
     <div class="flex flex-auto overflow-hidden">
-        <div
-                class="flex flex-auto flex-col overflow-hidden sm:mb-18 sm:overflow-y-auto"
-        >
-            @if (agents$ | async; as products) {
-                @if (products.length > 0) {
+        <div class="flex flex-auto flex-col overflow-hidden sm:mb-18 sm:overflow-y-auto">
+            @if (agents$ | async; as agents) {
+                @if (agents.length > 0) {
                     <div class="grid">
                         <!-- Header -->
-                        <div
-                                class="inventory-grid text-secondary sticky top-0 z-10 grid gap-4 bg-gray-50 px-6 py-4 text-md font-semibold shadow dark:bg-black dark:bg-opacity-5 md:px-8"
-                                matSort
-                                matSortDisableClear
-                        >
-                            <!-- Select -->
-                            <div></div>
-
-                            <!-- Name -->
-                            <div [mat-sort-header]="'name'">Name</div>
-
-                            <!-- State -->
-                            <div [mat-sort-header]="'state'">State</div>
-
-                            <div [mat-sort-header]="'type'">Type</div>
-
-                            <!-- User Prompt -->
-                            <div [mat-sort-header]="'userPrompt'">User Prompt</div>
-
-                            <!-- Error/Completed Output -->
-                            <div [mat-sort-header]="'output'">Error/Output</div>
-
-                            <!-- Cost -->
-                            <div [mat-sort-header]="'cost'">Cost</div>
+                        <div class="inventory-grid text-secondary sticky top-0 z-10 grid gap-4 bg-gray-50 px-6 py-4 text-md font-semibold shadow dark:bg-black dark:bg-opacity-5 md:px-8"
+                             matSort
+                             matSortDisableClear>
+                            <div class="w-10"></div>
+                            <div [mat-sort-header]="'name'" class="w-48">Name</div>
+                            <div [mat-sort-header]="'state'" class="w-24 hidden md:block">State</div>
+                            <div [mat-sort-header]="'type'" class="w-24 hidden sm:block">Type</div>
+                            <div [mat-sort-header]="'userPrompt'" class="w-64 hidden md:block">User Prompt</div>
+                            <div [mat-sort-header]="'output'" class="flex-1 hidden lg:block">Error/Output</div>
+                            <div [mat-sort-header]="'cost'" class="w-24 text-right">Cost</div>
                         </div>
+
                         <!-- Rows -->
-                        @if (agents$ | async; as agents) {
-                            @for (agent of agents; track trackByFn($index, agent)) {
-                                <div class="inventory-grid grid items-center gap-4 border-b px-6 py-3 md:px-8">
-                                    <!-- Select Checkbox -->
-                                    <div class="flex items-center">
-                                        <mat-checkbox
-                                                (click)="$event.stopPropagation()"
-                                                (change)="$event ? selection.toggle(agent) : null"
-                                                [checked]="selection.isSelected(agent)"
-                                        >
-                                        </mat-checkbox>
-                                    </div>
-
-                                    <!-- Name -->
-                                    <div class="truncate">
-                                        <a [routerLink]="['/agents', agent.agentId]">{{ agent.name }}</a>
-                                    </div>
-
-                                    <!-- State -->
-                                    <div>{{ agent.state }}</div>
-
-                                    <!-- Type -->
-                                    <div>{{ agent.type }}</div>
-
-                                    <!-- User Prompt -->
-                                    <div>{{ agent.userPrompt | slice: 0 : 150 }}</div>
-
-                                    <!-- Error/Completed Output -->
-                                    <div>
-                                        {{ (agent.state === 'error' ? agent.error : agent.output) | slice: 0 : 150 }}
-                                    </div>
-
-                                    <!-- Cost -->
-                                    <div>${{ agent.cost | number: '1.2-2' }}</div>
+                        @for (agent of agents; track trackByFn($index, agent)) {
+                            <div class="inventory-grid grid items-center gap-4 border-b px-6 py-2 hover:bg-gray-50 md:px-8">
+                                <div class="w-10">
+                                    <mat-checkbox
+                                            (click)="$event.stopPropagation()"
+                                            (change)="$event ? selection.toggle(agent) : null"
+                                            [checked]="selection.isSelected(agent)">
+                                    </mat-checkbox>
                                 </div>
-                            }
+
+                                <div class="w-48 truncate">
+                                    <a class="hover:text-primary" [routerLink]="['/ui/agents', agent.agentId]">
+                                        {{ agent.name }}
+                                    </a>
+                                </div>
+
+                                <div class="w-24 truncate hidden md:block">
+                                    <span [class]="getStateClass(agent.state)">{{ agent.state }}</span>
+                                </div>
+
+                                <div class="w-24 truncate hidden sm:block">{{ agent.type }}</div>
+
+                                <div class="w-64 hidden md:block">
+                                    <mat-tooltip [matTooltip]="agent.userPrompt">
+                                        <div class="max-h-8 truncate">{{ agent.userPrompt }}</div>
+                                    </mat-tooltip>
+                                </div>
+
+                                <div class="flex-1 hidden lg:block">
+                                    <mat-tooltip [matTooltip]="agent.state === 'error' ? agent.error : agent.output">
+                                        <div class="max-h-8 truncate">
+                                            {{ (agent.state === 'error' ? agent.error : agent.output) }}
+                                        </div>
+                                    </mat-tooltip>
+                                </div>
+
+                                <div class="w-24 text-right font-mono">
+                                    ${{ agent.cost | number: '1.2-2' }}
+                                </div>
+                            </div>
                         }
                     </div>
                     <!--
@@ -130,16 +114,14 @@
                     ></mat-paginator>
                     -->
                 } @else {
-                    <div
-                            class="border-t p-8 text-center text-3xl font-medium tracking-tight sm:p-16"
-                    >
-                        <div>There are no agents!</div>
+                    <div class="border-t p-8 text-center text-3xl font-medium tracking-tight sm:p-16">
+                        <div class="mb-1">There are no agents!</div>
 
                         <button
                                 class="ml-4"
                                 mat-flat-button
                                 [color]="'primary'"
-                                [routerLink]="['/agents/new']"
+                                [routerLink]="['/ui/agents/new']"
                         >
                             <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
                             <span class="ml-2 mr-1">Add</span>

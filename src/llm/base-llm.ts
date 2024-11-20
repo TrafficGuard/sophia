@@ -107,6 +107,19 @@ export abstract class BaseLLM implements LLM {
 		return extractStringResult(response);
 	}
 
+	generateTextWithJson(userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
+	generateTextWithJson(systemPrompt: string, userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
+	generateTextWithJson(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string>;
+	async generateTextWithJson(
+		userOrSystemOrMessages: string | LlmMessage[],
+		userOrOpts?: string | GenerateTextOptions,
+		opts?: GenerateTextOptions,
+	): Promise<string> {
+		const { messages, options } = this.parseGenerateTextParameters(userOrSystemOrMessages, userOrOpts, opts);
+		const response = await this.generateText(messages, options);
+		return extractJsonResult(response);
+	}
+
 	generateJson<T>(userPrompt: string, opts?: GenerateJsonOptions): Promise<T>;
 	generateJson<T>(systemPrompt: string, userPrompt: string, opts?: GenerateJsonOptions): Promise<T>;
 	generateJson<T>(messages: LlmMessage[], opts?: GenerateJsonOptions): Promise<T>;

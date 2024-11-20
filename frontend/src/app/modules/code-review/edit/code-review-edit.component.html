@@ -12,17 +12,24 @@
         <mat-card-content>
         <form [formGroup]="editForm" (ngSubmit)="onSubmit()" class="flex flex-col">
           <mat-form-field [ngClass]="['fuse-mat-dense', 'w-full']">
+            <mat-label>Title</mat-label>
+            <input matInput formControlName="title" required>
+          </mat-form-field>
+
+          <mat-form-field [ngClass]="['fuse-mat-dense', 'w-full']">
             <mat-label>Description</mat-label>
             <textarea matInput formControlName="description" required rows="4"></textarea>
           </mat-form-field>
 
+          <mat-checkbox [formControlName]="'enabled'">Enabled</mat-checkbox>
+
           <div class="flex flex-col md:flex-row gap-4 mt-4">
-            <div formGroupName="file_extensions" class="flex-auto">
+            <div formGroupName="fileExtensions" class="flex-auto">
               <mat-form-field [ngClass]="['fuse-mat-dense', 'w-full']">
                   <mat-label>Included File Extensions</mat-label>
                   <mat-chip-grid #chipList required>
                     <mat-chip
-                      *ngFor="let ext of editForm.get('file_extensions.include')?.value"
+                      *ngFor="let ext of editForm.get('fileExtensions.include')?.value"
                       [removable]="true"
                       (removed)="removeExtension(ext)"
                     >
@@ -84,7 +91,7 @@
                   <mat-label>Project Paths</mat-label>
                   <mat-chip-grid #projectPathChipList>
                     <mat-chip
-                      *ngFor="let path of editForm.get('project_paths')?.value"
+                      *ngFor="let path of editForm.get('projectPaths')?.value"
                       [removable]="true"
                       (removed)="removeProjectPath(path)"
                     >
@@ -119,7 +126,7 @@
               </mat-form-field>
               <mat-form-field [ngClass]="['fuse-mat-dense', 'flex-auto']">
                 <mat-label>Review Comment</mat-label>
-                <textarea matInput formControlName="review_comment" required></textarea>
+                <textarea matInput formControlName="reviewComment" required></textarea>
               </mat-form-field>
               <button mat-icon-button color="warn" class="pt-6" type="button" (click)="removeExample(i)">
                 <mat-icon>delete</mat-icon>
@@ -128,7 +135,7 @@
           </div>
 
           <div class="flex justify-end mt-6">
-            <button mat-button type="button" routerLink="/code-review">Cancel</button>
+            <button mat-button type="button" routerLink="/ui/code-reviews">Cancel</button>
             <button mat-raised-button color="primary" type="submit" [disabled]="editForm.invalid || isLoading">
               {{ configId ? 'Update' : 'Create' }}
             </button>

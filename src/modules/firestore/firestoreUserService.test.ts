@@ -13,6 +13,7 @@ describe('FirestoreUserService', () => {
 			enabled: true,
 			hilBudget: 0,
 			hilCount: 0,
+			createdAt: new Date(),
 			llmConfig: {
 				anthropicKey: '',
 				openaiKey: '',
@@ -21,19 +22,6 @@ describe('FirestoreUserService', () => {
 			},
 			functionConfig: {},
 			// gitlabConfig: {
-			// 	host: '',
-			// 	token: '',
-			// 	topLevelGroups: [],
-			// },
-			// githubConfig: {
-			// 	token: '',
-			// },
-			// jiraConfig: {
-			// 	baseUrl: '',
-			// 	email: '',
-			// 	token: '',
-			// },
-			// perplexityKey: '',
 		};
 		return { ...defaultUser, ...overrides };
 	}
@@ -48,6 +36,7 @@ describe('FirestoreUserService', () => {
 			let user = createUserWithDefaults({
 				email: 'test@example.com',
 				hilBudget: 100,
+				createdAt: new Date(),
 			});
 			user = await firestoreUserService.createUser(user);
 			const retrievedUser = await firestoreUserService.getUser(user.id);
@@ -112,6 +101,18 @@ describe('FirestoreUserService', () => {
 			expect(createdUser.email).to.equal(newUser.email);
 			const retrievedUser = await firestoreUserService.getUser(createdUser.id);
 			expect(retrievedUser.email).to.equal(newUser.email);
+			expect(retrievedUser.llmConfig).to.exist;
+		});
+
+		it('should create a minimal new user', async () => {
+			const newUser: Partial<User> = {
+				email: 'create@example.com',
+			};
+			const createdUser = await firestoreUserService.createUser(newUser);
+			expect(createdUser.email).to.equal(newUser.email);
+			const retrievedUser = await firestoreUserService.getUser(createdUser.id);
+			expect(retrievedUser.email).to.equal(newUser.email);
+			expect(retrievedUser.llmConfig).to.exist;
 		});
 	});
 });

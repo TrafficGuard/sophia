@@ -139,7 +139,7 @@ export class AssistantsService {
             take(1),
             switchMap((chats) =>
                 this._httpClient
-                    .patch<AssistantChat>('api/apps/chat/chat', {
+                    .patch<AssistantChat>('api/chat/chat', {
                         id,
                         chat,
                     })
@@ -188,7 +188,7 @@ export class AssistantsService {
             take(1),
             switchMap((chats) =>
                 this._httpClient
-                    .patch<AssistantChat>('api/apps/chat/chat', {
+                    .patch<AssistantChat>('api/chat/chat', {
                         id,
                         chat,
                     })

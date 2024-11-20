@@ -34,10 +34,10 @@ import { UiSettingsComponent } from './ui-settings/ui-settings.component';
 export class ProfileComponent implements OnInit, OnDestroy {
     @ViewChild('drawer') drawer: MatDrawer;
     drawerMode: 'over' | 'side' = 'side';
-    drawerOpened: boolean = true;
+    drawerOpened = true;
     panels: any[] = [];
-    selectedPanel: string = 'account';
-    private _unsubscribeAll: Subject<any> = new Subject<any>();
+    selectedPanel = 'account';
+    private _unsubscribeAll: Subject<any> = new Subject();
 
     /**
      * Constructor
@@ -46,6 +46,23 @@ export class ProfileComponent implements OnInit, OnDestroy {
         private _changeDetectorRef: ChangeDetectorRef,
         private _fuseMediaWatcherService: FuseMediaWatcherService
     ) {
+    }
+
+    /**
+     * Get panel from URL hash
+     * @private
+     */
+    private getPanelFromHash(): string {
+        const hash = window.location.hash.slice(1);
+        return this.panels.find(panel => panel.id === hash)?.id || 'account';
+    }
+
+    /**
+     * Update URL hash
+     * @private
+     */
+    private updateUrlHash(panel: string): void {
+        window.location.hash = panel === 'account' ? '' : panel;
     }
 
     // -----------------------------------------------------------------------------------------------------
@@ -94,6 +111,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
             },
         ];
 
+        // Set initial panel from URL hash
+        this.selectedPanel = this.getPanelFromHash();
+
         // Subscribe to media changes
         this._fuseMediaWatcherService.onMediaChange$
             .pipe(takeUntil(this._unsubscribeAll))
@@ -132,6 +152,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
      */
     goToPanel(panel: string): void {
         this.selectedPanel = panel;
+        this.updateUrlHash(panel);
 
         // Close the drawer on 'over' mode
         if (this.drawerMode === 'over') {

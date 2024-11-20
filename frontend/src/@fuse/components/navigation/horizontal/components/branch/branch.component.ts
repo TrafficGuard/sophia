@@ -47,7 +47,7 @@ export class FuseHorizontalNavigationBranchItemComponent
     private _changeDetectorRef = inject(ChangeDetectorRef);
     private _fuseNavigationService = inject(FuseNavigationService);
 
-    @Input() child: boolean = false;
+    @Input() child = false;
     @Input() item: FuseNavigationItem;
     @Input() name: string;
     @ViewChild('matMenu', { static: true }) matMenu: MatMenu;

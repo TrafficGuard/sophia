@@ -61,8 +61,8 @@ export class AgentComponent implements OnInit {
     feedbackForm: FormGroup;
     hilForm: FormGroup;
     errorForm: FormGroup;
-    isSubmitting: boolean = false;
-    isResumingError: boolean = false;
+    isSubmitting = false;
+    isResumingError = false;
 
     constructor(
         private route: ActivatedRoute,

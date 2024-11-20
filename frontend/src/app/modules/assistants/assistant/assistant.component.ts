@@ -18,13 +18,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import {Router, RouterLink, RouterModule, ActivatedRoute} from '@angular/router';
+import { Router, RouterLink, RouterModule, ActivatedRoute } from '@angular/router';
 import { FuseMediaWatcherService } from '@fuse/services/media-watcher';
 import { AssistantsService } from 'app/modules/assistants/assistants.service';
 import { AssistantChat } from '../assistant.types';
 import { AssistantInfoComponent } from 'app/modules/assistants/assistant-info/assistant-info.component';
 import { LLM, LlmService } from "app/modules/agents/services/llm.service";
-import {BehaviorSubject, Observable, Subject, takeUntil} from 'rxjs';
+import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import {
     CLIPBOARD_OPTIONS,
     ClipboardButtonComponent,
@@ -32,9 +32,9 @@ import {
     MarkdownService,
     provideMarkdown
 } from "ngx-markdown";
-import {MatOption} from "@angular/material/core";
-import {MatSelect} from "@angular/material/select";
-import {ReactiveFormsModule} from "@angular/forms";
+import { MatOption } from "@angular/material/core";
+import { MatSelect } from "@angular/material/select";
+import { ReactiveFormsModule } from "@angular/forms";
 
 
 @Component({
@@ -82,7 +82,7 @@ export class AssistantComponent implements OnInit, OnDestroy {
     @ViewChild('messageInput') messageInput: ElementRef;
     chat: AssistantChat;
     drawerMode: 'over' | 'side' = 'side';
-    drawerOpened: boolean = false;
+    drawerOpened = false;
     private _unsubscribeAll: Subject<any> = new Subject<any>();
     $llms: BehaviorSubject<LLM[]> = new BehaviorSubject(null);
     llmId: string;
@@ -239,7 +239,7 @@ export class AssistantComponent implements OnInit, OnDestroy {
         if (this.chat && this.chat.id) {
             this._assistantService.deleteChat(this.chat.id).subscribe(() => {
                 this.resetChat();
-                this.router.navigate(['/apps/chat']).catch(console.error);
+                this.router.navigate(['/ui/chat']).catch(console.error);
             });
         }
     }
@@ -270,7 +270,7 @@ export class AssistantComponent implements OnInit, OnDestroy {
             this._changeDetectorRef.markForCheck();
             // TODO handle error, set the message back to the messageInput and remove from chat.messages
             this._assistantService.createChat(message, this.llmId).subscribe(async (chat: AssistantChat) => {
-                this.router.navigate([`/apps/chat/${chat.id}`]).catch(console.error);
+                this.router.navigate([`/ui/chat/${chat.id}`]).catch(console.error);
             });
 
             return;

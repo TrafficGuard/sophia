@@ -19,6 +19,7 @@ import { functionRegistry } from './functionRegistry';
 import { agentDetailsRoutes } from './routes/agent/agent-details-routes';
 import { agentExecutionRoutes } from './routes/agent/agent-execution-routes';
 import { agentStartRoute } from './routes/agent/agent-start-route';
+import { authRoutes } from './routes/auth/auth-routes';
 import { chatRoutes } from './routes/chat/chat-routes';
 import { codeRoutes } from './routes/code/code-routes';
 import { gitlabRoutesV1 } from './routes/gitlab/gitlabRoutes-v1';
@@ -73,23 +74,24 @@ export async function initServer(): Promise<void> {
 	try {
 		await initFastify({
 			routes: [
-				gitlabRoutesV1 as RouteDefinition,
-				agentStartRoute as RouteDefinition,
-				agentDetailsRoutes as RouteDefinition,
-				agentExecutionRoutes as RouteDefinition,
-				profileRoute as RouteDefinition,
-				llmRoutes as RouteDefinition,
-				llmCallRoutes as RouteDefinition,
-				codeReviewRoutes as RouteDefinition,
-				chatRoutes as RouteDefinition,
-				codeRoutes as RouteDefinition,
+				authRoutes,
+				gitlabRoutesV1,
+				agentStartRoute,
+				agentDetailsRoutes,
+				agentExecutionRoutes,
+				profileRoute,
+				llmRoutes,
+				llmCallRoutes,
+				codeReviewRoutes,
+				chatRoutes,
+				codeRoutes,
 				// Add your routes below this line
 			],
 			instanceDecorators: applicationContext, // This makes all properties on the ApplicationContext interface available on the fastify instance in the routes
 			requestDecorators: {},
 		});
 	} catch (err: any) {
-		logger.fatal(err, 'Could not start nous');
+		logger.fatal(err, 'Could not start Sophia');
 	}
 }
 

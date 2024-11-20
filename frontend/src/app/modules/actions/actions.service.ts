@@ -12,18 +12,18 @@ export class ActionsService {
   constructor(private http: HttpClient) {}
 
   runCodeEditWorkflow(workingDirectory: string, requirements: string): Observable<any> {
-    return this.http.post(`${environment.apiBaseUrl}code/edit`, { workingDirectory, requirements });
+    return this.http.post(`/api/code/edit`, { workingDirectory, requirements });
   }
 
   runCodebaseQuery(workingDirectory: string, query: string): Observable<{ response: string }> {
-    return this.http.post<{ response: string }>(`${environment.apiBaseUrl}code/query`, { workingDirectory, query });
+    return this.http.post<{ response: string }>(`/api/code/query`, { workingDirectory, query });
   }
 
   selectFilesToEdit(workingDirectory: string, requirements: string): Observable<any> {
-    return this.http.post(`${environment.apiBaseUrl}code/select-files`, { workingDirectory, requirements });
+    return this.http.post(`/api/code/select-files`, { workingDirectory, requirements });
   }
 
   getRepositories(): Observable<string[]> {
-    return this.http.get<string[]>(`${environment.apiBaseUrl}code/repositories`);
+    return this.http.get<string[]>(`/api/code/repositories`);
   }
 }

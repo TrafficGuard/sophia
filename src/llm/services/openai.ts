@@ -1,16 +1,8 @@
-import { createOpenAI, openai } from '@ai-sdk/openai';
-import { OpenAIChatModelId } from '@ai-sdk/openai/internal';
-import { LanguageModel } from 'ai';
-import { OpenAI as OpenAISDK } from 'openai';
-import { addCost, agentContext } from '#agent/agentContextLocalStorage';
-import { LlmCall } from '#llm/llmCallService/llmCall';
+import { OpenAIProvider, createOpenAI } from '@ai-sdk/openai';
+import { AiLLM } from '#llm/services/ai-llm';
 import { logger } from '#o11y/logger';
-import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
-import { envVar } from '#utils/env-var';
-import { appContext } from '../../app';
-import { BaseLLM } from '../base-llm';
-import { GenerateTextOptions, LLM, combinePrompts } from '../llm';
+import { LLM } from '../llm';
 
 export const OPENAI_SERVICE = 'openai';
 
@@ -22,8 +14,6 @@ export function openAiLLMRegistry(): Record<string, () => LLM> {
 		'openai:o1-mini': () => openaiLLmFromModel('o1-mini'),
 	};
 }
-
-type Model = 'gpt-4o' | 'gpt-4o-mini' | 'o1-preview' | 'o1-mini';
 
 export function openaiLLmFromModel(model: string): LLM {
 	if (model.startsWith('gpt-4o-mini')) return GPT4oMini();
@@ -37,8 +27,6 @@ export function openAIo1() {
 	return new OpenAI(
 		'OpenAI o1',
 		'o1-preview',
-		'o1-preview',
-		128_000,
 		(input: string) => (input.length * 15) / 1_000_000,
 		(output: string) => (output.length * 60) / (1_000_000 * 4),
 	);
@@ -48,8 +36,6 @@ export function openAIo1mini() {
 	return new OpenAI(
 		'OpenAI o1-mini',
 		'o1-mini',
-		'o1-mini',
-		128_000,
 		(input: string) => (input.length * 3) / 1_000_000,
 		(output: string) => (output.length * 12) / (1_000_000 * 4),
 	);
@@ -59,8 +45,6 @@ export function GPT4o() {
 	return new OpenAI(
 		'GPT4o',
 		'gpt-4o',
-		'gpt-4o',
-		128_000,
 		(input: string) => (input.length * 2.5) / 1_000_000,
 		(output: string) => (output.length * 10) / (1_000_000 * 4),
 	);
@@ -70,135 +54,39 @@ export function GPT4oMini() {
 	return new OpenAI(
 		'GPT4o mini',
 		'gpt-4o-mini',
-		'gpt-4o-mini',
-		128_000,
 		(input: string) => (input.length * 0.15) / (1_000_000 * 4),
 		(output: string) => (output.length * 0.6) / (1_000_000 * 4),
 	);
 }
 
-export class OpenAI extends BaseLLM {
-	openAISDK: OpenAISDK | null = null;
-	aimodel: LanguageModel;
-
-	constructor(
-		name: string,
-		model: Model,
-		private aiModelId: OpenAIChatModelId,
-		maxInputTokens: number,
-		calculateInputCost: (input: string) => number,
-		calculateOutputCost: (output: string) => number,
-	) {
-		super(name, OPENAI_SERVICE, model, maxInputTokens, calculateInputCost, calculateOutputCost);
+export class OpenAI extends AiLLM<OpenAIProvider> {
+	constructor(displayName: string, model: string, calculateInputCost: (input: string) => number, calculateOutputCost: (output: string) => number) {
+		super(displayName, OPENAI_SERVICE, model, 128_000, calculateInputCost, calculateOutputCost);
 	}
 
-	private sdk(): OpenAISDK {
-		if (!this.openAISDK) {
-			this.openAISDK = new OpenAISDK({
-				apiKey: currentUser().llmConfig.openaiKey || envVar('OPENAI_API_KEY'),
+	protected apiKey(): string {
+		return currentUser().llmConfig.openaiKey || process.env.OPENAI_API_KEY;
+	}
+
+	provider(): OpenAIProvider {
+		if (!this.aiProvider) {
+			this.aiProvider = createOpenAI({
+				apiKey: this.apiKey(),
 			});
 		}
-		return this.openAISDK;
+		return this.aiProvider;
 	}
 
-	isConfigured(): boolean {
-		return Boolean(currentUser().llmConfig.openaiKey || process.env.OPENAI_API_KEY);
-	}
-
-	aiModel(): LanguageModel {
-		if (!this.aimodel) {
-			this.aimodel = createOpenAI({
-				apiKey: currentUser().llmConfig.openaiKey || envVar('OPENAI_API_KEY'),
-			})(this.getModel());
-		}
-		return this.aimodel;
-	}
-
-	async generateImage(description: string): Promise<string> {
-		const response = await this.sdk().images.generate({
-			model: 'dall-e-3',
-			prompt: description,
-			n: 1,
-			size: '1792x1024',
-		});
-		const imageUrl = response.data[0].url;
-		logger.info(`Generated image at ${imageUrl}`);
-		// await getFileSystem().writeFile('', imageUrl, 'utf8');
-		return imageUrl;
-	}
-
-	async _generateText(systemPrompt: string | undefined, userPrompt: string, opts?: GenerateTextOptions): Promise<string> {
-		return withActiveSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
-			const prompt = combinePrompts(userPrompt, systemPrompt);
-
-			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
-			span.setAttributes({
-				userPrompt,
-				inputChars: prompt.length,
-				model: this.model,
-				service: this.service,
-			});
-
-			const llmCallSave: Promise<LlmCall> = appContext().llmCallService.saveRequest({
-				userPrompt,
-				systemPrompt,
-				llmId: this.getId(),
-				agentId: agentContext()?.agentId,
-				callStack: this.callStack(agentContext()),
-			});
-			const requestTime = Date.now();
-
-			const messages = [];
-			if (systemPrompt) {
-				messages.push({
-					role: 'system',
-					content: systemPrompt,
-				});
-			}
-			messages.push({
-				role: 'user',
-				content: userPrompt,
-			});
-
-			const stream = await this.sdk().chat.completions.create({
-				model: this.model,
-				response_format: { type: opts?.type === 'json' ? 'json_object' : 'text' },
-				messages,
-				stream: false,
-			});
-			const responseText = stream.choices[0].message.content;
-			const timeToFirstToken = Date.now();
-			const finishTime = Date.now();
-
-			const llmCall: LlmCall = await llmCallSave;
-
-			const inputCost = this.calculateInputCost(prompt);
-			const outputCost = this.calculateOutputCost(responseText);
-			const cost = inputCost + outputCost;
-
-			llmCall.responseText = responseText;
-			llmCall.timeToFirstToken = timeToFirstToken;
-			llmCall.totalTime = finishTime - requestTime;
-			llmCall.cost = cost;
-			addCost(cost);
-
-			span.setAttributes({
-				inputChars: prompt.length,
-				outputChars: responseText.length,
-				response: responseText,
-				inputCost,
-				outputCost,
-				cost,
-			});
-
-			try {
-				await appContext().llmCallService.saveResponse(llmCall);
-			} catch (e) {
-				// queue to save
-				logger.error(e);
-			}
-
-			return responseText;
-		});
-	}
+	// async generateImage(description: string): Promise<string> {
+	// 	const response = await this.sdk().images.generate({
+	// 		model: 'dall-e-3',
+	// 		prompt: description,
+	// 		n: 1,
+	// 		size: '1792x1024',
+	// 	});
+	// 	const imageUrl = response.data[0].url;
+	// 	logger.info(`Generated image at ${imageUrl}`);
+	// 	// await getFileSystem().writeFile('', imageUrl, 'utf8');
+	// 	return imageUrl;
+	// }
 }

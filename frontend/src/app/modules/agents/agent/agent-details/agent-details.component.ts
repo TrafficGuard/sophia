@@ -48,10 +48,10 @@ export class AgentDetailsComponent implements OnInit {
     feedbackForm!: FormGroup;
     hilForm!: FormGroup;
     errorForm!: FormGroup;
-    isSubmitting: boolean = false;
-    isResumingError: boolean = false;
-    userPromptExpanded: boolean = false;
-    outputExpanded: boolean = false;
+    isSubmitting = false;
+    isResumingError = false;
+    userPromptExpanded = false;
+    outputExpanded = false;
     allAvailableFunctions: string[] = []; // Initialize with an empty array or fetch from a service
     llmNameMap: Map<string, string> = new Map();
 
@@ -72,7 +72,7 @@ export class AgentDetailsComponent implements OnInit {
         this.functionsService.getFunctions().subscribe(value =>
         this.allAvailableFunctions = value)
         this.http
-            .get<{ data: Array<{ id: string; name: string }> }>(`${environment.serverUrl}llms/list`)
+            .get<{ data: Array<{ id: string; name: string }> }>(`/apillms/list`)
             .pipe(
                 map((response) => {
                     console.log(response);
@@ -107,7 +107,7 @@ export class AgentDetailsComponent implements OnInit {
         const feedback = this.feedbackForm.get('feedback')?.value;
         this.isSubmitting = true;
         this.http
-            .post(`${environment.serverUrl}/agent/v1/feedback`, {
+            .post(`/api/agent/v1/feedback`, {
                 agentId: this.agentDetails.agentId,
                 executionId: this.agentDetails.executionId,
                 feedback: feedback,
@@ -135,7 +135,7 @@ export class AgentDetailsComponent implements OnInit {
         this.isSubmitting = true;
         const feedback = this.hilForm.get('feedback')?.value;
         this.http
-            .post(`${environment.serverUrl}/agent/v1/resume-hil`, {
+            .post(`/api/agent/v1/resume-hil`, {
                 agentId: this.agentDetails.agentId,
                 executionId: this.agentDetails.executionId,
                 feedback,
@@ -164,7 +164,7 @@ export class AgentDetailsComponent implements OnInit {
         this.isResumingError = true;
         const errorDetails = this.errorForm.get('errorDetails')?.value;
         this.http
-            .post(`${environment.serverUrl}/agent/v1/resume-error`, {
+            .post(`/api/agent/v1/resume-error`, {
                 agentId: this.agentDetails.agentId,
                 executionId: this.agentDetails.executionId,
                 feedback: errorDetails,
@@ -190,7 +190,7 @@ export class AgentDetailsComponent implements OnInit {
 
     cancelAgent(): void {
         this.http
-            .post(`${environment.serverUrl}/agent/v1/cancel`, {
+            .post(`/api/agent/v1/cancel`, {
                 agentId: this.agentDetails.agentId,
                 executionId: this.agentDetails.executionId,
                 reason: 'None provided',
@@ -276,7 +276,7 @@ export class AgentDetailsComponent implements OnInit {
     saveFunctions(selectedFunctions: string[]): void {
         // this.isSavingFunctions = true;
         this.http
-            .post(`${environment.serverUrl}agent/v1/update-functions`, {
+            .post(`/api/agent/v1/update-functions`, {
                 agentId: this.agentDetails.agentId,
                 functions: selectedFunctions,
             })
@@ -314,7 +314,7 @@ export class AgentDetailsComponent implements OnInit {
     private resumeCompletedAgent(resumeInstructions: string): void {
         this.isSubmitting = true;
         this.http
-            .post(`${environment.serverUrl}/agent/v1/resume-completed`, {
+            .post(`/api/agent/v1/resume-completed`, {
                 agentId: this.agentDetails.agentId,
                 executionId: this.agentDetails.executionId,
                 instructions: resumeInstructions,

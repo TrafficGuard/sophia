@@ -1,31 +1,37 @@
+import { readFileSync } from 'fs';
 import * as http from 'node:http';
 import { join } from 'node:path';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import fastify, {
 	FastifyBaseLogger,
 	FastifyInstance,
+	FastifyRegister,
 	FastifyReply,
 	FastifyRequest as FastifyRequestBase,
 	RawReplyDefaultExpression,
 	RawRequestDefaultExpression,
 } from 'fastify';
-import { User } from '#user/user';
-
-interface FastifyRequest extends FastifyRequestBase {
-	currentUser?: User;
-}
 import fastifyPlugin from 'fastify-plugin';
 import * as HttpStatus from 'http-status-codes';
-import { googleIapMiddleware, singleUserMiddleware } from '#fastify/userMiddleware';
+import { googleIapMiddleware, jwtAuthMiddleware, singleUserMiddleware } from '#fastify/authenticationMiddleware';
 import { logger } from '#o11y/logger';
+import { User } from '#user/user';
+import { AppFastifyInstance } from '../app';
 import { loadOnRequestHooks } from './hooks';
 
 const NODE_ENV = process.env.NODE_ENV ?? 'local';
 
 export const DEFAULT_HEALTHCHECK = '/health-check';
 
-/** Path prefix that the Angular app is served on. */
-const UI_PREFIX = '/ui/';
+const STATIC_PATH = process.env.STATIC_PATH || 'frontend/dist/fuse/browser';
+
+const indexHtmlPath = join(STATIC_PATH, 'index.html');
+let indexHtml: string;
+try {
+	indexHtml = readFileSync(indexHtmlPath).toString();
+} catch (e) {
+	logger.info(`${indexHtmlPath} not found`);
+}
 
 export type TypeBoxFastifyInstance = FastifyInstance<
 	http.Server,
@@ -35,11 +41,16 @@ export type TypeBoxFastifyInstance = FastifyInstance<
 	TypeBoxTypeProvider
 >;
 
-export type RouteDefinition = (fastify: TypeBoxFastifyInstance) => Promise<void>;
+export type RouteDefinition = (fastify: AppFastifyInstance) => Promise<void>;
+
+/** Our Fastify request type used in the application */
+interface FastifyRequest extends FastifyRequestBase {
+	currentUser?: User;
+}
 
 export const fastifyInstance: TypeBoxFastifyInstance = fastify({
 	maxParamLength: 256,
-}).withTypeProvider<TypeBoxTypeProvider>();
+}).withTypeProvider<TypeBoxTypeProvider>() as AppFastifyInstance;
 
 export interface FastifyConfig {
 	/** The port to listen on. If not provided looks up from process.env.PORT or else process.env.SERVER_PORT */
@@ -51,7 +62,7 @@ export interface FastifyConfig {
 	// healthcheckUrl?: string;
 }
 
-export async function initFastify(config: FastifyConfig): Promise<void> {
+export async function initFastify(config: FastifyConfig): Promise<AppFastifyInstance> {
 	/*
    	 To guarantee a consistent and predictable behaviour of your application, we highly recommend to always load your code as shown below:
       └── plugins (from the Fastify ecosystem)
@@ -65,12 +76,29 @@ export async function initFastify(config: FastifyConfig): Promise<void> {
 	if (config.instanceDecorators) registerInstanceDecorators(config.instanceDecorators);
 	if (config.requestDecorators) registerRequestDecorators(config.requestDecorators);
 	registerRoutes(config.routes);
-	fastifyInstance.register(require('@fastify/static'), {
-		root: join(process.cwd(), 'public'),
-		prefix: UI_PREFIX, // optional: default '/'
-		// constraints: { host: 'example.com' } // optional: default {}
+
+	// All backend API routes start with /api/ so any unmatched at this point is a 404
+	fastifyInstance.get('/api/*', async (request, reply) => {
+		return reply.code(404).send({ error: 'Not Found' });
 	});
+	fastifyInstance.post('/api/*', async (request, reply) => {
+		return reply.code(404).send({ error: 'Not Found' });
+	});
+
+	// When the user has refreshed the page at an Angular route URL, serve the index.html
+	fastifyInstance.get('/ui/*', async (request, reply) => {
+		// TODO serve this compressed when possible
+		return reply.header('Content-Type', 'text/html').header('Cache-Control', 'no-store, no-cache, must-revalidate').code(200).send(indexHtml);
+	});
+
+	// TODO precompress https://github.com/fastify/fastify-static?tab=readme-ov-file#precompressed
+	fastifyInstance.register(require('@fastify/static'), {
+		root: join(process.cwd(), STATIC_PATH),
+		prefix: '/',
+	});
+
 	setErrorHandler();
+
 	let port = config.port;
 	// If not provided autodetect from PORT or SERVER_PORT
 	// https://cloud.google.com/run/docs/container-contract#port
@@ -85,6 +113,7 @@ export async function initFastify(config: FastifyConfig): Promise<void> {
 		if (!port) throw new Error('Could not autodetect the server port to use from either the PORT or SERVER_PORT environment variables');
 	}
 	listen(port);
+	return fastifyInstance as AppFastifyInstance;
 }
 
 function listen(port: number): void {
@@ -103,10 +132,14 @@ function listen(port: number): void {
 }
 
 async function loadPlugins(config: FastifyConfig) {
+	// Register JWT plugin
+	await fastifyInstance.register(import('@fastify/jwt'), {
+		secret: process.env.JWT_SECRET || 'your-secret-key',
+	});
 	await fastifyInstance.register(import('@fastify/cors'), {
-		origin: '*', // TODO restrict to UI domain
+		origin: ['*'], // new URL(process.env.UI_URL).origin
 		methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow these HTTP methods
-		allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers
+		allowedHeaders: ['Content-Type', 'Authorization', 'X-Goog-Iap-Jwt-Assertion'], // Allow these headers
 		credentials: true,
 	});
 	fastifyInstance.register(require('fastify-healthcheck'), {
@@ -126,14 +159,17 @@ function loadHooks() {
 
 	// Authentication hook
 	let authenticationMiddleware = null;
-	if (process.env.AUTH === 'gcloud_iap') {
+	if (process.env.AUTH === 'google_iap') {
 		authenticationMiddleware = googleIapMiddleware;
 		logger.info('Configured Google IAP authentication middleware');
 	} else if (process.env.AUTH === 'single_user') {
 		authenticationMiddleware = singleUserMiddleware;
 		logger.info('Configured Single User authentication middleware');
+	} else if (process.env.AUTH === 'password') {
+		authenticationMiddleware = jwtAuthMiddleware;
+		logger.info('Configured JWT authentication middleware');
 	} else {
-		throw new Error('No valid authentication configured. Set AUTH to single_user or gcloud_iap');
+		throw new Error('No valid authentication configured. Set AUTH to single_user, google_iap or password');
 	}
 	fastifyInstance.addHook('onRequest', authenticationMiddleware);
 }
@@ -160,7 +196,7 @@ function registerRequestDecorators(decorators: { [key: string]: any }) {
 
 function registerRoutes(routes: RouteDefinition[]) {
 	for (const route of routes) {
-		fastifyInstance.register(route);
+		fastifyInstance.register(route as any);
 	}
 }
 

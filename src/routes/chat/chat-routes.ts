@@ -5,6 +5,7 @@ import { send, sendBadRequest } from '#fastify/index';
 import { LLM } from '#llm/llm';
 import { getLLM } from '#llm/llmFactory';
 import { Claude3_5_Sonnet_Vertex } from '#llm/services/anthropic-vertex';
+import { GPT4oMini } from '#llm/services/openai';
 import { logger } from '#o11y/logger';
 import { currentUser } from '#user/userService/userContext';
 import { AppFastifyInstance } from '../../app';
@@ -61,7 +62,12 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
 			}
 			if (!llm.isConfigured()) return sendBadRequest(reply, `LLM ${llm.getId()} is not configured`);
 
-			const titlePromise: Promise<string> | undefined = llm.generateText(
+			let titleLLM = llm;
+			if (llm.getModel().startsWith('o1')) {
+				// o1 series don't yet support system prompts
+				titleLLM = GPT4oMini();
+			}
+			const titlePromise: Promise<string> | undefined = titleLLM.generateText(
 				'The following message is the first message in a new chat conversation. Your task is to create a short title for the conversation. Respond only with the title, nothing else',
 				text,
 			);

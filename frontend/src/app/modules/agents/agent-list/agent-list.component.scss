@@ -1,0 +1,52 @@
+.inventory-grid {
+  // Mobile first - minimal layout
+  grid-template-columns: 40px minmax(120px, 1fr) 80px;
+  min-width: 0;
+  gap: 0.5rem;
+
+  // Small tablets and up
+  @screen sm {
+    grid-template-columns: 40px minmax(120px, 200px) 100px minmax(120px, 1fr);
+    gap: 1rem;
+  }
+
+  // Tablets and up
+  @screen md {
+    grid-template-columns: 40px minmax(120px, 200px) 100px 100px minmax(160px, 1fr) 80px;
+    gap: 1rem;
+  }
+
+  // Desktop and up
+  @screen lg {
+    grid-template-columns:
+            40px                    // Checkbox
+            minmax(120px, 200px)    // Name
+            100px                   // State
+            100px                   // Type
+            minmax(200px, 300px)    // User Prompt
+            minmax(200px, 1fr)      // Error/Output
+            100px;                  // Cost
+    gap: 1rem;
+  }
+
+  // Content cells
+  > div {
+    min-width: 0;              // Enable truncation
+    overflow: hidden;          // Enable truncation
+    text-overflow: ellipsis;   // Show ellipsis for overflow
+    white-space: nowrap;       // Prevent wrapping
+    padding: 0.5rem;
+  }
+}
+
+.state-completed {
+  @apply text-green-600;
+}
+
+.state-error {
+  @apply text-red-600;
+}
+
+.state-running {
+  @apply text-blue-600;
+}

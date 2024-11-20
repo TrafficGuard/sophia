@@ -20,6 +20,11 @@
             "outputPath": "dist/fuse",
             "index": "src/index.html",
             "browser": "src/main.ts",
+            "sourceMap": {
+              "scripts": true,
+              "hidden": true,
+              "vendor": true
+            },
             "polyfills": [
               "zone.js"
             ],
@@ -66,7 +71,9 @@
               "node_modules/prismjs/components/prism-json.min.js",
               "node_modules/prismjs/components/prism-python.min.js",
               "node_modules/prismjs/components/prism-typescript.min.js",
-              "node_modules/prismjs/components/prism-yaml.min.js"
+              "node_modules/prismjs/components/prism-yaml.min.js",
+              "node_modules/mermaid/dist/mermaid.min.js",
+              "node_modules/clipboard/dist/clipboard.min.js"
             ]
           },
           "configurations": {

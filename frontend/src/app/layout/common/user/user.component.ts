@@ -39,7 +39,7 @@ export class UserComponent implements OnInit, OnDestroy {
     static ngAcceptInputType_showAvatar: BooleanInput;
     /* eslint-enable @typescript-eslint/naming-convention */
 
-    @Input() showAvatar: boolean = true;
+    @Input() showAvatar = true;
     user: User = {
         name: '',
         email: '',
@@ -113,6 +113,6 @@ export class UserComponent implements OnInit, OnDestroy {
      * Sign out
      */
     signOut(): void {
-        this._router.navigate(['/sign-out']);
+        this._router.navigate(['/ui/sign-out']).catch(console.error);
     }
 }

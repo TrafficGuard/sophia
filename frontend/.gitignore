@@ -1,1 +1,4 @@
 .angular
+src/environments/.env.ts
+dist
+node_modules

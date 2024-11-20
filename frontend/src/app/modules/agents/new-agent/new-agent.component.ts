@@ -5,7 +5,6 @@ import {
   FormControl, FormGroup,
   FormsModule,
   ReactiveFormsModule,
-  UntypedFormBuilder,
   Validators,
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -63,7 +62,7 @@ export class NewAgentComponent implements OnInit {
   functions: string[] = [];
   llms: any[] = [];
   runAgentForm: FormGroup;
-  isSubmitting: boolean = false;
+  isSubmitting = false;
 
   constructor(
       private http: HttpClient,
@@ -87,17 +86,17 @@ export class NewAgentComponent implements OnInit {
     console.log(`setPreset ${preset}`);
     const presets = {
       'claude-vertex': {
-        easy: 'anthropic-vertex:claude-3-haiku',
+        easy: 'anthropic-vertex:claude-3-5-haiku',
         medium: 'anthropic-vertex:claude-3-5-sonnet',
         hard: 'anthropic-vertex:claude-3-5-sonnet',
       },
       claude: {
-        easy: 'anthropic:claude-3-haiku',
+        easy: 'anthropic:claude-3-5-haiku',
         medium: 'anthropic:claude-3-5-sonnet',
         hard: 'anthropic:claude-3-5-sonnet',
       },
       gemini: { easy: 'vertex:gemini-1.5-flash', medium: 'vertex:gemini-1.5-flash', hard: 'vertex:gemini-1.5-pro' },
-      openai: { easy: 'openai:gpt-4o', medium: 'openai:gpt-4o', hard: 'openai:gpt-4o' },
+      openai: { easy: 'openai:gpt-4o-mini', medium: 'openai:gpt-4o', hard: 'openai:gpt-4o' },
     };
     const selection = presets[preset];
     if (selection) {
@@ -111,7 +110,7 @@ export class NewAgentComponent implements OnInit {
 
   ngOnInit(): void {
     this.http
-        .get<{ data: string[] }>(`http://localhost:3000/api/agent/v1/functions`)
+        .get<{ data: string[] }>(`api/agent/v1/functions`)
         .pipe(
             map((response) => {
               console.log(response);
@@ -140,7 +139,7 @@ export class NewAgentComponent implements OnInit {
   }
 
   private loadUserProfile(): void {
-    const profileUrl = `http://localhost:3000/api/profile/view`;
+    const profileUrl = `/api/profile/view`;
     this.http.get(profileUrl).subscribe(
         (response: any) => {
           console.log(response.data);
@@ -163,7 +162,7 @@ export class NewAgentComponent implements OnInit {
         .filter((_, index) => this.runAgentForm.value['function' + index])
         .map((tool, _) => tool);
     this.http
-        .post<StartAgentResponse>(`http://localhost:3000/api/agent/v1/start`, {
+        .post<StartAgentResponse>(`/api/agent/v1/start`, {
           name: this.runAgentForm.value.name,
           userPrompt: this.runAgentForm.value.userPrompt,
           type: this.runAgentForm.value.type,
@@ -178,7 +177,7 @@ export class NewAgentComponent implements OnInit {
         .subscribe({
           next: (response) => {
             this.snackBar.open('Agent started', 'Close', { duration: 3000 });
-            this.router.navigate(['/agent', response.data.agentId]).catch((e) => console.error); // Assuming the response contains the agentId
+            this.router.navigate(['/ui/agent', response.data.agentId]).catch((e) => console.error); // Assuming the response contains the agentId
           },
           error: (error) => {
             this.snackBar.open(`Error ${error.message}`, 'Close', { duration: 3000 });

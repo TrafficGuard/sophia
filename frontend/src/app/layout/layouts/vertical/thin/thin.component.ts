@@ -14,6 +14,7 @@ import { Navigation } from 'app/core/navigation/navigation.types';
 import { NotificationsComponent } from 'app/layout/common/notifications/notifications.component';
 import { UserComponent } from 'app/layout/common/user/user.component';
 import { Subject, takeUntil } from 'rxjs';
+import {ShortcutsComponent} from "app/layout/common/shortcuts/shortcuts.component";
 
 @Component({
     selector: 'thin-layout',
@@ -26,6 +27,7 @@ import { Subject, takeUntil } from 'rxjs';
         MatButtonModule,
         MatIconModule,
         FuseFullscreenComponent,
+        ShortcutsComponent,
         NotificationsComponent,
         UserComponent,
         RouterOutlet,

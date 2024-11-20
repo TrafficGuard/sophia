@@ -6,7 +6,6 @@ import { AgentContext } from '#agent/agentContextTypes';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { deserializeAgentContext, serializeContext } from '#agent/agentSerialization';
 import { FileSystemRead } from '#functions/storage/FileSystemRead';
-import { FileSystemService } from '#functions/storage/fileSystemService';
 import { LlmTools } from '#functions/util';
 import { GPT4o } from '#llm/services/openai';
 import { appContext } from '../app';

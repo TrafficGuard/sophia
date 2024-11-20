@@ -1,6 +1,8 @@
-import {TextFieldModule} from '@angular/cdk/text-field';
-import {AsyncPipe, DatePipe, NgClass, NgTemplateOutlet} from '@angular/common';
+import { TextFieldModule } from '@angular/cdk/text-field';
+import { DatePipe, NgClass } from '@angular/common';
+import { UserService } from 'app/core/user/user.service';
 import {
+    AfterViewInit,
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
@@ -24,19 +26,19 @@ import {ChatService} from 'app/modules/admin/apps/chat/chat.service';
 import {Chat, ChatMessage} from 'app/modules/admin/apps/chat/chat.types';
 import {ChatInfoComponent} from 'app/modules/admin/apps/chat/chat-info/chat-info.component';
 import {LLM, LlmService} from "app/modules/agents/services/llm.service";
-import {BehaviorSubject, Subject, takeUntil} from 'rxjs';
+import {combineLatest, Subject, takeUntil} from 'rxjs';
 import {
-    CLIPBOARD_OPTIONS,
-    ClipboardButtonComponent,
     MarkdownModule,
     MarkdownService,
-    provideMarkdown
+    provideMarkdown,
+    MarkedRenderer
 } from "ngx-markdown";
 import {MatOption} from "@angular/material/core";
-import {MatSelect} from "@angular/material/select";
+import {MatSelect, MatSelectModule} from "@angular/material/select";
 import {ReactiveFormsModule} from "@angular/forms";
 import {MatTooltipModule} from "@angular/material/tooltip";
-
+import {ClipboardButtonComponent} from "./clipboard-button.component";
+import {FuseConfirmationService} from "../../../../../../@fuse/services/confirmation";
 
 @Component({
     selector: 'chat-conversation',
@@ -45,57 +47,51 @@ import {MatTooltipModule} from "@angular/material/tooltip";
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
-  imports: [
-    MatSidenavModule,
-    ChatInfoComponent,
-    MatButtonModule,
-    RouterLink,
-    MatIconModule,
-    MatMenuModule,
-    MatButtonModule,
-    MatMenuModule,
-    MatTooltipModule,
-    NgClass,
-    NgTemplateOutlet,
-    MatFormFieldModule,
-    MatInputModule,
-    TextFieldModule,
-    DatePipe,
-    MarkdownModule,
-    AsyncPipe,
-    RouterModule,
-    MatOption,
-    MatSelect,
-    ReactiveFormsModule,
-  ],
+    imports: [
+        MatSidenavModule,
+        ChatInfoComponent,
+        MatButtonModule,
+        RouterLink,
+        MatIconModule,
+        MatMenuModule,
+        MatButtonModule,
+        MatMenuModule,
+        MatTooltipModule,
+        NgClass,
+        MatFormFieldModule,
+        MatInputModule,
+        TextFieldModule,
+        DatePipe,
+        MarkdownModule,
+        RouterModule,
+        MatSelectModule,
+        ReactiveFormsModule,
+    ],
     providers: [
-        provideMarkdown({
-            clipboardOptions: {
-                provide: CLIPBOARD_OPTIONS,
-                useValue: {
-                    buttonComponent: ClipboardButtonComponent,
-                },
-            },
-        })
+        provideMarkdown(),
     ]
 })
-export class ConversationComponent implements OnInit, OnDestroy {
+export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
 
     @ViewChild('messageInput') messageInput: ElementRef;
+    @ViewChild('llmSelect') llmSelect: MatSelect;
     chat: Chat;
+    chats: Chat[];
     drawerMode: 'over' | 'side' = 'side';
-    drawerOpened: boolean = false;
+    drawerOpened = false;
     private _unsubscribeAll: Subject<any> = new Subject<any>();
-    $llms: BehaviorSubject<LLM[]> = new BehaviorSubject(null);
+    llms: LLM[] = null;
     llmId: string;
+    defaultChatLlmId: string;
     sendIcon: string = 'heroicons_outline:paper-airplane'
-    sendOnEnter: boolean = true;
+    sendOnEnter = true;
     private mediaRecorder: MediaRecorder;
     private audioChunks: Blob[] = [];
-    recording: boolean = false;
+    recording = false;
     /** If we're waiting for a response from the LLM after sending a message */
-    generating: boolean = false;
+    generating = false;
     generatingTimer = null;
+    readonly clipboardButton = ClipboardButtonComponent;
 
     /**
      * For the Markdown component, the syntax highlighting support has the plugins defined
@@ -105,12 +101,14 @@ export class ConversationComponent implements OnInit, OnDestroy {
         private _changeDetectorRef: ChangeDetectorRef,
         private _chatService: ChatService,
         private _fuseMediaWatcherService: FuseMediaWatcherService,
+        private _fuseConfirmationService: FuseConfirmationService,
         private _ngZone: NgZone,
         private _elementRef: ElementRef,
         private _markdown: MarkdownService,
         private llmService: LlmService,
         private router: Router,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
+        private userService: UserService
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -147,46 +145,45 @@ export class ConversationComponent implements OnInit, OnDestroy {
     // @ Lifecycle hooks
     // -----------------------------------------------------------------------------------------------------
 
-    /**
-     * On init
-     */
     ngOnInit(): void {
-        // Subscribe to route parameters
-        this.route.params
-            .pipe(takeUntil(this._unsubscribeAll))
-            .subscribe(params => {
-                const chatId = params['id'];
+        // Configure the Markdown parser options
+        this._markdown.options = {
+            renderer: new MarkedRenderer(),
+            gfm: true,
+            breaks: true,
+        };
 
-                if (chatId === 'new' || !chatId) {
-                    // If 'new' or no ID, reset the chat
-                    this.resetChat();
-                }
-            });
+        // Handle route parameters
+        this.route.params.pipe(
+            takeUntil(this._unsubscribeAll)
+        ).subscribe(params => {
+            const chatId = params['id'];
+            // Do we even need this?
+            if (!chatId) {
+                this.resetChat();
+            }
+        });
 
-        // Chat observable
-        this._chatService.chat$
+        // Combine user preferences and available LLMs streams
+        combineLatest([
+            this.userService.user$,
+            this.llmService.getLlms(),
+            this._chatService.chat$
+        ]).pipe(
+            takeUntil(this._unsubscribeAll)
+        ).subscribe(([user, llms, chat]) => {
+            this.defaultChatLlmId = user.defaultChatLlmId;
+            this.llms = llms;
+            this.chat = clone(chat) || { id: 'new', messages: [], title: '', updatedAt: Date.now() };
+            this.updateLlmSelector();
+            this._changeDetectorRef.markForCheck();
+        });
+
+        // Chats observable
+        this._chatService.chats$
             .pipe(takeUntil(this._unsubscribeAll))
-            .subscribe((chat: Chat) => {
-                console.log(chat)
-                if(chat === null) {
-                    // This chat was deleted
-                    this.router.navigate(['/apps/chat/new']).catch(console.error);
-                    return;
-                }
-                this.chat = clone(chat) || { id: '', messages: [], title: '', updatedAt: Date.now() };
-                console.log('this._chatService.chat$.subscribe')
-                console.log(chat);
-                if(chat.messages.length > 0) {
-                    // Set the LLM selector as the LLM used to send the last message
-                    const lastMessageLlmId = chat.messages.at(-1).llmId
-                    if (lastMessageLlmId) { // TODO check the llmId is in the $llm list
-                        this.llmId = lastMessageLlmId;
-                        console.log(`last message llm ${this.llmId}`)
-                    } else {
-                        // TODO default to user profile default chat LLM
-                    }
-                }
-                this._changeDetectorRef.markForCheck();
+            .subscribe((chats: Chat[]) => {
+                this.chats = chats;
             });
 
         // Media watcher (unchanged)
@@ -197,25 +194,62 @@ export class ConversationComponent implements OnInit, OnDestroy {
                 this._changeDetectorRef.markForCheck();
             });
 
-        // Load LLMs (unchanged)
-        this.llmService.getLlms().subscribe(llms => {
-          this.$llms.next(llms);
-          this.llmId = llms[0]?.id;
-        });
+
     }
 
-    /**
-     * On destroy
-     */
     ngOnDestroy(): void {
-        // Unsubscribe from all subscriptions
         this._unsubscribeAll.next(null);
         this._unsubscribeAll.complete();
+    }
+
+    ngAfterViewInit() {
+        setTimeout(() => {
+            this.messageInput.nativeElement.focus();
+        }, 500); // Small delay to ensure its displayed
     }
 
     // -----------------------------------------------------------------------------------------------------
     // @ Public methods
     // -----------------------------------------------------------------------------------------------------
+
+    /**
+     * Sets the appropriate LLM ID based on context and available LLMs:
+     * - For new chats: Uses user's default LLM if available
+     * - For existing chats: Uses the LLM from the last message
+     * - Fallback to first available LLM if no other selection is valid
+     */
+    updateLlmSelector() {
+        if (!this.llms) return;
+        const llmIds = this.llms.map(llm => llm.id);
+        
+        // For existing chats with messages, use the last message's LLM if still available
+        if (this.chat?.messages?.length > 0) {
+            const lastMessageLlmId = this.chat.messages.at(-1).llmId;
+            if (lastMessageLlmId && llmIds.includes(lastMessageLlmId)) {
+                this.llmId = lastMessageLlmId;
+                this._changeDetectorRef.markForCheck();
+                return;
+            }
+        }
+
+        // Try to use default LLM for new chats or when last message LLM unavailable
+        if (this.defaultChatLlmId && llmIds.includes(this.defaultChatLlmId)) {
+            this.llmId = this.defaultChatLlmId;
+            this._changeDetectorRef.markForCheck();
+            return;
+        }
+
+        // If default LLM is set but not available, log warning
+        if (this.defaultChatLlmId && !llmIds.includes(this.defaultChatLlmId)) {
+            console.warn(`Default LLM ${this.defaultChatLlmId} not found in available LLMs:`, llmIds);
+        }
+
+        // Fallback to first available LLM if no valid selection
+        if ((!this.llmId || !llmIds.includes(this.llmId)) && this.llms.length > 0) {
+            this.llmId = this.llms[0].id;
+            this._changeDetectorRef.markForCheck();
+        }
+    }
 
     /**
      * Open the chat info drawer
@@ -229,22 +263,9 @@ export class ConversationComponent implements OnInit, OnDestroy {
      * Reset the chat
      */
     resetChat(): void {
-        this.chat = {id: '', messages: [], title: '', updatedAt: Date.now()};
         this._chatService.resetChat();
-        this.generating = false
-
-        // TODO set LLM field to the user profile default chat LLM
-
-        // Close the contact info in case it's opened
-        this.drawerOpened = false;
-
-        // Clear the input field
-        if (this.messageInput) {
-            this.messageInput.nativeElement.value = '';
-        }
-
-        // Mark for check
-        this._changeDetectorRef.markForCheck();
+        // Ensure LLM selector is set when resetting
+        this.updateLlmSelector();
     }
 
     /**
@@ -252,9 +273,24 @@ export class ConversationComponent implements OnInit, OnDestroy {
      */
     deleteChat(): void {
         if (this.chat && this.chat.id) {
-            this._chatService.deleteChat(this.chat.id).subscribe(() => {
-                this.resetChat();
-                this.router.navigate(['/apps/chat']).catch(console.error);
+            const confirmation = this._fuseConfirmationService.open({
+                title: 'Delete chat',
+                message:
+                    'Are you sure you want to delete this chat?',
+                actions: {
+                    confirm: {
+                        label: 'Delete',
+                    },
+                },
+            });
+
+            confirmation.afterClosed().subscribe((result) => {
+                if (result === 'confirmed') {
+                    this._chatService.deleteChat(this.chat.id).subscribe(() => {
+                        this.router.navigate(['/ui/chat']).catch(console.error)
+                    });
+                    // TODO handle error - show toast
+                }
             });
         }
     }
@@ -270,7 +306,7 @@ export class ConversationComponent implements OnInit, OnDestroy {
     }
 
     sendMessage(): void {
-        const message = this.messageInput.nativeElement.value.trim();
+        let message: string = this.messageInput.nativeElement.value.trim();
         if (message === '') {
             return;
         }
@@ -297,14 +333,13 @@ export class ConversationComponent implements OnInit, OnDestroy {
         this.messageInput.nativeElement.value = '';
 
         // If this is a new chat, then redirect to the created chat
-        if (!this.chat.id) {
-
+        if (!this.chat.id || this.chat.id === 'new') {
             this._changeDetectorRef.markForCheck();
             // TODO handle error, set the message back to the messageInput and remove from chat.messages
             this._chatService.createChat(message, this.llmId).subscribe(async (chat: Chat) => {
                 clearInterval(this.generatingTimer)
                 this.generating = false;
-                this.router.navigate([`/apps/chat/${chat.id}`]).catch(console.error);
+                this.router.navigate([`/ui/chat/${chat.id}`]).catch(console.error);
             });
             // TODO catch errors
             return;
@@ -334,11 +369,24 @@ export class ConversationComponent implements OnInit, OnDestroy {
         });
     }
 
+    handleLlmKeydown(event: KeyboardEvent) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            event.stopPropagation();
+            this.messageInput.nativeElement.focus();
+        }
+    }
+
     @HostListener('keydown', ['$event'])
     handleKeyboardEvent(event: KeyboardEvent): void {
         if (this.sendOnEnter && event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
             this.sendMessage();
+        }
+
+        if (event.key === 'm' && event.ctrlKey) {
+            this.llmSelect.open();
+            this.llmSelect.focus();
         }
     }
 

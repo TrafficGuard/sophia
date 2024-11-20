@@ -18,6 +18,7 @@ npm install
 if [[ ! -f ./variables/local.env ]]; then
     echo "Creating local.env by copying from local.env.example"
     cp ./variables/local.env.example ./variables/local.env
+    cp ./variables/local.env.example ./variables/test.env
 fi
 
 
@@ -26,3 +27,4 @@ fi
 echo Initialising Angular project
 cd frontend
 npm install
+cd ..

@@ -166,7 +166,13 @@ export class AuthUtils {
      */
     private static _getTokenExpirationDate(token: string): Date | null {
         // Get the decoded token
-        const decodedToken = this._decodeToken(token);
+        let decodedToken;
+        try {
+            decodedToken = this._decodeToken(token);
+        } catch(e) {
+            return null;
+        }
+
 
         // Return if the decodedToken doesn't have an 'exp' field
         if (!decodedToken.hasOwnProperty('exp')) {

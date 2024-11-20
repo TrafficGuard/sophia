@@ -26,10 +26,10 @@ import { Subject, takeUntil } from 'rxjs';
 export class FuseLoadingBarComponent implements OnChanges, OnInit, OnDestroy {
     private _fuseLoadingService = inject(FuseLoadingService);
 
-    @Input() autoMode: boolean = true;
+    @Input() autoMode = true;
     mode: 'determinate' | 'indeterminate';
     progress: number = 0;
-    show: boolean = false;
+    show = false;
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
     // -----------------------------------------------------------------------------------------------------

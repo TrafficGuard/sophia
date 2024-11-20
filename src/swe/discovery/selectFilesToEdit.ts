@@ -212,10 +212,10 @@ Output the following:
 export async function removeUnrelatedFiles(requirements: string, fileSelection: SelectFilesResponse): Promise<SelectFilesResponse> {
 	const analyzeFile = async (file: SelectedFile): Promise<{ file: SelectedFile; isRelated: boolean; explanation: string }> => {
 		const fileSystem = getFileSystem();
-		const fileContents = (await fs.readFile(path.join(fileSystem.getWorkingDirectory(), file.path))).toString(); // TODO access filesystem directly to avoid lots of function calls
+		const fileContents = (await fs.readFile(path.join(fileSystem.getWorkingDirectory(), file.path))).toString();
 		const prompt = keepOrRemoveFileAnalysisPrompt(requirements, file, fileContents);
 
-		const jsonResult = await llms().easy.generateJson(
+		const jsonResult = await llms().easy.generateTextWithJson(
 			'You are an expert software developer tasked with identifying relevant files for a coding task.',
 			prompt,
 			{

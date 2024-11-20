@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { User } from 'app/core/user/user.types';
-import { map, Observable, ReplaySubject, tap } from 'rxjs';
+import { catchError, Observable, ReplaySubject, tap, throwError } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -34,9 +34,14 @@ export class UserService {
      * Get the current signed-in user data
      */
     get(): Observable<User> {
-        return this._httpClient.get<User>('api/common/user').pipe(
+        return this._httpClient.get<User>(`/api/profile/view`).pipe(
             tap((user) => {
+                user = (user as any).data
                 this._user.next(user);
+            }),
+            catchError(error => {
+                console.error('Error loading profile', error);
+                return throwError(() => new Error('Error loading profile'));
             })
         );
     }
@@ -46,9 +51,9 @@ export class UserService {
      *
      * @param user
      */
-    update(user: User): Observable<any> {
-        return this._httpClient.patch<User>('api/common/user', { user }).pipe(
-            map((response) => {
+    update(user: User): Observable<User> {
+        return this._httpClient.patch<User>('/api/profile/update', { user }).pipe(
+            tap((response) => {
                 this._user.next(response);
             })
         );

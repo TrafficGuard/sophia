@@ -24,6 +24,19 @@
                     <input matInput formControlName="email" />
                 </mat-form-field>
             </div>
+            <div class="sm:col-span-1">
+                <mat-form-field class="w-full">
+                    <mat-label>Default Chat LLM</mat-label>
+                    <mat-select formControlName="defaultChatLlmId">
+                        <mat-option *ngFor="let llm of $llms | async" [value]="llm.id">
+                            {{ llm.name }}
+                        </mat-option>
+                        <mat-option *ngIf="($llms | async)?.length === 0" [value]="null" disabled>
+                            No LLMs available
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
         </div>
 
         <!-- Section -->
@@ -102,6 +115,13 @@
                 <mat-form-field class="w-full">
                     <mat-label>Cerebras</mat-label>
                     <input matInput formControlName="cerebrasKey" />
+                </mat-form-field>
+            </div>
+            <!-- X.AI -->
+            <div class="sm:col-span-1">
+                <mat-form-field class="w-full">
+                    <mat-label>X.AI</mat-label>
+                    <input matInput formControlName="xaiKey" />
                 </mat-form-field>
             </div>
         </div>

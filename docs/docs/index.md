@@ -4,70 +4,70 @@
   <img src="https://public.trafficguard.ai/sophia/banner.png" alt="nous logo"/>
 </p>
 <p align="center">
-  <em>The open-source TypeScript platform for autonomous AI agents and LLM based workflows</em>
+  <em><b>The open-source TypeScript platform for AI agents and LLM based workflows</b></em>
 </p>
 <p align="center">
-
-</p>
-## The Sophia Story
-
 The Ancient Greek word <em><b>sophía (σοφία)</b></em> variously translates to "clever, skillful, intelligent, wise"
+</p>
 
-Sophia started from a simple goal: to harness AI's potential to enhance real-world productivity, born in DevOps and Platform Engineering space. We envisioned a tool that could:
 
-- Automate various processes and support requests, and triage build failures.
-- Review code for compliance with standards and best practices.
-- Assist with large refactorings, and more.
+The Sophia platform provides a complete out-of-the box experience for building AI agents and LLM based workflows with TypeScript.
 
-At TrafficGuard we process billions of events a month for our global clients, [increasing their Ad spend ROI](https://www.trafficguard.ai/case-studies?ref=sophia) from bots and other invalid traffic. 
-Our platform on Google Cloud comprises projects developed in TypeScript, Python, GoogleSQL, PHP and Terraform, deployed from GitLab.
+- [Autonomous agents](https://sophia.dev//autonomous-agents)
+- [Software developer agents](https://sophia.dev/software-engineer/)
+- [Code review agents](https://sophia.dev/software-engineer/)
+- Chat interface
+- Chatbots (Slack integration provided)
+- Functional callable tools (Filesystem, Jira, Slack, Perplexity, Google Cloud, Gitlab, GitHub and more)
+- CLI and Web UI interface
+- Run locally or deployed on the cloud with multi-user/SSO
+- OpenTelemetry observability
 
-With open source projects typically Python/GitHub focused, and the vendor AI tools being focused in their silos, 
-we saw a need for TypeScript based tooling which can work across our entire tech stack, and understand the overall architecture.
+## Autonomous agents
 
-Through its evolution we've designed nous as a flexible platform for the TypeScript community to expand and support the use cases and integrations of your choice.
-
-Our design choice of Firestore for the initial database implementation, with Cloud Run, provides a scale-to-zero solution with zero-cost using the free tier.
-With the intention to support uses cases such as your own custom personal assistant, always available via mobile.
-
-## Features
-
-Some of the key features include:
-
-- Advanced autonomous agents
-    - Reasoning/planning inspired from Google's [Self-Discover](https://arxiv.org/abs/2402.03620) paper
-    - Memory and function call history for complex workflows
-    - Iterative planning with hierarchical task decomposition
-    - Two LLM-independent function calling options:
-        - Custom XML-based function calling
-        - Sandboxed execution of generated code with multi-step function calling and logic
-            - Opportunistically can significantly reduce cost and latency compared to LLM-native/XML function calling
+- Reasoning/planning inspired from Google's [Self-Discover](https://arxiv.org/abs/2402.03620) and other papers
+- Memory and function call history for complex workflows
+- Iterative planning with hierarchical task decomposition
+- Sandboxed execution of generated code for multi-step function calling and logic
 - LLM function schemas auto-generated from source code
-- Function callable integrations:
-    - Filesystem, Jira, Slack, Perplexity, Gitlab and more
-- Supports multiple LLMs/Services:
-    - OpenAI, Anthropic (native & Vertex), Gemini, Groq, Fireworks, Together.ai, DeepSeek, Ollama, Cerebras
-- CLI and Web interface
-- Human-in-the-loop for:
-    - Budget control
-    - Agent initiated questions
-    - Error handling
-- Flexible deployment options:
-    - Run locally from the command line or through the web UI
-    - Scale-to-zero deployment on Firestore & Cloud Run
-    - Multi-user SSO enterprise deployment (with [Google Cloud IAP](https://cloud.google.com/security/products/iap))
-- Observability with OpenTelemetry tracing
+- Human-in-the-loop for budget control, agent initiated questions and error handling
+
+## Software developer agents
+
 - Code Editing Agent:
-    - Auto-detection of project initialization, compile, test and lint
-    - Find the relevant files to edit and perform initial analysis
-    - Code editing loop with compile, lint, test, fix (editing delegates to [Aider](https://aider.chat/))
-        - Compile error analyser can search online, add additional files and packages
-    - Review the changes with an additional code editing loop if required.
-- Software Engineer Agent:
-    - Find the appropriate repository from GitLab/GitHub
-    - Clone and create branch
-    - Call the Code Editing Agent
-    - Create merge request
+  - Auto-detection of project initialization, compile, test and lint
+  - Task file selection agent
+  - Code editing loop with compile, lint, test, fix (editing delegates to [Aider](https://aider.chat/))
+    - Compile error analyser can search online, add additional files and packages
+  - Review the changes with an additional code editing loop if required.
+- Software Engineer Agent (For issue to Pull Request workflow):
+  - Find the appropriate repository from GitLab/GitHub
+  - Clone and create branch
+  - Call the Code Editing Agent
+  - Create merge request
+- Code review agents
+- Query repository agent
+
+## Chatbots
+
+- Slack chatbot
+
+## Flexible run/deploy options
+
+- CLI interface
+- Web interface
+- Scale-to-zero deployment on Firestore & Cloud Run
+- Multi-user SSO enterprise deployment (with [Google Cloud IAP](https://cloud.google.com/security/products/iap))
+
+## LLM support 
+
+OpenAI, Anthropic (native & Vertex), Gemini, Groq, Fireworks, Together.ai, DeepSeek, Ollama, Cerebras, X.ai
+
+
+- Filesystem, Jira, Slack, Perplexity, Gitlab and more
+
+- Observability with OpenTelemetry tracing
+
 - Code Review agent:
     - Configurable code review guidelines
     - Posts comments on GitLab merge requests at the appropriate line with suggested changes

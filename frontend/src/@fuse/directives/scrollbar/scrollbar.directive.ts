@@ -34,7 +34,7 @@ export class FuseScrollbarDirective implements OnChanges, OnInit, OnDestroy {
     private _elementRef = inject(ElementRef);
     private _platform = inject(Platform);
 
-    @Input() fuseScrollbar: boolean = true;
+    @Input() fuseScrollbar = true;
     @Input() fuseScrollbarOptions: PerfectScrollbar.Options;
 
     private _animation: number;
@@ -186,7 +186,7 @@ export class FuseScrollbarDirective implements OnChanges, OnInit, OnDestroy {
      *
      * @param absolute
      */
-    position(absolute: boolean = false): ScrollbarPosition {
+    position(absolute = false): ScrollbarPosition {
         let scrollbarPosition;
 
         if (!absolute && this._ps) {
@@ -302,7 +302,7 @@ export class FuseScrollbarDirective implements OnChanges, OnInit, OnDestroy {
     scrollToElement(
         qs: string,
         offset: number = 0,
-        ignoreVisible: boolean = false,
+        ignoreVisible = false,
         speed?: number
     ): void {
         const element = this._elementRef.nativeElement.querySelector(qs);

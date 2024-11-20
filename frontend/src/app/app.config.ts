@@ -1,12 +1,13 @@
 import {provideHttpClient, HTTP_INTERCEPTORS, withInterceptorsFromDi} from '@angular/common/http';
 import { APP_INITIALIZER, ApplicationConfig, inject } from '@angular/core';
+import { LocalStorageService } from './core/services/local-storage.service';
 import { BaseUrlInterceptor } from './core/interceptors/base-url.interceptor';
 import { LuxonDateAdapter } from '@angular/material-luxon-adapter';
 import { DateAdapter, MAT_DATE_FORMATS } from '@angular/material/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import {
     PreloadAllModules,
-    provideRouter,
+    provideRouter, withDebugTracing,
     withInMemoryScrolling,
     withPreloading,
 } from '@angular/router';
@@ -30,6 +31,7 @@ export const appConfig: ApplicationConfig = {
         },
         provideRouter(
             appRoutes,
+            // withDebugTracing(),
             withPreloading(PreloadAllModules),
             withInMemoryScrolling({ scrollPositionRestoration: 'enabled' })
         ),
@@ -90,11 +92,13 @@ export const appConfig: ApplicationConfig = {
         // Fuse
         provideAuth(),
         provideIcons(),
+        LocalStorageService,
         provideFuse({
             mockApi: {
                 delay: 0,
                 services: mockApiServices,
             },
+            // Provides this as inject(FUSE_CONFIG)
             fuse: {
                 // Default UI settings
                 layout: 'modern',

@@ -10,18 +10,18 @@ import { LayoutComponent } from 'app/layout/layout.component';
 export const appRoutes: Route[] = [
 
     // Redirect empty path to '/example'
-    {path: '', pathMatch : 'full', redirectTo: 'example'},
+    {path: '', pathMatch : 'full', redirectTo: 'ui/example'},
 
     // Redirect signed-in user to the '/example'
     //
     // After the user signs in, the sign-in page will redirect the user to the 'signed-in-redirect'
     // path. Below is another redirection for that path to redirect the user to the desired
     // location. This is a small convenience to keep all main routes together here on this file.
-    {path: 'signed-in-redirect', pathMatch : 'full', redirectTo: 'example'},
+    {path: 'ui/signed-in-redirect', pathMatch : 'full', redirectTo: 'ui/example'},
 
     // Auth routes for guests
     {
-        path: '',
+        path: 'ui',
         canActivate: [NoAuthGuard],
         canActivateChild: [NoAuthGuard],
         component: LayoutComponent,
@@ -39,7 +39,7 @@ export const appRoutes: Route[] = [
 
     // Auth routes for authenticated users
     {
-        path: '',
+        path: 'ui',
         canActivate: [AuthGuard],
         canActivateChild: [AuthGuard],
         component: LayoutComponent,
@@ -54,7 +54,7 @@ export const appRoutes: Route[] = [
 
     // Landing routes
     {
-        path: '',
+        path: 'ui',
         component: LayoutComponent,
         data: {
             layout: 'empty'
@@ -66,9 +66,9 @@ export const appRoutes: Route[] = [
 
     // Admin routes
     {
-        path: '',
-        // canActivate: [AuthGuard], // AuthGuard
-        // canActivateChild: [AuthGuard], // AuthGuard
+        path: 'ui',
+        canActivate: [AuthGuard],
+        canActivateChild: [AuthGuard],
         component: LayoutComponent,
         resolve: {
             initialData: initialDataResolver
@@ -76,7 +76,7 @@ export const appRoutes: Route[] = [
         children: [
             {path: 'example', loadChildren: () => import('app/modules/admin/home/home.routes')},
             {path: 'profile', loadChildren: () => import('app/modules/profile/profile.routes')},
-            {path: 'apps/chat', loadChildren: () => import('app/modules/admin/apps/chat/chat.routes')},
+            {path: 'chat', loadChildren: () => import('app/modules/admin/apps/chat/chat.routes')},
             {path: 'agents', loadChildren: () => import('app/modules/agents/agent.routes')},
             {path: 'code-reviews', loadChildren: () => import('app/modules/code-review/code-review.routes')},
             {path: 'actions', loadChildren: () => import('app/modules/actions/actions.routes')},

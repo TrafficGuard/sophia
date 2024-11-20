@@ -30,7 +30,7 @@ import {MatIconModule} from "@angular/material/icon";
 export class ActionsComponent implements OnInit {
   codeForm!: FormGroup;
   result: string = '';
-  isLoading: boolean = false;
+  isLoading = false;
   repositories: string[] = [];
 
   constructor(private fb: FormBuilder, private actionsService: ActionsService) {}

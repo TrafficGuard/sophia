@@ -35,7 +35,7 @@ const conversationResolver = (
             const parentUrl = state.url.split('/').slice(0, -1).join('/');
 
             // Navigate to there
-            router.navigateByUrl(parentUrl);
+            router.navigateByUrl(parentUrl).catch(console.error);
 
             // Throw an error
             return throwError(error);

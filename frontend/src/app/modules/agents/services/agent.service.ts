@@ -2,7 +2,6 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { AgentContext, AgentPagination, LlmCall } from '../agent.types';
-import { environment } from 'environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AgentService {
@@ -29,7 +28,7 @@ export class AgentService {
     }
 
     getAgents(): Observable<AgentContext[]> {
-        return this._httpClient.get<AgentContext[]>(`${environment.apiBaseUrl}agent/v1/list`).pipe(
+        return this._httpClient.get<AgentContext[]>(`/api/agent/v1/list`).pipe(
             tap((agents) => {
                 agents = (agents as any).data;
                 this._agents.next(agents);
@@ -38,30 +37,30 @@ export class AgentService {
     }
 
     getAgentDetails(agentId: string): Observable<AgentContext> {
-        return this._httpClient.get<AgentContext>(`${environment.apiBaseUrl}agent/v1/details/${agentId}`);
+        return this._httpClient.get<AgentContext>(`/api/agent/v1/details/${agentId}`);
     }
 
     getLlmCalls(agentId: string): Observable<LlmCall[]> {
-        return this._httpClient.get<LlmCall[]>(`${environment.apiBaseUrl}llms/calls/agent/${agentId}`);
+        return this._httpClient.get<LlmCall[]>(`/api/llms/calls/agent/${agentId}`);
     }
 
     submitFeedback(agentId: string, executionId: string, feedback: string): Observable<any> {
-        return this._httpClient.post(`${environment.apiBaseUrl}agent/v1/feedback`, { agentId, executionId, feedback });
+        return this._httpClient.post(`/api/agent/v1/feedback`, { agentId, executionId, feedback });
     }
 
     resumeAgent(agentId: string, executionId: string, feedback: string): Observable<any> {
-        return this._httpClient.post(`${environment.apiBaseUrl}agent/v1/resume-hil`, { agentId, executionId, feedback });
+        return this._httpClient.post(`/api/agent/v1/resume-hil`, { agentId, executionId, feedback });
     }
 
     cancelAgent(agentId: string, executionId: string, reason: string): Observable<any> {
-        return this._httpClient.post(`${environment.apiBaseUrl}agent/v1/cancel`, { agentId, executionId, reason });
+        return this._httpClient.post(`/api/agent/v1/cancel`, { agentId, executionId, reason });
     }
 
     updateAgentFunctions(agentId: string, functions: string[]): Observable<any> {
-        return this._httpClient.post(`${environment.apiBaseUrl}agent/v1/update-functions`, { agentId, functions });
+        return this._httpClient.post(`/api/agent/v1/update-functions`, { agentId, functions });
     }
 
     deleteAgents(agentIds: string[]): Observable<any> {
-        return this._httpClient.post(`${environment.apiBaseUrl}agent/v1/delete`, { agentIds });
+        return this._httpClient.post(`/api/agent/v1/delete`, { agentIds });
     }
 }

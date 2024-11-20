@@ -33,7 +33,7 @@ import {MatProgressBar} from "@angular/material/progress-bar";
 export class CodeReviewListComponent implements OnInit {
   configs$: MatTableDataSource<CodeReviewConfig> = new MatTableDataSource<CodeReviewConfig>([]);
   selection = new SelectionModel<CodeReviewConfig>(true, []);
-  displayedColumns: string[] = ['select', 'description'];
+  displayedColumns: string[] = ['select', 'title', 'description', 'enabled'];
   isLoading = false;
   errorMessage = '';
 
@@ -56,7 +56,7 @@ export class CodeReviewListComponent implements OnInit {
         this.isLoading = false;
         this.selection.clear();
       },
-      (error) => {
+      () => {
         this.errorMessage = 'Error loading configurations';
         this.isLoading = false;
       }
@@ -65,9 +65,9 @@ export class CodeReviewListComponent implements OnInit {
 
   openEditPage(id?: string) {
     if (id) {
-      this.router.navigate(['/code-reviews/edit', id]).catch(console.error);
+      this.router.navigate(['/ui/code-reviews/edit', id]).catch(console.error);
     } else {
-      this.router.navigate(['/code-reviews/new']).catch(console.error);
+      this.router.navigate(['/ui/code-reviews/new']).catch(console.error);
     }
   }
 
@@ -114,7 +114,7 @@ export class CodeReviewListComponent implements OnInit {
               this.snackBar.open('Configurations deleted successfully', 'Close', { duration: 3000 });
               this.loadConfigs();
             },
-            (error) => {
+            () => {
               this.errorMessage = 'Error deleting configurations';
               this.snackBar.open('Error deleting configurations', 'Close', { duration: 3000 });
             }

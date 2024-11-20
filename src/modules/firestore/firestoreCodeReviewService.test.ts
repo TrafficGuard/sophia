@@ -81,19 +81,21 @@ describe('FirestoreCodeReviewService', () => {
 	describe('createCodeReviewConfig', () => {
 		it('should create a new code review config and return its id', async () => {
 			const newConfig: Omit<CodeReviewConfig, 'id'> = {
+				title: 'Test Configuration',
 				description: 'New Config',
-				file_extensions: {
+				enabled: true,
+				fileExtensions: {
 					include: ['.ts', '.js'],
 				},
 				requires: {
 					text: ['TODO', 'FIXME'],
 				},
 				tags: [],
-				projectPathGlobs: [],
+				projectPaths: [],
 				examples: [
 					{
 						code: 'console.log("Hello, world!");',
-						review_comment: 'Consider using a logging library for better control over log levels.',
+						reviewComment: 'Consider using a logging library for better control over log levels.',
 					},
 				],
 			};

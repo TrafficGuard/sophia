@@ -13,6 +13,7 @@ import { FuseMediaWatcherService } from '@fuse/services/media-watcher';
 import { NavigationService } from 'app/core/navigation/navigation.service';
 import { Navigation } from 'app/core/navigation/navigation.types';
 import { NotificationsComponent } from 'app/layout/common/notifications/notifications.component';
+import { ShortcutsComponent } from "app/layout/common/shortcuts/shortcuts.component";
 import { UserComponent } from 'app/layout/common/user/user.component';
 import { Subject, takeUntil } from 'rxjs';
 
@@ -31,6 +32,7 @@ import { Subject, takeUntil } from 'rxjs';
         NotificationsComponent,
         UserComponent,
         RouterOutlet,
+        ShortcutsComponent,
     ],
 })
 export class ModernLayoutComponent implements OnInit, OnDestroy {
@@ -64,9 +66,6 @@ export class ModernLayoutComponent implements OnInit, OnDestroy {
     // @ Lifecycle hooks
     // -----------------------------------------------------------------------------------------------------
 
-    /**
-     * On init
-     */
     ngOnInit(): void {
         // Subscribe to navigation data
         this._navigationService.navigation$
@@ -84,9 +83,6 @@ export class ModernLayoutComponent implements OnInit, OnDestroy {
             });
     }
 
-    /**
-     * On destroy
-     */
     ngOnDestroy(): void {
         // Unsubscribe from all subscriptions
         this._unsubscribeAll.next(null);
@@ -98,20 +94,10 @@ export class ModernLayoutComponent implements OnInit, OnDestroy {
     // -----------------------------------------------------------------------------------------------------
 
     /**
-     * Toggle navigation
-     *
      * @param name
      */
     toggleNavigation(name: string): void {
-        // Get the navigation
-        const navigation =
-            this._fuseNavigationService.getComponent<FuseVerticalNavigationComponent>(
-                name
-            );
-
-        if (navigation) {
-            // Toggle the opened status
-            navigation.toggle();
-        }
+        const navigation = this._fuseNavigationService.getComponent<FuseVerticalNavigationComponent>(name);
+        navigation?.toggle();
     }
 }
