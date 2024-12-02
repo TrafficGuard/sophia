@@ -24,6 +24,14 @@ export class ShortcutsService {
                 description: '',
                 label: 'New Chat',
                 useRouter: true
+            },
+            {
+                id: 'code-review',
+                link: '/ui/code-reviews/new',
+                icon: 'heroicons_outline:code-bracket-square',
+                description: '',
+                label: 'New Code Review Config',
+                useRouter: true
             }
         ]
         this._shortcuts.next(shortcuts)

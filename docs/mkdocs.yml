@@ -33,8 +33,7 @@ nav:
   - index.md
   - 'Getting stared':
       - 'Setup': setup.md
-      - 'CLI': getting-started-cli.md
-      - 'Web UI': getting-started-ui.md
+      - 'CLI': cli.md
       - 'Environment variables': environment-variables.md
       - 'Observability': observability.md
   - Concepts:

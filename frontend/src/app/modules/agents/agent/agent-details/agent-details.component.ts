@@ -1,26 +1,27 @@
-import {ChangeDetectorRef, Component, Input, OnInit} from '@angular/core';
-import { AgentContext, AgentRunningState } from '../../agent.types';
+import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
-import { MatListModule } from '@angular/material/list';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { AgentService } from '../../services/agent.service';
+import { HttpClient } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDialog } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { MatListModule } from '@angular/material/list';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { catchError, finalize, map, of, throwError } from 'rxjs';
 import { environment } from 'environments/environment';
-import { catchError, finalize } from 'rxjs/operators';
-import {map, of, throwError} from 'rxjs';
-import { MatDialog } from '@angular/material/dialog';
+import { AgentContext, AgentRunningState } from '../../agent.types';
 import { FunctionEditModalComponent } from '../function-edit-modal/function-edit-modal.component';
 import { ResumeAgentModalComponent } from '../resume-agent-modal/resume-agent-modal.component';
-import {MatSelectModule} from "@angular/material/select";
-import {MatCheckboxModule} from "@angular/material/checkbox";
-import {MatRadioModule} from "@angular/material/radio";
-import {FunctionsService} from "../../services/function.service";
+import { FunctionsService } from '../../services/function.service';
 
 @Component({
     selector: 'agent-details',
@@ -41,6 +42,7 @@ import {FunctionsService} from "../../services/function.service";
         MatCheckboxModule,
         MatRadioModule,
     ],
+    providers: [AgentService]
 })
 export class AgentDetailsComponent implements OnInit {
     @Input() agentDetails!: AgentContext;
@@ -62,7 +64,23 @@ export class AgentDetailsComponent implements OnInit {
         private dialog: MatDialog,
         private functionsService: FunctionsService,
         private changeDetectorRef: ChangeDetectorRef,
+        private router: Router,
+        private agentService: AgentService,
     ) {}
+
+    refreshAgentDetails(): void {
+        this.agentService.getAgentDetails(this.agentDetails.agentId)
+            .subscribe({
+                next: (updatedAgent) => {
+                    this.agentDetails = updatedAgent;
+                    this.changeDetectorRef.markForCheck();
+                },
+                error: (error) => {
+                    console.error('Error reloading agent state:', error);
+                    this.snackBar.open('Error reloading agent state', 'Close', { duration: 3000 });
+                }
+            });
+    }
 
     ngOnInit(): void {
         this.initializeFeedbackForm();
@@ -125,7 +143,7 @@ export class AgentDetailsComponent implements OnInit {
             .subscribe((response) => {
                 if (response) {
                     this.snackBar.open('Feedback submitted successfully', 'Close', { duration: 3000 });
-                    // Optionally reload or update agent details
+                    this.refreshAgentDetails();
                 }
             });
     }
@@ -205,7 +223,7 @@ export class AgentDetailsComponent implements OnInit {
             .subscribe((response) => {
                 if (response) {
                     this.snackBar.open('Agent cancelled successfully', 'Close', { duration: 3000 });
-                    // Optionally reload or update agent details
+                    this.router.navigate(['/ui/agent/list']).catch(console.error);
                 }
             });
     }
@@ -229,10 +247,6 @@ export class AgentDetailsComponent implements OnInit {
         }
     }
 
-    refreshAgentDetails(): void {
-        // Implement this method to refresh agent details
-        // You might need to emit an event to the parent component to handle this
-    }
 
     traceUrl(agent: AgentContext): string {
         return `https://console.cloud.google.com/traces/list?referrer=search&project=${environment.gcpProject}&supportedpurview=project&pageState=(%22traceIntervalPicker%22:(%22groupValue%22:%22P1D%22,%22customValue%22:null))&tid=${agent.traceId}`;

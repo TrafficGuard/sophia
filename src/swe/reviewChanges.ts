@@ -6,10 +6,10 @@ import { buildPrompt } from '#swe/softwareDeveloperAgent';
  * @param requirements
  * @param sourceBranchOrCommit the source branch or commit to review from
  */
-// TODO we'll need to be smarter about what the source branch/commit is to review from
-// as there might not a source branch to compare against, so we need the base commit.
-// Otherwise just review the current files.
 export async function reviewChanges(requirements: string, sourceBranchOrCommit: string): Promise<string[]> {
+	// TODO we'll need to be smarter about what the source branch/commit is to review from
+	// as there might not a source branch to compare against, so we need the base commit.
+	// Otherwise just review the current files.
 	const prompt = buildPrompt({
 		information: `The following is the git diff of the changes made so far to meet the requirements:\n<diff>\n${await getFileSystem().vcs.getBranchDiff(
 			sourceBranchOrCommit,
@@ -19,7 +19,12 @@ export async function reviewChanges(requirements: string, sourceBranchOrCommit: 
 		// 'If so explain why and finish with the output <complete/>. If not, detail what changes you would still like to make. Output your answer in the JSON matching this TypeScript interface:\n' +
 		// '{\n requirementsMet: boolean\n requirementsMetReasoning: string\n sameStyle: boolean\n sameStyleReasoning: string\n redundant: boolean\n redundantReasoning: string\n}'
 		action:
-			'Do the changes in the diff satisfy the requirements, and explain why? Are there any redundant changes in the diff? Was any code removed in the changes which should not have been? Is the solution sufficiently generic? Review the style of the code changes in the diff carefully against the original code.  Do the changes follow all the style conventions of the original code? Explain why.\n' +
+			'Do the changes in the diff satisfy the requirements, and explain why?\n' +
+			'Are there any redundant changes in the diff?\n' +
+			'Was any code removed in the changes which should not have been?\n' +
+			'Is the solution sufficiently generic?\n' +
+			'Review the style of the code changes in the diff carefully against the original code.  Do the changes follow all the style conventions of the original code? Explain why.\n' +
+			'Are there any changes unrelated to the requirements which should be reverted? \n' +
 			'Review your analysis decide if any more code editing needs to be done, and then finish responding with a JSON array in the following format with the surrounding json tags:' +
 			'<json>' +
 			'[' +

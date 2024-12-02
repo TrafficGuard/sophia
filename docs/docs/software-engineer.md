@@ -1,19 +1,10 @@
-# AI Software Engineer
+# AI Coding Agents
 
-AI offers coding capabilities across a spectrum of use cases, from smart IDE auto-completion to fully autonomous agents. AI's role in software development exists in a number of levels:
-
-1. IDE inline code suggestions
-2. IDE context aware chat
-3. [Aider](https://aider.chat/) pair-programming
-4. Sophia Code Editing agent
-5. Sophia Software Engineer agent
-
-The Sophia agents build upon the fantastic project [Aider](https://aider.chat/), providing additional layers above it for more autonomous use cases.  
-
+The Sophia software/coding agents build upon the project [Aider](https://aider.chat/), providing additional layers around it for more autonomous use cases.
 
 ## Code Editing Agent
 
-The [Code Editor Agent](https://github.com/TrafficGuard/nous/blob/main/src/swe/codeEditingAgent.ts) is used for editing local repositories. It was the 'bootstrap' agent to help accelerate the development of the platform.
+The [Code Editor Agent](https://github.com/TrafficGuard/nous/blob/main/src/swe/codeEditingAgent.ts) is used for editing local repositories. It was the 'bootstrap' agent to help accelerate the development of this platform.
 
 ### Workflow
 
@@ -22,17 +13,21 @@ The [Code Editor Agent](https://github.com/TrafficGuard/nous/blob/main/src/swe/c
 - Creates an implementation plan from the input requirements and analysing the current code.
 - Run a edit/compile/lint/test cycle
     - Calls Aider with the implementation plan and file list.
-    - Run compile, format, lint, test targets auto-detected from project configuration.
+    - Runs compile, format, lint, test targets auto-detected from project configuration.
     - On compile/lint/test errors the agent may:
-        - Perform online research to assist with fixing compile errors (Requires the Perplexity tool).
+        - Perform online research to assist with fixing errors (Requires Perplexity configured).
         - Install missing packages.
-        - Add additional files to the context
-        - Analyse the diff since the last successfully compiled commit
+        - Add additional files to the context.
+        - Analyse the diff since the last successfully compiled commit.
 
 ### FileSystem
 
 The agent context has a FileSystem, which defaults to the Sophia project directory. If you want to use the code editing agent
-on another local repo then set the `RunAgentConfig.fileSystemPath` property, or alternatively set the NOUS_FS environment variable to the repository path.
+on another local repo then the options are:
+
+- Use the `ss` script described in the [CLI](cli.md) documentation.
+- Set the SOPHIA_FS environment variable to the repository path before running a command to start an agent.
+- In a custom agent/workflow set the `RunAgentConfig.fileSystemPath` property on a new agent.
 
 ### Project Info
 
@@ -43,12 +38,10 @@ The agent searches through the files to find the commands and then saves it to t
 If the agent makes a mistake in the detection then manually edit the projectInfo.json file.
 
 ### Language Tools
-
-At TrafficGuard we have projects in Terraform HCL, JavaScript/TypeScript, PHP and Python.
  
 Sophia aims to be a flexible platform, and one example is the language specific tooling. The project detection also detects which language a project uses.
 
-The initial `LanguageTools` interface has the `generateProjectMap` and `installPackage` methods.
+The initial `LanguageTools` interface has the `generateProjectMap`, `getInstalledPackages` and `installPackage` methods.
 
 For example, the TypeScript `generateProjectMap` implementation runs `tsc` with the `emitDeclarationOnly` flag. This produces a smaller set of text for the LLM to search through, compared to the original source files.
 
@@ -96,7 +89,7 @@ In the context of learning and problem-solving for LLMs, metacognition includes 
 - Self-monitoring: Analyzing the LLM's responses to see if they meet the intended goals.
 - Adjustment: Refining prompts based on the LLM's output to improve results.
 - Reflection: Considering why certain prompts work better than others and learning from this.
-- Awareness of model limitations: Understanding what the LLM can and cannot do, and designing prompts accordingly.
+- Awareness of model limitations: Understanding what the LLM can and cannot do, and designing prompts and workflows accordingly.
 - Explicit instruction: Incorporating metacognitive strategies directly into prompts, asking the LLM to explain its reasoning or check its work.
 
 We accept that asking the LLM to get it right the first go is as absurd as asking you to write the solution from start to finish without any edits.

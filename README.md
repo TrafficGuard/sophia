@@ -3,9 +3,9 @@
   <img src="https://public.trafficguard.ai/sophia/banner.png" alt="nous logo"/>
 </p>
 <p align="center">
-  <em>The open-source TypeScript platform for autonomous AI agents and LLM based workflows </em>
+  <em>The open-source TypeScript platform for autonomous AI agents and LLM based workflows </em><br/>
+  <small>The Ancient Greek word <em><b>sophía (σοφία)</b></em> variously translates to "clever, skillful, intelligent, wise"</small>
 </p>
-The Ancient Greek word <em><b>sophía (σοφία)</b></em> is the abstract noun of σοφός (sophós), which variously translates to "clever, skillful, intelligent, wise"
 
 ## Documentation site
 [Home](https://sophia.dev/) |  [Setup](https://sophia.dev/setup/) | [Observability](https://sophia.dev/observability/) | [Function calling](https://sophia.dev/functions/) | 

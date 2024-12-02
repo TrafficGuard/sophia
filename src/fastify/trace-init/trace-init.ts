@@ -34,7 +34,7 @@ function initTrace(): void {
 	if (initialized) return;
 	initialized = true;
 
-	const enabled = process.env.TRACE_AGENT_ENABLED?.toLowerCase() === 'true' ?? false;
+	const enabled = process.env.TRACE_AGENT_ENABLED?.toLowerCase() === 'true';
 	if (enabled) {
 		const logLevel =
 			process.env.TRACE_LOG_LEVEL && Object.values(DiagLogLevel).includes(parseInt(process.env.TRACE_LOG_LEVEL))

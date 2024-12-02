@@ -39,7 +39,7 @@ If you would like to have input at a particular step, then in your prompt ask th
 Having a human in the loop is essential for any agent to handle a number of cases:
 
 - **Budget control** - Multiple iterations of calls to frontier LLMs can quickly add up.
-- **Guidance** - Keeping the AI on track after a few control loop iterations.
+- **Guidance** - Keeping the AI on track after a number of control loop iterations.
 - **Agent initiated feedback** - Provide details/decisions asked for by the AI
 - **Error handling** - Transient errors, configuration errors, balance exceeded errors and more can be fixed and then resume the agent. With some errors you may be able to give the agent guidance for a change in plan, or to research a solution.
 - **Verification** - Manually verify function calls that could result in data loss, unwanted modifications etc.

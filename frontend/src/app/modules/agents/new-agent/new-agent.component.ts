@@ -177,7 +177,7 @@ export class NewAgentComponent implements OnInit {
         .subscribe({
           next: (response) => {
             this.snackBar.open('Agent started', 'Close', { duration: 3000 });
-            this.router.navigate(['/ui/agent', response.data.agentId]).catch((e) => console.error); // Assuming the response contains the agentId
+            this.router.navigate(['/ui/agent', response.data.agentId]).catch(console.error);
           },
           error: (error) => {
             this.snackBar.open(`Error ${error.message}`, 'Close', { duration: 3000 });

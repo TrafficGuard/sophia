@@ -70,7 +70,7 @@
 
         <ng-container matColumnDef="description">
             <th mat-header-cell *matHeaderCellDef>Description</th>
-            <td mat-cell *matCellDef="let config">
+            <td mat-cell *matCellDef="let config" class="truncate overflow-ellipsis">
                 <a (click)="openEditPage(config.id)">{{ config.description }}</a>
             </td>
         </ng-container>

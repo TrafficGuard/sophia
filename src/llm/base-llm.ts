@@ -36,7 +36,6 @@ export abstract class BaseLLM implements LLM {
 	): { messages: LlmMessage[]; options?: GenerateTextOptions } {
 		let messages: LlmMessage[];
 		let options: GenerateTextOptions | undefined;
-
 		// Args: messages, opts
 		if (Array.isArray(userOrSystemOrMessages)) {
 			messages = userOrSystemOrMessages;
@@ -116,8 +115,16 @@ export abstract class BaseLLM implements LLM {
 		opts?: GenerateTextOptions,
 	): Promise<string> {
 		const { messages, options } = this.parseGenerateTextParameters(userOrSystemOrMessages, userOrOpts, opts);
-		const response = await this.generateText(messages, options);
-		return extractJsonResult(response);
+		try {
+			const response = await this.generateText(messages, options);
+			return extractJsonResult(response);
+		} catch (e) {
+			if (e instanceof SyntaxError) {
+				const response = await this.generateText(messages, options);
+				return extractJsonResult(response);
+			}
+			throw e;
+		}
 	}
 
 	generateJson<T>(userPrompt: string, opts?: GenerateJsonOptions): Promise<T>;
@@ -127,7 +134,15 @@ export abstract class BaseLLM implements LLM {
 		const { messages, options } = this.parseGenerateTextParameters(userOrSystemOrMessages, userOrOpts, opts);
 		const combinedOptions: GenerateTextOptions = options ? { ...options, type: 'json' } : { type: 'json' };
 		const response = await this.generateText(messages, combinedOptions);
-		return extractJsonResult(response);
+		try {
+			return extractJsonResult(response);
+		} catch (e) {
+			if (e instanceof SyntaxError) {
+				const response = await this.generateText(messages, options);
+				return extractJsonResult(response);
+			}
+			throw e;
+		}
 	}
 
 	getMaxInputTokens(): number {

@@ -46,6 +46,7 @@ type DiffReview = {
 	comments: Array<{ comment: string; lineNumber: number }>;
 };
 
+// Note that the type returned from getProjects is mapped to GitProject
 export type GitLabProject = Pick<
 	ProjectSchema,
 	| 'id'

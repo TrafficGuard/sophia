@@ -39,6 +39,7 @@ export class Perplexity {
 				baseURL: 'https://api.perplexity.ai',
 			});
 
+			// Valid model ids are at https://docs.perplexity.ai/guides/model-cards
 			response = await perplexity.chat.completions.create({
 				model: 'llama-3.1-sonar-large-128k-online',
 				max_tokens: 4096,

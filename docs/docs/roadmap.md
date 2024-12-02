@@ -1,17 +1,17 @@
 # Roadmap
 
-These are some of the items to implement next:
+Some of the items to implement next:
 
 GitHub support
 
-Ollama support
+Add attachments to chat.
 
-https://github.com/nextauthjs/next-auth/pull/9587
+More authentication options with https://github.com/nextauthjs/next-auth/pull/9587
 
 Additional agents:
 
 - Slack chatbot agent
-- SWE-bench agent
+- Complete SWE-bench agent
 - Add tools for GAIA agent
 - CI/CD failure investigation agent
 
@@ -25,24 +25,14 @@ Additional tools:
 
 - GMail
 - Google Drive
-- File store
 - Vector store
 - ...
 
-Code review configuration database persistence
-
 UI improvements
     - Real-time updates of agent state
-    - Edit agent when paused
+    - Edit agent when paused (Available functions is implemented)
 
 Postgresql persistence implementation
-
-Web UI authentication:
-
-- OAuth
-- user/password
-
-Windows support
 
 Prompt/response datasets
 

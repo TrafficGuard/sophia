@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Shortcut to running `npm run <script> <arg>` from the Sophia installation
+# Usage: `ss <script> <args>`
+
+if [ -z "$SOPHIA_HOME" ]; then
+  echo "Error: SOPHIA_HOME is not set."
+  exit 1
+fi
+
+# Check if at least one argument is passed
+if [ $# -lt 1 ]; then
+  echo "Usage: ss <script> [args]"
+  exit 1
+fi
+
+# Capture the first argument as the npm script
+script=$1
+shift # Shift the arguments so $@ contains the remaining args
+
+CWD=$(pwd)
+# Run the npm script with any additional arguments and the filesystem arg
+(cd "$SOPHIA_HOME" && npm run "$script" -- --fs="${CWD}" "$@")

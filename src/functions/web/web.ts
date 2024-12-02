@@ -69,7 +69,7 @@ export class PublicWeb {
 		const memory = agentContextStorage.getStore().memory;
 		if (memory[memoryKey]) throw new Error(`The memory key ${memoryKey} already exists`);
 		const contents = await this.getWebPage(url);
-		const extracted = await llms().medium.generateText(`<page_contents>${contents}</page_contents>\n\n${dataExtractionInstructions}`, null, {
+		const extracted = await llms().medium.generateText(`<page_contents>${contents}</page_contents>\n\n${dataExtractionInstructions}`, {
 			id: 'webpageDataExtraction',
 		});
 		if (memoryKey) {

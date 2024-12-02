@@ -81,7 +81,7 @@ export interface ExecResult {
 export function failOnError(userMessage: string, execResult: ExecResult): void {
 	if (execResult.exitCode === 0) return;
 	let errorMessage = userMessage;
-	errorMessage += `\n${execResult.stdout}` ?? '';
+	errorMessage += execResult.stdout ? `\n${execResult.stdout}` : '';
 	if (execResult.stdout && execResult.stderr) errorMessage += '\n';
 	if (execResult.stderr) errorMessage += execResult.stderr;
 	throw new Error(errorMessage);

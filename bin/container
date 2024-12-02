@@ -1,0 +1,2 @@
+#!/bin/bash
+docker exec -it $(docker ps -qf "name=sophia-dev") bash
