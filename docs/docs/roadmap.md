@@ -2,6 +2,8 @@
 
 Some of the items to implement next:
 
+Online demo
+
 GitHub support
 
 Add attachments to chat.
@@ -16,6 +18,7 @@ Additional agents:
 - CI/CD failure investigation agent
 
 Improvements to the autonomous and code editing agents (a whole roadmap in itself)
+- Include .cursorrules and CONVENTIONS.md files automatically
 
 Real-time human-in-the-loop which doesn't stop the agent control loop.
 

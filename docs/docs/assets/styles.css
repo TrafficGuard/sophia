@@ -1,0 +1,4 @@
+.md-header__topic:first-child {
+    font-weight: 500;
+    transform: scaleY(0.9);
+}

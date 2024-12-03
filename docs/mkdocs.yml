@@ -1,7 +1,8 @@
-site_name: sophia | ai
+site_name: SOPHIA | AI
 site_url: https://sophia.dev/
 theme:
   name: material
+  logo: assets/s.png
   palette:
     primary: black
   icon:
@@ -11,6 +12,9 @@ theme:
     - navigation.path
     - navigation.sections
     - navigation.expand
+
+extra_css:
+  - assets/styles.css
 
 markdown_extensions:
   - attr_list

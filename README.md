@@ -1,73 +1,62 @@
 <a id="banner"></a>
 <p align="center">
-  <img src="https://public.trafficguard.ai/sophia/banner.png" alt="nous logo"/>
+  <img src="https://public.trafficguard.ai/sophia/banner.png" alt="Sophia banner"/>
 </p>
 <p align="center">
-  <em>The open-source TypeScript platform for autonomous AI agents and LLM based workflows </em><br/>
+  <em>The open TypeScript platform for autonomous AI agents and LLM based workflows </em><br/>
   <small>The Ancient Greek word <em><b>sophía (σοφία)</b></em> variously translates to "clever, skillful, intelligent, wise"</small>
 </p>
 
 ## Documentation site
 [Home](https://sophia.dev/) |  [Setup](https://sophia.dev/setup/) | [Observability](https://sophia.dev/observability/) | [Function calling](https://sophia.dev/functions/) | 
-[Autonomous AI Agent](https://sophia.dev/xml-agent/) | [AI Software Engineer](https://sophia.dev/software-engineer/) | [AI Code reviews](https://sophia.dev/code-review/) |
+[Autonomous AI Agent](https://sophia.dev/autonomous-agents/) | [AI Software Engineer](https://sophia.dev/software-engineer/) | [AI Code reviews](https://sophia.dev/code-review/) |
 [Tools/Integrations](https://sophia.dev/integrations/) | [Roadmap](https://sophia.dev/roadmap/)
 
 ---
 
-[The Sophia Story](#the-sophia-story) | [Features](#features) | [UI Examples](#ui-examples) | [Code examples](#code-examples) | [Contributing](#contributing)
+[Features](#key-features) | [UI Examples](#ui-examples) | [Code examples](#code-examples) | [Contributing](#contributing)
 
-## The Sophia Story
+Sophia is a full-featured platform for developing and running agents, LLM based workflows and chatbots.
 
-Sophia started from a simple goal: to harness AI's potential to enhance real-world productivity, born in DevOps and Platform Engineering space. We envisioned a tool that could:
+Included are capable software engineering agents, which have assisted building the platform.
 
-- Automate various processes and support requests, and triage build failures.
-- Review code for compliance with standards and best practices.
-- Assist with large refactorings, and more.
+## Key features
 
-At TrafficGuard we process billions of events a month for our global clients, [increasing their ad spend ROI](https://www.trafficguard.ai/case-studies?ref=gh) by protecting against bots and other forms of invalid traffic.
-Our SaaS on GCP comprises projects developed in TypeScript, Python, GoogleSQL, PHP and Terraform, deployed from GitLab. 
+- [Advanced Autonomous agents](https://sophia.dev/autonomous-agents)
+- [Software developer agents](https://sophia.dev/software-engineer/)
+- [Pull request code review agent](https://sophia.dev/code-review/)
+- [AI chat interface](https://sophia.dev/chat/)
+- [Slack chatbot](https://sophia.dev/chatbot/)
+- Supports many LLM services - OpenAI, Anthropic (native & Vertex), Gemini, Groq, Fireworks, Together.ai, DeepSeek, Ollama, Cerebras, X.ai
+- Multi-agent [extend-reasoning implementations](https://github.com/TrafficGuard/sophia/tree/main/src/llm/multi-agent) of the LLM interface
+- Configurable Human-in-the-loop settings
+- [Functional callable tools/integrations](https://sophia.dev/integrations/) (Filesystem, Jira, Slack, Perplexity, Google Cloud, Gitlab, GitHub etc)
+- CLI and Web UI interface
+- Run locally or deployed on the cloud with multi-user/SSO
+- OpenTelemetry based observability
+- Leverages the extensive Python AI ecosystem through executing Python scripts/packages
 
-With open source projects typically Python/GitHub focused, and the vendor AI tools being focused in their silos, 
-we saw a need for TypeScript based tooling which can work across our entire tech stack, and understand the overall architecture.
+## Autonomous agents
 
-Through its evolution we've designed sophia as a flexible platform for the TypeScript community to expand and support the use cases and integrations of your choice.
-
-Our design choice of Firestore for the initial database implementation, with Cloud Run, provides a scale-to-zero solution with zero-cost using the free tier.
-With the intention to support uses cases such as your own custom personal assistant, always available via mobile.
-
-## Features
-
-Key features include:
-
-- Advanced autonomous agents
-  - Reasoning/planning inspired from Google's [Self-Discover](https://arxiv.org/abs/2402.03620) paper
-  - Memory and function call history for complex, multi-step workflows
-  - Adaptive iterative planning with hierarchical task decomposition
-  - Two control-loop function calling options (LLM-independent):
-    - Custom XML-based function calling
-    - Dynamic code generation with sandboxed execution for multistep function calling and logic
-      - Opportunistically can significantly reduce cost and latency over LLM-native/XML function calling
+- Reasoning/planning inspired from Google's [Self-Discover](https://arxiv.org/abs/2402.03620) and other papers
+- Memory and function call history for complex workflows
+- Iterative planning with hierarchical task decomposition
+- Sandboxed execution of generated code for multi-step function calling and logic
 - LLM function schemas auto-generated from source code
-- Function callable integrations:
-  - Filesystem, Jira, Slack, Perplexity, Gitlab, GitHub and more
-- Supports multiple LLMs/Services:
-  - OpenAI, Anthropic (native & Vertex), Gemini, Groq, Fireworks, Together.ai, DeepSeek, Ollama, Cerebras, X.ai
-- CLI and Web interface
-- Human-in-the-loop for:
-  - Budget control
-  - Agent initiated questions
-  - Error handling
-- Flexible deployment options:
-  - Run locally from the command line or through the web UI
-  - Scale-to-zero deployment on Firestore & Cloud Run
-  - Multi-user SSO enterprise deployment (with [Google Cloud IAP](https://cloud.google.com/security/products/iap))
-- Observability with OpenTelemetry tracing
-- Code Editing Agent:
+- Human-in-the-loop for budget control, agent initiated questions and error handling
+
+More details at the [Autonomous agent docs](https://sophia.dev/autonomous-agents)
+
+## Software developer agents
+
+- Code Editing Agent for local repositories
   - Auto-detection of project initialization, compile, test and lint
-  - Find the relevant files to edit and perform initial analysis
+  - Task file selection agent selects the relevant files
+  - Design agent creates the implementation plan.
   - Code editing loop with compile, lint, test, fix (editing delegates to [Aider](https://aider.chat/))
     - Compile error analyser can search online, add additional files and packages
-- Software Engineer Agent:
+  - Final review of the changes with an additional code editing loop if required.
+- Software Engineer Agent (For ticket to Pull Request workflow):
   - Find the appropriate repository from GitLab/GitHub
   - Clone and create branch
   - Call the Code Editing Agent
@@ -75,40 +64,68 @@ Key features include:
 - Code Review agent:
   - Configurable code review guidelines
   - Posts comments on GitLab merge requests at the appropriate line with suggested changes
+- Repository ad hoc query agent
+- Codebase awareness - optional index creation used by the task file selection agent
+
+More details at the [Software developer agents](https://sophia.dev/software-engineer/) docs.
+
+## Flexible run/deploy options
+
+- Run from the repository or the provided Dockerfile in single user mode.
+- CLI interface
+- Web interface
+- Scale-to-zero deployment on Firestore & Cloud Run
+- Multi-user SSO enterprise deployment (with [Google Cloud IAP](https://cloud.google.com/security/products/iap))
+- Terraform, infra scripts and more authentication options coming soon.
 
 ## UI Examples
 
-[New Agent](#new-agent) | [Sample trace](#sample-trace) | [Human in the loop notification](#human-in-the-loop-notification) | [Agent requested feedback](#agent-requested-feedback) | [List agents](#list-agents) | [Code review config](#code-review-configuration)
+### List agents
+
+![List agents](https://public.trafficguard.ai/sophia/agent-list.png)
 
 ### New Agent
 
-![New Agent UI](https://public.trafficguard.ai/sophia/start.png)
+![New Agent UI](https://public.trafficguard.ai/sophia/agent-new.png)
 
-### Sample trace
+### Agent error handling
 
-![Sample trace in Google Cloud](https://public.trafficguard.ai/nous/trace.png)
+![Feedback requested](https://public.trafficguard.ai/sophia/agent-feedback.png)
+
+### Agent LLM calls
+
+![Agent LLM calls](https://public.trafficguard.ai/sophia/agent-llm-calls.png)
+
+### Sample trace (Google Cloud)
+
+![Sample trace in Google Cloud](https://public.trafficguard.ai/sophia/trace.png)
 
 ### Human in the loop notification
 
-<img src="https://public.trafficguard.ai/nous/feedback.png" width="702">
-
-### Agent requested feedback
-
-![Feedback requested](https://public.trafficguard.ai/nous/agent-feedback.png)
-
-### List agents
-
-![List agents](https://public.trafficguard.ai/nous/list.png)
+<img src="https://public.trafficguard.ai/sophia/feedback.png" width="702">
 
 ### Code review configuration
 
-![Code review configuration](https://public.trafficguard.ai/nous/code-review.png)
+![Code review configuration](https://public.trafficguard.ai/sophia/code-reviews.png)
+
+### AI Chat
+
+![AI chat](https://public.trafficguard.ai/sophia/chat.png)
+
+### User profile
+
+![Profile](https://public.trafficguard.ai/sophia/profile1.png)
+![Profile](https://public.trafficguard.ai/sophia/profile2.png)
+
+Default values can also be set from environment variables.
 
 ## Code Examples
 
 ### Sophia vs LangChain
 
-Sophia doesn't use LangChain, for [many reasons](https://www.octomind.dev/blog/why-we-no-longer-use-langchain-for-building-our-ai-agents) that [you](https://www.google.com/search?q=langchain+site%3Anews.ycombinator.com) can [read online](https://www.google.com/search?q=langchain+sucks+site%3Areddit.com)
+Sophia doesn't use LangChain, for [many reasons](https://www.octomind.dev/blog/why-we-no-longer-use-langchain-for-building-our-ai-agents) that [you](https://www.google.com/search?q=langchain+site%3Anews.ycombinator.com) can [read](https://www.reddit.com/r/LangChain/comments/1gmfyi2/why_are_people_hating_langchain_so_much/) [online](https://www.google.com/search?q=langchain+sucks+site%3Areddit.com)
+
+The scope of the Sophia platform covers functionality found in LangChain and LangSmith.
 
 Let's compare the LangChain document example for Multiple Chains to the equivalent Sophia implementation.
 
@@ -150,17 +167,17 @@ console.log(result);
 
 #### Sophia
 ```typescript
-import { llms } from '#agent/context'
+import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { anthropicLLMs } from '#llms/anthropic'
 
-const prompt1 = (person: string) => `What is the city ${person} is from? Only respond with the name of the city.`;
-const prompt2 = (city: string, language: string) => `What country is the city ${city} in? Respond in ${language}.`;
+const cityFromPerson = (person: string) => `What is the city ${person} is from? Only respond with the name of the city.`;
+const countryFromCity = (city: string, language: string) => `What country is the city ${city} in? Respond in ${language}.`;
 
 runAgentWorkflow({ llms: anthropicLLMs() }, async () => {
-  const city = await llms().easy.generateText(prompt1('Obama'));
-  const result = await llms().easy.generateText(prompt2(city, 'German'));
+  const city = await llms().easy.generateText(cityFromPerson('Obama'));
+  const country = await llms().easy.generateText(countryFromCity(city, 'German'));
 
-  console.log(result);
+  console.log(country);
 });
 ```
 
@@ -180,20 +197,28 @@ startAgent({
 
 ### Automated LLM function schemas
 
-LLM function calling schemas are automatically generated by having the `@func` decorator on class methods.
+LLM function calling schema are automatically generated by having the `@func` decorator on class methods, avoiding the
+definition duplication using zod or JSON.
 
-![New Agent UI](https://public.trafficguard.ai/nous/jira-function-def.png)
-
-### Getting Started
-
-Visit our [documentation site](https://nous.trafficguard.ai/setup/) for the getting started guide and more details.
+```typescript
+@funcClass(__filename)
+export class Jira {
+    instance: AxiosInstance | undefined;
+    
+    /**
+     * Gets the description of a JIRA issue
+     * @param {string} issueId - the issue id (e.g. XYZ-123)
+     * @returns {Promise<string>} the issue description
+     */
+    @func()
+    async getJiraDescription(issueId: string): Promise<string> {
+        if (!issueId) throw new Error('issueId is required');
+        const response = await this.axios().get(`issue/${issueId}`);
+        return response.data.fields.description;
+    }
+}
+```
 
 ## Contributing
 
 We warmly welcome contributions to the project through [issues](https://github.com/TrafficGuard/nous/issues), [pull requests](https://github.com/TrafficGuard/nous/pulls)  or [discussions](https://github.com/TrafficGuard/nous/discussions)
-
-Contributed by [TrafficGuard](https://www.trafficguard.ai) - Increasing the ROI on your ad spend.
-
-Reach out to us as nous@trafficguard.ai if you'd like support to ramp up as a contributor.
-
-

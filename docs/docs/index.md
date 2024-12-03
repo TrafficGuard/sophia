@@ -1,14 +1,14 @@
 #
 <a id="banner"></a>
 <p align="center">
-  <img src="https://public.trafficguard.ai/sophia/banner.png" alt="nous logo"/>
+  <img src="https://public.trafficguard.ai/sophia/banner.png" alt="Sophia banner"/>
 </p>
 <p align="center">
   <em><b>The open TypeScript platform for AI agents and LLM based workflows</b></em><br/>
   <small>The Ancient Greek word <em><b>sophía (σοφία)</b></em> variously translates to "clever, skillful, intelligent, wise"</small>
 </p>
 
-Sophia is a full-featured platform for developing and running agents and LLM based workflows.
+Sophia is a full-featured platform for developing and running agents, LLM based workflows and chatbots.
 
 Included are capable software engineering agents, which have assisted building the platform.
 
@@ -41,24 +41,23 @@ Full details at the [Autonomous agent docs](https://sophia.dev/autonomous-agents
 
 ## Software developer agents
 
-- Code Editing Agent:
-  - For repositories on the file system.
-  - Auto-detection of project initialization, compile, test and lint
-  - Task file selection agent selects the relevant files
-  - Design agent creates the implementation plan.
-  - Code editing loop with compile, lint, test, fix (editing delegates to [Aider](https://aider.chat/))
-    - Compile error analyser can search online, add additional files and packages
-  - Final review of the changes with an additional code editing loop if required.
+- Code Editing Agent for local repositories
+    - Auto-detection of project initialization, compile, test and lint
+    - Task file selection agent selects the relevant files
+    - Design agent creates the implementation plan.
+    - Code editing loop with compile, lint, test, fix (editing delegates to [Aider](https://aider.chat/))
+      - Compile error analyser can search online, add additional files and packages
+    - Final review of the changes with an additional code editing loop if required.
 - Software Engineer Agent (For ticket to Pull Request workflow):
-  - Find the appropriate repository from GitLab/GitHub
-  - Clone and create branch
-  - Call the Code Editing Agent
-  - Create merge request
+    - Find the appropriate repository from GitLab/GitHub
+    - Clone and create branch
+    - Call the Code Editing Agent
+    - Create merge request
 - Code Review agent:
-  - Configurable code review guidelines
-  - Posts comments on GitLab merge requests at the appropriate line with suggested changes
+    - Configurable code review guidelines
+    - Posts comments on GitLab merge requests at the appropriate line with suggested changes
 - Repository ad hoc query agent
-- Codebase awareness - optional index creation of a codebase used by the task file selection agent
+- Codebase awareness - optional index creation used by the task file selection agent
 
 Full details at the [Software developer agents](https://sophia.dev/software-engineer/) docs.
 
@@ -160,17 +159,17 @@ console.log(result);
 
 #### Sophia
 ```typescript
-import { llms } from '#agent/context'
+import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { anthropicLLMs } from '#llms/anthropic'
 
-const prompt1 = (person: string) => `What is the city ${person} is from? Only respond with the name of the city.`;
-const prompt2 = (city: string, language: string) => `What country is the city ${city} in? Respond in ${language}.`;
+const cityFromPerson = (person: string) => `What is the city ${person} is from? Only respond with the name of the city.`;
+const countryFromCity = (city: string, language: string) => `What country is the city ${city} in? Respond in ${language}.`;
 
 runAgentWorkflow({ llms: anthropicLLMs() }, async () => {
-  const city = await llms().easy.generateText(prompt1('Obama'));
-  const result = await llms().easy.generateText(prompt2(city, 'German'));
+  const city = await llms().easy.generateText(cityFromPerson('Obama'));
+  const country = await llms().easy.generateText(countryFromCity(city, 'German'));
 
-  console.log(result);
+  console.log(country);
 });
 ```
 
