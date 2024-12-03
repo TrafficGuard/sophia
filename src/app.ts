@@ -2,8 +2,6 @@ import { AgentStateService } from '#agent/agentStateService/agentStateService';
 import { FileAgentStateService } from '#agent/agentStateService/fileAgentStateService';
 import { InMemoryAgentStateService } from '#agent/agentStateService/inMemoryAgentStateService';
 import { ChatService } from '#chat/chatTypes';
-import { RouteDefinition } from '#fastify/fastifyApp';
-import { firestoreApplicationContext } from '#firestore/firestoreApplicationContext';
 import { InMemoryLlmCallService } from '#llm/llmCallService/inMemoryLlmCallService';
 import { LlmCallService } from '#llm/llmCallService/llmCallService';
 import { logger } from '#o11y/logger';
@@ -22,11 +20,11 @@ import { agentStartRoute } from './routes/agent/agent-start-route';
 import { authRoutes } from './routes/auth/auth-routes';
 import { chatRoutes } from './routes/chat/chat-routes';
 import { codeRoutes } from './routes/code/code-routes';
-import { gitlabRoutesV1 } from './routes/gitlab/gitlabRoutes-v1';
 import { llmCallRoutes } from './routes/llms/llm-call-routes';
 import { llmRoutes } from './routes/llms/llm-routes';
 import { profileRoute } from './routes/profile/profile-route';
 import { codeReviewRoutes } from './routes/scm/codeReviewRoutes';
+import { gitlabRoutesV1 } from './routes/webhooks/gitlab/gitlabRoutes-v1';
 
 export interface ApplicationContext {
 	agentStateService: AgentStateService;
@@ -97,14 +95,10 @@ export async function initServer(): Promise<void> {
 
 export async function initFirestoreApplicationContext(): Promise<ApplicationContext> {
 	logger.info('Initializing Firestore persistence');
-	// const firestoreModule = await import("./modules/firestore/firestoreApplicationContext.ts")
-	// applicationContext = firestoreModule.firestoreApplicationContext()
+	// applicationContext = firestoreApplicationContext();
 
-	// const dynamicImport = new Function('specifier', 'return import(specifier)');
-	// const firestoreModule = await dynamicImport('./modules/firestore/firestoreApplicationContext.cjs');
-	// applicationContext = firestoreModule.firestoreApplicationContext();
-
-	applicationContext = firestoreApplicationContext();
+	const firestoreModule = await import('./modules/firestore/firestoreModule.cjs');
+	applicationContext = firestoreModule.firestoreApplicationContext();
 
 	await applicationContext.userService.ensureSingleUser();
 	return applicationContext;

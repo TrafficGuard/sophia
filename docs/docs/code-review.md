@@ -13,9 +13,9 @@ Each configuration has three filters to determine if a review will be done on a 
 - Required text in diff: The diff must contain the provided text.
 - Project paths: If any values are provided the project path must match one of the path globs.
 
-Lines numbers are added to the diffs as comments every 10 lines and in blank lines to assist the AI in providing the correct line number to add the comment.
+Lines numbers are added to the diffs as comments every 10 lines and in blank lines to assist the AI in providing the correct line number in the merge request diff to add the comment.
 
-![Code review config](https://public.trafficguard.ai/sophia/code-review.png)
+![Code review config](https://public.trafficguard.ai/sophia/code-reviews.png)
 
 # GitLab Configuration
 

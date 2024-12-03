@@ -173,7 +173,7 @@ class VertexLLM extends BaseLLM {
 		return withActiveSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
 			if (systemPrompt) span.setAttribute('systemPrompt', systemPrompt);
 
-			const promptLength = userPrompt.length + systemPrompt?.length ?? 0;
+			const promptLength = userPrompt.length + (systemPrompt?.length ?? 0);
 
 			span.setAttributes({
 				userPrompt,

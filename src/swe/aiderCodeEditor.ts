@@ -24,7 +24,7 @@ export class AiderCodeEditor {
 	 * @param filesToEdit the names of any existing relevant files to edit
 	 */
 	@func()
-	async editFilesToMeetRequirements(requirements: string, filesToEdit: string[]): Promise<void> {
+	async editFilesToMeetRequirements(requirements: string, filesToEdit: string[], commit = true): Promise<void> {
 		const span = getActiveSpan();
 		const messageFilePath = '.aider-requirements';
 		logger.debug(requirements);
@@ -76,9 +76,10 @@ export class AiderCodeEditor {
 
 		// Use the Sophia system directory, not the FileSystem working directory
 		// as we want all the 'system' files in one place.
+		const agentId = agentContext()?.agentId ?? 'NONE';
 		const llmHistoryFolder = join(systemDir(), 'aider/llm-history');
 		await promisify(fs.mkdir)(llmHistoryFolder, { recursive: true });
-		const llmHistoryFile = `${llmHistoryFolder}/${getFormattedDate()}__${agentContext().agentId}}`;
+		const llmHistoryFile = `${llmHistoryFolder}/${getFormattedDate()}__${agentId}}`;
 
 		logger.info(`LLM history file ${llmHistoryFile}`);
 		try {
@@ -90,12 +91,14 @@ export class AiderCodeEditor {
 			throw error;
 		}
 
+		const commitArgs: string = commit ? '' : '--no-dirty-commits --no-auto-commits';
+
 		// Due to limitations in the provider APIs, caching statistics and costs are not available when streaming responses.
 		// --map-tokens=2048
 		// Use the Python from the Sophia .python-version as it will have aider installed
 		const fileToEditArg = filesToEdit.map((file) => `"${file}"`).join(' ');
 		logger.info(fileToEditArg);
-		const cmd = `${getPythonPath()} -m aider --no-check-update --no-stream --yes ${modelArg} --llm-history-file="${llmHistoryFile}" --message-file=${messageFilePath} ${fileToEditArg}`;
+		const cmd = `${getPythonPath()} -m aider --no-check-update --cache-prompts ${commitArgs} --no-stream --yes ${modelArg} --llm-history-file="${llmHistoryFile}" --message-file=${messageFilePath} ${fileToEditArg}`;
 
 		const { stdout, stderr, exitCode } = await execCommand(cmd, { envVars: env });
 		if (stdout) logger.info(stdout);

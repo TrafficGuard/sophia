@@ -1,18 +1,24 @@
 import { Type } from '@sinclair/typebox';
+import { FastifyReply } from 'fastify';
 import { agentContextStorage, createContext } from '#agent/agentContextLocalStorage';
 import { AgentContext } from '#agent/agentContextTypes';
 import { RunAgentConfig } from '#agent/agentRunner';
+import { serializeContext } from '#agent/agentSerialization';
 import { send, sendSuccess } from '#fastify/index';
 import { GitLab } from '#functions/scm/gitlab';
 import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { logger } from '#o11y/logger';
 import { envVar } from '#utils/env-var';
-import { AppFastifyInstance, appContext } from '../../app';
-import { envVarHumanInLoopSettings } from '../../cli/cliHumanInLoop';
+import { AppFastifyInstance, appContext } from '../../../app';
+import { envVarHumanInLoopSettings } from '../../../cli/cliHumanInLoop';
 
 const basePath = '/api/webhooks';
 
 export async function gitlabRoutesV1(fastify: AppFastifyInstance) {
+	fastify.get(`${basePath}/test`, {}, async (req, reply) => {
+		send(reply as FastifyReply, 200, { message: 'ok' });
+	});
+
 	// /get
 	// See https://docs.gitlab.com/ee/user/project/integrations/webhook_events.html#merge-request-events
 	fastify.post(

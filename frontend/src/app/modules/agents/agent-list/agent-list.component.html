@@ -47,16 +47,14 @@
                 @if (agents.length > 0) {
                     <div class="grid">
                         <!-- Header -->
-                        <div class="inventory-grid text-secondary sticky top-0 z-10 grid gap-4 bg-gray-50 px-6 py-4 text-md font-semibold shadow dark:bg-black dark:bg-opacity-5 md:px-8"
-                             matSort
-                             matSortDisableClear>
+                        <div class="inventory-grid text-secondary sticky top-0 z-10 grid gap-4 bg-gray-50 px-6 py-4 text-md font-semibold shadow dark:bg-black dark:bg-opacity-5 md:px-8">
                             <div class="w-10"></div>
-                            <div [mat-sort-header]="'name'" class="w-48">Name</div>
-                            <div [mat-sort-header]="'state'" class="w-24 hidden md:block">State</div>
-                            <div [mat-sort-header]="'type'" class="w-24 hidden sm:block">Type</div>
-                            <div [mat-sort-header]="'userPrompt'" class="w-64 hidden md:block">User Prompt</div>
-                            <div [mat-sort-header]="'output'" class="flex-1 hidden lg:block">Error/Output</div>
-                            <div [mat-sort-header]="'cost'" class="w-24 text-right">Cost</div>
+                            <div>Name</div>
+                            <div>State</div>
+                            <div class="hidden lg:block">Type</div>
+                            <div>User Prompt</div>
+                            <div class="hidden md:block">Error/Output</div>
+                            <div class="hidden lg:block">Cost</div>
                         </div>
 
                         <!-- Rows -->
@@ -70,33 +68,29 @@
                                     </mat-checkbox>
                                 </div>
 
-                                <div class="w-48 truncate">
+                                <div>
                                     <a class="hover:text-primary" [routerLink]="['/ui/agents', agent.agentId]">
                                         {{ agent.name }}
                                     </a>
                                 </div>
 
-                                <div class="w-24 truncate hidden md:block">
+                                <div>
                                     <span [class]="getStateClass(agent.state)">{{ agent.state }}</span>
                                 </div>
 
-                                <div class="w-24 truncate hidden sm:block">{{ agent.type }}</div>
+                                <div class="hidden lg:block">{{ agent.type }}</div>
 
-                                <div class="w-64 hidden md:block">
-                                    <mat-tooltip [matTooltip]="agent.userPrompt">
-                                        <div class="max-h-8 truncate">{{ agent.userPrompt }}</div>
-                                    </mat-tooltip>
+                                <div [matTooltip]="agent.userPrompt">
+                                    <div class="max-h-8 truncate">{{ agent.userPrompt }}</div>
                                 </div>
 
-                                <div class="flex-1 hidden lg:block">
-                                    <mat-tooltip [matTooltip]="agent.state === 'error' ? agent.error : agent.output">
-                                        <div class="max-h-8 truncate">
-                                            {{ (agent.state === 'error' ? agent.error : agent.output) }}
-                                        </div>
-                                    </mat-tooltip>
+                                <div class="hidden md:block" [matTooltip]="agent.state === 'error' ? agent.error : agent.output">
+                                    <div class="max-h-8 truncate">
+                                        {{ (agent.state === 'error' ? agent.error : agent.output) }}
+                                    </div>
                                 </div>
 
-                                <div class="w-24 text-right font-mono">
+                                <div class="hidden lg:block">
                                     ${{ agent.cost | number: '1.2-2' }}
                                 </div>
                             </div>

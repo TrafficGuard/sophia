@@ -23,7 +23,7 @@ This document provides comprehensive details about the environment variables uti
 **SINGLE_USER_EMAIL**
 
 - **Description**: Email of the user in single-user mode.
-- **Default Value**: (None - must be set is AUTH=single_user)
+- **Default Value**: (None - must be set if AUTH=single_user)
 
 **UI_URL**
 

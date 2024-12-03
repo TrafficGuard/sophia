@@ -5,7 +5,6 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import fastify, {
 	FastifyBaseLogger,
 	FastifyInstance,
-	FastifyRegister,
 	FastifyReply,
 	FastifyRequest as FastifyRequestBase,
 	RawReplyDefaultExpression,
@@ -25,13 +24,7 @@ export const DEFAULT_HEALTHCHECK = '/health-check';
 
 const STATIC_PATH = process.env.STATIC_PATH || 'frontend/dist/fuse/browser';
 
-const indexHtmlPath = join(STATIC_PATH, 'index.html');
 let indexHtml: string;
-try {
-	indexHtml = readFileSync(indexHtmlPath).toString();
-} catch (e) {
-	logger.info(`${indexHtmlPath} not found`);
-}
 
 export type TypeBoxFastifyInstance = FastifyInstance<
 	http.Server,
@@ -63,6 +56,12 @@ export interface FastifyConfig {
 }
 
 export async function initFastify(config: FastifyConfig): Promise<AppFastifyInstance> {
+	const indexHtmlPath = join(STATIC_PATH, 'index.html');
+	try {
+		indexHtml = readFileSync(indexHtmlPath).toString();
+	} catch (e) {
+		logger.info(`${indexHtmlPath} not found`);
+	}
 	/*
    	 To guarantee a consistent and predictable behaviour of your application, we highly recommend to always load your code as shown below:
       └── plugins (from the Fastify ecosystem)

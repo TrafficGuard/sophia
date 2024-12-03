@@ -1,6 +1,33 @@
-## package.json scripts
+There are two main ways to interact with the system:
 
-There are a number of convenience scripts in the package.json for running agents, where the entrypoint file matches `/src/cli/<script-name>.ts`
+1. Through web UI with the server running.
+2. Using CLI scripts for specific tasks.
+
+## Running the server & UI
+
+### Local install
+In one terminal run
+```bash
+npm run start:local
+```
+In a second terminal run
+```bash
+cd frontend
+npm run start:local
+```
+
+### Docker
+
+Run `docker compose up`
+
+The UI will be available at [http://localhost:4200](http://localhost:4200)
+
+## CLI scripts
+
+To run the CLI scripts when using the Docker container, run the script `./bin/container` to open a bash shell inside the Sophia development container.
+
+
+There are a number of convenience scripts in the package.json for running agents and other scripts such as benchmarks, where the entrypoint file matches `/src/cli/<script-name>.ts`
 
 ### agent
 
@@ -47,7 +74,7 @@ This agent can be used for process automation and handling requests within the l
 This simply generates text from a prompt. As with the other scripts you can provide arguments for a quick prompt. 
 Otherwise, prepare the prompt in `src/cli/gen-in` and don't provide any other arguments.
 
-The output is written to `src/cli/gen-in` and the console
+The output is written to `src/cli/gen-out` and the console
 
 ### gaia
 
@@ -69,7 +96,44 @@ package to convert the HTML to Markdown, further reducing the token count.
 
 By default, it writes the output to `scrape.md`. Alternatively you can provide an argument for the file to write to.
 
+### query
+
+`npm run query <question>` runs the codebase query agent at *src/swe/discovery/codebaseQuery.ts* which can answer ad hoc
+questions about a codebase/folder contents.
+
+
+
+## Development
+
+### Running tests
+
+Keep the Firestore emulator running in a separate shell or in the background
+```bash
+npm run emulators
+```
+```bash
+npm run test
+```
+
+
+
+
 ## CLI usage optimizations
+
+### Helper CLI script
+
+To run Sophia agents in other folders and repositories, the script at `bin/path/ss` allows you to invoke the Sophia package.json scripts from any directory.
+
+To use this you in your shell config files (e.g. ~/.bashrc, ~/.zshrc)
+
+- Set the `SOPHIA_HOME` variable to the path of the Sophia repository.
+- Add `$SOPHIA_HOME/bin/path` to the `PATH` variable.
+
+Then from any folder you can run commands like:
+
+`ss query what test frameworks does this repository use`
+
+Where *query* is the Sophia package.json script. For all the examples in the CLI scripts section above you can replace `npm run` with `ss`
 
 ### Speech-to-text
 
@@ -78,27 +142,3 @@ Speech-to-text is useful writing longer prompts with additional details to guide
 On Mac's you can enable Dictation for quick-access speech-to-text
 ![List agents](https://public.trafficguard.ai/nous/dictation.png)
 
-### Helper scripts
-
-If you get tired of writing `npm run` all the time, copy this script to a file named `n` on your PATH
-then you can simply run `n agent list the files in the current directory`
-
-```bash
-#!/bin/bash
-
-# Shortcut to running `npm run <script> <arg>`
-# Usage: `n <script> <args>`qq
-
-# Check if at least one argument is passed
-if [ $# -lt 1 ]; then
-  echo "Usage: r <script> [args]"
-  exit 1
-fi
-
-# Capture the first argument as the npm script
-script=$1
-shift # Shift the arguments so $@ contains the remaining args
-
-# Run the npm script with any additional arguments
-npm run "$script" "$@"
-```

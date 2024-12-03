@@ -1,27 +1,32 @@
 #
 <a id="banner"></a>
 <p align="center">
-  <img src="https://public.trafficguard.ai/sophia/banner.png" alt="nous logo"/>
+  <img src="https://public.trafficguard.ai/sophia/banner.png" alt="Sophia banner"/>
 </p>
 <p align="center">
-  <em><b>The open-source TypeScript platform for AI agents and LLM based workflows</b></em>
-</p>
-<p align="center">
-The Ancient Greek word <em><b>sophía (σοφία)</b></em> variously translates to "clever, skillful, intelligent, wise"
+  <em><b>The open TypeScript platform for AI agents and LLM based workflows</b></em><br/>
+  <small>The Ancient Greek word <em><b>sophía (σοφία)</b></em> variously translates to "clever, skillful, intelligent, wise"</small>
 </p>
 
+Sophia is a full-featured platform for developing and running agents, LLM based workflows and chatbots.
 
-The Sophia platform provides a complete out-of-the box experience for building AI agents and LLM based workflows with TypeScript.
+Included are capable software engineering agents, which have assisted building the platform.
 
-- [Autonomous agents](https://sophia.dev//autonomous-agents)
+## Key features
+
+- [Advanced Autonomous agents](https://sophia.dev/autonomous-agents)
 - [Software developer agents](https://sophia.dev/software-engineer/)
-- [Code review agents](https://sophia.dev/software-engineer/)
-- Chat interface
-- Chatbots (Slack integration provided)
-- Functional callable tools (Filesystem, Jira, Slack, Perplexity, Google Cloud, Gitlab, GitHub and more)
+- [Pull request code review agent](https://sophia.dev/code-review/)
+- [AI chat interface](https://sophia.dev/chat/)
+- [Slack chatbot](https://sophia.dev/chatbot/)
+- Supports many LLM services - OpenAI, Anthropic (native & Vertex), Gemini, Groq, Fireworks, Together.ai, DeepSeek, Ollama, Cerebras, X.ai
+- Multi-agent [extend-reasoning implementations](https://github.com/TrafficGuard/sophia/tree/main/src/llm/multi-agent) of the LLM interface
+- Configurable Human-in-the-loop settings
+- Functional callable tools (Filesystem, Jira, Slack, Perplexity, Google Cloud, Gitlab, GitHub etc)
 - CLI and Web UI interface
 - Run locally or deployed on the cloud with multi-user/SSO
-- OpenTelemetry observability
+- OpenTelemetry based observability
+- Leverages the extensive Python AI ecosystem through executing Python scripts/packages
 
 ## Autonomous agents
 
@@ -32,77 +37,87 @@ The Sophia platform provides a complete out-of-the box experience for building A
 - LLM function schemas auto-generated from source code
 - Human-in-the-loop for budget control, agent initiated questions and error handling
 
+Full details at the [Autonomous agent docs](https://sophia.dev/autonomous-agents)
+
 ## Software developer agents
 
-- Code Editing Agent:
-  - Auto-detection of project initialization, compile, test and lint
-  - Task file selection agent
-  - Code editing loop with compile, lint, test, fix (editing delegates to [Aider](https://aider.chat/))
-    - Compile error analyser can search online, add additional files and packages
-  - Review the changes with an additional code editing loop if required.
-- Software Engineer Agent (For issue to Pull Request workflow):
-  - Find the appropriate repository from GitLab/GitHub
-  - Clone and create branch
-  - Call the Code Editing Agent
-  - Create merge request
-- Code review agents
-- Query repository agent
+- Code Editing Agent for local repositories
+    - Auto-detection of project initialization, compile, test and lint
+    - Task file selection agent selects the relevant files
+    - Design agent creates the implementation plan.
+    - Code editing loop with compile, lint, test, fix (editing delegates to [Aider](https://aider.chat/))
+      - Compile error analyser can search online, add additional files and packages
+    - Final review of the changes with an additional code editing loop if required.
+- Software Engineer Agent (For ticket to Pull Request workflow):
+    - Find the appropriate repository from GitLab/GitHub
+    - Clone and create branch
+    - Call the Code Editing Agent
+    - Create merge request
+- Code Review agent:
+    - Configurable code review guidelines
+    - Posts comments on GitLab merge requests at the appropriate line with suggested changes
+- Repository ad hoc query agent
+- Codebase awareness - optional index creation used by the task file selection agent
 
-## Chatbots
-
-- Slack chatbot
+Full details at the [Software developer agents](https://sophia.dev/software-engineer/) docs.
 
 ## Flexible run/deploy options
 
+- Run from the repository or the provided Dockerfile in single user mode.
 - CLI interface
 - Web interface
 - Scale-to-zero deployment on Firestore & Cloud Run
 - Multi-user SSO enterprise deployment (with [Google Cloud IAP](https://cloud.google.com/security/products/iap))
-
-## LLM support 
-
-OpenAI, Anthropic (native & Vertex), Gemini, Groq, Fireworks, Together.ai, DeepSeek, Ollama, Cerebras, X.ai
-
-
-- Filesystem, Jira, Slack, Perplexity, Gitlab and more
-
-- Observability with OpenTelemetry tracing
-
-- Code Review agent:
-    - Configurable code review guidelines
-    - Posts comments on GitLab merge requests at the appropriate line with suggested changes
+- Terraform, infra scripts and more authentication options coming soon.
 
 ## UI Examples
 
+### List agents
+
+![List agents](https://public.trafficguard.ai/sophia/agent-list.png)
+
 ### New Agent
 
-![New Agent UI](https://public.trafficguard.ai/nous/start.png)
+![New Agent UI](https://public.trafficguard.ai/sophia/agent-new.png)
 
-### Sample trace
+### Agent error handling
 
-![Sample trace in Google Cloud](https://public.trafficguard.ai/nous/trace.png)
+![Feedback requested](https://public.trafficguard.ai/sophia/agent-feedback.png)
+
+### Agent LLM calls
+
+![Agent LLM calls](https://public.trafficguard.ai/sophia/agent-llm-calls.png)
+
+### Sample trace (Google Cloud)
+
+![Sample trace in Google Cloud](https://public.trafficguard.ai/sophia/trace.png)
 
 ### Human in the loop notification
 
-<img src="https://public.trafficguard.ai/nous/feedback.png" width="702">
-
-### Agent requested feedback
-
-![Feedback requested](https://public.trafficguard.ai/nous/agent-feedback.png)
-
-### List agents
-
-![List agents](https://public.trafficguard.ai/nous/list.png)
+<img src="https://public.trafficguard.ai/sophia/feedback.png" width="702">
 
 ### Code review configuration
 
-![Code review configuration](https://public.trafficguard.ai/nous/code-review.png)
+![Code review configuration](https://public.trafficguard.ai/sophia/code-reviews.png)
+
+### AI Chat
+
+![AI chat](https://public.trafficguard.ai/sophia/chat.png)
+
+### User profile
+
+![Profile](https://public.trafficguard.ai/sophia/profile1.png)
+![Profile](https://public.trafficguard.ai/sophia/profile2.png)
+
+Default values can also be set from environment variables.
 
 ## Code Examples
 
 ### Sophia vs LangChain
 
-Sophia doesn't use LangChain, for [many reasons](https://www.octomind.dev/blog/why-we-no-longer-use-langchain-for-building-our-ai-agents) that [you](https://www.google.com/search?q=langchain+site%3Anews.ycombinator.com) can [read online](https://www.google.com/search?q=langchain+sucks+site%3Areddit.com)
+Sophia doesn't use LangChain, for [many reasons](https://www.octomind.dev/blog/why-we-no-longer-use-langchain-for-building-our-ai-agents) that [you](https://www.google.com/search?q=langchain+site%3Anews.ycombinator.com) can [read](https://www.reddit.com/r/LangChain/comments/1gmfyi2/why_are_people_hating_langchain_so_much/) [online](https://www.google.com/search?q=langchain+sucks+site%3Areddit.com)
+
+The scope of the Sophia platform covers functionality found in LangChain and LangSmith. 
 
 Let's compare the LangChain document example for Multiple Chains to the equivalent Sophia implementation.
 
@@ -144,17 +159,17 @@ console.log(result);
 
 #### Sophia
 ```typescript
-import { llms } from '#agent/context'
+import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { anthropicLLMs } from '#llms/anthropic'
 
-const prompt1 = (person: string) => `What is the city ${person} is from? Only respond with the name of the city.`;
-const prompt2 = (city: string, language: string) => `What country is the city ${city} in? Respond in ${language}.`;
+const cityFromPerson = (person: string) => `What is the city ${person} is from? Only respond with the name of the city.`;
+const countryFromCity = (city: string, language: string) => `What country is the city ${city} in? Respond in ${language}.`;
 
 runAgentWorkflow({ llms: anthropicLLMs() }, async () => {
-  const city = await llms().easy.generateText(prompt1('Obama'));
-  const result = await llms().easy.generateText(prompt2(city, 'German'));
+  const city = await llms().easy.generateText(cityFromPerson('Obama'));
+  const country = await llms().easy.generateText(countryFromCity(city, 'German'));
 
-  console.log(result);
+  console.log(country);
 });
 ```
 

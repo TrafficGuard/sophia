@@ -10,6 +10,7 @@ import { MatProgressBarModule } from "@angular/material/progress-bar";
 import { MatInputModule } from '@angular/material/input';
 import { ActionsService } from "./actions.service";
 import {MatIconModule} from "@angular/material/icon";
+import {MatButtonModule} from "@angular/material/button";
 
 @Component({
   selector: 'app-code',
@@ -24,7 +25,8 @@ import {MatIconModule} from "@angular/material/icon";
     MatIconModule,
     MatCardModule,
     MatProgressBarModule,
-    MatInputModule
+    MatInputModule,
+    MatButtonModule,
   ]
 })
 export class ActionsComponent implements OnInit {

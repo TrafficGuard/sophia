@@ -20,7 +20,7 @@ export function buildPrompt(args: {
 	requirements: string;
 	action: string;
 }): string {
-	return `${basePrompt}' + ${args.information}\n\nThe requirements of the task are as follows:\n<requirements>\n${args.requirements}\n</requirements>\n\nThe action to be performed is as follows:\n<action>\n${args.action}\n</action>\n`;
+	return `${basePrompt}\n\n${args.information}\n\nThe requirements of the task are as follows:\n<requirements>\n${args.requirements}\n</requirements>\n\nThe action to be performed is as follows:\n<action>\n${args.action}\n</action>\n`;
 }
 
 /**
@@ -49,6 +49,8 @@ export class SoftwareDeveloperAgent {
 		const projectInfo = await this.detectSingleProjectInfo();
 
 		if (projectInfo.initialise) {
+			// Need to pass NODE_ENV: 'development' so if the initialise command runs `npm install` then it installs the dev dependencies.
+			// as the current process may have it set to 'production'
 			const result: ExecResult = await runShellCommand(projectInfo.initialise, { envVars: { NODE_ENV: 'development' } });
 			failOnError('Error initialising the repository project', result);
 		}

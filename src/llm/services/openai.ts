@@ -2,7 +2,7 @@ import { OpenAIProvider, createOpenAI } from '@ai-sdk/openai';
 import { AiLLM } from '#llm/services/ai-llm';
 import { logger } from '#o11y/logger';
 import { currentUser } from '#user/userService/userContext';
-import { LLM } from '../llm';
+import { GenerateTextOptions, LLM, LlmMessage } from '../llm';
 
 export const OPENAI_SERVICE = 'openai';
 
@@ -75,6 +75,23 @@ export class OpenAI extends AiLLM<OpenAIProvider> {
 			});
 		}
 		return this.aiProvider;
+	}
+
+	async generateTextFromMessages(llmMessages: LlmMessage[], opts?: GenerateTextOptions): Promise<string> {
+		if (this.getModel().startsWith('o1-')) {
+			if (opts?.stopSequences) {
+				opts.stopSequences = undefined;
+			}
+			if (llmMessages[0].role === 'system') {
+				const systemPrompt = llmMessages.shift().content;
+				const userPrompt = llmMessages[0].content;
+				if (typeof systemPrompt !== 'string' || typeof userPrompt !== 'string')
+					throw new Error('System prompt and first user message must be only string content when using o1 models, as system prompts are not supported');
+				llmMessages[0].content = `Always follow the system prompt instructions when replying:\n<system-prompt>\n${systemPrompt}\n</system-prompt>\n\n${userPrompt}`;
+			}
+		}
+
+		return super.generateTextFromMessages(llmMessages, opts);
 	}
 
 	// async generateImage(description: string): Promise<string> {
