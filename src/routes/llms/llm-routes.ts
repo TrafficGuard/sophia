@@ -1,6 +1,6 @@
 import { send } from '#fastify/index';
 import { LLM_TYPES, getLLM } from '#llm/llmFactory';
-import { AppFastifyInstance } from '../../app';
+import { AppFastifyInstance } from '../../server';
 
 const basePath = '/api/llms';
 

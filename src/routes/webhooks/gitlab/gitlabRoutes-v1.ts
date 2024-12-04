@@ -9,8 +9,9 @@ import { GitLab } from '#functions/scm/gitlab';
 import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { logger } from '#o11y/logger';
 import { envVar } from '#utils/env-var';
-import { AppFastifyInstance, appContext } from '../../../app';
+import { appContext } from '../../../applicationContext';
 import { envVarHumanInLoopSettings } from '../../../cli/cliHumanInLoop';
+import { AppFastifyInstance } from '../../../server';
 
 const basePath = '/api/webhooks';
 

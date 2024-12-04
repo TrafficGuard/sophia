@@ -7,7 +7,7 @@ import { functionFactory } from '#functionSchema/functionDecorators';
 import { getLLM } from '#llm/llmFactory';
 import { logger } from '#o11y/logger';
 import { currentUser } from '#user/userService/userContext';
-import { AppFastifyInstance } from '../../app';
+import { AppFastifyInstance } from '../../server';
 
 const v1BasePath = '/api/agent/v1';
 

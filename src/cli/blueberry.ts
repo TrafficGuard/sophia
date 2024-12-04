@@ -5,7 +5,7 @@ import { agentContext, agentContextStorage, createContext } from '#agent/agentCo
 import { AgentContext } from '#agent/agentContextTypes';
 import { Blueberry } from '#llm/multi-agent/blueberry';
 import { mockLLMs } from '#llm/services/mock-llm';
-import { initFirestoreApplicationContext } from '../app';
+import { initFirestoreApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
 
 // Usage:

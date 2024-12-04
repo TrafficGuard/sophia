@@ -10,7 +10,7 @@ import { getRepositoryOverview, getTopLevelSummary } from '#swe/documentationBui
 import { reviewChanges } from '#swe/reviewChanges';
 import { supportingInformation } from '#swe/supportingInformation';
 import { execCommand, runShellCommand } from '#utils/exec';
-import { appContext } from '../app';
+import { appContext } from '../applicationContext';
 import { cacheRetry } from '../cache/cacheRetry';
 import { AiderCodeEditor } from './aiderCodeEditor';
 import { SelectFilesResponse, selectFilesToEdit } from './discovery/selectFilesToEdit';

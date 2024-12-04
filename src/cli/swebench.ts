@@ -20,7 +20,7 @@ import { logger } from '#o11y/logger';
 import { SWEBenchAgent, SWEInstance } from '#swe/SWEBenchAgent';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { sleep } from '#utils/async-utils';
-import { appContext, initFirestoreApplicationContext } from '../app';
+import { appContext, initFirestoreApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
 
 async function main() {

@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { appContext, initInMemoryApplicationContext } from 'src/app';
 import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext, AgentLLMs } from '#agent/agentContextTypes';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK, REQUEST_FEEDBACK_PARAM_NAME } from '#agent/agentFunctions';
@@ -19,6 +18,7 @@ import { MockLLM } from '#llm/services/mock-llm';
 import { setTracer } from '#o11y/trace';
 import { User } from '#user/user';
 import { sleep } from '#utils/async-utils';
+import { appContext, initInMemoryApplicationContext } from '../applicationContext';
 import { agentContextStorage } from './agentContextLocalStorage';
 
 const REQUEST_FEEDBACK_VALUE = 'question is...';

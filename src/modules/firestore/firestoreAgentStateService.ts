@@ -1,6 +1,6 @@
 import { DocumentSnapshot, Firestore } from '@google-cloud/firestore';
 import { LlmFunctions } from '#agent/LlmFunctions';
-import { AgentContext, AgentRunningState } from '#agent/agentContextTypes';
+import { AgentContext, AgentRunningState, isExecuting } from '#agent/agentContextTypes';
 import { deserializeAgentContext, serializeContext } from '#agent/agentSerialization';
 import { AgentStateService } from '#agent/agentStateService/agentStateService';
 import { functionFactory } from '#functionSchema/functionDecorators';
@@ -20,11 +20,39 @@ export class FirestoreAgentStateService implements AgentStateService {
 		const serialized = serializeContext(state);
 		serialized.lastUpdate = Date.now();
 		const docRef = this.db.doc(`AgentContext/${state.agentId}`);
-		try {
-			await docRef.set(serialized);
-		} catch (error) {
-			logger.error(error, 'Error saving agent state');
-			throw error;
+
+		if (state.parentAgentId) {
+			await this.db.runTransaction(async (transaction) => {
+				// Get the parent agent
+				const parentDocRef = this.db.doc(`AgentContext/${state.parentAgentId}`);
+				const parentDoc = await transaction.get(parentDocRef);
+
+				if (!parentDoc.exists) {
+					throw new Error(`Parent agent ${state.parentAgentId} not found`);
+				}
+
+				const parentData = parentDoc.data();
+				const childAgents = new Set(parentData.childAgents || []);
+
+				// Add child to parent if not already present
+				if (!childAgents.has(state.agentId)) {
+					childAgents.add(state.agentId);
+					transaction.update(parentDocRef, {
+						childAgents: Array.from(childAgents),
+						lastUpdate: Date.now(),
+					});
+				}
+
+				// Save the child agent state
+				transaction.set(docRef, serialized);
+			});
+		} else {
+			try {
+				await docRef.set(serialized);
+			} catch (error) {
+				logger.error(error, 'Error saving agent state');
+				throw error;
+			}
 		}
 	}
 
@@ -87,14 +115,40 @@ export class FirestoreAgentStateService implements AgentStateService {
 		}
 	}
 
+	@span()
 	async delete(ids: string[]): Promise<void> {
-		const batch = this.db.batch();
-		for (const id of ids) {
-			const docRef = this.db.doc(`AgentContext/${id}`);
-			batch.delete(docRef);
+		// First load all agents to handle parent-child relationships
+		let agents = await Promise.all(
+			ids.map(async (id) => {
+				try {
+					return await this.load(id); // only need to load the childAgents property
+				} catch (error) {
+					logger.error(error, `Error loading agent ${id} for deletion`);
+					return null;
+				}
+			}),
+		);
+
+		const user = currentUser();
+
+		agents = agents
+			.filter((agent) => !!agent) // Filter out non-existent ids
+			.filter((agent) => agent.user.id === user.id) // Can only delete your own agents
+			.filter((agent) => !isExecuting(agent)) // Can only delete executing agents
+			.filter((agent) => !agent.parentAgentId); // Only delete parent agents. Child agents are deleted with the parent agent.
+
+		// Now delete the agents
+		const deleteBatch = this.db.batch();
+		for (const agent of agents) {
+			for (const childId of agent.childAgents ?? []) {
+				deleteBatch.delete(this.db.doc(`AgentContext/${childId}`));
+			}
+			// TODO will need to handle if child agents have child agents
+			const docRef = this.db.doc(`AgentContext/${agent.agentId}`);
+			deleteBatch.delete(docRef);
 		}
-		// TODO delete LlmCalls and FunctionCache entries for the agent
-		await batch.commit();
+
+		await deleteBatch.commit();
 	}
 
 	async updateFunctions(agentId: string, functions: string[]): Promise<void> {

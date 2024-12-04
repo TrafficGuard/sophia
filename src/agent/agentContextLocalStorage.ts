@@ -53,6 +53,7 @@ export function createContext(config: RunAgentConfig): AgentContext {
 	const hilBudget = config.humanInLoop?.budget ?? (process.env.HIL_BUDGET ? parseFloat(process.env.HIL_BUDGET) : 2);
 	const context: AgentContext = {
 		agentId: config.resumeAgentId || randomUUID(),
+		parentAgentId: config.parentAgentId,
 		executionId: randomUUID(),
 		traceId: '',
 		metadata: config.metadata ?? {},

@@ -1,8 +1,6 @@
-import { ClaudeLLMs } from '#llm/services/anthropic';
-import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { SlackChatBotService } from '#modules/slack/slackChatBotService';
 import { sleep } from '#utils/async-utils';
-import { initFirestoreApplicationContext } from '../app';
+import { initFirestoreApplicationContext } from '../applicationContext';
 
 async function main() {
 	if (process.env.GCLOUD_PROJECT) {

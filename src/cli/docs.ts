@@ -10,7 +10,7 @@ import { Gemini_1_5_Flash } from '#llm/services/vertexai';
 import { buildSummaryDocs } from '#swe/documentationBuilder';
 import { detectProjectInfo } from '#swe/projectDetection';
 import { generateRepositoryMaps } from '#swe/repositoryMap';
-import { initFirestoreApplicationContext } from '../app';
+import { initFirestoreApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
 
 async function main() {

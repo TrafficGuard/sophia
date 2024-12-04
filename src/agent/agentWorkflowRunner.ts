@@ -5,7 +5,7 @@ import { RunAgentConfig } from '#agent/agentRunner';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { errorToString } from '#utils/errors';
-import { appContext } from '../app';
+import { appContext } from '../applicationContext';
 
 /**
  * Runs a workflow with an agentContext. This also persists the agent so its actions can be reviewed in the UI

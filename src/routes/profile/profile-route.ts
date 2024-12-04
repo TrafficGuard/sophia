@@ -3,7 +3,7 @@ import { FastifyReply } from 'fastify';
 import { send } from '#fastify/index';
 import { User } from '#user/user';
 import { currentUser } from '#user/userService/userContext';
-import { AppFastifyInstance } from '../../app';
+import { AppFastifyInstance } from '../../server';
 
 const basePath = '/api/profile';
 

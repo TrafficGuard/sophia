@@ -10,7 +10,7 @@ import { logger } from '#o11y/logger';
 import { User } from '#user/user';
 import { errorToString } from '#utils/errors';
 import { CDATA_END, CDATA_START } from '#utils/xml-utils';
-import { appContext } from '../app';
+import { appContext } from '../applicationContext';
 
 export const SUPERVISOR_RESUMED_FUNCTION_NAME: string = `Supervisor${FUNC_SEP}Resumed`;
 export const SUPERVISOR_CANCELLED_FUNCTION_NAME: string = `Supervisor${FUNC_SEP}Cancelled`;
@@ -22,6 +22,8 @@ const FUNCTION_OUTPUT_SUMMARIZE_MIN_LENGTH = 2000;
 export interface RunAgentConfig {
 	/** The user who created the agent. Uses currentUser() if not provided */
 	user?: User;
+	/** The parent agentId */
+	parentAgentId?: string;
 	/** The name of this agent */
 	agentName: string;
 	/** The type of autonomous agent function calling. Defaults to codegen */

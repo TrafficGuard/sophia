@@ -13,7 +13,7 @@ import { groqLlama3_1_70B } from '#llm/services/groq';
 import { GPT4oMini, openAIo1, openAIo1mini } from '#llm/services/openai';
 import { Gemini_1_5_Flash } from '#llm/services/vertexai';
 import { codebaseQuery } from '#swe/discovery/codebaseQuery';
-import { initFirestoreApplicationContext } from '../app';
+import { initFirestoreApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
 
 async function main() {

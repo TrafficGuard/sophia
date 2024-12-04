@@ -11,8 +11,8 @@ import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { codebaseQuery } from '#swe/discovery/codebaseQuery';
 import { SelectFilesResponse, selectFilesToEdit } from '#swe/discovery/selectFilesToEdit';
-import { AppFastifyInstance } from '../../app';
 import { sophiaDirName, systemDir } from '../../appVars';
+import { AppFastifyInstance } from '../../server';
 
 function findRepositories(dir: string): string[] {
 	const repos: string[] = [];

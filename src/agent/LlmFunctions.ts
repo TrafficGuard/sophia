@@ -1,13 +1,10 @@
 import { Agent } from '#agent/agentFunctions';
+import { functionFactory } from '#functionSchema/functionDecorators';
 import { FUNC_SEP, FunctionSchema, getFunctionSchemas } from '#functionSchema/functions';
+import { FileSystemRead } from '#functions/storage/FileSystemRead';
+import { ToolType, toolType } from '#functions/toolType';
 import { FunctionCall } from '#llm/llm';
 import { logger } from '#o11y/logger';
-
-import { FileSystemService } from '#functions/storage/fileSystemService';
-import { GetToolType, ToolType, toolType } from '#functions/toolType';
-
-import { functionFactory } from '#functionSchema/functionDecorators';
-import { FileSystemRead } from '#functions/storage/FileSystemRead';
 
 /**
  * Holds the instances of the classes with function callable methods.
@@ -28,6 +25,7 @@ export class LlmFunctions {
 	}
 
 	fromJSON(obj: any): this {
+		if (!obj) return this;
 		const functionClassNames = (obj.functionClasses ?? obj.tools) as string[]; // obj.tools for backward compat with dev version
 		for (const functionClassName of functionClassNames) {
 			const ctor = functionFactory()[functionClassName];

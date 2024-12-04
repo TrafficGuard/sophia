@@ -3,7 +3,7 @@ import { agentContext } from '#agent/agentContextLocalStorage';
 import { AgentLLMs } from '#agent/agentContextTypes';
 import { LlmCall } from '#llm/llmCallService/llmCall';
 import { withActiveSpan } from '#o11y/trace';
-import { appContext } from '../../app';
+import { appContext } from '../../applicationContext';
 import { BaseLLM } from '../base-llm';
 import { GenerateTextOptions, LLM, combinePrompts } from '../llm';
 

@@ -13,7 +13,7 @@ import { FUNC_SEP, FunctionSchema, getAllFunctionSchemas } from '#functionSchema
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { errorToString } from '#utils/errors';
-import { appContext } from '../app';
+import { appContext } from '../applicationContext';
 import { agentContextStorage, llms } from './agentContextLocalStorage';
 
 const stopSequences = ['</response>'];

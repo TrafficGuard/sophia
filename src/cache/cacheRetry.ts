@@ -1,6 +1,6 @@
 import { FUNC_SEP } from '#functionSchema/functions';
 import { logger } from '#o11y/logger';
-import { appContext } from '../app';
+import { appContext } from '../applicationContext';
 import { CacheScope } from './functionCacheService';
 
 interface CacheRetryOptions {

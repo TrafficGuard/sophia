@@ -8,7 +8,7 @@ import { Claude3_5_Sonnet_Vertex } from '#llm/services/anthropic-vertex';
 import { GPT4oMini } from '#llm/services/openai';
 import { logger } from '#o11y/logger';
 import { currentUser } from '#user/userService/userContext';
-import { AppFastifyInstance } from '../../app';
+import { AppFastifyInstance } from '../../server';
 
 const basePath = '/api';
 

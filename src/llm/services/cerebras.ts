@@ -5,7 +5,6 @@ import { LlmCall } from '#llm/llmCallService/llmCall';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
-import { appContext } from '../../app';
 import { RetryableError } from '../../cache/cacheRetry';
 import { BaseLLM } from '../base-llm';
 import { GenerateTextOptions, LLM, LlmMessage, combinePrompts } from '../llm';
@@ -13,6 +12,7 @@ import { GenerateTextOptions, LLM, LlmMessage, combinePrompts } from '../llm';
 import SystemMessageRequest = CompletionCreateParams.SystemMessageRequest;
 import AssistantMessageRequest = CompletionCreateParams.AssistantMessageRequest;
 import UserMessageRequest = CompletionCreateParams.UserMessageRequest;
+import { appContext } from '../../applicationContext';
 
 export const CEREBRAS_SERVICE = 'cerebras';
 
