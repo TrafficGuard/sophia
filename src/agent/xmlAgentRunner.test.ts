@@ -28,7 +28,7 @@ const NOOP_FUNCTION_CALL = `<plan>I'm going to call the noop function</plan>\n<f
 const SKY_COLOUR_FUNCTION_CALL = `<plan>Get the sky colour</plan>\n<function_calls><function_call><function_name>${TEST_FUNC_SKY_COLOUR}</function_name><parameters></parameters></function_call></function_calls>`;
 
 describe.skip('xmlAgentRunner', () => {
-	const app = initInMemoryApplicationContext();
+	const app = appContext();
 	let mockLLM = new MockLLM();
 	let llms: AgentLLMs = {
 		easy: mockLLM,
