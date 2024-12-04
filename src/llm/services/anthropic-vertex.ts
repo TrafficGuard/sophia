@@ -10,10 +10,10 @@ import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
-import { appContext } from '../../app';
 import { RetryableError, cacheRetry } from '../../cache/cacheRetry';
 import TextBlock = Anthropic.TextBlock;
 import { AgentLLMs } from '#agent/agentContextTypes';
+import { appContext } from '../../applicationContext';
 
 export const ANTHROPIC_VERTEX_SERVICE = 'anthropic-vertex';
 

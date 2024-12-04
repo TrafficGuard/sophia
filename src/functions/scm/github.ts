@@ -237,6 +237,7 @@ function convertGitHubToGitProject(repo: GitHubRepository): GitProject {
 		id: repo.id,
 		name: repo.name,
 		namespace: repo.full_name.split('/')[0],
+		fullPath: repo.full_name,
 		description: repo.description,
 		defaultBranch: repo.default_branch,
 		visibility: repo.private ? 'private' : 'public',

@@ -1,5 +1,10 @@
 import { llms } from '#agent/agentContextLocalStorage';
 
+/**
+ *
+ * @param requirements
+ * @param issueId
+ */
 export async function createBranchName(requirements: string, issueId?: string): Promise<string> {
 	let branchName = await llms().medium.generateTextWithResult(
 		`<requirements>${requirements}</requirement>\n

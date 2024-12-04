@@ -15,7 +15,7 @@ import { GenerateTextOptions, LlmMessage } from '#llm/llm';
 import { LlmCall } from '#llm/llmCallService/llmCall';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
-import { appContext } from '../../app';
+import { appContext } from '../../applicationContext';
 
 /**
  * Base class for LLM implementations using the Vercel ai package

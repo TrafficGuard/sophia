@@ -6,7 +6,8 @@ import { runXmlAgent } from '#agent/xmlAgentRunner';
 import { send, sendBadRequest } from '#fastify/index';
 import { functionFactory } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
-import { AppFastifyInstance, appContext } from '../../app';
+import { appContext } from '../../applicationContext';
+import { AppFastifyInstance } from '../../server';
 
 const v1BasePath = '/api/agent/v1';
 export async function agentExecutionRoutes(fastify: AppFastifyInstance) {

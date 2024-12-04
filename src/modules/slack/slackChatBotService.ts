@@ -11,7 +11,7 @@ import { Perplexity } from '#functions/web/perplexity';
 import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { logger } from '#o11y/logger';
 import { sleep } from '#utils/async-utils';
-import { appContext } from '../../app';
+import { appContext } from '../../applicationContext';
 import { ChatBotService } from '../../chatBot/chatBotService';
 
 let slackApp: App<StringIndexed> | undefined;

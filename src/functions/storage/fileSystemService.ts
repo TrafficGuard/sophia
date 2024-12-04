@@ -2,17 +2,16 @@ import { access, existsSync, lstat, mkdir, readFile, readdir, stat, writeFileSyn
 import { resolve } from 'node:path';
 import path, { join } from 'path';
 import { promisify } from 'util';
-import { glob } from 'glob-gitignore';
+// import { glob } from 'glob-gitignore';
 import ignore, { Ignore } from 'ignore';
 import Pino from 'pino';
 import { agentContext } from '#agent/agentContextLocalStorage';
-import { func, funcClass } from '#functionSchema/functionDecorators';
 import { parseArrayParameterValue } from '#functionSchema/functionUtils';
 import { Git } from '#functions/scm/git';
 import { VersionControlSystem } from '#functions/scm/versionControlSystem';
 import { LlmTools } from '#functions/util';
 import { logger } from '#o11y/logger';
-import { getActiveSpan } from '#o11y/trace';
+import { getActiveSpan, span } from '#o11y/trace';
 import { spawnCommand } from '#utils/exec';
 import { CDATA_END, CDATA_START, needsCDATA } from '#utils/xml-utils';
 import { SOPHIA_FS } from '../../appVars';
@@ -27,7 +26,7 @@ const fs = {
 };
 
 // import fg from 'fast-glob';
-const globAsync = promisify(glob);
+// const globAsync = promisify(glob);
 
 type FileFilter = (filename: string) => boolean;
 
@@ -57,7 +56,7 @@ export class FileSystemService {
 	 */
 	constructor(public basePath?: string) {
 		this.basePath ??= process.cwd();
-		logger.info(`process.argv ${JSON.stringify(process.argv)}`);
+
 		const args = process.argv; //.slice(2); // Remove the first two elements (node and script path)
 		const fsArg = args.find((arg) => arg.startsWith('--fs='));
 		const fsEnvVar = process.env[SOPHIA_FS];

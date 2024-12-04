@@ -8,7 +8,7 @@ import { GitLab } from '#functions/scm/gitlab';
 import { ClaudeLLMs } from '#llm/services/anthropic';
 import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
-import { initFirestoreApplicationContext } from '../app';
+import { initFirestoreApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
 
 async function main() {

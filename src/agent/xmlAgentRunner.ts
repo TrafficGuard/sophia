@@ -13,7 +13,7 @@ import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { envVar } from '#utils/env-var';
 import { errorToString } from '#utils/errors';
-import { appContext } from '../app';
+import { appContext } from '../applicationContext';
 import { agentContext, agentContextStorage, llms } from './agentContextLocalStorage';
 
 export const XML_AGENT_SPAN = 'XmlAgent';

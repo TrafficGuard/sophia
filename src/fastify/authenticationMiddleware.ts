@@ -3,7 +3,7 @@ import { DEFAULT_HEALTHCHECK } from '#fastify/fastifyApp';
 import { logger } from '#o11y/logger';
 import { runWithUser } from '#user/userService/userContext';
 import { ROUTES } from '../../shared/routes';
-import { appContext } from '../app';
+import { appContext } from '../applicationContext';
 import { getPayloadUserId } from './jwt';
 
 // Middleware function

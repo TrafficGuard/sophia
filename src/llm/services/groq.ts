@@ -7,7 +7,7 @@ import { AiLLM } from '#llm/services/ai-llm';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
-import { appContext } from '../../app';
+import { appContext } from '../../applicationContext';
 import { RetryableError } from '../../cache/cacheRetry';
 import { BaseLLM } from '../base-llm';
 import { GenerateTextOptions, LLM, combinePrompts } from '../llm';

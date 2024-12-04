@@ -1,6 +1,6 @@
 import * as bcrypt from 'bcrypt';
-import { User } from '../user';
-import { UserService } from './userService';
+import { User } from '#user/user';
+import { UserService } from '#user/userService/userService';
 
 export const SINGLE_USER_ID = 'user';
 
@@ -97,7 +97,7 @@ export class InMemoryUserService implements UserService {
 			hilCount: user.hilCount ?? 0,
 			llmConfig: user.llmConfig ?? { anthropicKey: '', openaiKey: '', groqKey: '', togetheraiKey: '' },
 			functionConfig: {},
-			createdAt: new Date(),
+			createdAt: user.createdAt ?? new Date(),
 		};
 		this.users.push(newUser);
 		return Promise.resolve(newUser);

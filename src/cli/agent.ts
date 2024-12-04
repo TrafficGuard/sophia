@@ -9,7 +9,7 @@ import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
-import { appContext, initFirestoreApplicationContext } from '../app';
+import { appContext, initFirestoreApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
 
 export async function main() {

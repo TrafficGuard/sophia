@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { appContext, initInMemoryApplicationContext } from 'src/app';
 import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext, AgentLLMs } from '#agent/agentContextTypes';
 import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK, REQUEST_FEEDBACK_PARAM_NAME } from '#agent/agentFunctions';
@@ -19,6 +18,7 @@ import { MockLLM } from '#llm/services/mock-llm';
 import { setTracer } from '#o11y/trace';
 import { User } from '#user/user';
 import { sleep } from '#utils/async-utils';
+import { appContext, initInMemoryApplicationContext } from '../applicationContext';
 import { agentContextStorage } from './agentContextLocalStorage';
 
 const REQUEST_FEEDBACK_VALUE = 'question is...';
@@ -28,7 +28,7 @@ const NOOP_FUNCTION_CALL = `<plan>I'm going to call the noop function</plan>\n<f
 const SKY_COLOUR_FUNCTION_CALL = `<plan>Get the sky colour</plan>\n<function_calls><function_call><function_name>${TEST_FUNC_SKY_COLOUR}</function_name><parameters></parameters></function_call></function_calls>`;
 
 describe.skip('xmlAgentRunner', () => {
-	const app = initInMemoryApplicationContext();
+	const app = appContext();
 	let mockLLM = new MockLLM();
 	let llms: AgentLLMs = {
 		easy: mockLLM,

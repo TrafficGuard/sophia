@@ -8,7 +8,7 @@ import {
 	MergeRequestDiscussionNotePositionOptions,
 	ProjectSchema,
 } from '@gitbeaker/rest';
-import { micromatch } from 'micromatch';
+import * as micromatch from 'micromatch';
 import { agentContext, getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
@@ -18,8 +18,8 @@ import { functionConfig } from '#user/userService/userContext';
 import { allSettledAndFulFilled } from '#utils/async-utils';
 import { envVar } from '#utils/env-var';
 import { execCommand, failOnError, shellEscape } from '#utils/exec';
-import { appContext } from '../../app';
 import { systemDir } from '../../appVars';
+import { appContext } from '../../applicationContext';
 import { cacheRetry } from '../../cache/cacheRetry';
 import { LlmTools } from '../util';
 import { GitProject } from './gitProject';
@@ -163,6 +163,7 @@ export class GitLab implements SourceControlManagement {
 			id: project.id,
 			name: project.name,
 			namespace: project.namespace.full_path,
+			fullPath: `${project.namespace.full_path}/${project.path}`,
 			description: project.description,
 			defaultBranch: project.default_branch,
 			visibility: project.visibility,

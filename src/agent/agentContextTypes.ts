@@ -70,7 +70,9 @@ export type AgentLLMs = Record<TaskLevel, LLM>;
 export interface AgentContext {
 	/** Primary Key - Agent instance id. Allocated when the agent is first starts */
 	agentId: string;
-	/** Id of the running execution. This changes after the agent restarts due to an error, pausing, human in loop,  etc */
+	/** Child agent ids */
+	childAgents?: string[];
+	/** Id of the running execution. This changes after the agent restarts due to an error, pausing, human in loop, completion etc */
 	executionId: string;
 	/** Current OpenTelemetry traceId */
 	traceId: string;
@@ -123,7 +125,7 @@ export interface AgentContext {
 	invoking: FunctionCall[];
 	/** Additional notes that tool functions can add to the response to the agent */
 	notes: string[];
-	/** The initial user prompt */
+	/** The initial prompt provided by the user or parent agent */
 	userPrompt: string;
 	/** The prompt the agent execution started/resumed with */
 	inputPrompt: string;

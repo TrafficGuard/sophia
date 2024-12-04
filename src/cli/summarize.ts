@@ -8,7 +8,7 @@ import { shutdownTrace } from '#fastify/trace-init/trace-init';
 import { SummarizerAgent } from '#functions/text/summarizer';
 import { ClaudeLLMs } from '#llm/services/anthropic';
 import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
-import { initFirestoreApplicationContext } from '../app';
+import { initFirestoreApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
 
 async function main() {

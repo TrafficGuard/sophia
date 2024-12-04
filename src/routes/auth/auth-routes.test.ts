@@ -1,6 +1,7 @@
 import { expect } from 'chai';
-import { AppFastifyInstance, initInMemoryApplicationContext } from '../../app';
+import { initInMemoryApplicationContext } from '../../applicationContext';
 import { initFastify } from '../../fastify';
+import { AppFastifyInstance } from '../../server';
 import { authRoutes } from './auth-routes';
 
 describe.skip('Auth Routes', () => {

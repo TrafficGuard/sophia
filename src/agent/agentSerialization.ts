@@ -4,7 +4,7 @@ import { getCompletedHandler } from '#agent/completionHandlerRegistry';
 import { FileSystemService } from '#functions/storage/fileSystemService';
 import { deserializeLLMs } from '#llm/llmFactory';
 import { currentUser } from '#user/userService/userContext';
-import { appContext } from '../app';
+import { appContext } from '../applicationContext';
 
 export function serializeContext(context: AgentContext): Record<string, any> {
 	const serialized = {};
@@ -14,6 +14,10 @@ export function serializeContext(context: AgentContext): Record<string, any> {
 			// do nothing
 		} else if (context[key] === null) {
 			serialized[key] = null;
+		}
+		// Handle childAgents array specially to ensure it's always an array
+		else if (key === 'childAgents') {
+			serialized[key] = context[key] || [];
 		}
 		// Copy primitive properties across
 		else if (typeof context[key] === 'string' || typeof context[key] === 'number' || typeof context[key] === 'boolean') {
@@ -65,6 +69,7 @@ export async function deserializeAgentContext(serialized: Record<keyof AgentCont
 
 	context.memory = serialized.memory;
 	context.metadata = serialized.metadata;
+	context.childAgents = serialized.childAgents || [];
 	context.llms = deserializeLLMs(serialized.llms);
 
 	const user = currentUser();
@@ -79,6 +84,7 @@ export async function deserializeAgentContext(serialized: Record<keyof AgentCont
 	if (!context.iterations) context.iterations = 0;
 
 	// Need to default empty parameters. Seems to get lost in Firestore
+	context.functionCallHistory ??= [];
 	for (const call of context.functionCallHistory) call.parameters ??= {};
 
 	return context as AgentContext;
