@@ -55,6 +55,7 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		agentId: config.resumeAgentId || randomUUID(),
 		parentAgentId: config.parentAgentId,
 		executionId: randomUUID(),
+		childAgents: [],
 		traceId: '',
 		metadata: config.metadata ?? {},
 		name: config.agentName,

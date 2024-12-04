@@ -51,7 +51,7 @@ export async function initFirestoreApplicationContext(): Promise<ApplicationCont
 }
 
 export function initInMemoryApplicationContext(): ApplicationContext {
-	if (applicationContext) throw new Error('Application context already initialized');
+	// if (applicationContext) throw new Error('Application context already initialized');
 	applicationContext = inMemoryApplicationContext();
 	applicationContext.userService.ensureSingleUser().catch();
 	return applicationContext;

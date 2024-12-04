@@ -97,7 +97,7 @@ export class InMemoryUserService implements UserService {
 			hilCount: user.hilCount ?? 0,
 			llmConfig: user.llmConfig ?? { anthropicKey: '', openaiKey: '', groqKey: '', togetheraiKey: '' },
 			functionConfig: {},
-			createdAt: new Date(),
+			createdAt: user.createdAt ?? new Date(),
 		};
 		this.users.push(newUser);
 		return Promise.resolve(newUser);

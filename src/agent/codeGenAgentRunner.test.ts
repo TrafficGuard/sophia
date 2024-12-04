@@ -19,7 +19,7 @@ import { logger } from '#o11y/logger';
 import { setTracer } from '#o11y/trace';
 import { User } from '#user/user';
 import { sleep } from '#utils/async-utils';
-import { appContext, initInMemoryApplicationContext } from '../applicationContext';
+import { appContext, applicationContext, initInMemoryApplicationContext } from '../applicationContext';
 import { agentContextStorage } from './agentContextLocalStorage';
 
 const PY_AGENT_COMPLETED = (note: string) => `await ${AGENT_COMPLETED_NAME}("${note}")`;
