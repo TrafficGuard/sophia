@@ -1,6 +1,6 @@
 import { expect } from 'chai';
+import { InMemoryUserService } from '#modules/memory/inMemoryUserService';
 import { User } from '../user';
-import { InMemoryUserService } from './inMemoryUserService';
 
 describe('InMemoryUserService', () => {
 	const inMemoryUserService = new InMemoryUserService();
