@@ -73,17 +73,11 @@ export class AgentDetailsComponent implements OnInit {
         private llmService: LlmService
     ) {}
 
-    refreshAgentDetails(): void {
-        this.refreshRequested.emit();
-    }
-
     ngOnInit(): void {
-        this.initializeFeedbackForm();
-        this.initializeHilForm();
-        this.initializeErrorForm();
-        // Load available functions here, possibly from a service
-        this.functionsService.getFunctions().subscribe(value =>
-        this.allAvailableFunctions = value)
+        this.feedbackForm = this.formBuilder.group({ feedback: ['', Validators.required] });
+        this.hilForm = this.formBuilder.group({  feedback: [''] });
+        this.errorForm = this.formBuilder.group({ errorDetails: ['', Validators.required] });
+        this.functionsService.getFunctions().subscribe(value => this.allAvailableFunctions = value)
         this.isLoadingLlms = true;
         this.llmService.getLlms().pipe(
             finalize(() => {
@@ -103,22 +97,8 @@ export class AgentDetailsComponent implements OnInit {
         });
     }
 
-    private initializeFeedbackForm(): void {
-        this.feedbackForm = this.formBuilder.group({
-            feedback: ['', Validators.required],
-        });
-    }
-
-    private initializeHilForm(): void {
-        this.hilForm = this.formBuilder.group({
-            feedback: [''],
-        });
-    }
-
-    private initializeErrorForm(): void {
-        this.errorForm = this.formBuilder.group({
-            errorDetails: ['', Validators.required],
-        });
+    refreshAgentDetails(): void {
+        this.refreshRequested.emit();
     }
 
     onSubmitFeedback(): void {
@@ -215,7 +195,7 @@ export class AgentDetailsComponent implements OnInit {
         ).subscribe((response) => {
             if (response) {
                 this.snackBar.open('Agent cancelled successfully', 'Close', { duration: 3000 });
-                this.router.navigate(['/ui/agent/list']).catch(console.error);
+                this.router.navigate(['/ui/agents/list']).catch(console.error);
             }
         });
     }
@@ -329,6 +309,7 @@ export class AgentDetailsComponent implements OnInit {
         ).subscribe((response) => {
             if (response) {
                 this.snackBar.open('Agent resumed successfully', 'Close', { duration: 3000 });
+                this.refreshRequested.emit();
             }
         });
     }

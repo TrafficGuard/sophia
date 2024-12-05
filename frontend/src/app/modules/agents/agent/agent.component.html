@@ -1,28 +1,21 @@
+<div class="flex-auto pt-6 sm:px-4 sm:pb-4">
+    <mat-tab-group [animationDuration]="'0'">
 
+        <mat-tab label="Details">
+            <agent-details [agentDetails]="agentDetails" (refreshRequested)="loadAgentDetails()"></agent-details>
+        </mat-tab>
 
-    <!-- Main -->
-    <div class="flex-auto pt-6 sm:px-4 sm:pb-4">
-        <!-- Tabs -->
-        <mat-tab-group [animationDuration]="'0'">
-            <!-- Tab #1 -->
-            <mat-tab label="Details">
-                <!-- TAB CONTENT GOES HERE -->
-                <agent-details [agentDetails]="agentDetails" (refreshRequested)="loadAgentDetails()"></agent-details>
-            </mat-tab>
+        <mat-tab label="Memory">
+            <agent-memory [agentDetails]="agentDetails"></agent-memory>
+        </mat-tab>
 
-            <!-- Tab #2 -->
-            <mat-tab label="Memory">
-                <agent-memory [agentDetails]="agentDetails"></agent-memory>
-            </mat-tab>
+        <mat-tab label="Function Calls">
+            <agent-function-calls [agentDetails]="agentDetails"></agent-function-calls>
+        </mat-tab>
 
-            <!-- Tab #3 -->
-            <mat-tab label="Function Calls">
-                <agent-function-calls [agentDetails]="agentDetails"></agent-function-calls>
-            </mat-tab>
+        <mat-tab label="LLM Calls">
+            <agent-llm-calls [agentId]="agentId"></agent-llm-calls>
+        </mat-tab>
 
-            <!-- Tab #4 -->
-            <mat-tab label="LLM Calls">
-                <agent-llm-calls [agentId]="agentId"></agent-llm-calls>
-            </mat-tab>
-        </mat-tab-group>
-    </div>
+    </mat-tab-group>
+</div>

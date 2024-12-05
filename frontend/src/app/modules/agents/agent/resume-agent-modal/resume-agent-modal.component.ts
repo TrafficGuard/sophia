@@ -9,11 +9,11 @@ import { CommonModule } from '@angular/common';
 @Component({
   selector: 'app-resume-agent-modal',
   template: `
-    <h2 mat-dialog-title>Resume Agent</h2>
+    <h2 mat-dialog-title class="font-bold">Resume Agent</h2>
     <form [formGroup]="resumeForm" (ngSubmit)="onSubmit()">
       <mat-dialog-content>
-        <mat-form-field appearance="fill">
-          <mat-label>Resume Instructions</mat-label>
+        <mat-form-field appearance="fill" style="width: 100%">
+          <mat-label>Instructions</mat-label>
           <textarea matInput formControlName="resumeInstructions" rows="4"></textarea>
           <mat-error *ngIf="resumeForm.get('resumeInstructions')?.hasError('required')">
             Resume instructions are required
