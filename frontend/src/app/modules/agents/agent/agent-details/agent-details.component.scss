@@ -15,6 +15,10 @@
   width: 500px;
 }
 
+.flip-x {
+  transform: scaleX(-1);
+}
+
 .truncate {
   display: block;
   white-space: nowrap;

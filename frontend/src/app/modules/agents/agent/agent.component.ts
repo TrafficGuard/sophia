@@ -1,13 +1,8 @@
 import {ChangeDetectionStrategy, Component, ViewEncapsulation, OnInit, ChangeDetectorRef} from '@angular/core';
-import { RouterOutlet } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
 import { environment } from 'environments/environment';
-import { FunctionEditModalComponent } from './function-edit-modal/function-edit-modal.component';
-import { ResumeAgentModalComponent } from './resume-agent-modal/resume-agent-modal.component';
-import { FormBuilder, FormGroup } from '@angular/forms';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -26,6 +21,7 @@ import { AgentDetailsComponent } from './agent-details/agent-details.component';
 import { AgentMemoryComponent } from './agent-memory/agent-memory.component';
 import { AgentFunctionCallsComponent } from './agent-function-calls/agent-function-calls.component';
 import { AgentLlmCallsComponent } from './agent-llm-calls/agent-llm-calls.component';
+import {AgentService} from "../services/agent.service";
 
 @Component({
     selector: 'agent',
@@ -34,7 +30,6 @@ import { AgentLlmCallsComponent } from './agent-llm-calls/agent-llm-calls.compon
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
     imports: [
-        RouterOutlet,
         MatTabsModule,
         MatCardModule,
         MatFormFieldModule,
@@ -58,44 +53,26 @@ import { AgentLlmCallsComponent } from './agent-llm-calls/agent-llm-calls.compon
 export class AgentComponent implements OnInit {
     agentId: string | null = null;
     agentDetails: AgentContext | null = null;
-    feedbackForm: FormGroup;
-    hilForm: FormGroup;
-    errorForm: FormGroup;
-    isSubmitting = false;
-    isResumingError = false;
 
     constructor(
         private route: ActivatedRoute,
-        private http: HttpClient,
-        private formBuilder: FormBuilder,
         private snackBar: MatSnackBar,
-        private router: Router,
-        private dialog: MatDialog,
         private _changeDetectorRef: ChangeDetectorRef,
-    ) {
-        this.feedbackForm = this.formBuilder.group({
-            feedback: [''],
-        });
-        this.hilForm = this.formBuilder.group({
-            feedback: [''],
-        });
-        this.errorForm = this.formBuilder.group({
-            errorDetails: [''],
-        });
-    }
+        private agentService: AgentService
+    ) {}
 
     ngOnInit(): void {
         this.route.paramMap.subscribe(params => {
             this.agentId = params.get('id');
-            console.log(`agent.component ngOnInig ${this.agentId}`)
-            if (this.agentId) {
-                this.loadAgentDetails(this.agentId);
-            }
+            console.log(`agent.component ngOnInit ${this.agentId}`)
+            this.loadAgentDetails();
         });
     }
 
-    loadAgentDetails(agentId: string): void {
-        this.http.get<AgentContext>(`${environment.apiBaseUrl}agent/v1/details/${agentId}`)
+    loadAgentDetails(): void {
+        if(!this.agentId) return;
+
+        this.agentService.getAgentDetails(this.agentId)
             .subscribe(
                 details => {
                     this.agentDetails = (details as any).data;
@@ -120,6 +97,4 @@ export class AgentComponent implements OnInit {
                 }
             );
     }
-
-    // Add other methods as needed (e.g., onSubmitFeedback, onResumeHil, cancelAgent, etc.)
 }

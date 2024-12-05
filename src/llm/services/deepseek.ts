@@ -14,7 +14,7 @@ export const DEEPSEEK_SERVICE = 'deepseek';
 
 export function deepseekLLMRegistry(): Record<string, () => LLM> {
 	return {
-		[`${DEEPSEEK_SERVICE}:deepseek-chat`]: () => deepseekChat(),
+		[`${DEEPSEEK_SERVICE}:deepseek-chat`]: deepseekChat,
 	};
 }
 

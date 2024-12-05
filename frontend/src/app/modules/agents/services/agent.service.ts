@@ -63,4 +63,20 @@ export class AgentService {
     deleteAgents(agentIds: string[]): Observable<any> {
         return this._httpClient.post(`/api/agent/v1/delete`, { agentIds });
     }
+
+    resumeError(agentId: string, executionId: string, feedback: string): Observable<any> {
+        return this._httpClient.post(`/api/agent/v1/resume-error`, {
+            agentId,
+            executionId,
+            feedback
+        });
+    }
+
+    resumeCompletedAgent(agentId: string, executionId: string, instructions: string): Observable<any> {
+        return this._httpClient.post(`/api/agent/v1/resume-completed`, {
+            agentId,
+            executionId,
+            instructions
+        });
+    }
 }

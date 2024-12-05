@@ -9,6 +9,7 @@ export interface LLMServicesConfig {
 	deepseekKey?: string;
 	fireworksKey?: string;
 	cerebrasKey?: string;
+	deepinfraKey?: string;
 	xaiKey?: string;
 }
 
