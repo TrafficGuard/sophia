@@ -62,7 +62,6 @@ export class AgentDetailsComponent implements OnInit {
 
     constructor(
         private formBuilder: FormBuilder,
-        private http: HttpClient,
         private snackBar: MatSnackBar,
         private dialog: MatDialog,
         private functionsService: FunctionsService,
@@ -134,28 +133,26 @@ export class AgentDetailsComponent implements OnInit {
         if (!this.feedbackForm.valid) return;
         const feedback = this.feedbackForm.get('feedback')?.value;
         this.isSubmitting = true;
-        this.http
-            .post(`/api/agent/v1/feedback`, {
-                agentId: this.agentDetails.agentId,
-                executionId: this.agentDetails.executionId,
-                feedback: feedback,
+
+        this.agentService.submitFeedback(
+            this.agentDetails.agentId,
+            this.agentDetails.executionId,
+            feedback
+        ).pipe(
+            catchError((error) => {
+                console.error('Error submitting feedback:', error);
+                this.snackBar.open('Error submitting feedback', 'Close', { duration: 3000 });
+                return of(null);
+            }),
+            finalize(() => {
+                this.isSubmitting = false;
             })
-            .pipe(
-                catchError((error) => {
-                    console.error('Error submitting feedback:', error);
-                    this.snackBar.open('Error submitting feedback', 'Close', { duration: 3000 });
-                    return of(null);
-                }),
-                finalize(() => {
-                    this.isSubmitting = false;
-                })
-            )
-            .subscribe((response) => {
-                if (response) {
-                    this.snackBar.open('Feedback submitted successfully', 'Close', { duration: 3000 });
-                    this.refreshAgentDetails();
-                }
-            });
+        ).subscribe((response) => {
+            if (response) {
+                this.snackBar.open('Feedback submitted successfully', 'Close', { duration: 3000 });
+                this.refreshAgentDetails();
+            }
+        });
     }
 
     onResumeHil(): void {
@@ -191,51 +188,45 @@ export class AgentDetailsComponent implements OnInit {
         if (!this.errorForm.valid) return;
         this.isResumingError = true;
         const errorDetails = this.errorForm.get('errorDetails')?.value;
-        this.http
-            .post(`/api/agent/v1/resume-error`, {
-                agentId: this.agentDetails.agentId,
-                executionId: this.agentDetails.executionId,
-                feedback: errorDetails,
+
+        this.agentService.resumeError(
+            this.agentDetails.agentId,
+            this.agentDetails.executionId,
+            errorDetails
+        ).pipe(
+            catchError((error) => {
+                console.error('Error resuming agent:', error);
+                this.snackBar.open('Error resuming agent', 'Close', { duration: 3000 });
+                return of(null);
+            }),
+            finalize(() => {
+                this.isResumingError = false;
             })
-            .pipe(
-                catchError((error) => {
-                    console.error('Error resuming agent:', error);
-                    this.snackBar.open('Error resuming agent', 'Close', { duration: 3000 });
-                    return of(null);
-                }),
-                finalize(() => {
-                    this.isResumingError = false;
-                })
-            )
-            .subscribe((response) => {
-                if (response) {
-                    this.snackBar.open('Agent resumed successfully', 'Close', { duration: 3000 });
-                    this.errorForm.reset();
-                    // Optionally reload or update agent details
-                }
-            });
+        ).subscribe((response) => {
+            if (response) {
+                this.snackBar.open('Agent resumed successfully', 'Close', { duration: 3000 });
+                this.errorForm.reset();
+            }
+        });
     }
 
     cancelAgent(): void {
-        this.http
-            .post(`/api/agent/v1/cancel`, {
-                agentId: this.agentDetails.agentId,
-                executionId: this.agentDetails.executionId,
-                reason: 'None provided',
+        this.agentService.cancelAgent(
+            this.agentDetails.agentId,
+            this.agentDetails.executionId,
+            'None provided'
+        ).pipe(
+            catchError((error) => {
+                console.error('Error cancelling agent:', error);
+                this.snackBar.open('Error cancelling agent', 'Close', { duration: 3000 });
+                return of(null);
             })
-            .pipe(
-                catchError((error) => {
-                    console.error('Error cancelling agent:', error);
-                    this.snackBar.open('Error cancelling agent', 'Close', { duration: 3000 });
-                    return of(null);
-                })
-            )
-            .subscribe((response) => {
-                if (response) {
-                    this.snackBar.open('Agent cancelled successfully', 'Close', { duration: 3000 });
-                    this.router.navigate(['/ui/agent/list']).catch(console.error);
-                }
-            });
+        ).subscribe((response) => {
+            if (response) {
+                this.snackBar.open('Agent cancelled successfully', 'Close', { duration: 3000 });
+                this.router.navigate(['/ui/agent/list']).catch(console.error);
+            }
+        });
     }
 
     displayState(state: AgentRunningState): string {
@@ -299,29 +290,22 @@ export class AgentDetailsComponent implements OnInit {
     }
 
     saveFunctions(selectedFunctions: string[]): void {
-        // this.isSavingFunctions = true;
-        this.http
-            .post(`/api/agent/v1/update-functions`, {
-                agentId: this.agentDetails.agentId,
-                functions: selectedFunctions,
+        this.agentService.updateAgentFunctions(
+            this.agentDetails.agentId,
+            selectedFunctions
+        ).pipe(
+            catchError((error) => {
+                console.error('Error updating agent functions:', error);
+                this.snackBar.open('Error updating agent functions', 'Close', { duration: 3000 });
+                return throwError(() => new Error('Error updating agent functions'));
             })
-            .pipe(
-                catchError((error) => {
-                    console.error('Error updating agent functions:', error);
-                    this.snackBar.open('Error updating agent functions', 'Close', { duration: 3000 });
-                    return throwError(() => new Error('Error updating agent functions'));
-                }),
-                finalize(() => {
-                    // this.isSavingFunctions = false;
-                })
-            )
-            .subscribe({
-                next: () => {
-                    this.snackBar.open('Agent functions updated successfully', 'Close', { duration: 3000 });
-                    this.agentDetails.functions = selectedFunctions;
-                    this.changeDetectorRef.markForCheck();
-                },
-            });
+        ).subscribe({
+            next: () => {
+                this.snackBar.open('Agent functions updated successfully', 'Close', { duration: 3000 });
+                this.agentDetails.functions = selectedFunctions;
+                this.changeDetectorRef.markForCheck();
+            },
+        });
     }
 
     openResumeModal(): void {
@@ -338,27 +322,23 @@ export class AgentDetailsComponent implements OnInit {
 
     private resumeCompletedAgent(resumeInstructions: string): void {
         this.isSubmitting = true;
-        this.http
-            .post(`/api/agent/v1/resume-completed`, {
-                agentId: this.agentDetails.agentId,
-                executionId: this.agentDetails.executionId,
-                instructions: resumeInstructions,
+        this.agentService.resumeCompletedAgent(
+            this.agentDetails.agentId,
+            this.agentDetails.executionId,
+            resumeInstructions
+        ).pipe(
+            catchError((error) => {
+                console.error('Error resuming completed agent:', error);
+                this.snackBar.open('Error resuming completed agent', 'Close', { duration: 3000 });
+                return of(null);
+            }),
+            finalize(() => {
+                this.isSubmitting = false;
             })
-            .pipe(
-                catchError((error) => {
-                    console.error('Error resuming completed agent:', error);
-                    this.snackBar.open('Error resuming completed agent', 'Close', { duration: 3000 });
-                    return of(null);
-                }),
-                finalize(() => {
-                    this.isSubmitting = false;
-                })
-            )
-            .subscribe((response) => {
-                if (response) {
-                    this.snackBar.open('Agent resumed successfully', 'Close', { duration: 3000 });
-                    // Optionally reload or update agent details
-                }
-            });
+        ).subscribe((response) => {
+            if (response) {
+                this.snackBar.open('Agent resumed successfully', 'Close', { duration: 3000 });
+            }
+        });
     }
 }
