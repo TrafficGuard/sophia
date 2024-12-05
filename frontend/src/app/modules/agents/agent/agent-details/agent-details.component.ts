@@ -22,6 +22,7 @@ import { AgentContext, AgentRunningState } from '../../agent.types';
 import { FunctionEditModalComponent } from '../function-edit-modal/function-edit-modal.component';
 import { ResumeAgentModalComponent } from '../resume-agent-modal/resume-agent-modal.component';
 import { FunctionsService } from '../../services/function.service';
+import { LlmService, LLM } from '../../services/llm.service';
 
 @Component({
     selector: 'agent-details',
@@ -42,7 +43,7 @@ import { FunctionsService } from '../../services/function.service';
         MatCheckboxModule,
         MatRadioModule,
     ],
-    providers: [AgentService]
+    providers: [AgentService, LlmService]
 })
 export class AgentDetailsComponent implements OnInit {
     @Input() agentDetails!: AgentContext;
@@ -66,6 +67,7 @@ export class AgentDetailsComponent implements OnInit {
         private changeDetectorRef: ChangeDetectorRef,
         private router: Router,
         private agentService: AgentService,
+        private llmService: LlmService,
     ) {}
 
     refreshAgentDetails(): void {
@@ -89,17 +91,15 @@ export class AgentDetailsComponent implements OnInit {
         // Load available functions here, possibly from a service
         this.functionsService.getFunctions().subscribe(value =>
         this.allAvailableFunctions = value)
-        this.http
-            .get<{ data: Array<{ id: string; name: string }> }>(`/apillms/list`)
-            .pipe(
-                map((response) => {
-                    console.log(response);
-                    return response.data as Array<{ id: string; name: string }>;
-                })
-            )
-            .subscribe((llms) => {
-                this.llmNameMap = new Map(llms.map((llm) => [llm.id, llm.name]));
-            });
+        this.llmService.getLlms().subscribe({
+            next: (llms: LLM[]) => {
+                this.llmNameMap = new Map(llms.map(llm => [llm.id, llm.name]));
+            },
+            error: (error) => {
+                console.error('Error loading LLMs:', error);
+                this.snackBar.open('Error loading LLM data', 'Close', { duration: 3000 });
+            }
+        });
     }
 
     private initializeFeedbackForm(): void {
