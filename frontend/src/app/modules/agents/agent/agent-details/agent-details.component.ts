@@ -57,6 +57,8 @@ export class AgentDetailsComponent implements OnInit {
     outputExpanded = false;
     allAvailableFunctions: string[] = []; // Initialize with an empty array or fetch from a service
     llmNameMap: Map<string, string> = new Map();
+    isLoadingLlms = false;
+    llmLoadError: string | null = null;
 
     constructor(
         private formBuilder: FormBuilder,
@@ -91,12 +93,20 @@ export class AgentDetailsComponent implements OnInit {
         // Load available functions here, possibly from a service
         this.functionsService.getFunctions().subscribe(value =>
         this.allAvailableFunctions = value)
-        this.llmService.getLlms().subscribe({
+        this.isLoadingLlms = true;
+        this.llmService.getLlms().pipe(
+            finalize(() => {
+                this.isLoadingLlms = false;
+                this.changeDetectorRef.markForCheck();
+            })
+        ).subscribe({
             next: (llms: LLM[]) => {
                 this.llmNameMap = new Map(llms.map(llm => [llm.id, llm.name]));
+                this.llmLoadError = null;
             },
             error: (error) => {
                 console.error('Error loading LLMs:', error);
+                this.llmLoadError = 'Failed to load LLM data';
                 this.snackBar.open('Error loading LLM data', 'Close', { duration: 3000 });
             }
         });
@@ -259,9 +269,10 @@ export class AgentDetailsComponent implements OnInit {
     }
 
     getLlmName(llmId: string): string {
-        // Implement this method to get LLM name from ID
-        // You might need to inject a service that provides this information
-        return this.llmNameMap.get(llmId) || llmId;
+        if (!llmId) {
+            return 'Unknown';
+        }
+        return this.llmNameMap.get(llmId) || `Unknown LLM (${llmId})`;
     }
 
     openFunctionEditModal(): void {
