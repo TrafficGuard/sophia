@@ -1,10 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { LlmService, LLM } from './llm.service';
-import {environment} from "../../../../environments/environment";
 
 
-const LLM_LIST_API_URL = `${environment.apiBaseUrl}llms/list`;
+const LLM_LIST_API_URL = `/api/llms/list`;
 
 describe('LlmService', () => {
   let service: LlmService;
