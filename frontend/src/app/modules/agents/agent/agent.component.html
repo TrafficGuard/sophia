@@ -7,7 +7,7 @@
             <!-- Tab #1 -->
             <mat-tab label="Details">
                 <!-- TAB CONTENT GOES HERE -->
-                <agent-details [agentDetails]="agentDetails"></agent-details>
+                <agent-details [agentDetails]="agentDetails" (refreshRequested)="loadAgentDetails()"></agent-details>
             </mat-tab>
 
             <!-- Tab #2 -->

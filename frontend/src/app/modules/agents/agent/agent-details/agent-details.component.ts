@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -48,6 +48,7 @@ import {MatTooltip} from "@angular/material/tooltip";
 })
 export class AgentDetailsComponent implements OnInit {
     @Input() agentDetails!: AgentContext;
+    @Output() refreshRequested = new EventEmitter<void>();
 
     feedbackForm!: FormGroup;
     hilForm!: FormGroup;
@@ -73,17 +74,7 @@ export class AgentDetailsComponent implements OnInit {
     ) {}
 
     refreshAgentDetails(): void {
-        this.agentService.getAgentDetails(this.agentDetails.agentId)
-            .subscribe({
-                next: (updatedAgent) => {
-                    this.agentDetails = updatedAgent;
-                    this.changeDetectorRef.markForCheck();
-                },
-                error: (error) => {
-                    console.error('Error reloading agent state:', error);
-                    this.snackBar.open('Error reloading agent state', 'Close', { duration: 3000 });
-                }
-            });
+        this.refreshRequested.emit();
     }
 
     ngOnInit(): void {
