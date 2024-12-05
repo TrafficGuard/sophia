@@ -159,12 +159,11 @@ export class AgentDetailsComponent implements OnInit {
         if (!this.hilForm.valid) return;
         this.isSubmitting = true;
         const feedback = this.hilForm.get('feedback')?.value;
-        this.http
-            .post(`/api/agent/v1/resume-hil`, {
-                agentId: this.agentDetails.agentId,
-                executionId: this.agentDetails.executionId,
-                feedback,
-            })
+        this.agentService.resumeAgent(
+            this.agentDetails.agentId,
+            this.agentDetails.executionId,
+            feedback
+        )
             .pipe(
                 catchError((error) => {
                     console.error('Error resuming agent:', error);
