@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AgentService } from '../../services/agent.service';
-import { HttpClient } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -68,7 +67,7 @@ export class AgentDetailsComponent implements OnInit {
         private changeDetectorRef: ChangeDetectorRef,
         private router: Router,
         private agentService: AgentService,
-        private llmService: LlmService,
+        private llmService: LlmService
     ) {}
 
     refreshAgentDetails(): void {
