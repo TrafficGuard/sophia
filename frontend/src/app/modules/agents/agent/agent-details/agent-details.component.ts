@@ -22,6 +22,7 @@ import { FunctionEditModalComponent } from '../function-edit-modal/function-edit
 import { ResumeAgentModalComponent } from '../resume-agent-modal/resume-agent-modal.component';
 import { FunctionsService } from '../../services/function.service';
 import { LlmService, LLM } from '../../services/llm.service';
+import {MatTooltip} from "@angular/material/tooltip";
 
 @Component({
     selector: 'agent-details',
@@ -41,6 +42,7 @@ import { LlmService, LLM } from '../../services/llm.service';
         MatSelectModule,
         MatCheckboxModule,
         MatRadioModule,
+        MatTooltip,
     ],
     providers: [AgentService, LlmService]
 })
