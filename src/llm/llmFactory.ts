@@ -5,10 +5,11 @@ import { MultiLLM } from '#llm/multi-llm';
 import { anthropicLLMRegistry } from '#llm/services/anthropic';
 import { anthropicVertexLLMRegistry } from '#llm/services/anthropic-vertex';
 import { cerebrasLLMRegistry } from '#llm/services/cerebras';
+import { deepinfraLLMRegistry } from '#llm/services/deepinfra';
 import { deepseekLLMRegistry } from '#llm/services/deepseek';
 import { fireworksLLMRegistry } from '#llm/services/fireworks';
 import { groqLLMRegistry } from '#llm/services/groq';
-import { MockLLM, mockLLM } from '#llm/services/mock-llm';
+import { mockLLMRegistry } from '#llm/services/mock-llm';
 import { ollamaLLMRegistry } from '#llm/services/ollama';
 import { openAiLLMRegistry } from '#llm/services/openai';
 import { togetherLLMRegistry } from '#llm/services/together';
@@ -25,20 +26,28 @@ export const LLM_FACTORY: Record<string, () => LLM> = {
 	...togetherLLMRegistry(),
 	...vertexLLMRegistry(),
 	...deepseekLLMRegistry(),
+	...deepinfraLLMRegistry(),
 	...cerebrasLLMRegistry(),
 	...xaiLLMRegistry(),
 	...ollamaLLMRegistry(),
 	...blueberryLLMRegistry(),
-	...{ 'mock:mock': () => mockLLM },
+	...mockLLMRegistry(),
 };
 
-export const LLM_TYPES: Array<{ id: string; name: string }> = Object.values(LLM_FACTORY)
-	.map((factory) => factory())
-	.map((llm) => {
-		return { id: llm.getId(), name: llm.getDisplayName() };
-	});
+export function llmTypes(): Array<{ id: string; name: string }> {
+	return Object.values(LLM_FACTORY)
+		.map((factory) => factory())
+		.map((llm) => {
+			return { id: llm.getId(), name: llm.getDisplayName() };
+		});
+}
 
-const REGISTRY_KEYS = Object.keys(LLM_FACTORY);
+let _llmRegistryKeys: string[];
+
+function llmRegistryKeys(): string[] {
+	_llmRegistryKeys ??= Object.keys(LLM_FACTORY);
+	return _llmRegistryKeys;
+}
 
 /**
  * @param llmId LLM identifier in the format service:model
@@ -49,7 +58,7 @@ export function getLLM(llmId: string): LLM {
 		return LLM_FACTORY[llmId]();
 	}
 	// Check substring matching
-	for (const key of REGISTRY_KEYS) {
+	for (const key of llmRegistryKeys()) {
 		if (llmId.startsWith(key)) {
 			return LLM_FACTORY[key]();
 		}

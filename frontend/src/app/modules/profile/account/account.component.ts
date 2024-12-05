@@ -74,6 +74,7 @@ export class SettingsAccountComponent implements OnInit {
                 togetheraiKey: new FormControl(''),
                 fireworksKey: new FormControl(''),
                 deepseekKey: new FormControl(''),
+                deepinfraKey: new FormControl(''),
                 cerebrasKey: new FormControl(''),
                 xaiKey: new FormControl(''),
             }),

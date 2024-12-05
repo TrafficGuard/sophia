@@ -3,6 +3,7 @@ import { LlmMessage } from '#llm/llm';
 import { Claude3_5_Haiku } from '#llm/services/anthropic';
 import { Claude3_5_Haiku_Vertex } from '#llm/services/anthropic-vertex';
 import { cerebrasLlama3_8b } from '#llm/services/cerebras';
+import { deepinfraQwQ_32B, deepinfraQwen2_5_Coder32B } from '#llm/services/deepinfra';
 import { deepseekChat } from '#llm/services/deepseek';
 import { fireworksLlama3_70B } from '#llm/services/fireworks';
 import { groqLlama3_1_8b } from '#llm/services/groq';
@@ -60,6 +61,20 @@ describe('LLMs', () => {
 			const llm = cerebrasLlama3_8b();
 
 			it('should generateText', async () => {
+				const response = await llm.generateText(SKY_PROMPT, { temperature: 0 });
+				expect(response.toLowerCase()).to.include('blue');
+			});
+		});
+
+		describe('Deepinfra', () => {
+			it('Qwen2_5_Coder32B should generateText', async () => {
+				const llm = deepinfraQwen2_5_Coder32B();
+				const response = await llm.generateText(SKY_PROMPT, { temperature: 0 });
+				expect(response.toLowerCase()).to.include('blue');
+			});
+
+			it('QwQ_32B should generateText', async () => {
+				const llm = deepinfraQwQ_32B();
 				const response = await llm.generateText(SKY_PROMPT, { temperature: 0 });
 				expect(response.toLowerCase()).to.include('blue');
 			});
