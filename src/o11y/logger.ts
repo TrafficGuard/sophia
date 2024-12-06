@@ -1,4 +1,5 @@
 import Pino from 'pino';
+import { agentContext } from '#agent/agentContextLocalStorage';
 const logLevel = process.env.LOG_LEVEL || 'INFO';
 // Review config at https://github.com/simenandre/pino-cloud-logging/blob/main/src/main.ts
 
@@ -56,6 +57,12 @@ export const logger: Pino.Logger = Pino({
 			const logObject = object as { err?: Error };
 			const stackTrace = logObject.err?.stack;
 			const stackProp: any = stackTrace ? { stack_trace: stackTrace } : {};
+
+			const agent = agentContext();
+			if (agent) {
+				object.agentId = agent.agentId;
+				if (agent.parentAgentId) object.parentAgentId = agent.parentAgentId;
+			}
 
 			return { ...object, ...stackProp };
 		},
