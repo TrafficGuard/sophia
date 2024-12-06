@@ -11,7 +11,7 @@ import { currentUser } from '#user/userService/userContext';
 export const agentContextStorage = new AsyncLocalStorage<AgentContext>();
 
 export function agentContext(): AgentContext | undefined {
-	return agentContextStorage.getStore();
+	return agentContextStorage?.getStore();
 }
 
 export function llms(): AgentLLMs {
