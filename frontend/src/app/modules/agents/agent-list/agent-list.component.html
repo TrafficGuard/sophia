@@ -81,7 +81,9 @@
                                 <div class="hidden lg:block">{{ agent.type }}</div>
 
                                 <div [matTooltip]="agent.userPrompt">
-                                    <div class="max-h-8 truncate">{{ agent.userPrompt }}</div>
+                                    <a class="hover:text-primary" [routerLink]="['/ui/agents', agent.agentId]">
+                                        <div class="max-h-8 truncate">{{ agent.userPrompt }}</div>
+                                    </a>
                                 </div>
 
                                 <div class="hidden md:block" [matTooltip]="agent.state === 'error' ? agent.error : agent.output">

@@ -23,6 +23,7 @@ import { ResumeAgentModalComponent } from '../resume-agent-modal/resume-agent-mo
 import { FunctionsService } from '../../services/function.service';
 import { LlmService, LLM } from '../../services/llm.service';
 import {MatTooltip} from "@angular/material/tooltip";
+import {AgentLinks, GoogleCloudLinks} from "../../services/agent-links";
 
 @Component({
     selector: 'agent-details',
@@ -61,6 +62,7 @@ export class AgentDetailsComponent implements OnInit {
     llmNameMap: Map<string, string> = new Map();
     isLoadingLlms = false;
     llmLoadError: string | null = null;
+    agentLinks: AgentLinks = new GoogleCloudLinks();
 
     constructor(
         private formBuilder: FormBuilder,
@@ -221,13 +223,15 @@ export class AgentDetailsComponent implements OnInit {
 
 
     traceUrl(agent: AgentContext): string {
-        return `https://console.cloud.google.com/traces/list?referrer=search&project=${environment.gcpProject}&supportedpurview=project&pageState=(%22traceIntervalPicker%22:(%22groupValue%22:%22P1D%22,%22customValue%22:null))&tid=${agent.traceId}`;
+        return this.agentLinks.traceUrl(agent);
     }
 
-    agentUrl(agent: AgentContext): string {
-        return `https://console.cloud.google.com/firestore/databases/${
-            environment.firestoreDb || '(default)'
-        }/data/panel/AgentContext/${agent?.agentId}?project=${environment.gcpProject}`;
+    logsUrl(agent: AgentContext): string {
+        return this.agentLinks.logsUrl(agent);
+    }
+
+    databaseUrl(agent: AgentContext): string {
+        return this.agentLinks.databaseUrl(agent);
     }
 
     getLlmName(llmId: string): string {

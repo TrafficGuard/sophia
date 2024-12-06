@@ -9,7 +9,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatButtonModule } from '@angular/material/button';
-import {MatOption} from "@angular/material/core";
+import {AgentService} from "../../services/agent.service";
 
 @Component({
     selector: 'agent-llm-calls',
@@ -29,9 +29,9 @@ export class AgentLlmCallsComponent implements OnInit {
     llmCalls: LlmCall[] = [];
 
     constructor(
-        private http: HttpClient,
         private sanitizer: DomSanitizer,
-        private snackBar: MatSnackBar
+        private snackBar: MatSnackBar,
+        private agentService: AgentService,
     ) {}
 
     ngOnInit(): void {
@@ -41,12 +41,11 @@ export class AgentLlmCallsComponent implements OnInit {
     }
 
     loadLlmCalls(): void {
-        this.http
-            .get<any>(`${environment.apiBaseUrl}llms/calls/agent/${this.agentId}`)
+        this.agentService.getLlmCalls(this.agentId)
             .subscribe(
                 (calls) => {
-                    this.llmCalls = calls.data;
-                    console.log(calls.data);
+                    this.llmCalls = calls;
+                    console.log(calls);
                     this.llmCalls.forEach((call) => {
                         call.userPrompt = call.userPrompt?.replace('\\n', '<br/>');
                         if (call.systemPrompt) {

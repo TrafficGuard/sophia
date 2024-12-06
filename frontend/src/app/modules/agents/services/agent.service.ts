@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import {BehaviorSubject, map, Observable, tap} from 'rxjs';
 import { AgentContext, AgentPagination, LlmCall } from '../agent.types';
 
 @Injectable({ providedIn: 'root' })
@@ -41,7 +41,12 @@ export class AgentService {
     }
 
     getLlmCalls(agentId: string): Observable<LlmCall[]> {
-        return this._httpClient.get<LlmCall[]>(`/api/llms/calls/agent/${agentId}`);
+        return this._httpClient.get<LlmCall[]>(`/api/llms/calls/agent/${agentId}`).pipe(
+            map((llmCalls) => {
+                llmCalls = (llmCalls as any).data;
+                return llmCalls;
+            })
+        );
     }
 
     submitFeedback(agentId: string, executionId: string, feedback: string): Observable<any> {

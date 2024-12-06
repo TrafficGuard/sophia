@@ -99,11 +99,14 @@
     <mat-card class="p-8">
         <div>
             <mat-icon (click)="refreshAgentDetails()" class="mr-3" [matTooltip]="'Reload'">refresh</mat-icon>
-            <a href="{{ agentUrl(agentDetails) }}" target="_blank" class="mr-3" [matTooltip]="'View database entry'">
-                <mat-icon>storage</mat-icon>
+            <a href="{{ databaseUrl(agentDetails) }}" target="_blank" class="mr-3" [matTooltip]="'View database entry'">
+                <mat-icon svgIcon="feather:database" class="scale-75"></mat-icon>
             </a>
             <a href="{{ traceUrl(agentDetails) }}" target="_blank" class="mr-3" [matTooltip]="'View traces'">
                 <mat-icon class="flip-x">sort</mat-icon>
+            </a>
+            <a href="{{ logsUrl(agentDetails) }}" target="_blank" class="mr-3" [matTooltip]="'View logs'">
+                <mat-icon>reorder</mat-icon>
             </a>
         </div>
 
