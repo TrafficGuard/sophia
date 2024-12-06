@@ -30,6 +30,8 @@ USER $user
 RUN mkdir .sophia
 # Generate the function schemas
 RUN npm run functionSchemas
+# Download the tiktokenizer model
+RUN npm run initTiktokenizer
 
 ENV NODE_ENV=production
 ENV PORT=8080
