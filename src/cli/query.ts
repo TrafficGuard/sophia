@@ -9,7 +9,6 @@ import { ClaudeLLMs } from '#llm/services/anthropic';
 import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { cerebrasLlama3_70b } from '#llm/services/cerebras';
 import { deepseekChat } from '#llm/services/deepseek';
-import { groqLlama3_1_70B } from '#llm/services/groq';
 import { GPT4oMini, openAIo1, openAIo1mini } from '#llm/services/openai';
 import { Gemini_1_5_Flash } from '#llm/services/vertexai';
 import { codebaseQuery } from '#swe/discovery/codebaseQuery';
