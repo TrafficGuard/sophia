@@ -11,11 +11,12 @@ import { PublicWeb } from '#functions/web/web';
 import { LlmCall } from '#llm/llmCallService/llmCall';
 import { ClaudeLLMs } from '#llm/services/anthropic';
 import { Claude3_5_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
-import { groqLlama3_1_70B } from '#llm/services/groq';
+import { groqLlama3_3_70B } from '#llm/services/groq';
 import { Gemini_1_5_Flash } from '#llm/services/vertexai';
 import { logger } from '#o11y/logger';
 import { sleep } from '#utils/async-utils';
 
+import { openAIo1 } from '#llm/services/openai';
 import { appContext, initFirestoreApplicationContext } from '../applicationContext';
 
 const SYSTEM_PROMPT = `Finish your answer with the following template: FINAL ANSWER: [YOUR FINAL ANSWER]. YOUR FINAL ANSWER should be a number OR as few words as possible OR a comma separated list of numbers and/or strings. If you are asked for a number, don't use comma to write your number neither use units such as $ or percent sign unless specified otherwise. If you are asked for a string, don't use articles, neither abbreviations (e.g. for cities), and write the digits in plain text unless specified otherwise. If you are asked for a comma separated list, apply the above rules depending of whether the element to be put in the list is a number or a string.`;
@@ -92,9 +93,9 @@ async function answerGaiaQuestion(task: GaiaQuestion): Promise<GaiaResult> {
 			// llms: ClaudeVertexLLMs(),
 			llms: {
 				easy: Gemini_1_5_Flash(),
-				medium: groqLlama3_1_70B(),
+				medium: groqLlama3_3_70B(),
 				hard: Claude3_5_Sonnet_Vertex(),
-				xhard: Claude3_5_Sonnet_Vertex(),
+				xhard: openAIo1(),
 			},
 			agentName: `gaia-${task.task_id}`,
 			type: 'codegen',

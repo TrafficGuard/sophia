@@ -10,6 +10,7 @@ import { PinoInstrumentation } from './instrumentation';
 
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { agentContextStorage } from '#agent/agentContextLocalStorage';
+import { checkForceStopped } from '#agent/forceStopAgent';
 import { setTracer } from '#o11y/trace';
 
 let initialized = false;
@@ -104,9 +105,9 @@ function initTrace(): void {
 		});
 
 		const tracer = trace.getTracer(traceServiceName);
-		setTracer(tracer, agentContextStorage);
+		setTracer(tracer, agentContextStorage, checkForceStopped);
 	} else {
-		setTracer(null, agentContextStorage);
+		setTracer(null, agentContextStorage, checkForceStopped);
 	}
 }
 

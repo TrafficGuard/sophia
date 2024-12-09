@@ -270,15 +270,20 @@ export class FileSystemService {
 	 * @returns the contents of the file(s) in format <file_contents path="dir/file1">file1 contents</file_contents><file_contents path="dir/file2">file2 contents</file_contents>
 	 */
 	async readFile(filePath: string): Promise<string> {
+		// Want to check that the activeSpan is FileSystemRead.readFile, otherwise don't add to the span attributes
+		// const span = getActiveSpan();
+		// span.setAttribute('argPath', filePath)
 		logger.debug(`readFile ${filePath}`);
 		let contents: string;
 		const relativeFullPath = path.join(this.getWorkingDirectory(), filePath);
 		logger.debug(`Checking ${filePath} and ${relativeFullPath}`);
 		// Check relative to current working directory first
 		if (existsSync(relativeFullPath)) {
+			// span.setAttribute('resolvedPath', relativeFullPath)
 			contents = (await fs.readFile(relativeFullPath)).toString();
 			// Then check if it's an absolute path
 		} else if (filePath.startsWith('/') && existsSync(filePath)) {
+			// span.setAttribute('resolvedPath', filePath)
 			contents = (await fs.readFile(filePath)).toString();
 		} else {
 			throw new Error(`File ${filePath} does not exist`);
