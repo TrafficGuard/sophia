@@ -22,6 +22,9 @@ COPY .husky/install.mjs .husky/install.mjs
 
 COPY package*.json ./
 RUN npm ci
+# Download the tiktokenizer model which is written to node_modules/@microsoft/tiktokenizer/model
+# Need to do this as the root user as sophia user can't write to node_modules
+RUN npm run initTiktokenizer
 
 COPY . .
 
@@ -30,8 +33,6 @@ USER $user
 RUN mkdir .sophia
 # Generate the function schemas
 RUN npm run functionSchemas
-# Download the tiktokenizer model
-RUN npm run initTiktokenizer
 
 ENV NODE_ENV=production
 ENV PORT=8080
