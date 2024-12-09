@@ -87,9 +87,9 @@ export interface LLM {
 	 * This allows the LLM to generate reasoning etc before the JSON object. However, it's not possible to use structured outputs
 	 * which restrict the response to a schema.
 	 */
-	generateTextWithJson(userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
-	generateTextWithJson(systemPrompt: string, userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
-	generateTextWithJson(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string>;
+	generateTextWithJson<T>(userPrompt: string, opts?: GenerateJsonOptions): Promise<T>;
+	generateTextWithJson<T>(systemPrompt: string, userPrompt: string, opts?: GenerateJsonOptions): Promise<T>;
+	generateTextWithJson<T>(messages: LlmMessage[], opts?: GenerateJsonOptions): Promise<T>;
 
 	/** Generates a response which only returns a JSON object. */
 	generateJson<T>(userPrompt: string, opts?: GenerateJsonOptions): Promise<T>;
