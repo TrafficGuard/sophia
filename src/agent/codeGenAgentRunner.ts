@@ -3,7 +3,13 @@ import { Span, SpanStatusCode } from '@opentelemetry/api';
 import { PyodideInterface, loadPyodide } from 'pyodide';
 import { runAgentCompleteHandler } from '#agent/agentCompletion';
 import { AgentContext } from '#agent/agentContextTypes';
-import { AGENT_COMPLETED_NAME, AGENT_REQUEST_FEEDBACK, AGENT_SAVE_MEMORY_CONTENT_PARAM_NAME } from '#agent/agentFunctions';
+import {
+	AGENT_COMPLETED_NAME,
+	AGENT_COMPLETED_PARAM_NAME,
+	AGENT_REQUEST_FEEDBACK,
+	AGENT_SAVE_MEMORY_CONTENT_PARAM_NAME,
+	REQUEST_FEEDBACK_PARAM_NAME,
+} from '#agent/agentFunctions';
 import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, buildToolStatePrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
 import { AgentExecution, formatFunctionError, formatFunctionResult } from '#agent/agentRunner';
 import { convertJsonToPythonDeclaration, extractPythonCode } from '#agent/codeGenAgentUtils';
@@ -215,7 +221,7 @@ export async function runCodeGenAgent(agent: AgentContext): Promise<AgentExecuti
 						.filter((pkg) => llmPythonCode.includes(`${pkg}.`) || pkg === 'json') // always need json for JsProxyEncoder
 						.map((pkg) => `import ${pkg}\n`)
 						.join();
-					logger.info(`Allowed imports: ${pythonScript}`);
+
 					pythonScript += `
 from typing import Any, List, Dict, Tuple, Optional, Union
 from pyodide.ffi import JsProxy
@@ -265,18 +271,18 @@ main()`.trim();
 
 						// Should force completed/requestFeedback to exit the script - throw a particular Error class
 						if (lastFunctionCall.function_name === AGENT_COMPLETED_NAME) {
-							logger.info('Task completed');
+							logger.info(`Task completed: ${lastFunctionCall.parameters[AGENT_COMPLETED_PARAM_NAME]}`);
 							agent.state = 'completed';
 							completed = true;
 						} else if (lastFunctionCall.function_name === AGENT_REQUEST_FEEDBACK) {
-							logger.info('Feedback requested');
+							logger.info(`Feedback requested: ${lastFunctionCall.parameters[REQUEST_FEEDBACK_PARAM_NAME]}`);
 							agent.state = 'feedback';
 							requestFeedback = true;
 						} else {
 							if (!anyFunctionCallErrors && !completed && !requestFeedback) agent.state = 'agent';
 						}
 					} catch (e) {
-						logger.info(`Caught function error ${e.message}`);
+						logger.info(e, `Caught function error ${e.message}`);
 						functionErrorCount++;
 					}
 					// Function invocations are complete
