@@ -1,4 +1,5 @@
 import { existsSync } from 'fs';
+import fs from 'node:fs';
 import { join } from 'path';
 import {
 	CommitDiffSchema,
@@ -192,8 +193,9 @@ export class GitLab implements SourceControlManagement {
 			// checkExecResult(result, `Failed to pull ${path}`);
 		} else {
 			logger.info(`Cloning project: ${projectPathWithNamespace} to ${path}`);
+			await fs.promises.mkdir(path, { recursive: true });
 			const command = `git clone https://oauth2:${this.config().token}@${this.config().host}/${projectPathWithNamespace}.git ${path}`;
-			const result = await execCommand(command);
+			const result = await execCommand(command, { mask: this.config().token });
 
 			if (result.stderr?.includes('remote HEAD refers to nonexistent ref')) {
 				const gitProject = await this.getProject(projectPathWithNamespace);

@@ -1,4 +1,6 @@
+import fs from 'node:fs';
 import util from 'util';
+import { getFileSystem } from '#agent/agentContextLocalStorage';
 import { funcClass } from '#functionSchema/functionDecorators';
 import { FileSystemService } from '#functions/storage/fileSystemService';
 import { logger } from '#o11y/logger';
@@ -15,6 +17,7 @@ export class Git implements VersionControlSystem {
 	constructor(private fileSystem: FileSystemService) {}
 
 	async clone(repoURL: string, commitOrBranch = ''): Promise<void> {
+		await fs.promises.mkdir(getFileSystem().getWorkingDirectory(), { recursive: true });
 		const { exitCode, stdout, stderr } = await execCommand(`git clone ${repoURL} ${commitOrBranch}`);
 		if (exitCode > 0) throw new Error(`${stdout}\n${stderr}`);
 	}
