@@ -91,6 +91,8 @@ export interface ExecCmdOptions {
 	workingDirectory?: string;
 	envVars?: Record<string, string>;
 	throwOnError?: boolean;
+	/** Value to mask in logs/traces */
+	mask?: string;
 }
 
 // TODO stream the output and watch for cmdsubst> which would indicate a malformed command
