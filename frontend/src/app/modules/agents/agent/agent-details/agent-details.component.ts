@@ -290,9 +290,7 @@ export class AgentDetailsComponent implements OnInit {
         });
 
         dialogRef.afterClosed().subscribe((result) => {
-            if (result) {
-                this.resumeCompletedAgent(result.resumeInstructions);
-            }
+            if (result) this.resumeCompletedAgent(result.resumeInstructions);
         });
     }
 
