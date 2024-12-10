@@ -24,14 +24,14 @@ export function startWatcher() {
 	const watcher = fs.watch(watchPath, { recursive: true }, async (event: WatchEventType, filename: string | null) => {
 		// Early exit if filename is null
 		if (!filename) return;
-		console.log(filename);
-		console.log(event);
+		console.log(`${event} ${filename}`);
+
 		const filePath = path.join(process.cwd(), watchPath, filename);
 		if (!fileExistsSync(filePath)) {
 			logger.debug(`${filePath} doesn't exist`);
 			return;
 		}
-		logger.info(`Checking ${filePath}`);
+		console.log(`Checking ${filePath}`);
 		try {
 			const data = await fs.promises.readFile(filePath, 'utf-8');
 
@@ -44,7 +44,7 @@ export function startWatcher() {
 			const lines = data.split('\n');
 
 			// Find the index of the first line that starts with '//>>' and ends with '//'
-			const index = lines.findIndex((line) => line.includes('//>>') && line.trim().endsWith('//'));
+			const index = lines.findIndex((line) => line.includes('//>') && line.trim().endsWith('//'));
 
 			// Early exit if no matching lines are found
 			if (index === -1) return;
@@ -54,7 +54,7 @@ export function startWatcher() {
 			const indentation = line.match(/^\s*/)[0]; // Capture leading whitespace for indentation
 			const requirements = line.trim().slice(3, -2).trim();
 
-			logger.info(requirements);
+			logger.info(`Extracted requirements: ${requirements}`);
 
 			// Formulate the prompt
 			const prompt = `You are to implement the TODO instructions on the line which starts with //>> and ends with //.\ni.e: ${requirements}`;
