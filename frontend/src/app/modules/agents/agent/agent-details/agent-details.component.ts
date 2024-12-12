@@ -123,6 +123,7 @@ export class AgentDetailsComponent implements OnInit {
             })
         ).subscribe((response) => {
             if (response) {
+                this.feedbackForm.reset();
                 this.snackBar.open('Feedback submitted successfully', 'Close', { duration: 3000 });
                 this.refreshAgentDetails();
             }
@@ -289,9 +290,7 @@ export class AgentDetailsComponent implements OnInit {
         });
 
         dialogRef.afterClosed().subscribe((result) => {
-            if (result) {
-                this.resumeCompletedAgent(result.resumeInstructions);
-            }
+            if (result) this.resumeCompletedAgent(result.resumeInstructions);
         });
     }
 

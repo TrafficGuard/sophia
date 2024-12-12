@@ -4,7 +4,7 @@ import { getLastFunctionCallArg } from '#agent/agentCompletion';
 import { AgentCompleted, AgentContext, isExecuting } from '#agent/agentContextTypes';
 import { AGENT_COMPLETED_PARAM_NAME, REQUEST_FEEDBACK_PARAM_NAME } from '#agent/agentFunctions';
 import { resumeCompleted, startAgent } from '#agent/agentRunner';
-import { GoogleCloud } from '#functions/cloud/google-cloud';
+import { GoogleCloud } from '#functions/cloud/google/google-cloud';
 import { GitLab } from '#functions/scm/gitlab';
 import { LlmTools } from '#functions/util';
 import { Perplexity } from '#functions/web/perplexity';

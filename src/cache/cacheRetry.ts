@@ -40,7 +40,7 @@ export function cacheRetry(options: Partial<CacheRetryOptions> = DEFAULTS) {
 			const cacheRetryOptions = optionsWithDefaults(options);
 
 			const cacheService = appContext().functionCacheService;
-			// console.log(this.constructor.name, methodName, args)
+
 			if (cacheRetryOptions.scope) {
 				const cachedValue = await cacheService.getValue(cacheRetryOptions.scope, this.constructor.name, methodName, args);
 
@@ -51,7 +51,7 @@ export function cacheRetry(options: Partial<CacheRetryOptions> = DEFAULTS) {
 			}
 
 			for (let attempt = 1; attempt <= cacheRetryOptions.retries; attempt++) {
-				logger.debug(`${this.constructor.name}${FUNC_SEP}${methodName} retry ${attempt - 1}`);
+				if (attempt > 1) logger.debug(`${this.constructor.name}${FUNC_SEP}${methodName} retry ${attempt - 1}`);
 				try {
 					let result = originalMethod.apply(this, args);
 					if (typeof result?.then === 'function') result = await result;

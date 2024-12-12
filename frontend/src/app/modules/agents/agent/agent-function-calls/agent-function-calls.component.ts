@@ -12,7 +12,20 @@ import { MatExpansionModule } from '@angular/material/expansion';
                 <div class="mb-3 font-medium text-xl">{{ invoked.function_name }}</div>
             
                 <div *ngFor="let param of invoked.parameters | keyvalue">
-                    <p><strong>{{ param.key }}:</strong> {{ param.value }}</p>
+                    <div>
+                        <strong>{{ param.key }}:</strong>
+                        <ng-container *ngIf="param.value?.toString().length <= 200">
+                            {{ param.value }}
+                        </ng-container>
+                        <mat-expansion-panel *ngIf="param.value?.toString().length > 200" class="mt-4" #expansionPanel>
+                            <mat-expansion-panel-header [class.expanded-header]="expansionPanel.expanded">
+                                <mat-panel-title class="font-normal" *ngIf="!expansionPanel.expanded">
+                                    {{ param.value?.toString().substring(0, 200) }}...
+                                </mat-panel-title>
+                            </mat-expansion-panel-header>
+                            <p>{{ param.value }}</p>
+                        </mat-expansion-panel>
+                    </div>
                 </div>
                 <mat-expansion-panel *ngIf="invoked.stdout" class="mt-4">
                     <mat-expansion-panel-header>
@@ -29,6 +42,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
             </div>
         </mat-card>
     `,
+    styles: `.mat-expansion-panel-header.mat-expanded.expanded-header {  height: 1.3em; padding-top: 1.2em; }`,
     standalone: true,
     imports: [CommonModule, MatCardModule, MatExpansionModule],
 })

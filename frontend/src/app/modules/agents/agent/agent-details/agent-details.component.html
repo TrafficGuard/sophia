@@ -1,7 +1,7 @@
 @if(agentDetails) {
     <mat-card *ngIf="agentDetails.state === 'feedback'" class="p-3 mb-4">
         <form [formGroup]="feedbackForm" (ngSubmit)="onSubmitFeedback()">
-            <mat-card-title>Feedback Requested</mat-card-title>
+            <mat-card-title class="font-bold pl-5 text-lg">Feedback Requested</mat-card-title>
             <mat-card-content style="margin-bottom: 0; margin-top: 15px">
                 <mat-expansion-panel
                         *ngIf="agentDetails.functionCallHistory && agentDetails.functionCallHistory.length > 0"
@@ -42,7 +42,7 @@
 
     <mat-card *ngIf="agentDetails?.state === 'error'" class="p-3 mb-4">
         <form [formGroup]="errorForm" (ngSubmit)="onResumeError()">
-            <mat-card-title>Agent Error</mat-card-title>
+            <mat-card-title class="font-bold pl-5 text-lg">Agent Error</mat-card-title>
             <mat-card-content style="margin-bottom: 0; margin-top: 15px">
                 <mat-expansion-panel *ngIf="agentDetails.error" style="width: 1000px; margin-bottom: 20px">
                     <mat-expansion-panel-header>
@@ -75,7 +75,7 @@
 
     <mat-card *ngIf="agentDetails?.state === 'hil'" class="p-3 mb-4">
         <form [formGroup]="hilForm" (ngSubmit)="onResumeHil()">
-            <mat-card-title>Human In Loop check</mat-card-title>
+            <mat-card-title class="font-bold pl-5 text-lg">Human In Loop check</mat-card-title>
             <mat-card-content>
                 <mat-form-field appearance="fill" class="full-width">
                     <textarea

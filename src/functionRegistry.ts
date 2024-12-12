@@ -1,4 +1,4 @@
-import { GoogleCloud } from '#functions/cloud/google-cloud';
+import { GoogleCloud } from '#functions/cloud/google/google-cloud';
 import { ImageGen } from '#functions/image';
 import { Jira } from '#functions/jira';
 import { GitHub } from '#functions/scm/github';

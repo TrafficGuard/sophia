@@ -3,7 +3,6 @@ import Groq from 'groq-sdk';
 import { agentContext } from '#agent/agentContextLocalStorage';
 import { addCost } from '#agent/agentContextLocalStorage';
 import { LlmCall } from '#llm/llmCallService/llmCall';
-import { AiLLM } from '#llm/services/ai-llm';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
@@ -16,39 +15,19 @@ export const GROQ_SERVICE = 'groq';
 
 export function groqLLMRegistry(): Record<string, () => LLM> {
 	return {
-		'groq:gemma2-9b-it': groqGemma2_9b,
-		'groq:llama-3.1-8b-instant': groqLlama3_1_8b,
-		'groq:llama-3.1-70b-versatile': groqLlama3_1_70B,
+		'groq:llama-3.3-70b-versatile': groqLlama3_3_70B,
 	};
 }
 
-export function groqGemma2_9b(): LLM {
-	return new GroqLLM(
-		'Gemma2 9b-it (Groq)',
-		GROQ_SERVICE,
-		'gemma2-9b-it',
-		8_192,
-		(input: string) => (input.length * 0.2) / (1_000_000 * 3.5),
-		(output: string) => (output.length * 0.2) / (1_000_000 * 3.5),
-	);
-}
+// Pricing and model ids at
+// https://groq.com/pricing/
+// https://console.groq.com/docs/models
 
-export function groqLlama3_1_8b(): LLM {
+export function groqLlama3_3_70B(): LLM {
 	return new GroqLLM(
-		'LLaMA3.1 8b (Groq)',
+		'Llama3.3 70b (Groq)',
 		GROQ_SERVICE,
-		'llama-3.1-8b-instant',
-		131_072,
-		(input: string) => (input.length * 0.05) / (1_000_000 * 4),
-		(output: string) => (output.length * 0.08) / (1_000_000 * 4),
-	);
-}
-
-export function groqLlama3_1_70B(): LLM {
-	return new GroqLLM(
-		'Llama3.1 70b (Groq)',
-		GROQ_SERVICE,
-		'llama-3.1-70b-versatile',
+		'llama-3.3-70b-versatile',
 		131_072,
 		(input: string) => (input.length * 0.59) / (1_000_000 * 4),
 		(output: string) => (output.length * 0.79) / (1_000_000 * 4),

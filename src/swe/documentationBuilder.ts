@@ -1,7 +1,9 @@
 import { promises as fs } from 'node:fs';
 import { basename, dirname, join } from 'path';
+import { Span } from '@opentelemetry/api';
 import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { logger } from '#o11y/logger';
+import { getActiveSpan, withActiveSpan } from '#o11y/trace';
 import { sleep } from '#utils/async-utils';
 import { errorToString } from '#utils/errors';
 import { sophiaDirName } from '../appVars';
@@ -36,12 +38,21 @@ export async function buildSummaryDocs(
 	fileFilter: (path: string) => boolean = (file) => (file.endsWith('.tf') || file.endsWith('.ts') || file.endsWith('.py')) && !file.endsWith('test.ts'),
 ): Promise<void> {
 	logger.info('Building summary docs');
-	// In the first pass we generate the summaries for the individual files
-	await buildFileDocs(fileFilter);
-	// // In the second pass we build the folder-level summaries from the bottom up
-	await buildFolderDocs();
-	// Generate a project-level summary from the folder summaries
-	await generateTopLevelSummary();
+
+	await withActiveSpan('buildSummaryDocs', async (span: Span) => {
+		await withActiveSpan('buildFileDocs', async (span: Span) => {
+			// In the first pass we generate the summaries for the individual files
+			await buildFileDocs(fileFilter);
+		});
+		await withActiveSpan('buildFolderDocs', async (span: Span) => {
+			// In the second pass we build the folder-level summaries from the bottom up
+			await buildFolderDocs();
+		});
+		await withActiveSpan('generateTopLevelSummary', async (span: Span) => {
+			// Generate a project-level summary from the folder summaries
+			await generateTopLevelSummary();
+		});
+	});
 }
 
 // Utils -----------------------------------------------------------
@@ -111,7 +122,18 @@ The summaries should be in a very terse, gramatically shortened writing style th
 
 Note: Avoid duplicating information from parent summaries. Focus on what's unique to this file.
 
+Provide terse values for short and long values, in a similar style to the example.
+
+Respond with the questions and then JSON in this format:
+<json>
+{
+  "short": "Key details",
+  "long": "Extended details. Key points. Identifiers"
+}
+</json>
+
 <example>
+<example-request>
 When the filename is variables.tf or output.tf and just has variable declarations respond like the following. Variables which are common to all (ie. project_id, project_number, region) dont require any description.
 <file_contents>
 variable "project_id" {
@@ -129,17 +151,23 @@ variable "run_sa" {
   type        = string
 }
 </file_contents>
-<response>
+</example-request>
+<example-response>
+# Possible questions:
+- What services are regional?
+- What service accounts are used by Cloud Runs?
+
 <json>
 {
   "short": "project_id, region, run_sa",
   "long": "project_id, region, run_sa: Cloud Run Service Account",
 }
 </json>
-</response>
+</example-response>
 </example>
 
 <example>
+<example-request>
 When a file has terraform resources respond like this example.
 <file_contents>
 terraform {
@@ -152,8 +180,8 @@ terraform {
   }
 }
 
-resource "google_cloud_run_service" "affiliate-conversion-importer" {
-  name     = "affiliate-conversion-importer"
+resource "google_cloud_run_service" "foo-service" {
+  name     = "foo-service"
   location = var.region
   project  = var.project_id
 
@@ -173,25 +201,26 @@ resource "google_cloud_run_service" "affiliate-conversion-importer" {
   }
 }
 </file_contents>
-<response>
+</example-request>
+
+<example-response>
+# Possible questions:
+- What services are regional?
+- Why isn't the foo-service changing when the template is updated?
+
 <json>
 {
-    "short": "Cloud run service affiliate-conversion-importer",
-    "long": "Cloud run service affiliate-conversion-importer with region, project_id, run_sa vars. Ignores changes to template."
+    "short": "Cloud run service foo-service",
+    "long": "Cloud run service foo-service with region, project_id, run_sa vars. Ignores changes to template."
 }
 </json>
-</response>
+</example-response>
 </example>
-Note the terse values for short and long in the previous example.
-
-Respond with JSON in this format:
-{
-  "short": "Key details",
-  "long": "Extended details. Key points. Identifiers"
-}`;
+`;
 
 			logger.info(`Generating summary for ${file}`);
-			const doc = (await easyLlm.generateJson(prompt)) as Summary;
+			// TODO batch these in parallel
+			const doc = (await easyLlm.generateJson(prompt, { id: 'Generate file summary' })) as Summary;
 			doc.path = file;
 			logger.info(doc);
 			// Save the documentation summary files in a parallel directory structure under the .sophia/docs folder
@@ -236,6 +265,7 @@ export async function buildFolderDocs(): Promise<void> {
 	const sortedFolders = sortFoldersByDepth(folders);
 
 	for (const folderPath of sortedFolders) {
+		// TODO batch these in parallel, make sure the ordering is ok
 		let filesAndSubFoldersCombinedSummary: string;
 		try {
 			const fileSummaries: Summary[] = await getFileSummaries(folderPath);
@@ -355,7 +385,7 @@ Task: Generate a cohesive summary for this folder that captures its role in the 
 
 Note: Focus on the folder's unique contributions. Avoid repeating information from parent summaries.
 
-Respond with JSON in this format:
+Respond only with JSON in this format:
 <json>
 {
   "sentence": "Concise one-sentence folder summary",
@@ -364,7 +394,7 @@ Respond with JSON in this format:
 </json>
 `;
 
-	return await llm.generateJson(prompt);
+	return await llm.generateJson(prompt, { id: 'Generate folder summary' });
 }
 
 /**
@@ -394,7 +424,7 @@ export async function generateTopLevelSummary(): Promise<string> {
 	const combinedSummary = folderSummaries.map((summary) => `${summary.path}:\n${summary.long}`).join('\n\n');
 
 	// Generate the top-level summary using LLM
-	const topLevelSummary = await llms().easy.generateText(generateDetailedSummaryPrompt(combinedSummary));
+	const topLevelSummary = await llms().easy.generateText(generateDetailedSummaryPrompt(combinedSummary), { id: 'Generate top level summary' });
 
 	// Save the top-level summary
 	await saveTopLevelSummary(cwd, topLevelSummary);
