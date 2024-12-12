@@ -81,4 +81,3 @@ export function groupSecurityCommandCenterFindings(findings: SccFinding[]): Grou
 		return acc;
 	}, {} as GroupedFindings);
 }
-
