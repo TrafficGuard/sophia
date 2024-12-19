@@ -15,12 +15,12 @@ import { GenerateTextOptions, LLM, combinePrompts } from '../llm';
 import { MultiLLM } from '../multi-llm';
 
 export function GEMINI_1_5_PRO_LLMS(): AgentLLMs {
-	const pro1_5 = Gemini_1_5_Pro();
+	const flash2 = Gemini_2_0_Flash();
 	return {
-		easy: Gemini_1_5_Flash(),
-		medium: pro1_5,
-		hard: pro1_5,
-		xhard: new MultiLLM([pro1_5], 5),
+		easy: flash2,
+		medium: flash2,
+		hard: flash2,
+		xhard: new MultiLLM([flash2], 5),
 	};
 }
 
@@ -28,9 +28,9 @@ export const VERTEX_SERVICE = 'vertex';
 
 export function vertexLLMRegistry(): Record<string, () => LLM> {
 	return {
-		[`${VERTEX_SERVICE}:gemini-experimental`]: Gemini_1_5_Experimental,
 		[`${VERTEX_SERVICE}:gemini-1.5-pro`]: Gemini_1_5_Pro,
 		[`${VERTEX_SERVICE}:gemini-1.5-flash`]: Gemini_1_5_Flash,
+		[`${VERTEX_SERVICE}:gemini-2.0-flash`]: Gemini_2_0_Flash,
 		[`${VERTEX_SERVICE}:Llama3-405b-instruct-maas`]: Vertex_Llama3_405b,
 	};
 }
@@ -73,6 +73,17 @@ export function Gemini_1_5_Flash() {
 		1_000_000,
 		(input: string) => (input.length * 0.000125) / 1000,
 		(output: string) => (output.length * 0.000375) / 1000,
+	);
+}
+
+export function Gemini_2_0_Flash() {
+	return new VertexLLM(
+		'Gemini 2.0 Flash Experimental',
+		VERTEX_SERVICE,
+		'gemini-2.0-flash-exp',
+		1_000_000,
+		(input: string) => 0, //(input.length * 0.000125) / 1000,
+		(output: string) => 0, //(output.length * 0.000375) / 1000,
 	);
 }
 

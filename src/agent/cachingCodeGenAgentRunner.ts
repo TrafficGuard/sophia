@@ -259,7 +259,7 @@ export async function runCachingCodegenAgent(agent: AgentContext): Promise<Agent
 						.filter((pkg) => llmPythonCode.includes(`${pkg}.`) || pkg === 'json') // always need json for JsProxyEncoder
 						.map((pkg) => `import ${pkg}\n`)
 						.join();
-					logger.info(`Allowed imports: ${pythonScript}`);
+
 					pythonScript += `
 from typing import Any, List, Dict, Tuple, Optional, Union
 from pyodide.ffi import JsProxy

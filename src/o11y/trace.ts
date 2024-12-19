@@ -27,15 +27,18 @@ const dummyTracer = {
 
 let tracer: SugaredTracer | null = null;
 let agentContextStorage: AsyncLocalStorage<AgentContext>;
+let checkForceStopped: () => void;
 
 /**
  * @param {Tracer} theTracer - Tracer to be set by the trace-init service
  * @param theAgentContextStorage
+ * @param checkForcedStoppedFunc
  */
-export function setTracer(theTracer: Tracer, theAgentContextStorage: AsyncLocalStorage<AgentContext>): void {
+export function setTracer(theTracer: Tracer, theAgentContextStorage: AsyncLocalStorage<AgentContext>, checkForcedStoppedFunc: () => void = () => {}): void {
 	if (theTracer) tracer = wrapTracer(theTracer);
-	// Having the agentContextStorage() function call in this file was causing a compile failure, so we need to pass in the reference to the storage.
+	// Having the agentContextStorage() and checkForcedStopped () function call in this file causes a compile failure, so we need to pass in the reference to the storage.
 	agentContextStorage = theAgentContextStorage;
+	checkForceStopped = checkForcedStoppedFunc;
 }
 
 export function getTracer(): SugaredTracer | null {
@@ -50,6 +53,7 @@ export function getTracer(): SugaredTracer | null {
  * @returns a new span
  */
 export function startSpan(spanName: string): Span {
+	checkForceStopped();
 	return tracer?.startSpan(spanName) ?? <Span>(<unknown>dummyTracer.startSpan());
 }
 
@@ -66,6 +70,7 @@ export function getActiveSpan(): Span | null {
  */
 export async function withActiveSpan<T>(spanName: string, func: (span: Span) => T): Promise<T> {
 	if (!spanName) console.error(new Error(), 'spanName not provided');
+	checkForceStopped();
 	const functionWithCallStack = async (span: Span): Promise<T> => {
 		try {
 			agentContextStorage?.getStore()?.callStack?.push(spanName);
@@ -85,6 +90,7 @@ export async function withActiveSpan<T>(spanName: string, func: (span: Span) => 
  * @param func
  */
 export function withSpan<T>(spanName: string, func: (span: Span) => T): T {
+	checkForceStopped();
 	if (!tracer) return func(fakeSpan);
 
 	return tracer.withSpan(spanName, func);
@@ -111,6 +117,7 @@ export function span(attributeExtractors: SpanAttributeExtractors = {}) {
 	return function spanDecorator(originalMethod: any, context: ClassMethodDecoratorContext): any {
 		const functionName = String(context.name);
 		return async function replacementMethod(this: any, ...args: any[]) {
+			checkForceStopped();
 			try {
 				agentContextStorage?.getStore()?.callStack?.push(functionName);
 				if (!tracer) {

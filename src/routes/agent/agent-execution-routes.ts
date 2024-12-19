@@ -2,6 +2,7 @@ import { Type } from '@sinclair/typebox';
 import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext } from '#agent/agentContextTypes';
 import { cancelAgent, provideFeedback, resumeCompleted, resumeError, resumeHil } from '#agent/agentRunner';
+import { forceStopAgent } from '#agent/forceStopAgent';
 import { runXmlAgent } from '#agent/xmlAgentRunner';
 import { send, sendBadRequest } from '#fastify/index';
 import { functionFactory } from '#functionSchema/functionDecorators';
@@ -11,6 +12,25 @@ import { AppFastifyInstance } from '../../server';
 
 const v1BasePath = '/api/agent/v1';
 export async function agentExecutionRoutes(fastify: AppFastifyInstance) {
+	/** Forcibly stop an agent */
+	fastify.post(
+		`${v1BasePath}/force-stop`,
+		{
+			schema: {
+				body: Type.Object({
+					agentId: Type.String(),
+				}),
+			},
+		},
+		async (req, reply) => {
+			const { agentId } = req.body;
+
+			await forceStopAgent(agentId);
+
+			send(reply, 200);
+		},
+	);
+
 	/** Provides feedback to an agent */
 	fastify.post(
 		`${v1BasePath}/feedback`,
