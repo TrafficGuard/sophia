@@ -13,6 +13,7 @@ import { llmRoutes } from './routes/llms/llm-routes';
 import { profileRoute } from './routes/profile/profile-route';
 import { codeReviewRoutes } from './routes/scm/codeReviewRoutes';
 import { gitlabRoutesV1 } from './routes/webhooks/gitlab/gitlabRoutes-v1';
+import { jiraRoutes } from './routes/webhooks/jira/jira-routes';
 
 export interface AppFastifyInstance extends TypeBoxFastifyInstance, ApplicationContext {}
 
@@ -39,6 +40,7 @@ export async function initServer(): Promise<void> {
 				codeReviewRoutes,
 				chatRoutes,
 				codeRoutes,
+				jiraRoutes,
 				// Add your routes below this line
 			],
 			instanceDecorators: applicationContext, // This makes all properties on the ApplicationContext interface available on the fastify instance in the routes
