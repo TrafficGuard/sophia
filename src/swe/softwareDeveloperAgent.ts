@@ -25,45 +25,52 @@ export function buildPrompt(args: {
 
 /**
  * Workflow for completing requirements. This will look up the appropriate project in source control, clone, make the changes and create a pull/merge request.
- * Assumes the SCM is set on the workflow context
+ * Assumes the SourceControlManagement tool is set on the workflow context
  */
 @funcClass(__filename)
 export class SoftwareDeveloperAgent {
 	/**
 	 * Runs the software developer agent to complete the user request/requirements. This will find the appropriate Git project/repository, clone it, make the changes, compile and test if applicable, commit and create a pull/merge request to review.
 	 * @param requirements the requirements to implement. Provide ALL the details that might be required by this agent to complete the requirements task. Do not refer to details in memory etc, you must provide the actual details.
+	 * @param scmFullProjectPath (Optional) The full path to the GitHub/GitLab etc. repository, if definitely known. (e.g.  org/repo or group1/group2/project). Otherwise, leave blank, and it will be determined by searching through all the available projects.
 	 * @returns the Merge/Pull request URL if one was created
 	 */
 	@func()
-	async runSoftwareDeveloperWorkflow(requirements: string): Promise<string> {
+	async runSoftwareDeveloperWorkflow(requirements: string, scmFullProjectPath?: string): Promise<string> {
 		const fileSystem = getFileSystem();
+		const scm = getSourceControlManagementTool();
+
 		const requirementsSummary = await this.summariseRequirements(requirements);
 
-		const gitProject = await this.selectProject(requirementsSummary);
-		logger.info(`Selected project ${JSON.stringify(gitProject)}`);
-		const targetBranch = gitProject.defaultBranch;
+		const gitProject = scmFullProjectPath
+			? (await scm.getProjects()).find((project) => project.fullPath === scmFullProjectPath)
+			: await this.selectProject(requirementsSummary);
 
-		const repoPath = await getSourceControlManagementTool().cloneProject(`${gitProject.namespace}/${gitProject.name}`);
+		logger.info(`Git project ${JSON.stringify(gitProject)}`);
+
+		const repoPath = await scm.cloneProject(gitProject.fullPath, gitProject.defaultBranch);
 		fileSystem.setWorkingDirectory(repoPath);
 
-		const projectInfo = await this.detectSingleProjectInfo();
+		const projectInfo = await this.detectSingleProjectInfo(requirements);
 
-		if (projectInfo.initialise) {
-			// Need to pass NODE_ENV: 'development' so if the initialise command runs `npm install` then it installs the dev dependencies.
-			// as the current process may have it set to 'production'
-			const result: ExecResult = await runShellCommand(projectInfo.initialise, { envVars: { NODE_ENV: 'development' } });
-			failOnError('Error initialising the repository project', result);
+		// Branch setup -----------------
+
+		// TODO If we've already created the feature branch (how can we tell?) and doing more work on it, then don't need to switch to the base dev branch
+		// If the default branch in Gitlab/GitHub isn't the branch we want to create feature branches from, then switch to it.
+		let baseBranch = gitProject.defaultBranch;
+		if (projectInfo.devBranch && projectInfo.devBranch !== baseBranch) {
+			await fileSystem.vcs.switchToBranch(projectInfo.devBranch);
+			baseBranch = projectInfo.devBranch;
 		}
+		await fileSystem.vcs.pull();
 
-		// Should check we're on the develop/default branch first, and pull, when creating a branch
-		// If we're resuming an agent which has progressed past here then it will switch to the branch it created before
-		const branchName = await this.createBranchName(requirements);
-		await fileSystem.vcs.switchToBranch(branchName);
+		const featureBranchName = await this.createBranchName(requirements);
+		await fileSystem.vcs.switchToBranch(featureBranchName);
 
 		const initialHeadSha: string = await fileSystem.vcs.getHeadSha();
 
 		try {
-			await new CodeEditingAgent().runCodeEditWorkflow(requirementsSummary, projectInfo);
+			await new CodeEditingAgent().runCodeEditWorkflow(requirementsSummary, { projectInfo });
 		} catch (e) {
 			logger.warn(e.message);
 			// If no changes were made then throw an error
@@ -76,7 +83,7 @@ export class SoftwareDeveloperAgent {
 
 		const { title, description } = await generatePullRequestTitleDescription(requirements, projectInfo.devBranch);
 
-		return await getSourceControlManagementTool().createMergeRequest(title, description, branchName, targetBranch);
+		return await getSourceControlManagementTool().createMergeRequest(title, description, featureBranchName, baseBranch);
 	}
 
 	@cacheRetry({ scope: 'agent' })
@@ -103,16 +110,16 @@ export class SoftwareDeveloperAgent {
 	}
 
 	// @cacheRetry()
-	async detectProjectInfo(): Promise<ProjectInfo[]> {
-		return await detectProjectInfo();
+	async detectProjectInfo(requirements?: string): Promise<ProjectInfo[]> {
+		return await detectProjectInfo(requirements);
 	}
 
 	/**
 	 * A projectInfo.json file may have references to sub-projects. Calling this method assumes
 	 * there will be only one entry in the projectInfo.json file, and will throw an error if there is more
 	 */
-	async detectSingleProjectInfo(): Promise<ProjectInfo> {
-		const projectInfos = await this.detectProjectInfo();
+	async detectSingleProjectInfo(requirements?: string): Promise<ProjectInfo> {
+		const projectInfos = await this.detectProjectInfo(requirements);
 		if (projectInfos.length !== 1) throw new Error('detected project info length != 1');
 		const projectInfo = projectInfos[0];
 		logger.info(projectInfo, `Detected project info ${Object.keys(projectInfo).join(', ')}`);

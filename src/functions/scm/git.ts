@@ -133,6 +133,12 @@ export class Git implements VersionControlSystem {
 	}
 
 	@span()
+	async pull(branchName: string): Promise<void> {
+		const { stdout, stderr, exitCode } = await execCommand('git pull');
+		if (exitCode > 0) throw new Error(`Error pulling changes for ${branchName}.\n${stdout}\n${stderr}`);
+	}
+
+	@span()
 	async mergeChangesIntoLatestCommit(files: string[]): Promise<void> {
 		const result = await execCommand(`git add ${files.map((file) => `"${file}"`).join(' ')} && git commit --amend --no-edit`);
 		failOnError(`Failed to amend current commit with outstanding changes to ${files.join(' ')}`, result);

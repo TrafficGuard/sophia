@@ -38,7 +38,7 @@ export class CodeEditingAgent {
 	 * Runs a workflow which finds, edits and creates the required files to implement the requirements, and committing changes to version control.
 	 * It also compiles, formats, lints, and runs tests where applicable.
 	 * @param requirements The detailed requirements to implement, including supporting documentation and code samples. Do not refer to details in memory etc, you must provide the actual details.
-	 * altOptions are generally for programmatic use and not exposed to the autonomous agents.
+	 * altOptions are for programmatic use and not exposed to the autonomous agents.
 	 */
 	@func()
 	async runCodeEditWorkflow(
@@ -60,7 +60,8 @@ export class CodeEditingAgent {
 		fs.setWorkingDirectory(projectInfo.baseDir);
 
 		// Run in parallel to the requirements generation
-		// NODE_ENV development needed to install devDependencies for Node.js projects.
+		// NODE_ENV=development is needed to install devDependencies for Node.js projects.
+		// Set this in case the current process has NODE_ENV set to 'production'
 		const installPromise: Promise<any> = projectInfo.initialise
 			? runShellCommand(projectInfo.initialise, { envVars: { NODE_ENV: 'development' } })
 			: Promise.resolve();
