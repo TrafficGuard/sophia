@@ -133,7 +133,8 @@ export class Git implements VersionControlSystem {
 	}
 
 	@span()
-	async pull(branchName: string): Promise<void> {
+	async pull(): Promise<void> {
+		const branchName = await this.getBranchName();
 		const { stdout, stderr, exitCode } = await execCommand('git pull');
 		if (exitCode > 0) throw new Error(`Error pulling changes for ${branchName}.\n${stdout}\n${stderr}`);
 	}
