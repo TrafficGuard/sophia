@@ -30,6 +30,7 @@ export function vertexLLMRegistry(): Record<string, () => LLM> {
 	return {
 		[`${VERTEX_SERVICE}:gemini-1.5-pro`]: Gemini_1_5_Pro,
 		[`${VERTEX_SERVICE}:gemini-1.5-flash`]: Gemini_1_5_Flash,
+		[`${VERTEX_SERVICE}:gemini-2.0-flash-thinking`]: Gemini_2_0_Flash_Thinking,
 		[`${VERTEX_SERVICE}:gemini-2.0-flash`]: Gemini_2_0_Flash,
 		[`${VERTEX_SERVICE}:Llama3-405b-instruct-maas`]: Vertex_Llama3_405b,
 	};
@@ -81,6 +82,17 @@ export function Gemini_2_0_Flash() {
 		'Gemini 2.0 Flash Experimental',
 		VERTEX_SERVICE,
 		'gemini-2.0-flash-exp',
+		1_000_000,
+		(input: string) => 0, //(input.length * 0.000125) / 1000,
+		(output: string) => 0, //(output.length * 0.000375) / 1000,
+	);
+}
+
+export function Gemini_2_0_Flash_Thinking() {
+	return new VertexLLM(
+		'Gemini 2.0 Flash Thinking Experimental',
+		VERTEX_SERVICE,
+		'gemini-2.0-flash-thinking-exp-1219',
 		1_000_000,
 		(input: string) => 0, //(input.length * 0.000125) / 1000,
 		(output: string) => 0, //(output.length * 0.000375) / 1000,
