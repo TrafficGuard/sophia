@@ -22,9 +22,9 @@ import {MatMenuModule} from '@angular/material/menu';
 import {MatSidenavModule} from '@angular/material/sidenav';
 import {ActivatedRoute, Router, RouterLink, RouterModule} from '@angular/router';
 import {FuseMediaWatcherService} from '@fuse/services/media-watcher';
-import {ChatService} from 'app/modules/admin/apps/chat/chat.service';
-import {Chat, ChatMessage} from 'app/modules/admin/apps/chat/chat.types';
-import {ChatInfoComponent} from 'app/modules/admin/apps/chat/chat-info/chat-info.component';
+import {ChatService} from 'app/modules/chat/chat.service';
+import {Chat, ChatMessage} from 'app/modules/chat/chat.types';
+import {ChatInfoComponent} from 'app/modules/chat/chat-info/chat-info.component';
 import {LLM, LlmService} from "app/modules/agents/services/llm.service";
 import {combineLatest, Subject, takeUntil} from 'rxjs';
 import {
@@ -38,7 +38,7 @@ import {MatSelect, MatSelectModule} from "@angular/material/select";
 import {ReactiveFormsModule} from "@angular/forms";
 import {MatTooltipModule} from "@angular/material/tooltip";
 import {ClipboardButtonComponent} from "./clipboard-button.component";
-import {FuseConfirmationService} from "../../../../../../@fuse/services/confirmation";
+import {FuseConfirmationService} from "../../../../@fuse/services/confirmation";
 
 @Component({
     selector: 'chat-conversation',

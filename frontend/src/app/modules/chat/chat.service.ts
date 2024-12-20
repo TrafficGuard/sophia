@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import {Chat, ChatMessage, LlmMessage} from 'app/modules/admin/apps/chat/chat.types';
+import {Chat, ChatMessage, LlmMessage} from 'app/modules/chat/chat.types';
 import {
     BehaviorSubject,
     Observable,
