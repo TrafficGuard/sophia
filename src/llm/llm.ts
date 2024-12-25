@@ -1,5 +1,5 @@
 // https://github.com/AgentOps-AI/tokencost/blob/main/tokencost/model_prices.json
-import { CoreAssistantMessage, CoreSystemMessage, CoreToolMessage, CoreUserMessage, StreamTextResult } from 'ai';
+import { CoreMessage, FilePart, ImagePart, StreamTextResult, TextPart } from 'ai';
 
 export interface GenerateTextOptions {
 	type?: 'text' | 'json';
@@ -31,15 +31,60 @@ export type GenerateJsonOptions = Omit<GenerateTextOptions, 'type'>;
  */
 export type GenerateFunctionOptions = Omit<GenerateTextOptions, 'type'>;
 
-type AiMessage = CoreSystemMessage | CoreUserMessage | CoreAssistantMessage | CoreToolMessage;
+/*
+Types from the 'ai' package:
 
-export type LlmMessage = AiMessage & {
-	// /**
-	//  * TextPart  { type: "text" , text: string }
-	//  * ImagePart { type: "image", image: string | Uint8Array | ArrayBuffer | Buffer | URL, mimeType?: string }
-	//  * FilePart  { type: "file", data: string | Uint8Array | ArrayBuffer | Buffer | URL, mimeType: string }
-	//  */
-	// content: string | Array<TextPart | ImagePart | FilePart>;
+type CoreMessage = CoreSystemMessage | CoreUserMessage | CoreAssistantMessage | CoreToolMessage;
+
+type CoreUserMessage = {
+    role: 'user';
+    content: UserContent;
+}
+
+type UserContent = string | Array<TextPart | ImagePart | FilePart>;
+
+type DataContent = string | Uint8Array | ArrayBuffer | Buffer;
+
+interface TextPart {
+    type: 'text';
+    // The text content.
+	text: string;
+}
+
+interface ImagePart {
+    type: 'image';
+    // Image data. Can either be:
+  	// - data: a base64-encoded string, a Uint8Array, an ArrayBuffer, or a Buffer
+  	// - URL: a URL that points to the image
+	image: DataContent | URL;
+	// Optional mime type of the image.
+	mimeType?: string;
+}
+
+interface FilePart {
+    type: 'file';
+    // File data. Can either be:
+  	// - data: a base64-encoded string, a Uint8Array, an ArrayBuffer, or a Buffer
+  	// - URL: a URL that points to the image
+	image: DataContent | URL;
+	// Mime type of the file.
+	mimeType: string;
+}
+*/
+
+/** Additional information added to the FilePart and ImagePart objects */
+export interface AttachmentInfo {
+	filename: string;
+	size: number;
+}
+
+export type FilePartExt = FilePart & AttachmentInfo;
+export type ImagePartExt = ImagePart & AttachmentInfo;
+
+/** Extension of the 'ai' package UserContent type */
+export type UserContentExt = string | Array<TextPart | ImagePartExt | FilePartExt>;
+
+export type LlmMessage = CoreMessage & {
 	/** The LLM which generated the text (only when role=assistant) */
 	llmId?: string;
 	/** Set the cache_control flag with Claude models */

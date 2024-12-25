@@ -26,6 +26,7 @@ export function anthropicVertexLLMRegistry(): Record<string, () => LLM> {
 	};
 }
 
+// Supported image types image/jpeg', 'image/png', 'image/gif' or 'image/webp'
 export function Claude3_5_Sonnet_Vertex() {
 	return new AnthropicVertexLLM(
 		'Claude 3.5 Sonnet (Vertex)',

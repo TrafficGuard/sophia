@@ -80,7 +80,7 @@ export abstract class AiLLM<Provider extends ProviderV1> extends BaseLLM {
 
 			const requestTime = Date.now();
 			try {
-				const result: GenerateTextResult<any> = await aiGenerateText({
+				const result: GenerateTextResult<any, any> = await aiGenerateText({
 					model: this.aiModel(),
 					messages,
 					temperature: opts?.temperature,

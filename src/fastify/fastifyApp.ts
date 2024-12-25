@@ -138,10 +138,11 @@ async function loadPlugins(config: FastifyConfig) {
 	await fastifyInstance.register(import('@fastify/cors'), {
 		origin: ['*'], // new URL(process.env.UI_URL).origin
 		methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow these HTTP methods
-		allowedHeaders: ['Content-Type', 'Authorization', 'X-Goog-Iap-Jwt-Assertion'], // Allow these headers
+		allowedHeaders: ['Content-Type', 'Authorization', 'X-Goog-Iap-Jwt-Assertion', 'Enctype'], // Allow these headers
 		credentials: true,
 	});
-	fastifyInstance.register(require('fastify-healthcheck'), {
+	await fastifyInstance.register(require('@fastify/multipart'));
+	await fastifyInstance.register(require('fastify-healthcheck'), {
 		healthcheckUrl: /* config.healthcheckUrl ?? */ DEFAULT_HEALTHCHECK,
 	});
 	await fastifyInstance.register(import('fastify-raw-body'), {

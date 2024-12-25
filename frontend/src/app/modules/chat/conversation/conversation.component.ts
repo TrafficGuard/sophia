@@ -14,6 +14,7 @@ import {
     ViewChild,
     ViewEncapsulation,
 } from '@angular/core';
+import { Attachment } from 'app/modules/chat/chat.types';
 import {MatButtonModule} from '@angular/material/button';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatIconModule} from '@angular/material/icon';
@@ -75,6 +76,8 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
 
     @ViewChild('messageInput') messageInput: ElementRef;
     @ViewChild('llmSelect') llmSelect: MatSelect;
+    @ViewChild('fileInput') fileInput: ElementRef;
+    selectedFiles: File[] = [];
     chat: Chat;
     chats: Chat[];
     drawerMode: 'over' | 'side' = 'side';
@@ -307,16 +310,26 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
 
     sendMessage(): void {
         let message: string = this.messageInput.nativeElement.value.trim();
-        if (message === '') {
+        if (message === '' && this.selectedFiles.length === 0) {
             return;
         }
 
         this.generating = true;
         this.sendIcon = 'heroicons_outline:stop-circle'
 
+        const attachments: Attachment[] = this.selectedFiles.map(file => ({
+            type: file.type.startsWith('image/') ? 'image' : 'file',
+            filename: file.name,
+            size: file.size,
+            data: file,
+            mimeType: file.type,
+        }));
+        attachments.forEach(a => console.log(a.filename))
+
         this.chat.messages.push({
             content: message,
             isMine: true,
+            attachments: attachments,
         })
         const generatingMessage: ChatMessage = {
             content: '',
@@ -331,12 +344,13 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
         }, 800)
         // Clear the input
         this.messageInput.nativeElement.value = '';
+        this.selectedFiles = [];
 
         // If this is a new chat, then redirect to the created chat
         if (!this.chat.id || this.chat.id === 'new') {
             this._changeDetectorRef.markForCheck();
             // TODO handle error, set the message back to the messageInput and remove from chat.messages
-            this._chatService.createChat(message, this.llmId).subscribe(async (chat: Chat) => {
+            this._chatService.createChat(message, this.llmId, attachments).subscribe(async (chat: Chat) => {
                 clearInterval(this.generatingTimer)
                 this.generating = false;
                 this.router.navigate([`/ui/chat/${chat.id}`]).catch(console.error);
@@ -346,7 +360,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
         }
 
         this._scrollToBottom();
-        this._chatService.sendMessage(this.chat.id, message, this.llmId).subscribe((chat: Chat) => {
+        this._chatService.sendMessage(this.chat.id, message, this.llmId, attachments).subscribe((chat: Chat) => {
             console.log(`message sent`)
             console.log(chat)
             this.chat = clone(chat);
@@ -486,6 +500,53 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
                 console.error('Error sending audio message', error);
             }
         );
+    }
+
+    onFileSelected(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        if (input.files) {
+            this.addFiles(Array.from(input.files));
+        }
+    }
+
+    removeFile(file: File): void {
+        const index = this.selectedFiles.indexOf(file);
+        if (index > -1) {
+            this.selectedFiles.splice(index, 1);
+            this._changeDetectorRef.markForCheck();
+        }
+    }
+
+    onDragOver(event: DragEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    onDrop(event: DragEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const files = Array.from(event.dataTransfer?.files || []);
+        this.addFiles(files);
+    }
+
+    private addFiles(files: File[]): void {
+        // 10MB limit per file
+        const MAX_FILE_SIZE = 10 * 1024 * 1024;
+        
+        files.forEach(file => {
+            if (file.size > MAX_FILE_SIZE) {
+                // TODO: Show error toast
+                console.error(`File ${file.name} exceeds 10MB limit`);
+                return;
+            }
+            if (!this.selectedFiles.find(f => f.name === file.name)) {
+                console.log(`Adding file ${file.name}`)
+                this.selectedFiles.push(file);
+            }
+        });
+        
+        this._changeDetectorRef.markForCheck();
     }
 }
 
