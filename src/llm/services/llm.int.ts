@@ -17,7 +17,7 @@ const elephantBase64 = fs.readFileSync('test/llm/elephant.jpg', 'base64');
 const pdfBase64 = fs.readFileSync('test/llm/purple.pdf', 'base64');
 
 // Skip until API keys are configured in CI
-describe.only('LLMs', () => {
+describe('LLMs', () => {
 	const SKY_PROMPT: LlmMessage[] = [
 		{
 			role: 'system',
@@ -88,6 +88,20 @@ describe.only('LLMs', () => {
 			const response = await llm.generateText(IMAGE_BASE64_PROMPT, { temperature: 0 });
 			expect(response.toLowerCase()).to.include('elephant');
 		});
+
+		it('should handle PDF attachments', async () => {
+			const response = await llm.generateText(PDF_PROMPT, { temperature: 0 });
+			expect(response.toLowerCase()).to.include('purple');
+		});
+
+		// it('should cache messages', async () => {
+		// 	const response = await llm.generateText([
+		// 		{
+		// 			role: ''
+		// 		}
+		// 	], { temperature: 0 });
+		// 	expect(response.toLowerCase()).to.include('purple');
+		// });
 	});
 
 	describe('Cerebras', () => {
