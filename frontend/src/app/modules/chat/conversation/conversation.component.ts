@@ -18,6 +18,7 @@ import { Attachment } from 'app/modules/chat/chat.types';
 import {MatButtonModule} from '@angular/material/button';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatIconModule} from '@angular/material/icon';
+import {MatSnackBar} from '@angular/material/snack-bar';
 import {MatInputModule} from '@angular/material/input';
 import {MatMenuModule} from '@angular/material/menu';
 import {MatSidenavModule} from '@angular/material/sidenav';
@@ -111,7 +112,8 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
         private llmService: LlmService,
         private router: Router,
         private route: ActivatedRoute,
-        private userService: UserService
+        private userService: UserService,
+        private _snackBar: MatSnackBar
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -360,20 +362,51 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
         }
 
         this._scrollToBottom();
-        this._chatService.sendMessage(this.chat.id, message, this.llmId, attachments).subscribe((chat: Chat) => {
-            console.log(`message sent`)
-            console.log(chat)
-            this.chat = clone(chat);
-            clearInterval(this.generatingTimer)
-            this.generating = false;
-            this.sendIcon = 'heroicons_outline:paper-airplane'
-            this._resizeMessageInput();
-            this._scrollToBottom();
+        this._chatService.sendMessage(this.chat.id, message, this.llmId, attachments).subscribe({
+            next: (chat: Chat) => {
+                console.log(`message sent`)
+                console.log(chat)
+                this.chat = clone(chat);
+                clearInterval(this.generatingTimer)
+                this.generating = false;
+                this.sendIcon = 'heroicons_outline:paper-airplane'
+                this._resizeMessageInput();
+                this._scrollToBottom();
 
-            // Mark for check
-            this._changeDetectorRef.markForCheck();
+                // Mark for check
+                this._changeDetectorRef.markForCheck();
+            },
+            error: (error) => {
+                console.error('Error sending message:', error);
+                
+                // Remove the two pending messages
+                this.chat.messages.pop(); // Remove generating message
+                this.chat.messages.pop(); // Remove user message
+                
+                // Restore the message input and files
+                this.messageInput.nativeElement.value = message;
+                this.selectedFiles = attachments.map(a => a.data);
+                
+                // Reset UI state
+                clearInterval(this.generatingTimer);
+                this.generating = false;
+                this.sendIcon = 'heroicons_outline:paper-airplane';
+                
+                // Show error message
+                this._snackBar.open(
+                    'Failed to send message. Please try again.',
+                    'Close',
+                    {
+                        duration: 5000,
+                        horizontalPosition: 'center',
+                        verticalPosition: 'bottom',
+                        panelClass: ['error-snackbar']
+                    }
+                );
+                
+                this._changeDetectorRef.markForCheck();
+            }
         });
-        // TODO catch errors and set this.generating=false
     }
 
     private _scrollToBottom(): void {
