@@ -6,20 +6,14 @@ import { agentContextStorage, getFileSystem, llms } from '#agent/agentContextLoc
 import { execCommand } from '#utils/exec';
 import { cacheRetry } from '../../cache/cacheRetry';
 const { getJson } = require('serpapi');
-import { readFileSync } from 'fs';
 import * as autoconsent from '@duckduckgo/autoconsent';
 import fetch from 'cross-fetch';
 import puppeteer from 'puppeteer';
 import { Browser } from 'puppeteer';
-import { fileExistsAsync, fileExistsSync } from 'tsconfig-paths/lib/filesystem';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 import { sleep } from '#utils/async-utils';
-
-// For Node.js
 const TurndownService = require('turndown');
-// import * as TurndownService from 'turndown';
-// import {TurndownService} from 'turndown';
 const turndownService = new TurndownService();
 
 export interface OrganicSearchResult {
@@ -28,10 +22,7 @@ export interface OrganicSearchResult {
 	content?: string;
 }
 
-let browser: Browser;
 let blocker: PuppeteerBlocker;
-
-export const gitHubRepoHomepageRegex = /https:\/\/github.com\/([\w^\\-])*\/([\w^\\-])*\/?$/;
 
 /**
  * Functions for reading web pages on the public internet and taking screenshots
@@ -63,14 +54,14 @@ export class PublicWeb {
 	 * @param memoryKey {string} The key to update the memory with, storing the data extracted from the web page. This key must NOT already exist in the memory block.
 	 * @returns the extracted data
 	 */
-	@func()
+	// @func()
 	@cacheRetry({ scope: 'global' })
 	async getWebPageExtract(url: string, dataExtractionInstructions: string, memoryKey?: string): Promise<string> {
 		const memory = agentContextStorage.getStore().memory;
 		if (memory[memoryKey]) throw new Error(`The memory key ${memoryKey} already exists`);
 		const contents = await this.getWebPage(url);
 		const extracted = await llms().medium.generateText(`<page_contents>${contents}</page_contents>\n\n${dataExtractionInstructions}`, {
-			id: 'webpageDataExtraction',
+			id: 'Webpage Data Extraction',
 		});
 		if (memoryKey) {
 			agentContextStorage.getStore().memory[memoryKey] = extracted;
@@ -87,53 +78,25 @@ export class PublicWeb {
 	// @cacheRetry({ scope: 'global' })
 	async getWebPage(url: string): Promise<string> {
 		logger.info(`PublicWeb.getWebPage ${url}`);
-		const wgetBasePath = path.join(getFileSystem().basePath, '.cache', 'wget');
-		// Remove https:// or http://
-		const urlPath = url.slice(url.indexOf('/') + 2);
-
-		// const wgetCachedPath = path.join(wgetBasePath, urlPath);
-		// // If we haven't downloaded it, then download the page
-		// if (!fileExistsSync(wgetCachedPath)) {
-		// 	if (urlPath.startsWith('www.youtube.com')) {
-		// 		// TODO get YouTube transcript
-		// 		return '';
-		// 	}
-		//
-		// 	// const { stdout, stderr, exitCode } = await execCommand(`wget -q -p ${url}`, wgetBasePath);
-		// 	// if (exitCode > 0) await sleep(1000);
-		// 	// {
-		// 	// 	const { stdout, stderr, exitCode } = await execCommand(`wget -p ${url}`, wgetBasePath);
-		// 	// 	if (exitCode > 0) throw new Error(`${stdout} ${stderr}`);
-		// 	// }
-		// }
-		// const htmlContents: string = readFileSync(wgetCachedPath).toString();
-
-		const isGitHubHomepage: boolean = false; //gitHubRepoHomepageRegex.test(url);
 
 		// https://screenshotone.com/blog/how-to-hide-cookie-banners-when-taking-a-screenshot-with-puppeteer/
-		if (!browser) browser = await puppeteer.launch({ headless: true });
+		const browser: Browser = await puppeteer.launch({ headless: false, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 		const page = await browser.newPage();
-		const httpResponse = await page.goto(url);
-		await sleep(1000);
-		const htmlContents = await page.content();
-		await browser.close(); // can this handle concurrent requests?
-		console.log(htmlContents.length);
-		let readableHtml: string;
-		if (isGitHubHomepage) {
-			readableHtml = htmlContents.slice(htmlContents.indexOf('<article '));
-			readableHtml = readableHtml.slice(0, readableHtml.indexOf('</article>') + 10);
-		} else {
-			readableHtml = this.readableVersionFromHtml(htmlContents, url);
-		}
-		console.log(readableHtml.length);
-		console.log('==================');
 
-		const markdown = this.htmlToMarkdown(readableHtml, url);
-		console.log(markdown.length);
-		logger.debug(`MARKDOWN =======================================\n${markdown}\n================================================`);
-		// const newSizePercent = Number((markdown.length / htmlContents.length) * 100).toFixed(1);
-		// console.log(`Readable and markdown conversion compressed to ${newSizePercent}%${url ? ` for ${url}` : ''}`);
-		return markdown;
+		await page.setRequestInterception(true);
+		page.on('request', (request) => {
+			if (request.resourceType() === 'image') request.abort();
+			else request.continue();
+		});
+		const httpResponse = await page.goto(url, { waitUntil: 'networkidle2' });
+		await sleep(2000);
+		const htmlContents = await page.content();
+
+		await page.close();
+		await browser.close();
+
+		const readableHtml = this.readableVersionFromHtml(htmlContents, url);
+		return this.htmlToMarkdown(readableHtml, url);
 	}
 
 	/**
@@ -159,16 +122,7 @@ export class PublicWeb {
 	 * @param url The URL of the HTML (optional)
 	 */
 	htmlToMarkdown(html: string, url?: string): string {
-		// const start = Date.now()
-		const markdown = turndownService.turndown(html);
-		// console.log(`Markdown conversion took ${Date.now()-start}ms`)
-		return markdown;
-	}
-
-	async readableVersionFromUrl(url): Promise<string> {
-		const urlFetch = await fetch(url);
-		const html = await urlFetch.text();
-		return this.readableVersionFromHtml(html);
+		return turndownService.turndown(html);
 	}
 
 	/**
@@ -259,38 +213,50 @@ export class PublicWeb {
 	/**
 	 * Takes a screenshot of a web page while hiding cookie banners
 	 * @param url The URL of the web page to screenshot. Must be a complete URL with https://
-	 * @returns {Buffer} A Buffer containing the screenshot image data in .png format
+	 * @returns {Promise<{ image: Buffer; logs: string[] }>} A Buffer containing the screenshot image data in .png format, and the browser logs
 	 */
 	@func()
-	async takeScreenshot(url: string): Promise<Buffer> {
+	async takeScreenshotAndLogs(url: string): Promise<{ image: Buffer; logs: string[] }> {
 		logger.info(`Taking screenshot of ${url}`);
 
 		if (!blocker) blocker = await PuppeteerBlocker.fromLists(fetch as any, ['https://secure.fanboy.co.nz/fanboy-cookiemonster.txt']);
 
-		if (!browser) browser = await puppeteer.launch({ headless: true });
+		const browser: Browser = await puppeteer.launch({ headless: true });
 		const page = await browser.newPage();
 
 		try {
 			await blocker.enableBlockingInPage(page);
 			await page.setViewport({ width: 1280, height: 1024 });
 
-			page.once('load', async () => {
-				const tab = autoconsent.attachToPage(page, url, [], 10);
-				await tab.doOptIn();
-			});
+			// page.once('load', async () => {
+			// 	const tab = autoconsent.attachToPage(page, url, [], 10);
+			// 	await tab.doOptIn();
+			// });
+
+			const logs: string[] = [];
+			//
+			page
+				.on('console', (message) => logs.push(`${message.type().substr(0, 3).toUpperCase()} ${message.text()}`))
+				.on('pageerror', ({ message }) => logs.push(message))
+				.on('requestfailed', (request) => logs.push(`${request.failure().errorText} ${request.url()}`));
 
 			await page.goto(url, { waitUntil: ['load', 'domcontentloaded'] });
 
 			// Wait for a short time to allow any dynamic content to load
-			await sleep(2000);
+			await sleep(4000);
 
 			const screenshot = await page.screenshot({ type: 'png' });
-			return screenshot as Buffer;
+
+			return {
+				image: screenshot,
+				logs,
+			};
 		} catch (error) {
 			logger.error(`Error taking screenshot of ${url}: ${error.message}`);
 			throw error;
 		} finally {
-			await page.close();
+			await page?.close();
+			await browser?.close();
 		}
 	}
 }
