@@ -220,7 +220,7 @@
                             </button>
                         </div>
                         <!-- mat-select -->
-                        <mat-form-field appearance="fill" class="w-20 mt-2" style="min-width: 200px" subscriptSizing="dynamic">
+                        <mat-form-field appearance="fill" class="w-20 mt-2" style="min-width: 225px" subscriptSizing="dynamic">
                             <mat-select #llmSelect (keydown)="handleLlmKeydown($event)" placeholder="LLM" [(value)]="llmId">
                                 @for (llm of llms; track llm.id) {
                                     <mat-option [value]="llm.id">
