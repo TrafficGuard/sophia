@@ -73,7 +73,7 @@ function parseProjectInfo(fileContents: string): ProjectInfo[] | null {
  * Determines the language/runtime, base folder and key commands for a project on the filesystem.
  * Loads from the file projectInfo.json if it exists
  */
-export async function detectProjectInfo(): Promise<ProjectInfo[]> {
+export async function detectProjectInfo(requirements?: string): Promise<ProjectInfo[]> {
 	logger.info('detectProjectInfo');
 	const fileSystem = getFileSystem();
 	if (await fileSystem.fileExists('projectInfo.json')) {
@@ -88,10 +88,13 @@ export async function detectProjectInfo(): Promise<ProjectInfo[]> {
 	const files: string[] = await fileSystem.listFilesRecursively('./');
 
 	const prompt = `<task_requirements>
+${requirements ? `<context>\n${requirements}\n</context>\n` : ''}
 <task_input>
 ${files.join('\n')}
 </task_input>
-You task it to detect key information (language/runtime and build/test commands) for a software project from the names of the files contained within it. 
+You task it to detect key information (language/runtime and build/test commands) for a software project from the names of the files contained within it${
+		requirements ? ' and the <context>' : ''
+	}. 
 
 For the "files" return value you will select the file names of only a few key files (documentation, project configuration, and optionally a select few entrypoint files) that will be later read and analysed to determine the commands. Do not include lock files for 3rd party code such as package-lock.json
 
@@ -100,8 +103,8 @@ You must respond only in JSON format matching the ProjectDetection interface in 
 interface ProjectDetections {
   /** The folder which contains all the project configuration files (eg. package.json for node.js, pom.xml for Java). Often the root folder ("./") but not always */
   baseDir: string;
-  /** The programming language of the project */
-  language: 'java' | 'nodejs' | 'csharp' | 'ruby' | 'python';
+  /** The programming language/runtime of the project */
+  language: 'java' | 'nodejs' | 'csharp' | 'ruby' | 'python' | 'terraform';
   /** The files to read to determine the shell commands to compile, run lint/formating and test the code. Do not include lock files for 3rd party code such as package-lock.json */
   files: string[],
 }

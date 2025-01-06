@@ -37,6 +37,7 @@ export function fireworksLLMRegistry(): Record<string, () => LLM> {
 	return {
 		[`${FIREWORKS_SERVICE}:accounts/fireworks/models/llama-v3p1-70b-instruct`]: fireworksLlama3_70B,
 		[`${FIREWORKS_SERVICE}:accounts/fireworks/models/llama-v3p1-405b-instruct`]: fireworksLlama3_405B,
+		[`${FIREWORKS_SERVICE}:accounts/fireworks/models/deepseek-v3`]: fireworksDeepSeek,
 	};
 }
 
@@ -57,5 +58,15 @@ export function fireworksLlama3_405B(): LLM {
 		131_072,
 		(input: string) => (input.length * 3) / 1_000_000 / 4,
 		(output: string) => (output.length * 3) / 1_000_000 / 4,
+	);
+}
+
+export function fireworksDeepSeek(): LLM {
+	return new Fireworks(
+		'DeepSeek 3 (Fireworks)',
+		'accounts/fireworks/models/deepseek-v3',
+		131_072,
+		(input: string) => (input.length * 0.9) / 1_000_000 / 4,
+		(output: string) => (output.length * 0.9) / 1_000_000 / 4,
 	);
 }

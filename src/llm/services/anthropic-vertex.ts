@@ -1,19 +1,24 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { AnthropicVertex } from '@anthropic-ai/vertex-sdk';
 import { addCost, agentContext } from '#agent/agentContextLocalStorage';
-import { BaseLLM } from '../base-llm';
-import { MaxTokensError } from '../errors';
-import { GenerateTextOptions, LLM, LlmMessage } from '../llm';
-import Message = Anthropic.Message;
+import { AgentLLMs } from '#agent/agentContextTypes';
 import { LlmCall } from '#llm/llmCallService/llmCall';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
-import { RetryableError, cacheRetry } from '../../cache/cacheRetry';
-import TextBlock = Anthropic.TextBlock;
-import { AgentLLMs } from '#agent/agentContextTypes';
 import { appContext } from '../../applicationContext';
+import { RetryableError, cacheRetry } from '../../cache/cacheRetry';
+import { BaseLLM } from '../base-llm';
+import { MaxTokensError } from '../errors';
+import { GenerateTextOptions, LLM, LlmMessage } from '../llm';
+
+type Message = Anthropic.Messages.Message;
+type MessageParam = Anthropic.Messages.MessageParam;
+type TextBlock = Anthropic.Messages.TextBlock;
+type TextBlockParam = Anthropic.Messages.TextBlockParam;
+type ImageBlockParam = Anthropic.Messages.ImageBlockParam;
+type BetaBase64PDFBlock = Anthropic.Beta.BetaBase64PDFBlock;
 
 export const ANTHROPIC_VERTEX_SERVICE = 'anthropic-vertex';
 
@@ -26,6 +31,7 @@ export function anthropicVertexLLMRegistry(): Record<string, () => LLM> {
 	};
 }
 
+// Supported image types image/jpeg', 'image/png', 'image/gif' or 'image/webp'
 export function Claude3_5_Sonnet_Vertex() {
 	return new AnthropicVertexLLM(
 		'Claude 3.5 Sonnet (Vertex)',
@@ -134,6 +140,7 @@ class AnthropicVertexLLM extends BaseLLM {
 
 			let message: Message;
 			let systemMessage: string | undefined = undefined;
+
 			try {
 				if (messages[0].role === 'system') {
 					const message = messages.splice(0, 1)[0];
@@ -171,36 +178,71 @@ class AnthropicVertexLLM extends BaseLLM {
 				  }
 				}
 				 */
-				const anthropicMessages: Anthropic.Messages.MessageParam[] = messages.map((message) => {
-					let content: string | Array<Anthropic.Messages.TextBlockParam | Anthropic.Messages.ImageBlockParam>;
+				const anthropicMessages: MessageParam[] = messages.map((message) => {
+					let content: string | Array<TextBlockParam | ImageBlockParam | BetaBase64PDFBlock>;
 
 					if (typeof message.content === 'string') {
-						content = message.content;
+						if (message.cache === 'ephemeral') {
+							const text: TextBlockParam = {
+								type: 'text',
+								text: message.content,
+								cache_control: {
+									type: 'ephemeral',
+								},
+							};
+							content = [text];
+						} else {
+							content = message.content;
+						}
 					} else if (Array.isArray(message.content)) {
-						content = message.content.map((part) => {
+						content = message.content.map((part: any) => {
 							if (part.type === 'text') {
-								return {
+								const textBlock: TextBlockParam = {
 									type: 'text',
 									text: part.text,
-								} as Anthropic.Messages.TextBlockParam;
+								};
+								if (message.cache === 'ephemeral') {
+									textBlock.cache_control = {
+										type: 'ephemeral',
+									};
+								}
+								return textBlock;
 							}
 							if (part.type === 'image') {
-								return {
+								const imageBlock: ImageBlockParam = {
 									type: 'image',
 									source: {
 										type: 'base64',
 										data: part.image.toString(),
 										media_type: part.mimeType || 'image/png',
 									},
-								} as Anthropic.Messages.ImageBlockParam;
-								// } else if (part.type === 'file') {
-								// 	// Convert files to text representation since Anthropic doesn't support files
-								// 	return {
-								// 		type: 'text',
-								// 		text: `[File attachment]`,
-								// 	} as Anthropic.Messages.TextBlockParam;
+								};
+								if (message.cache === 'ephemeral') {
+									imageBlock.cache_control = {
+										type: 'ephemeral',
+									};
+								}
+								return imageBlock;
 							}
-							throw new Error(`Unsupported message type ${part.type}`);
+							if (part.type === 'file') {
+								if (part.mimeType === 'application/pdf') {
+									const pdfBlock: BetaBase64PDFBlock = {
+										type: 'document',
+										source: {
+											type: 'base64',
+											media_type: 'application/pdf',
+											data: part.data,
+										},
+									};
+									if (message.cache === 'ephemeral') {
+										pdfBlock.cache_control = {
+											type: 'ephemeral',
+										};
+									}
+									return pdfBlock;
+								}
+								throw new Error(`Unsupported file type: ${part.type}`);
+							}
 						});
 					} else {
 						content = '[No content]';

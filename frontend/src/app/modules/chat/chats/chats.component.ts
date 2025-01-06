@@ -14,8 +14,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { RouterLink, RouterOutlet } from '@angular/router';
-import { ChatService } from 'app/modules/admin/apps/chat/chat.service';
-import { Chat } from 'app/modules/admin/apps/chat/chat.types';
+import { ChatService } from 'app/modules/chat/chat.service';
+import { Chat } from 'app/modules/chat/chat.types';
 import { Subject, takeUntil } from 'rxjs';
 import { FuseConfirmationService } from '@fuse/services/confirmation';
 

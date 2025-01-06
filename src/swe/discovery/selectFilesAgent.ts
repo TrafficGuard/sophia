@@ -274,7 +274,7 @@ async function readFileContents(filePaths: string[]): Promise<string> {
 	for (const filePath of filePaths) {
 		const fullPath = path.join(fileSystem.getWorkingDirectory(), filePath);
 		try {
-			const fileContent = await fileSystem.readFile(filePath);
+			const fileContent = await fileSystem.readFile(fullPath);
 			contents += `<file_contents path="${filePath}">
 ${fileContent}
 </file_contents>

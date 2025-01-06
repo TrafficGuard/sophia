@@ -1,5 +1,5 @@
 import Pino from 'pino';
-import { agentContext } from '#agent/agentContextLocalStorage';
+import { AgentContext } from '#agent/agentContextTypes';
 const logLevel = process.env.LOG_LEVEL || 'INFO';
 // Review config at https://github.com/simenandre/pino-cloud-logging/blob/main/src/main.ts
 
@@ -25,6 +25,17 @@ const transport =
 				},
 		  }
 		: undefined;
+
+let agentContextFn: () => AgentContext;
+
+async function load() {
+	// const agentContextLocalStorageModule = await import('#agent/agentContextLocalStorage.js');
+	// // const { agentContext } = await import('#agent/agentContextLocalStorage');
+	// // agentContextFn = agentContext
+	// agentContextFn = agentContextLocalStorageModule.agentContext
+	// console.log('Dynamically loaded agentContextLocalStorage.agentContent()')
+}
+load().catch(console.error);
 
 /**
  * Pino logger configured for a Google Cloud environment.
@@ -58,10 +69,12 @@ export const logger: Pino.Logger = Pino({
 			const stackTrace = logObject.err?.stack;
 			const stackProp: any = stackTrace ? { stack_trace: stackTrace } : {};
 
-			const agent = agentContext();
-			if (agent) {
-				object.agentId = agent.agentId;
-				if (agent.parentAgentId) object.parentAgentId = agent.parentAgentId;
+			if (agentContextFn) {
+				const agent = agentContextFn();
+				if (agent) {
+					object.agentId = agent.agentId;
+					if (agent.parentAgentId) object.parentAgentId = agent.parentAgentId;
+				}
 			}
 
 			return { ...object, ...stackProp };

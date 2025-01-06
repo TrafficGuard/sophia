@@ -14,17 +14,19 @@ import {
     ViewChild,
     ViewEncapsulation,
 } from '@angular/core';
+import { Attachment } from 'app/modules/chat/chat.types';
 import {MatButtonModule} from '@angular/material/button';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatIconModule} from '@angular/material/icon';
+import {MatSnackBar} from '@angular/material/snack-bar';
 import {MatInputModule} from '@angular/material/input';
 import {MatMenuModule} from '@angular/material/menu';
 import {MatSidenavModule} from '@angular/material/sidenav';
 import {ActivatedRoute, Router, RouterLink, RouterModule} from '@angular/router';
 import {FuseMediaWatcherService} from '@fuse/services/media-watcher';
-import {ChatService} from 'app/modules/admin/apps/chat/chat.service';
-import {Chat, ChatMessage} from 'app/modules/admin/apps/chat/chat.types';
-import {ChatInfoComponent} from 'app/modules/admin/apps/chat/chat-info/chat-info.component';
+import {ChatService} from 'app/modules/chat/chat.service';
+import {Chat, ChatMessage} from 'app/modules/chat/chat.types';
+import {ChatInfoComponent} from 'app/modules/chat/chat-info/chat-info.component';
 import {LLM, LlmService} from "app/modules/agents/services/llm.service";
 import {combineLatest, Subject, takeUntil} from 'rxjs';
 import {
@@ -38,7 +40,7 @@ import {MatSelect, MatSelectModule} from "@angular/material/select";
 import {ReactiveFormsModule} from "@angular/forms";
 import {MatTooltipModule} from "@angular/material/tooltip";
 import {ClipboardButtonComponent} from "./clipboard-button.component";
-import {FuseConfirmationService} from "../../../../../../@fuse/services/confirmation";
+import {FuseConfirmationService} from "../../../../@fuse/services/confirmation";
 
 @Component({
     selector: 'chat-conversation',
@@ -75,6 +77,8 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
 
     @ViewChild('messageInput') messageInput: ElementRef;
     @ViewChild('llmSelect') llmSelect: MatSelect;
+    @ViewChild('fileInput') fileInput: ElementRef;
+    selectedFiles: File[] = [];
     chat: Chat;
     chats: Chat[];
     drawerMode: 'over' | 'side' = 'side';
@@ -108,7 +112,8 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
         private llmService: LlmService,
         private router: Router,
         private route: ActivatedRoute,
-        private userService: UserService
+        private userService: UserService,
+        private _snackBar: MatSnackBar
     ) {}
 
     // -----------------------------------------------------------------------------------------------------
@@ -307,16 +312,26 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
 
     sendMessage(): void {
         let message: string = this.messageInput.nativeElement.value.trim();
-        if (message === '') {
+        if (message === '' && this.selectedFiles.length === 0) {
             return;
         }
 
         this.generating = true;
         this.sendIcon = 'heroicons_outline:stop-circle'
 
+        const attachments: Attachment[] = this.selectedFiles.map(file => ({
+            type: file.type.startsWith('image/') ? 'image' : 'file',
+            filename: file.name,
+            size: file.size,
+            data: file,
+            mimeType: file.type,
+        }));
+        attachments.forEach(a => console.log(a.filename))
+
         this.chat.messages.push({
             content: message,
             isMine: true,
+            attachments: attachments,
         })
         const generatingMessage: ChatMessage = {
             content: '',
@@ -331,12 +346,13 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
         }, 800)
         // Clear the input
         this.messageInput.nativeElement.value = '';
+        this.selectedFiles = [];
 
         // If this is a new chat, then redirect to the created chat
         if (!this.chat.id || this.chat.id === 'new') {
             this._changeDetectorRef.markForCheck();
             // TODO handle error, set the message back to the messageInput and remove from chat.messages
-            this._chatService.createChat(message, this.llmId).subscribe(async (chat: Chat) => {
+            this._chatService.createChat(message, this.llmId, attachments).subscribe(async (chat: Chat) => {
                 clearInterval(this.generatingTimer)
                 this.generating = false;
                 this.router.navigate([`/ui/chat/${chat.id}`]).catch(console.error);
@@ -346,20 +362,51 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
         }
 
         this._scrollToBottom();
-        this._chatService.sendMessage(this.chat.id, message, this.llmId).subscribe((chat: Chat) => {
-            console.log(`message sent`)
-            console.log(chat)
-            this.chat = clone(chat);
-            clearInterval(this.generatingTimer)
-            this.generating = false;
-            this.sendIcon = 'heroicons_outline:paper-airplane'
-            this._resizeMessageInput();
-            this._scrollToBottom();
+        this._chatService.sendMessage(this.chat.id, message, this.llmId, attachments).subscribe({
+            next: (chat: Chat) => {
+                console.log(`message sent`)
+                console.log(chat)
+                this.chat = clone(chat);
+                clearInterval(this.generatingTimer)
+                this.generating = false;
+                this.sendIcon = 'heroicons_outline:paper-airplane'
+                this._resizeMessageInput();
+                this._scrollToBottom();
 
-            // Mark for check
-            this._changeDetectorRef.markForCheck();
+                // Mark for check
+                this._changeDetectorRef.markForCheck();
+            },
+            error: (error) => {
+                console.error('Error sending message:', error);
+                
+                // Remove the two pending messages
+                this.chat.messages.pop(); // Remove generating message
+                this.chat.messages.pop(); // Remove user message
+                
+                // Restore the message input and files
+                this.messageInput.nativeElement.value = message;
+                this.selectedFiles = attachments.map(a => a.data);
+                
+                // Reset UI state
+                clearInterval(this.generatingTimer);
+                this.generating = false;
+                this.sendIcon = 'heroicons_outline:paper-airplane';
+                
+                // Show error message
+                this._snackBar.open(
+                    'Failed to send message. Please try again.',
+                    'Close',
+                    {
+                        duration: 5000,
+                        horizontalPosition: 'center',
+                        verticalPosition: 'bottom',
+                        panelClass: ['error-snackbar']
+                    }
+                );
+                
+                this._changeDetectorRef.markForCheck();
+            }
         });
-        // TODO catch errors and set this.generating=false
     }
 
     private _scrollToBottom(): void {
@@ -486,6 +533,53 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
                 console.error('Error sending audio message', error);
             }
         );
+    }
+
+    onFileSelected(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        if (input.files) {
+            this.addFiles(Array.from(input.files));
+        }
+    }
+
+    removeFile(file: File): void {
+        const index = this.selectedFiles.indexOf(file);
+        if (index > -1) {
+            this.selectedFiles.splice(index, 1);
+            this._changeDetectorRef.markForCheck();
+        }
+    }
+
+    onDragOver(event: DragEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    onDrop(event: DragEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const files = Array.from(event.dataTransfer?.files || []);
+        this.addFiles(files);
+    }
+
+    private addFiles(files: File[]): void {
+        // 10MB limit per file
+        const MAX_FILE_SIZE = 10 * 1024 * 1024;
+        
+        files.forEach(file => {
+            if (file.size > MAX_FILE_SIZE) {
+                // TODO: Show error toast
+                console.error(`File ${file.name} exceeds 10MB limit`);
+                return;
+            }
+            if (!this.selectedFiles.find(f => f.name === file.name)) {
+                console.log(`Adding file ${file.name}`)
+                this.selectedFiles.push(file);
+            }
+        });
+        
+        this._changeDetectorRef.markForCheck();
     }
 }
 

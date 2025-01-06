@@ -19,6 +19,9 @@ export interface VersionControlSystem {
 
 	switchToBranch(branchName: string): Promise<void>;
 
+	/** Pull the changes from the remote/origin server for the current branch */
+	pull(): Promise<void>;
+
 	/** Gets the current branch name */
 	getBranchName(): Promise<string>;
 

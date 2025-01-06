@@ -5,6 +5,7 @@ import { RunAgentConfig } from '#agent/agentRunner';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { errorToString } from '#utils/errors';
+import { formatMillisDuration } from '#utils/time';
 import { appContext } from '../applicationContext';
 
 /**
@@ -20,12 +21,15 @@ export async function runAgentWorkflow(config: RunAgentConfig, workflow: (agent:
 
 	return agentContextStorage.run(context, async () => {
 		try {
+			const start = Date.now();
 			await withActiveSpan(config.agentName, async (span: Span) => {
 				await workflow(context);
 			});
 			context = agentContext();
 			context.state = 'completed';
-			logger.info(`Completed. Cost $${context.cost.toFixed(2)}`);
+			const duration = Date.now() - start;
+
+			logger.info(`Completed. Cost $${context.cost.toFixed(2)}. Time: ${formatMillisDuration(duration)}`);
 		} catch (e) {
 			logger.error(e);
 			context = agentContext();

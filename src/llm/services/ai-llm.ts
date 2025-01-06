@@ -80,7 +80,7 @@ export abstract class AiLLM<Provider extends ProviderV1> extends BaseLLM {
 
 			const requestTime = Date.now();
 			try {
-				const result: GenerateTextResult<any> = await aiGenerateText({
+				const result: GenerateTextResult<any, any> = await aiGenerateText({
 					model: this.aiModel(),
 					messages,
 					temperature: opts?.temperature,
@@ -92,10 +92,6 @@ export abstract class AiLLM<Provider extends ProviderV1> extends BaseLLM {
 				const finishTime = Date.now();
 				const llmCall: LlmCall = await llmCallSave;
 
-				// TODO calculate costs from response tokens
-				result.usage.totalTokens;
-				result.usage.promptTokens;
-				result.usage.completionTokens;
 				const inputCost = this.calculateInputCost(prompt);
 				const outputCost = this.calculateOutputCost(responseText);
 				const cost = inputCost + outputCost;
@@ -104,6 +100,8 @@ export abstract class AiLLM<Provider extends ProviderV1> extends BaseLLM {
 				llmCall.timeToFirstToken = null; // Not available in this implementation
 				llmCall.totalTime = finishTime - requestTime;
 				llmCall.cost = cost;
+				llmCall.inputTokens = result.usage.promptTokens;
+				llmCall.outputTokens = result.usage.completionTokens;
 				addCost(cost);
 
 				span.setAttributes({

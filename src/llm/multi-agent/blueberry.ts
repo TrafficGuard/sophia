@@ -2,7 +2,7 @@ import { BaseLLM } from '#llm/base-llm';
 import { GenerateTextOptions, LLM } from '#llm/llm';
 import { getLLM } from '#llm/llmFactory';
 import { Claude3_5_Sonnet_Vertex } from '#llm/services/anthropic-vertex';
-import { cerebrasLlama3_70b } from '#llm/services/cerebras';
+import { cerebrasLlama3_3_70b } from '#llm/services/cerebras';
 import { fireworksLlama3_405B } from '#llm/services/fireworks';
 import { GPT4o } from '#llm/services/openai';
 import { Gemini_1_5_Flash, Gemini_1_5_Pro } from '#llm/services/vertexai';
@@ -108,7 +108,7 @@ export class Blueberry extends BaseLLM {
 			}
 		}
 		// if (!this.llms) this.llms = [Claude3_5_Sonnet_Vertex(), GPT4o(), Gemini_1_5_Pro(), Claude3_5_Sonnet_Vertex(), fireworksLlama3_405B()];
-		let llm = cerebrasLlama3_70b();
+		let llm = cerebrasLlama3_3_70b();
 		// llm = groqLlama3_1_70B();
 		llm = Gemini_1_5_Flash();
 		if (!this.llms) this.llms = [llm, llm, llm, llm, llm];

@@ -5,11 +5,11 @@ import {
     RouterStateSnapshot,
     Routes,
 } from '@angular/router';
-import { ChatComponent } from 'app/modules/admin/apps/chat/chat.component';
-import { ChatService } from 'app/modules/admin/apps/chat/chat.service';
-import { ChatsComponent } from 'app/modules/admin/apps/chat/chats/chats.component';
-import { ConversationComponent } from 'app/modules/admin/apps/chat/conversation/conversation.component';
-import { EmptyConversationComponent } from 'app/modules/admin/apps/chat/empty-conversation/empty-conversation.component';
+import { ChatComponent } from 'app/modules/chat/chat.component';
+import { ChatService } from 'app/modules/chat/chat.service';
+import { ChatsComponent } from 'app/modules/chat/chats/chats.component';
+import { ConversationComponent } from 'app/modules/chat/conversation/conversation.component';
+import { EmptyConversationComponent } from 'app/modules/chat/empty-conversation/empty-conversation.component';
 import { catchError, throwError } from 'rxjs';
 
 /**

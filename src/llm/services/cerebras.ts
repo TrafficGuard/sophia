@@ -7,8 +7,7 @@ import { withActiveSpan } from '#o11y/trace';
 import { currentUser } from '#user/userService/userContext';
 import { RetryableError } from '../../cache/cacheRetry';
 import { BaseLLM } from '../base-llm';
-import { GenerateTextOptions, LLM, LlmMessage, combinePrompts } from '../llm';
-
+import { GenerateTextOptions, LLM, LlmMessage } from '../llm';
 import SystemMessageRequest = CompletionCreateParams.SystemMessageRequest;
 import AssistantMessageRequest = CompletionCreateParams.AssistantMessageRequest;
 import UserMessageRequest = CompletionCreateParams.UserMessageRequest;
@@ -19,14 +18,13 @@ export const CEREBRAS_SERVICE = 'cerebras';
 export function cerebrasLLMRegistry(): Record<string, () => LLM> {
 	return {
 		'cerebras:llama3.1-8b': cerebrasLlama3_8b,
-		'cerebras:llama3.1-70b': cerebrasLlama3_70b,
+		'cerebras:llama3.3-70b': cerebrasLlama3_3_70b,
 	};
 }
 
 export function cerebrasLlama3_8b(): LLM {
 	return new CerebrasLLM(
-		'LLaMA3 8b (Cerebras)',
-		CEREBRAS_SERVICE,
+		'Llama 3.1 8b (Cerebras)',
 		'llama3.1-8b',
 		8_192,
 		(input: string) => 0, //(input.length * 0.05) / (1_000_000 * 4),
@@ -36,11 +34,10 @@ export function cerebrasLlama3_8b(): LLM {
 	);
 }
 
-export function cerebrasLlama3_70b(): LLM {
+export function cerebrasLlama3_3_70b(): LLM {
 	return new CerebrasLLM(
-		'LLaMA3 70b (Cerebras)',
-		CEREBRAS_SERVICE,
-		'llama3.1-70b',
+		'Llama 3.3 70b (Cerebras)',
+		'llama-3.3-70b',
 		8_192,
 		(input: string) => 0, //(input.length * 0.05) / (1_000_000 * 4),
 		(output: string) => 0, //(output.length * 0.08) / (1_000_000 * 4),
@@ -57,7 +54,6 @@ export class CerebrasLLM extends BaseLLM {
 
 	constructor(
 		displayName: string,
-		service: string,
 		model: string,
 		maxInputTokens: number,
 		/** Needed for Aider when we only have the text size */
@@ -67,15 +63,13 @@ export class CerebrasLLM extends BaseLLM {
 		private costPerMillionInputTokens: number,
 		private costPerMillionOutputTokens: number,
 	) {
-		super(displayName, service, model, maxInputTokens, calculateInputCost, calculateOutputCost);
+		super(displayName, CEREBRAS_SERVICE, model, maxInputTokens, calculateInputCost, calculateOutputCost);
 	}
 
 	client(): Cerebras {
-		if (!this._client) {
-			this._client = new Cerebras({
-				apiKey: currentUser().llmConfig.cerebrasKey || process.env.CEREBRAS_API_KEY,
-			});
-		}
+		this._client ??= new Cerebras({
+			apiKey: currentUser().llmConfig.cerebrasKey || process.env.CEREBRAS_API_KEY,
+		});
 		return this._client;
 	}
 

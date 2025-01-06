@@ -83,6 +83,20 @@
                                 }"
                             >
                                 <!-- Bubble -->
+                                <!-- Image Attachments -->
+                                @if (message.attachments && message.attachments.length > 0) {
+                                    @for (attachment of message.attachments; track attachment.filename) {
+                                        @if (attachment.type === 'image') {
+                                            <div class="mb-2">
+                                                <img [src]="attachment.previewUrl" alt="{{ attachment.filename }}" class="w-full max-w-md h-auto rounded" />
+                                                <!--
+                                                <div class="text-sm text-gray-500">{{ attachment.filename }}</div>
+                                                -->
+                                            </div>
+                                        }
+                                    }
+                                }
+
                                 <div
                                     class="relative max-w-3/4 rounded-lg px-3 py-2"
                                     [ngClass]="{
@@ -101,6 +115,18 @@
                                             [data]="message.content"
                                             ngPreserveWhitespaces
                                         ></markdown>
+                                        <!-- Display non-image attachments -->
+                                        @if (message.attachments && message.attachments.length > 0) {
+                                            <div class="mt-2">
+                                                @for (attachment of message.attachments; track attachment.filename) {
+                                                    @if (attachment.type !== 'image') {
+                                                        <div>
+                                                            <div class="text-sm text-gray-500">{{ attachment.filename }}</div>
+                                                        </div>
+                                                    }
+                                                }
+                                            </div>
+                                        }
 
                                         <!-- Regenerate button for AI messages -->
                                         @if (!message.isMine) {
@@ -133,7 +159,7 @@
                                         }
                                     </div>
                                 </div>
-                                <!-- Time -->
+                                <!-- Time
                                 @if (
                                     first || last ||
                                     chat.messages[i + 1].isMine !== message.isMine ||
@@ -148,7 +174,7 @@
                                     >
                                         {{ message.createdAt | date: 'HH:mm' }}
                                     </div>
-                                }
+                                }-->
                             </div>
                         }
                     </div>
@@ -160,16 +186,19 @@
                     <div class="flex flex-col items-start mr-4 -mt-2">
                         <!-- Buttons -->
                         <div class="flex items-center">
-                            <!--
-                            <button mat-icon-button>
-                                <mat-icon [svgIcon]="'heroicons_outline:face-smile'"></mat-icon>
-                            </button>
-
-                            <button class="ml-0.5" [matTooltip]="'Temperature'">
-                                <mat-icon [svgIcon]="'device_thermostat'"></mat-icon>
-                            </button>
-                            -->
-                            <button class="ml-0.5" mat-icon-button [disabled]="true" [matTooltip]="'Attach a file. You can also drag a file onto the message field.'">
+                            <input
+                                type="file"
+                                #fileInput
+                                (change)="onFileSelected($event)"
+                                [multiple]="true"
+                                class="hidden"
+                                accept="image/*,.pdf,.txt,.doc,.docx"
+                            />
+                            <button 
+                                class="ml-0.5" 
+                                mat-icon-button 
+                                (click)="fileInput.click()"
+                                [matTooltip]="'Attach a file. You can also drag a file onto the message field.'">
                                 <mat-icon [svgIcon]="'heroicons_outline:paper-clip'"></mat-icon>
                             </button>
                             <button class="ml-0.5"
@@ -191,7 +220,7 @@
                             </button>
                         </div>
                         <!-- mat-select -->
-                        <mat-form-field appearance="fill" class="w-20 mt-2" style="min-width: 200px" subscriptSizing="dynamic">
+                        <mat-form-field appearance="fill" class="w-20 mt-2" style="min-width: 225px" subscriptSizing="dynamic">
                             <mat-select #llmSelect (keydown)="handleLlmKeydown($event)" placeholder="LLM" [(value)]="llmId">
                                 @for (llm of llms; track llm.id) {
                                     <mat-option [value]="llm.id">
@@ -201,10 +230,36 @@
                             </mat-select>
                         </mat-form-field>
                     </div>
-                    <!-- Message Input Field -->
-                    <mat-form-field class="fuse-mat-dense fuse-mat-rounded fuse-mat-bold w-full" subscriptSizing="dynamic">
-                        <textarea matInput cdkTextareaAutosize #messageInput rows="3" class="max-h-100"></textarea>
-                    </mat-form-field>
+                    <div class="flex flex-col w-full">
+                        <!-- Attachment previews -->
+                        @if (selectedFiles.length > 0) {
+                            <div class="flex flex-wrap gap-2 mb-2">
+                                @for (file of selectedFiles; track file.name) {
+                                    <div class="flex items-center p-2 bg-gray-100 dark:bg-gray-800 rounded">
+                                        <span class="text-sm truncate max-w-[150px]">{{file.name}}</span>
+                                        <button
+                                                class="ml-1"
+                                                mat-icon-button
+                                                (click)="removeFile(file)">
+                                            <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        <!-- Message Input Field -->
+                        <mat-form-field class="fuse-mat-dense fuse-mat-rounded fuse-mat-bold w-full" subscriptSizing="dynamic">
+                            <textarea 
+                                matInput 
+                                cdkTextareaAutosize 
+                                #messageInput 
+                                rows="3" 
+                                class="max-h-100"
+                                (dragover)="onDragOver($event)"
+                                (drop)="onDrop($event)">
+                            </textarea>
+                        </mat-form-field>
+                    </div>
                     <!-- Send Button -->
                     <div class="my-px ml-4 mt-2 flex h-11 items-center">
                         <button mat-icon-button (click)="sendMessage()">

@@ -1,4 +1,3 @@
-import path from 'path';
 import { agentContext, getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { FileSystemService } from '#functions/storage/fileSystemService';
@@ -7,6 +6,7 @@ import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
 import { CompileErrorAnalysis, CompileErrorAnalysisDetails, analyzeCompileErrors } from '#swe/analyzeCompileErrors';
 import { getRepositoryOverview, getTopLevelSummary } from '#swe/documentationBuilder';
+import { includeAlternativeAiToolFiles } from '#swe/includeAlternativeAiToolFiles';
 import { reviewChanges } from '#swe/reviewChanges';
 import { supportingInformation } from '#swe/supportingInformation';
 import { execCommand, runShellCommand } from '#utils/exec';
@@ -38,22 +38,30 @@ export class CodeEditingAgent {
 	 * Runs a workflow which finds, edits and creates the required files to implement the requirements, and committing changes to version control.
 	 * It also compiles, formats, lints, and runs tests where applicable.
 	 * @param requirements The detailed requirements to implement, including supporting documentation and code samples. Do not refer to details in memory etc, you must provide the actual details.
+	 * altOptions are for programmatic use and not exposed to the autonomous agents.
 	 */
 	@func()
-	async runCodeEditWorkflow(requirements: string, projectInfo?: ProjectInfo): Promise<void> {
-		if (!projectInfo) {
+	async runCodeEditWorkflow(
+		requirements: string,
+		altOptions: { fileSelection?: string[]; projectInfo?: ProjectInfo; workingDirectory?: string } = {},
+	): Promise<void> {
+		let projectInfo: ProjectInfo;
+		if (!altOptions.projectInfo) {
 			const detected: ProjectInfo[] = await detectProjectInfo();
 			if (detected.length !== 1) throw new Error('projectInfo array must have one item');
 			projectInfo = detected[0];
 		}
-
 		logger.info(projectInfo);
+
 		const fs: FileSystemService = getFileSystem();
-		const git = fs.vcs;
+
+		if (altOptions.workingDirectory) fs.setWorkingDirectory(altOptions.workingDirectory);
+
 		fs.setWorkingDirectory(projectInfo.baseDir);
 
 		// Run in parallel to the requirements generation
-		// NODE_ENV development needed to install devDependencies for Node.js projects.
+		// NODE_ENV=development is needed to install devDependencies for Node.js projects.
+		// Set this in case the current process has NODE_ENV set to 'production'
 		const installPromise: Promise<any> = projectInfo.initialise
 			? runShellCommand(projectInfo.initialise, { envVars: { NODE_ENV: 'development' } })
 			: Promise.resolve();
@@ -63,20 +71,23 @@ export class CodeEditingAgent {
 		const gitBase = !projectInfo.devBranch || projectInfo.devBranch === currentBranch ? headCommit : projectInfo.devBranch;
 		logger.info(`git base ${gitBase}`);
 
-		// Find the initial set of files required for editing
-		const filesResponse: SelectFilesResponse = await this.selectFilesToEdit(requirements, projectInfo);
-		const initialSelectedFiles: string[] = [
-			...filesResponse.primaryFiles.map((selected) => selected.path),
-			...filesResponse.secondaryFiles.map((selected) => selected.path),
-		];
-		logger.info(initialSelectedFiles, `Initial selected files (${initialSelectedFiles.length})`);
+		let fileSelection: string[] = altOptions.fileSelection || [];
+		if (!fileSelection) {
+			// Find the initial set of files required for editing
+			const filesResponse: SelectFilesResponse = await this.selectFilesToEdit(requirements, projectInfo);
+			fileSelection = [...filesResponse.primaryFiles.map((selected) => selected.path), ...filesResponse.secondaryFiles.map((selected) => selected.path)];
+		}
 
-		// Perform a first pass on the files to generate an implementation specification
+		await includeAlternativeAiToolFiles(fileSelection);
+
+		logger.info(fileSelection, `Initial selected files (${fileSelection.length})`);
+
+		// Perform a first pass on the selected files to generate an implementation specification
 
 		const repositoryOverview: string = await getRepositoryOverview();
 		const installedPackages: string = await projectInfo.languageTools.getInstalledPackages();
 
-		const implementationDetailsPrompt = `${repositoryOverview}${installedPackages}${await fs.readFilesAsXml(initialSelectedFiles)}
+		const implementationDetailsPrompt = `${repositoryOverview}${installedPackages}${await fs.readFilesAsXml(fileSelection)}
 		<requirements>${requirements}</requirements>
 		You are a senior software engineer. Your task is to review the provided user requirements against the code provided and produce a detailed, comprehensive implementation design specification to give to a developer to implement the changes in the provided files.
 		Do not provide any details of verification commands etc as the CI/CD build will run integration tests. Only detail the changes required to the files for the pull request.
@@ -120,7 +131,7 @@ Then respond in following format:
 		await installPromise;
 
 		// Edit/compile loop ----------------------------------------
-		let compileErrorAnalysis: CompileErrorAnalysis | null = await this.editCompileLoop(projectInfo, initialSelectedFiles, implementationRequirements);
+		let compileErrorAnalysis: CompileErrorAnalysis | null = await this.editCompileLoop(projectInfo, fileSelection, implementationRequirements);
 		this.failOnCompileError(compileErrorAnalysis);
 
 		// Store in memory for now while we see how the prompt performs
@@ -135,7 +146,7 @@ Then respond in following format:
 			for (const reviewItem of reviewItems) {
 				reviewRequirements += `\n- ${reviewItem}`;
 			}
-			compileErrorAnalysis = await this.editCompileLoop(projectInfo, initialSelectedFiles, reviewRequirements);
+			compileErrorAnalysis = await this.editCompileLoop(projectInfo, fileSelection, reviewRequirements);
 			this.failOnCompileError(compileErrorAnalysis);
 		}
 
@@ -394,7 +405,7 @@ Then respond in following format:
 			action:
 				'You will respond ONLY in JSON. From the requirements quietly consider which the files may be required to complete the task. You MUST output your answer ONLY as JSON in the format of this example:\n<example>\n{\n files: ["file1", "file2", "file3"]\n}\n</example>',
 		});
-		const response: any = await llms().medium.generateJson(prompt, { id: 'extractFilenames' });
+		const response: any = await llms().medium.generateJson(prompt, { id: 'Extract Filenames' });
 		return response.files;
 	}
 }

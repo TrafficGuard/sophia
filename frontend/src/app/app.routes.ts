@@ -64,7 +64,7 @@ export const appRoutes: Route[] = [
         ]
     },
 
-    // Admin routes
+    // Module routes
     {
         path: 'ui',
         canActivate: [AuthGuard],
@@ -74,9 +74,9 @@ export const appRoutes: Route[] = [
             initialData: initialDataResolver
         },
         children: [
-            {path: 'example', loadChildren: () => import('app/modules/admin/home/home.routes')},
+            //{path: 'example', loadChildren: () => import('app/modules/admin/home/home.routes')},
             {path: 'profile', loadChildren: () => import('app/modules/profile/profile.routes')},
-            {path: 'chat', loadChildren: () => import('app/modules/admin/apps/chat/chat.routes')},
+            {path: 'chat', loadChildren: () => import('app/modules/chat/chat.routes')},
             {path: 'agents', loadChildren: () => import('app/modules/agents/agent.routes')},
             {path: 'code-reviews', loadChildren: () => import('app/modules/code-review/code-review.routes')},
             {path: 'actions', loadChildren: () => import('app/modules/actions/actions.routes')},

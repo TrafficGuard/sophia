@@ -21,7 +21,7 @@ class TestLLM extends BaseLLM {
 	}
 }
 
-describe.only('BaseLLM.parseGenerateTextParameters', () => {
+describe('BaseLLM.parseGenerateTextParameters', () => {
 	const testLLM = new TestLLM();
 
 	it('should handle userPrompt and opts', () => {
