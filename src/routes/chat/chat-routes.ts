@@ -194,7 +194,7 @@ async function extractMessage(req: FastifyRequest<any>): Promise<{ llmId: string
 }
 
 /**
- * Converts a text message and attachments from the UI to the UserContent type stored in the database
+ * Converts a text message and attachments from the UI to the UserContentExt type stored in the database
  * @param message
  * @param attachments
  */
