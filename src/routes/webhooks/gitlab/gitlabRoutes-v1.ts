@@ -3,7 +3,6 @@ import { FastifyReply } from 'fastify';
 import { agentContextStorage, createContext } from '#agent/agentContextLocalStorage';
 import { AgentContext } from '#agent/agentContextTypes';
 import { RunAgentConfig } from '#agent/agentRunner';
-import { serializeContext } from '#agent/agentSerialization';
 import { send, sendSuccess } from '#fastify/index';
 import { GitLab } from '#functions/scm/gitlab';
 import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
@@ -45,10 +44,16 @@ export async function gitlabRoutesV1(fastify: AppFastifyInstance) {
 				humanInLoop: envVarHumanInLoopSettings(),
 			};
 			const context: AgentContext = createContext(config);
+			const mergeRequestId = `${event.project.id}, ${event.object_attributes.id}, ${event.object_attributes.title}`;
+			logger.info(`Agent ${context.agentId} reviewing merge request ${mergeRequestId}`);
+
 			agentContextStorage.run(context, () => {
 				new GitLab()
 					.reviewMergeRequest(event.project.id, event.object_attributes.id)
-					.catch((error) => logger.error(error, `Error reviewing merge request ${event.project.id}, ${event.object_attributes.id}`));
+					.then(() => {
+						logger.debug(`Competed review of merge request ${mergeRequestId}`);
+					})
+					.catch((error) => logger.error(error, `Error reviewing merge request ${mergeRequestId}`));
 			});
 
 			send(reply, 200);
