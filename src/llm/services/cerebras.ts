@@ -18,7 +18,7 @@ export const CEREBRAS_SERVICE = 'cerebras';
 export function cerebrasLLMRegistry(): Record<string, () => LLM> {
 	return {
 		'cerebras:llama3.1-8b': cerebrasLlama3_8b,
-		'cerebras:llama3.3-70b': cerebrasLlama3_3_70b,
+		'cerebras:llama-3.3-70b': cerebrasLlama3_3_70b,
 	};
 }
 
