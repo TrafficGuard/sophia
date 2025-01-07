@@ -3,6 +3,7 @@ import { unlinkSync } from 'node:fs';
 import { expect } from 'chai';
 import { systemDir } from '../appVars';
 import { parseUserCliArgs, saveAgentId } from './cli';
+import { optimizeProjectStructure } from '#swe/codeEditingAgent';
 
 describe('parseProcessArgs', () => {
 	beforeEach(() => {
@@ -38,5 +39,21 @@ describe('parseProcessArgs', () => {
 		const result = parseUserCliArgs('test', []);
 		expect(result.resumeAgentId).to.be.undefined;
 		expect(result.initialPrompt).to.be.empty;
+	});
+});
+
+describe('optimizeProjectStructure', () => {
+	it('should optimize project structure with default rules', async () => {
+		const result = await optimizeProjectStructure({});
+		expect(result).to.be.undefined;
+	});
+
+	it('should optimize project structure with custom rules', async () => {
+		const customRules = JSON.stringify([
+			{ type: 'move', from: 'src/old-folder', to: 'src/new-folder' },
+			{ type: 'delete', target: 'src/temp-file.ts' },
+		]);
+		const result = await optimizeProjectStructure({ rules: customRules });
+		expect(result).to.be.undefined;
 	});
 });

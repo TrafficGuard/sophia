@@ -101,7 +101,18 @@ By default, it writes the output to `scrape.md`. Alternatively you can provide a
 `npm run query <question>` runs the codebase query agent at *src/swe/discovery/codebaseQuery.ts* which can answer ad hoc
 questions about a codebase/folder contents.
 
+### optimize
 
+`npm run optimize` runs the optimizeProjectStructure function configured in `src/cli/cli.ts`
+
+Without arguments, the script will optimize the project structure based on predefined rules. You can also provide specific options to customize the optimization process.
+
+For example, you could run:
+```bash
+npm run optimize -- --rules=custom-rules.json
+```
+
+This will use the custom rules defined in `custom-rules.json` to optimize the project structure.
 
 ## Development
 
