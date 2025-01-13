@@ -25,7 +25,7 @@ export function llms(): AgentLLMs {
 export function addCost(cost: number) {
 	const store = agentContextStorage.getStore();
 	if (!store) return;
-	logger.debug(`Adding cost $${cost}`);
+	logger.debug(`Adding cost $${cost.toFixed(6)}`);
 	store.cost += cost;
 	store.budgetRemaining -= cost;
 }
@@ -81,6 +81,7 @@ export function createContext(config: RunAgentConfig): AgentContext {
 		memory: {},
 		invoking: [],
 		lastUpdate: Date.now(),
+		liveFiles: [],
 	};
 	return context;
 }
