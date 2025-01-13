@@ -68,13 +68,23 @@ export function Gemini_1_5_Flash() {
 	);
 }
 
+// export function Gemini_1_5_Flash_8B() {
+// 	return new VertexLLM(
+// 		'Gemini 1.5 Flash 8B',
+// 		'gemini-1.5-flash-8b',
+// 		1_000_000,
+// 		(input: string) => (input.length * 0.000125) / 1000,
+// 		(output: string) => (output.length * 0.000375) / 1000,
+// 	);
+// }
+
 export function Gemini_2_0_Flash() {
 	return new VertexLLM(
 		'Gemini 2.0 Flash Experimental',
 		'gemini-2.0-flash-exp',
 		1_000_000,
-		(input: string) => 0, //(input.length * 0.000125) / 1000,
-		(output: string) => 0, //(output.length * 0.000375) / 1000,
+		(input: string) => (input.length * 0.000125) / 1000,
+		(output: string) => (output.length * 0.000375) / 1000,
 	);
 }
 
@@ -83,8 +93,8 @@ export function Gemini_2_0_Flash_Thinking() {
 		'Gemini 2.0 Flash Thinking Experimental',
 		'gemini-2.0-flash-thinking-exp-1219',
 		1_000_000,
-		(input: string) => 0, //(input.length * 0.000125) / 1000,
-		(output: string) => 0, //(output.length * 0.000375) / 1000,
+		(input: string) => (input.length * 0.000125) / 1000,
+		(output: string) => (output.length * 0.000375) / 1000,
 	);
 }
 
