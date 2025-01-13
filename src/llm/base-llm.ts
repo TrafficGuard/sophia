@@ -85,14 +85,6 @@ export abstract class BaseLLM implements LLM {
 		return this.generateTextFromMessages(messages, options);
 	}
 
-	async generateFunctionResponse(systemPrompt: string, prompt: string, opts?: GenerateFunctionOptions): Promise<FunctionResponse> {
-		const response = await this._generateText(systemPrompt, prompt, opts);
-		return {
-			textResponse: response,
-			functions: parseFunctionCallsXml(response),
-		};
-	}
-
 	generateTextWithResult(userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
 	generateTextWithResult(systemPrompt: string, userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
 	generateTextWithResult(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string>;
