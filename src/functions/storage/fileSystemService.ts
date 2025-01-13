@@ -12,7 +12,7 @@ import { VersionControlSystem } from '#functions/scm/versionControlSystem';
 import { LlmTools } from '#functions/util';
 import { logger } from '#o11y/logger';
 import { getActiveSpan, span } from '#o11y/trace';
-import { spawnCommand } from '#utils/exec';
+import { execCmd, spawnCommand } from '#utils/exec';
 import { CDATA_END, CDATA_START, needsCDATA } from '#utils/xml-utils';
 import { SOPHIA_FS } from '../../appVars';
 
@@ -189,15 +189,20 @@ export class FileSystemService {
 	 * @returns the list of file and folder names
 	 */
 	async listFilesInDirectory(dirPath = '.'): Promise<string[]> {
-		// const rootPath = path.join(this.basePath, dirPath);
 		const filter: FileFilter = (name) => true;
 		const ig = ignore();
-		// TODO should go up the directories to the base path looking for .gitignore files
-		const gitIgnorePath = path.join(this.getWorkingDirectory(), dirPath, '.gitignore');
-		// console.log(gitIgnorePath);
+
+		// Determine the correct path based on whether dirPath is absolute or relative
+		let readdirPath: string;
+		if (path.isAbsolute(dirPath)) {
+			readdirPath = dirPath;
+		} else {
+			readdirPath = path.join(this.getWorkingDirectory(), dirPath);
+		}
+
+		// Load .gitignore rules if present
+		const gitIgnorePath = path.join(readdirPath, '.gitignore');
 		if (existsSync(gitIgnorePath)) {
-			// read the gitignore file into a string array
-			// console.log(`Found ${gitIgnorePath}`);
 			let lines = await fs.readFile(gitIgnorePath, 'utf8').then((data) => data.split('\n'));
 			lines = lines.map((line) => line.trim()).filter((line) => line.length && !line.startsWith('#'), filter);
 			ig.add(lines);
@@ -206,17 +211,22 @@ export class FileSystemService {
 
 		const files: string[] = [];
 
-		const readdirPath = join(this.getWorkingDirectory(), dirPath);
-		const dirents = await fs.readdir(readdirPath, { withFileTypes: true });
-		for (const dirent of dirents) {
-			const direntName = dirent.isDirectory() ? `${dirent.name}/` : dirent.name;
-			const relativePath = path.relative(this.getWorkingDirectory(), path.join(this.getWorkingDirectory(), dirPath, direntName));
+		try {
+			const dirents = await fs.readdir(readdirPath, { withFileTypes: true });
+			for (const dirent of dirents) {
+				const direntName = dirent.isDirectory() ? `${dirent.name}/` : dirent.name;
+				const relativePath = path.relative(this.getWorkingDirectory(), path.join(readdirPath, direntName));
 
-			if (!ig.ignores(relativePath)) {
-				files.push(dirent.name);
+				if (!ig.ignores(relativePath)) {
+					files.push(dirent.name);
+				}
 			}
+		} catch (error) {
+			console.error('Error reading directory:', error);
+			throw error; // Re-throw the error to be caught by the caller
 		}
-		return files; //files.map((file) => file.substring(file.lastIndexOf(path.sep, file.length - 1)));
+
+		return files;
 	}
 
 	/**
@@ -227,7 +237,7 @@ export class FileSystemService {
 	async listFilesRecursively(dirPath = './', useGitIgnore = true): Promise<string[]> {
 		this.log.debug(`listFilesRecursively cwd: ${this.workingDirectory}`);
 
-		const startPath = path.join(this.getWorkingDirectory(), dirPath);
+		const startPath = path.isAbsolute(dirPath) ? dirPath : path.join(this.getWorkingDirectory(), dirPath);
 		// TODO check isnt going higher than this.basePath
 
 		const ig = useGitIgnore ? await this.loadGitignoreRules(startPath) : ignore();
@@ -441,7 +451,9 @@ export class FileSystemService {
 
 	async listFolders(dirPath = './'): Promise<string[]> {
 		const workingDir = this.getWorkingDirectory();
-		dirPath = path.join(workingDir, dirPath);
+		if (!path.isAbsolute(dirPath)) {
+			dirPath = path.join(workingDir, dirPath);
+		}
 		try {
 			const items = await fs.readdir(dirPath);
 			const folders: string[] = [];
@@ -450,8 +462,7 @@ export class FileSystemService {
 				const itemPath = path.join(dirPath, item);
 				const stat = await fs.stat(itemPath);
 				if (stat.isDirectory()) {
-					const relativePath = path.relative(workingDir, itemPath);
-					folders.push(relativePath);
+					folders.push(item); // Return only the subfolder name
 				}
 			}
 			return folders;
@@ -567,6 +578,24 @@ export class FileSystemService {
 		});
 
 		return tree;
+	}
+
+	async getGitRoot(): Promise<string | null> {
+		try {
+			// Use git rev-parse to get the root directory
+			const result = await execCmd('git rev-parse --show-toplevel');
+
+			// If command succeeds, return the trimmed stdout (git root path)
+			if (!result.error) {
+				return result.stdout.trim();
+			}
+
+			// If git command fails, return null
+			return null;
+		} catch {
+			// Any unexpected errors also result in null
+			return null;
+		}
 	}
 }
 

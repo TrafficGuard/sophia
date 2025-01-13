@@ -2,22 +2,26 @@ import path from 'path';
 import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { LlmMessage } from '#llm/llm';
 import { logger } from '#o11y/logger';
-import { getRepositoryOverview } from '#swe/documentationBuilder';
-import { ProjectInfo, getProjectInfo } from '#swe/projectDetection';
+import { ProjectInfo, detectProjectInfo, getProjectInfo } from '#swe/projectDetection';
+import { getRepositoryOverview } from '#swe/repoIndexDocBuilder';
 import { RepositoryMaps, generateRepositoryMaps } from '#swe/repositoryMap';
 
-// WORK IN PROGRESS ------
+/*
+Agent which iteratively loads files to find the file set required for a task/query.
 
-interface AssistantAction {
+After each iteration the agent should accept or ignore each of the new files loaded.
+
+This agent is designed to utilise LLM prompt caching.
+*/
+
+interface InitialResponse {
 	inspectFiles?: string[];
-	selectFiles?: SelectedFile[];
-	ignoreFiles?: string[];
-	complete?: boolean;
 }
 
-export interface FileSelection {
-	files: SelectedFile[];
-	extracts?: FileExtract[];
+interface IterationResponse {
+	keepFiles?: SelectedFile[];
+	ignoreFiles?: SelectedFile[];
+	inspectFiles?: string[];
 }
 
 export interface SelectedFile {
@@ -26,7 +30,7 @@ export interface SelectedFile {
 	/** The reason why this file needs to in the file selection */
 	reason: string;
 	/** If the file should not need to be modified when implementing the task. Only relevant when the task is for making changes, and not just a query. */
-	readonly: boolean;
+	readonly?: boolean;
 }
 
 export interface FileExtract {
@@ -36,52 +40,115 @@ export interface FileExtract {
 	extract: string;
 }
 
-function getStageInstructions(stage: 'initial' | 'post_inspect' | 'all_inspected'): string {
-	if (stage === 'initial') {
-		return `
-At this stage, you should decide which files to inspect based on the requirements and project map.
+async function initializeFileSelectionAgent(requirements: string, projectInfo?: ProjectInfo): Promise<LlmMessage[]> {
+	// Ensure projectInfo is available
+	projectInfo ??= (await detectProjectInfo())[0];
 
-**Valid Actions**:
-- Request to inspect files by providing "inspectFiles": ["file1", "file2"]
+	// Generate repository maps and overview
+	const projectMaps: RepositoryMaps = await generateRepositoryMaps([projectInfo]);
+	const repositoryOverview: string = await getRepositoryOverview();
+	const fileSystemWithSummaries: string = `<project_files>\n${projectMaps.fileSystemTreeWithFileSummaries.text}\n</project_files>\n`;
 
-**Response Format**:
-Respond with a JSON object wrapped in <json>...</json> tags, containing only the **"inspectFiles"** property.
+	// Construct the initial prompt
+	const systemPrompt = `${repositoryOverview}${fileSystemWithSummaries}
 
-Do not include file contents unless they have been provided to you.
+Your task is to select the minimal, complete file set that will be required for completing the task/query in the requirements.
+
+Always respond only in the format/instructions requested.
+
+# Process Files Response Instructions
+
+When requested to respond as per the Proces Files Response Instructions you will need to keep/ignore each of the files you previously selected to inspect, giving a reason why.
+Then you can select additional files to read and inspect if required from the <project_files> provided in the system instructions.
+
+## Response Format
+Your response must finish in the following format:
+<observations-to-requirements>
+</observations-to-requirements>
+<keep-ignore-thinking>
+</keep-ignore-thinking>
+<select-files-thinking>
+</select-files-thinking>
+<requirements-solution-thinking>
+</requirements-solution-thinking>
+<json>
+</json>
+
+## Response Format Contents
+
+The final part of the response should be a JSON object in the following format:
+<json>
+{
+  keepFiles:[
+    {"path": "dir/file1", "reason": "..."}
+  ],
+  ignoreFiles:[
+    {"path": "dir/file1", "reason": "..."}
+  ],
+  inspectFiles: [
+    "dir1/dir2/file2"
+  ]
+}
+</json>
+
+If you believe that you have all the files required for the requirements task/query, then return an empty array for inspectFiles.
 `;
-	}
-	if (stage === 'post_inspect') {
-		return `
-You have received the contents of the files you requested to inspect.
+	// Do not include file contents unless they have been provided to you.
+	const initialUserPrompt = `<requirements>\n${requirements}\n</requirements>
 
-**Valid Actions**:
-- Decide to select or ignore the inspected files by providing:
-  - "selectFiles": [{"path": "file1", "reason": "...", "readonly": false}, ...]
-  - "ignoreFiles": ["file2", ...]
+# Initial Response Instructions
 
-**Response Format**:
-Respond with a JSON object wrapped in <json>...</json> tags, containing **"selectFiles"** and/or **"ignoreFiles"** properties.
+For this initial file selection step respond in the following format:
+<observations-related-to-requirements>
+</observations-related-to-requirements>
+<select-files-thinking>
+</select-files-thinking>
+<json>
+</json>
 
-Do not include file contents unless they have been provided to you.
+Your response must end with a JSON object wrapped in <json> tags in the following format:
+<json>
+{
+  "inspectFiles": ["dir/file1", "dir1/dir2/file2"]
+}
+</json>
 `;
-	}
-	if (stage === 'all_inspected') {
-		return `
-You have processed all inspected files.
+	return [
+		{ role: 'system', content: systemPrompt, cache: 'ephemeral' },
+		{ role: 'user', content: initialUserPrompt, cache: 'ephemeral' },
+	];
+}
 
-**Valid Actions**:
-- Request to inspect more files by providing "inspectFiles": ["file3", "file4"]
-- If you have all the necessary files, complete the selection by responding with "complete": true
+async function generateFileSelectionProcessingResponse(messages: LlmMessage[], pendingFiles: string[]): Promise<IterationResponse> {
+	const prompt = `
+${(await readFileContents(pendingFiles)).contents}
 
-**Response Format**:
-Respond with a JSON object wrapped in <json>...</json> tags, containing either:
-- **"inspectFiles"** property, or
-- **"complete": true**
+The files that must be included in either the keepFiles or ignoreFiles properties are:
+${pendingFiles.join('\n')}
 
-Do not include file contents unless they have been provided to you.
+Respond only as per the Process Files Response Instructions.
 `;
+	const iterationMessages: LlmMessage[] = [...messages, { role: 'user', content: prompt }];
+
+	return await llms().medium.generateTextWithJson(iterationMessages);
+}
+
+async function processedIterativeStepUserPrompt(response: IterationResponse): Promise<LlmMessage> {
+	const ignored = response.ignoreFiles?.map((s) => s.path) ?? [];
+	const kept = response.keepFiles?.map((s) => s.path) ?? [];
+
+	let ignoreText = '';
+	if (ignored.length) {
+		ignoreText = '\nRemoved the following ignored files:';
+		for (const ig of response.ignoreFiles) {
+			ignoreText += `\n${ig.path} - ${ig.reason}`;
+		}
 	}
-	return '';
+
+	return {
+		role: 'user',
+		content: `${(await readFileContents(kept)).contents}${ignoreText}`,
+	};
 }
 
 /**
@@ -115,7 +182,7 @@ Do not include file contents unless they have been provided to you.
  * [index] - [role]: [message]
  *
  * Messages #1
- * 0 - USER : given <task> and <filesystem-tree> and <repository-overview> select initial files for the task.
+ * 0 - SYSTEM/USER : given <task> and <filesystem-tree> and <repository-overview> select initial files for the task.
  *
  * Messages #2
  * 1 - ASSISTANT: { "inspectFiles": ["file1", "file2"] }
@@ -139,7 +206,6 @@ Do not include file contents unless they have been provided to you.
  * 0 - USER : given <task> and <filesystem-tree> and <repository-overview> select initial files for the task.
  *
  *
- *
  * The history of the actions will be kept, and always included in final message to the LLM.
  *
  * All files staged in a previous step must be processed in the next step (ie. added, extracted or removed)
@@ -147,129 +213,97 @@ Do not include file contents unless they have been provided to you.
  * @param requirements
  * @param projectInfo
  */
-export async function selectFilesAgent(requirements: string, projectInfo?: ProjectInfo): Promise<FileSelection> {
-	try {
-		projectInfo ??= await getProjectInfo();
-		const projectMaps: RepositoryMaps = await generateRepositoryMaps([projectInfo]);
-		const repositoryOverview: string = await getRepositoryOverview();
-		const fileSystemWithSummaries: string = `<project_map>\n${projectMaps.fileSystemTreeWithSummaries.text}\n</project_map>\n`;
+async function selectFilesCore(
+	requirements: string,
+	projectInfo?: ProjectInfo,
+): Promise<{
+	messages: LlmMessage[];
+	selectedFiles: SelectedFile[];
+}> {
+	const messages: LlmMessage[] = await initializeFileSelectionAgent(requirements, projectInfo);
 
-		const messages: LlmMessage[] = [];
-		const fileSelection: FileSelection = { files: [], extracts: [] };
-		let stagedFiles: string[] = [];
-		let isComplete = false;
+	const maxIterations = 10;
+	let iterationCount = 0;
 
-		const initialPrompt = `${repositoryOverview}
-        ${fileSystemWithSummaries}
-        <requirements>
-        ${requirements}
-        </requirements>`;
+	const initialResponse: InitialResponse = await llms().medium.generateTextWithJson(messages);
+	messages.push({ role: 'assistant', content: JSON.stringify(initialResponse) });
 
-		messages.push({ role: 'user', content: initialPrompt });
+	let filesToInspect = initialResponse.inspectFiles || [];
 
-		const maxIterations = 5;
-		let iterationCount = 0;
+	const keptFiles = new Set<{ path: string; reason: string }>();
+	const ignoredFiles = new Set<{ path: string; reason: string }>();
 
-		while (!isComplete) {
-			iterationCount++;
-			if (iterationCount > maxIterations) {
-				throw new Error('Maximum interaction iterations reached.');
-			}
+	while (filesToInspect.length > 0) {
+		iterationCount++;
+		if (iterationCount > maxIterations) throw new Error('Maximum interaction iterations reached.');
 
-			// Determine the current stage
-			let currentStage: 'initial' | 'post_inspect' | 'all_inspected';
-			if (iterationCount === 1) {
-				// First iteration
-				currentStage = 'initial';
-			} else if (stagedFiles.length > 0) {
-				// Just provided file contents; expecting select or ignore
-				currentStage = 'post_inspect';
-			} else {
-				// After processing inspected files
-				currentStage = 'all_inspected';
-			}
+		const response: IterationResponse = await generateFileSelectionProcessingResponse(messages, filesToInspect);
+		logger.info(response);
+		for (const ignored of response.ignoreFiles ?? []) ignoredFiles.add(ignored);
+		for (const kept of response.keepFiles ?? []) keptFiles.add(kept);
 
-			// Get the stage-specific instructions
-			const stageInstructions = getStageInstructions(currentStage);
+		messages.push(await processedIterativeStepUserPrompt(response));
+		// Don't cache the final result as it would only potentially be used once when generating a query answer
+		const cache = filesToInspect.length ? 'ephemeral' : undefined;
+		messages.push({
+			role: 'assistant',
+			content: JSON.stringify(response),
+			cache,
+		});
 
-			// Construct the current prompt by appending stage instructions
-			const currentPrompt = `
-<task>
-Your task is to select files from the <project_map> to fulfill the given requirements.
-
-Before responding, please follow these steps:
-1. **Observations**: Make observations about the project and requirements.
-2. **Thoughts**: Think about which files are necessary.
-3. **Reasoning**: Provide reasoning for your choices.
-4. **Response**: Finally, respond according to the instructions below.
-
-${stageInstructions}
-</task>`;
-
-			// Add the current prompt to messages
-			messages.push({ role: 'user', content: currentPrompt });
-
-			// Call the LLM with the current messages
-			const assistantResponse = await llms().medium.generateJson<AssistantAction>(messages);
-
-			// Add the assistant's response to the conversation history
-			messages.push({ role: 'assistant', content: JSON.stringify(assistantResponse) });
-
-			// Handle the assistant's response based on the current stage
-			if (currentStage === 'initial' && assistantResponse.inspectFiles) {
-				// Read and provide the contents of the requested files
-				const fileContents = await readFileContents(assistantResponse.inspectFiles);
-				messages.push({ role: 'user', content: fileContents });
-				stagedFiles = assistantResponse.inspectFiles;
-			} else if (currentStage === 'post_inspect' && (assistantResponse.selectFiles || assistantResponse.ignoreFiles)) {
-				// Process selected files and remove ignored files from staging
-				if (assistantResponse.selectFiles) {
-					fileSelection.files.push(...assistantResponse.selectFiles);
-				}
-				if (assistantResponse.ignoreFiles) {
-					stagedFiles = stagedFiles.filter((f) => !assistantResponse.ignoreFiles.includes(f));
-				}
-				// Ensure all staged files have been processed
-				if (stagedFiles.length > 0) {
-					const message = `Please respond with select or ignore for the remaining files in the same JSON format as before.\n${JSON.stringify(stagedFiles)}`;
-					messages.push({ role: 'user', content: message });
-				} else {
-					// Move to next stage
-					stagedFiles = [];
-				}
-			} else if (currentStage === 'all_inspected') {
-				if (assistantResponse.inspectFiles) {
-					// Read and provide the contents of the requested files
-					const fileContents = await readFileContents(assistantResponse.inspectFiles);
-					messages.push({ role: 'user', content: fileContents });
-					stagedFiles = assistantResponse.inspectFiles;
-				} else if (assistantResponse.complete) {
-					// Mark the selection process as complete
-					isComplete = true;
-				} else {
-					throw new Error('Invalid response in all_inspected stage.');
-				}
-			} else {
-				throw new Error('Unexpected response from assistant.');
-			}
+		// Max of 4 cache tags with Anthropic. Clear the first one after the cached system prompt
+		const cachedMessages = messages.filter((msg) => msg.cache === 'ephemeral');
+		if (cachedMessages.length > 4) {
+			logger.info('Removing cache tag');
+			cachedMessages[1].cache = undefined;
 		}
 
-		if (fileSelection.files.length === 0) {
-			throw new Error('No files were selected to fulfill the requirements.');
-		}
+		filesToInspect = response.inspectFiles;
 
-		logger.info(`Selected files: ${fileSelection.files.map((f) => f.path).join(', ')}`);
-
-		return fileSelection;
-	} catch (error) {
-		logger.error('Error in selectFilesAgent:', error);
-		throw error;
+		// TODO if keepFiles and ignoreFiles doesnt have all of the files in filesToInspect, then
+		// filesToInspect = filesToInspect.filter((path) => !keptFiles.has(path) && !ignoredFiles.has(path));
 	}
+
+	if (keptFiles.size === 0) throw new Error('No files were selected to fulfill the requirements.');
+
+	const selectedFiles = Array.from(keptFiles.values());
+
+	return { messages, selectedFiles };
 }
 
-async function readFileContents(filePaths: string[]): Promise<string> {
+export async function selectFilesAgent(requirements: string, projectInfo?: ProjectInfo): Promise<SelectedFile[]> {
+	const { selectedFiles } = await selectFilesCore(requirements, projectInfo);
+	return selectedFiles;
+}
+
+export async function queryWorkflow(query: string, projectInfo?: ProjectInfo): Promise<string> {
+	const { messages, selectedFiles } = await selectFilesCore(query, projectInfo);
+
+	// Construct the final prompt for answering the query
+	const finalPrompt = `<query>                                                                                                                                                                                                                                                                                                                                                                                           
+${query}
+</query>                                                                                                                                                                                                                                                                                                                                                                                          
+																																																																																													 
+Please provide a detailed answer to the query using the information from the available file contents, and including citations to the files where the relevant information was found.
+Respond in the following format (Note only the contents of the result tag will be returned to the user):
+
+<thinking></thinking>
+<reflection></reflection>
+<result></result>                                                                                                                                                                                                                                                                                 
+ `;
+
+	messages.push({ role: 'user', content: finalPrompt });
+
+	// Perform the additional LLM call to get the answer
+	const answer = await llms().medium.generateTextWithResult(messages);
+	return answer.trim();
+}
+
+async function readFileContents(filePaths: string[]): Promise<{ contents: string; invalidPaths: string[] }> {
 	const fileSystem = getFileSystem();
-	let contents = '';
+	let contents = '<files>\n';
+
+	const invalidPaths = [];
 
 	for (const filePath of filePaths) {
 		const fullPath = path.join(fileSystem.getWorkingDirectory(), filePath);
@@ -281,9 +315,9 @@ ${fileContent}
 `;
 		} catch (e) {
 			logger.info(`Couldn't read ${filePath}`);
-			contents += `Couldn't read ${filePath}\n`;
+			contents += `Invalid path ${filePath}\n`;
+			invalidPaths.push(filePath);
 		}
 	}
-
-	return contents;
+	return { contents: `${contents}</files>`, invalidPaths };
 }

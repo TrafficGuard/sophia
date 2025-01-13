@@ -5,8 +5,9 @@ import { Perplexity } from '#functions/web/perplexity';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
 import { CompileErrorAnalysis, CompileErrorAnalysisDetails, analyzeCompileErrors } from '#swe/analyzeCompileErrors';
-import { getRepositoryOverview, getTopLevelSummary } from '#swe/documentationBuilder';
+import { SelectedFile, selectFilesAgent } from '#swe/discovery/selectFilesAgent';
 import { includeAlternativeAiToolFiles } from '#swe/includeAlternativeAiToolFiles';
+import { getRepositoryOverview, getTopLevelSummary } from '#swe/repoIndexDocBuilder';
 import { reviewChanges } from '#swe/reviewChanges';
 import { supportingInformation } from '#swe/supportingInformation';
 import { execCommand, runShellCommand } from '#utils/exec';
@@ -74,8 +75,10 @@ export class CodeEditingAgent {
 		let fileSelection: string[] = altOptions.fileSelection || [];
 		if (!fileSelection) {
 			// Find the initial set of files required for editing
-			const filesResponse: SelectFilesResponse = await this.selectFilesToEdit(requirements, projectInfo);
-			fileSelection = [...filesResponse.primaryFiles.map((selected) => selected.path), ...filesResponse.secondaryFiles.map((selected) => selected.path)];
+			// const filesResponse: SelectFilesResponse = await this.selectFilesToEdit(requirements, projectInfo);
+			// fileSelection = [...filesResponse.primaryFiles.map((selected) => selected.path), ...filesResponse.secondaryFiles.map((selected) => selected.path)];
+			const selectFiles = await this.selectFiles(requirements, projectInfo);
+			fileSelection = selectFiles.map((sf) => sf.path);
 		}
 
 		await includeAlternativeAiToolFiles(fileSelection);
@@ -87,6 +90,7 @@ export class CodeEditingAgent {
 		const repositoryOverview: string = await getRepositoryOverview();
 		const installedPackages: string = await projectInfo.languageTools.getInstalledPackages();
 
+		// TODO don't need this if we use the architect mode in Aider
 		const implementationDetailsPrompt = `${repositoryOverview}${installedPackages}${await fs.readFilesAsXml(fileSelection)}
 		<requirements>${requirements}</requirements>
 		You are a senior software engineer. Your task is to review the provided user requirements against the code provided and produce a detailed, comprehensive implementation design specification to give to a developer to implement the changes in the provided files.
@@ -340,6 +344,11 @@ Then respond in following format:
 	@cacheRetry()
 	async selectFilesToEdit(requirements: string, projectInfo: ProjectInfo): Promise<SelectFilesResponse> {
 		return await selectFilesToEdit(requirements, projectInfo);
+	}
+
+	@cacheRetry()
+	async selectFiles(requirements: string, projectInfo: ProjectInfo): Promise<SelectedFile[]> {
+		return await selectFilesAgent(requirements, projectInfo);
 	}
 
 	async runStaticAnalysis(projectInfo: ProjectInfo): Promise<void> {

@@ -1,8 +1,7 @@
 import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
-import { LlmMessage } from '#llm/llm';
 import { logger } from '#o11y/logger';
-import { getTopLevelSummary } from '#swe/documentationBuilder';
 import { ProjectInfo, getProjectInfo } from '#swe/projectDetection';
+import { getTopLevelSummary } from '#swe/repoIndexDocBuilder';
 import { RepositoryMaps, generateRepositoryMaps } from '#swe/repositoryMap';
 
 interface FileSelection {
@@ -21,7 +20,7 @@ async function firstPass(query: string): Promise<string[]> {
 
 	const prompt = `${await getTopLevelSummary()}
 <project-outline>
-${projectMaps.fileSystemTreeWithSummaries.text}
+${projectMaps.fileSystemTreeWithFileSummaries.text}
 <project-outline>
 
 
@@ -55,7 +54,7 @@ async function secondPass(query: string, filePaths: string[]): Promise<string[]>
 	const fileContents = await getFileSystem().readFilesAsXml(filePaths);
 	const prompt = `${await getTopLevelSummary()}
 <project-outline>
-${projectMaps.fileSystemTreeWithSummaries.text}
+${projectMaps.fileSystemTreeWithFileSummaries.text}
 </project-outline>
 
 <query>${query}</query>
