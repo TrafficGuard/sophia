@@ -178,13 +178,6 @@ export interface LLM {
 	getMaxInputTokens(): number;
 
 	/**
-	 * Calculate costs for generation
-	 * @param input the input text
-	 * @param output the output text
-	 */
-	calculateCost(input: string, output: string): [totalCost: number, inputCost: number, outputCost: number];
-
-	/**
 	 * @param text
 	 * @returns the number of tokens in the text for this LLM
 	 */

@@ -5,6 +5,7 @@ import {
 	GenerateTextResult,
 	LanguageModelUsage,
 	LanguageModelV1,
+	ProviderMetadata,
 	StreamTextResult,
 	generateText as aiGenerateText,
 	streamText as aiStreamText,
@@ -23,21 +24,6 @@ import { appContext } from '../../applicationContext';
 export abstract class AiLLM<Provider extends ProviderV1> extends BaseLLM {
 	protected aiProvider: Provider | undefined;
 
-	/** Model id form the Vercel AI package */
-
-	constructor(
-		readonly displayName: string,
-		readonly service: string,
-		readonly model: string,
-		maxInputTokens: number,
-		/** Needed for Aider when we only have the text size */
-		readonly calculateInputCost: (input: string) => number,
-		/** Needed for Aider when we only have the text size */
-		readonly calculateOutputCost: (output: string) => number,
-	) {
-		super(displayName, service, model, maxInputTokens, calculateInputCost, calculateOutputCost);
-	}
-
 	protected abstract provider(): Provider;
 
 	protected abstract apiKey(): string | undefined;
@@ -54,14 +40,13 @@ export abstract class AiLLM<Provider extends ProviderV1> extends BaseLLM {
 		return true;
 	}
 
+	protected processMessages(llmMessages: LlmMessage[]): LlmMessage[] {
+		return llmMessages;
+	}
+
 	async generateTextFromMessages(llmMessages: LlmMessage[], opts?: GenerateTextOptions): Promise<string> {
 		return withActiveSpan(`generateTextFromMessages ${opts?.id ?? ''}`, async (span) => {
-			const messages: CoreMessage[] = llmMessages.map((msg) => {
-				if (msg.cache === 'ephemeral') {
-					msg.experimental_providerMetadata = { anthropic: { cacheControl: { type: 'ephemeral' } } };
-				}
-				return msg;
-			});
+			const messages: CoreMessage[] = this.processMessages(llmMessages);
 
 			const prompt = messages.map((m) => m.content).join('\n');
 			span.setAttributes({
@@ -92,12 +77,12 @@ export abstract class AiLLM<Provider extends ProviderV1> extends BaseLLM {
 				const finishTime = Date.now();
 				const llmCall: LlmCall = await llmCallSave;
 
-				const inputCost = this.calculateInputCost(prompt);
-				const outputCost = this.calculateOutputCost(responseText);
+				const inputCost = this.calculateInputCost('', result.usage.promptTokens, result.experimental_providerMetadata);
+				const outputCost = this.calculateOutputCost(responseText, result.usage.completionTokens);
 				const cost = inputCost + outputCost;
 
 				llmCall.responseText = responseText;
-				llmCall.timeToFirstToken = null; // Not available in this implementation
+				llmCall.timeToFirstToken = finishTime - requestTime;
 				llmCall.totalTime = finishTime - requestTime;
 				llmCall.cost = cost;
 				llmCall.inputTokens = result.usage.promptTokens;
@@ -153,7 +138,7 @@ export abstract class AiLLM<Provider extends ProviderV1> extends BaseLLM {
 
 			const requestTime = Date.now();
 			try {
-				const result = await aiStreamText({
+				const result = aiStreamText({
 					model: this.aiModel(),
 					messages,
 					temperature: opts?.temperature,
@@ -165,15 +150,10 @@ export abstract class AiLLM<Provider extends ProviderV1> extends BaseLLM {
 					onChunk({ string: textPart });
 				}
 
-				const response = await result.response;
-
-				// TODO calculate costs from response tokens
 				const usage: LanguageModelUsage = await result.usage;
-				usage.totalTokens;
-				usage.promptTokens;
-				usage.completionTokens;
-				const inputCost = this.calculateInputCost(prompt);
-				const outputCost = this.calculateOutputCost(await result.text);
+				const metadata: ProviderMetadata = await result.experimental_providerMetadata;
+				const inputCost = this.calculateInputCost('', usage.promptTokens, metadata);
+				const outputCost = this.calculateOutputCost(await result.text, usage.completionTokens);
 				const cost = inputCost + outputCost;
 				addCost(cost);
 

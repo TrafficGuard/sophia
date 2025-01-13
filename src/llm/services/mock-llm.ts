@@ -87,8 +87,8 @@ export class MockLLM extends BaseLLM {
 			const finishTime = Date.now();
 			const llmCall: LlmCall = await llmCallSave;
 
-			const inputCost = this.calculateInputCost(prompt);
-			const outputCost = this.calculateOutputCost(responseText);
+			const inputCost = this.calculateInputCost(prompt, await this.countTokens(prompt));
+			const outputCost = this.calculateOutputCost(responseText, await this.countTokens(responseText));
 			const cost = inputCost + outputCost;
 			addCost(cost);
 
