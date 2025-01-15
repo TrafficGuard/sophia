@@ -38,6 +38,8 @@ export interface ProjectInfo extends ProjectScripts {
 	devBranch: string;
 	/** Note to include in the file selection prompts. e.g. "Do not include the files XYZ unless explicitly instructed" */
 	fileSelection: string;
+	/** GLob paths of which files should be processed by the buildIndexDocs function in repoIndexDocBuilder.ts */
+	indexDocs: string[];
 }
 
 export async function getProjectInfo(): Promise<ProjectInfo | null> {
@@ -186,6 +188,7 @@ Explain your reasoning, then output a Markdown JSON block, with the JSON formatt
 		...projectScripts,
 		fileSelection: 'Do not include package manager lock files',
 		languageTools: getLanguageTools(projectDetection.language),
+		indexDocs: [],
 	};
 	logger.info(projectInfo, 'ProjectInfo detected');
 	await getFileSystem().writeFile('projectInfo.json', JSON.stringify([projectInfo], null, 2));

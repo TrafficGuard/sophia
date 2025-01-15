@@ -85,10 +85,11 @@ export function functionSchemaParser(sourceFilePath: string): Record<string, Fun
 	if (jsonUpdatedTimestamp && jsonUpdatedTimestamp > sourceUpdatedTimestamp) {
 		try {
 			const json = readFileSync(`${cachedPath}.json`).toString();
-			logger.debug(`Loading cached function schemas from ${cachedPath}.json`);
+			if (logger) logger.debug(`Loading cached function schemas from ${cachedPath}.json`);
 			return JSON.parse(json);
 		} catch (e) {
-			logger.info('Error loading cached function schemas: ', e.message);
+			if (logger) logger.info(`Error loading cached function schemas: ${e.message}`);
+			else console.log(`Error loading cached function schemas: ${e.message}`);
 		}
 	}
 

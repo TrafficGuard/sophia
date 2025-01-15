@@ -133,4 +133,6 @@ export interface AgentContext {
 	functionCallHistory: FunctionCallResult[];
 	/** How many iterations of the autonomous agent control loop to require human input to continue */
 	hilCount;
+	/** Files which are always provided in the agent control loop prompt */
+	liveFiles: string[];
 }

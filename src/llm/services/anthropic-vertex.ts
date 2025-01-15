@@ -9,7 +9,7 @@ import { currentUser } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
 import { appContext } from '../../applicationContext';
 import { RetryableError, cacheRetry } from '../../cache/cacheRetry';
-import { BaseLLM } from '../base-llm';
+import { BaseLLM, InputCostFunction, perMilTokens } from '../base-llm';
 import { MaxTokensError } from '../errors';
 import { GenerateTextOptions, LLM, LlmMessage } from '../llm';
 
@@ -33,25 +33,18 @@ export function anthropicVertexLLMRegistry(): Record<string, () => LLM> {
 
 // Supported image types image/jpeg', 'image/png', 'image/gif' or 'image/webp'
 export function Claude3_5_Sonnet_Vertex() {
-	return new AnthropicVertexLLM(
-		'Claude 3.5 Sonnet (Vertex)',
-		'claude-3-5-sonnet-v2@20241022',
-		3,
-		15,
-		(input: string) => (input.length * 3) / (1_000_000 * 3.5),
-		(output: string) => (output.length * 15) / (1_000_000 * 3.5),
-	);
+	return new AnthropicVertexLLM('Claude 3.5 Sonnet (Vertex)', 'claude-3-5-sonnet-v2@20241022', 3, 15);
 }
 
 export function Claude3_5_Haiku_Vertex() {
-	return new AnthropicVertexLLM(
-		'Claude 3.5 Haiku (Vertex)',
-		'claude-3-5-haiku@20241022',
-		1,
-		5,
-		(input: string) => (input.length * 0.25) / (1_000_000 * 3.5),
-		(output: string) => (output.length * 1.25) / (1_000_000 * 3.5),
-	);
+	return new AnthropicVertexLLM('Claude 3.5 Haiku (Vertex)', 'claude-3-5-haiku@20241022', 1, 5);
+}
+
+function inputCostFunction(dollarsPerMillionTokens: number): InputCostFunction {
+	return (input: string, tokens: number, usage: any) =>
+		(tokens * dollarsPerMillionTokens) / 1_000_000 +
+		(usage.cache_creation_input_tokens * dollarsPerMillionTokens * 1.25) / 1_000_000 +
+		(usage.cache_read_input_tokens * dollarsPerMillionTokens * 0.1) / 1_000_000;
 }
 
 // export function Claude3_Opus_Vertex() {
@@ -85,19 +78,15 @@ class AnthropicVertexLLM extends BaseLLM {
 		model: string,
 		private inputTokensMil: number,
 		private outputTokenMil: number,
-		calculateInputCost: (input: string) => number,
-		calculateOutputCost: (output: string) => number,
 	) {
-		super(displayName, ANTHROPIC_VERTEX_SERVICE, model, 200_000, calculateInputCost, calculateOutputCost);
+		super(displayName, ANTHROPIC_VERTEX_SERVICE, model, 200_000, inputCostFunction(inputTokensMil), perMilTokens(outputTokenMil));
 	}
 
 	private api(): AnthropicVertex {
-		if (!this.client) {
-			this.client = new AnthropicVertex({
-				projectId: currentUser().llmConfig.vertexProjectId ?? envVar('GCLOUD_PROJECT'),
-				region: currentUser().llmConfig.vertexRegion || process.env.GCLOUD_CLAUDE_REGION || envVar('GCLOUD_REGION'),
-			});
-		}
+		this.client ??= new AnthropicVertex({
+			projectId: currentUser().llmConfig.vertexProjectId ?? envVar('GCLOUD_PROJECT'),
+			region: currentUser().llmConfig.vertexRegion || process.env.GCLOUD_CLAUDE_REGION || envVar('GCLOUD_REGION'),
+		});
 		return this.client;
 	}
 
@@ -290,8 +279,10 @@ class AnthropicVertexLLM extends BaseLLM {
 
 			const inputTokens = message.usage.input_tokens;
 			const outputTokens = message.usage.output_tokens;
+			const usage = message.usage;
 
-			const inputCost = (inputTokens * this.inputTokensMil) / 1_000_000;
+			const inputCost = this.calculateInputCost(null, inputTokens, usage);
+
 			const outputCost = (outputTokens * this.outputTokenMil) / 1_000_000;
 			const cost = inputCost + outputCost;
 			addCost(cost);
@@ -306,6 +297,7 @@ class AnthropicVertexLLM extends BaseLLM {
 			span.setAttributes({
 				inputTokens,
 				outputTokens,
+				cachedInputTokens: usage.cache_read_input_tokens,
 				response: responseText,
 				inputCost: inputCost.toFixed(4),
 				outputCost: outputCost.toFixed(4),

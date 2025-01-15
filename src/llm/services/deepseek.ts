@@ -99,9 +99,9 @@ export class DeepseekLLM extends BaseLLM {
 
 				const responseText = response.data.choices[0].message.content;
 
-				const inputCacheHitTokens = response.data.prompt_cache_hit_tokens;
-				const inputCacheMissTokens = response.data.prompt_cache_miss_tokens;
-				const outputTokens = response.data.completion_tokens;
+				const inputCacheHitTokens = response.data.usage.prompt_cache_hit_tokens;
+				const inputCacheMissTokens = response.data.usage.prompt_cache_miss_tokens;
+				const outputTokens = response.data.usage.completion_tokens;
 
 				const timeToFirstToken = Date.now() - requestTime;
 				const finishTime = Date.now();

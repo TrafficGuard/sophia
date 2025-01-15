@@ -23,7 +23,7 @@ export function serializeContext(context: AgentContext): Record<string, any> {
 		else if (typeof context[key] === 'string' || typeof context[key] === 'number' || typeof context[key] === 'boolean') {
 			serialized[key] = context[key];
 		}
-		// Assume arrays (functionCallHistory) can be directly de(serialised) to JSON
+		// Assume arrays (functionCallHistory, liveFiles) can be directly de(serialised) to JSON
 		else if (Array.isArray(context[key])) {
 			serialized[key] = context[key];
 		}

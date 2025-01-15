@@ -146,15 +146,7 @@ export interface LLM {
 	 */
 	generateTextWithResult(prompt: string, opts?: GenerateTextOptions): Promise<string>;
 	generateTextWithResult(systemPrompt: string, prompt: string, opts?: GenerateTextOptions): Promise<string>;
-	generateTextWithResult<T>(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<T>;
-
-	/**
-	 * Generates a response expecting to contain the <function_call> element matching the FunctionResponse type
-	 * @param systemPrompt
-	 * @param userPrompt
-	 * @param opts
-	 */
-	generateFunctionResponse(systemPrompt: string, userPrompt: string, opts?: GenerateFunctionOptions): Promise<FunctionResponse>;
+	generateTextWithResult(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string>;
 
 	/**
 	 * Streams text from the LLM
@@ -184,13 +176,6 @@ export interface LLM {
 
 	/** The maximum number of input tokens */
 	getMaxInputTokens(): number;
-
-	/**
-	 * Calculate costs for generation
-	 * @param input the input text
-	 * @param output the output text
-	 */
-	calculateCost(input: string, output: string): [totalCost: number, inputCost: number, outputCost: number];
 
 	/**
 	 * @param text

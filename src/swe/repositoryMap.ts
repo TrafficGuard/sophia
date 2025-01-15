@@ -2,7 +2,7 @@ import { getFileSystem } from '#agent/agentContextLocalStorage';
 import { countTokens } from '#llm/tokens';
 import { logger } from '#o11y/logger';
 import { ProjectInfo } from '#swe/projectDetection';
-import { Summary, getTopLevelSummary, loadBuildDocsSummaries } from './documentationBuilder';
+import { Summary, getTopLevelSummary, loadBuildDocsSummaries } from './repoIndexDocBuilder';
 
 interface RepositoryMap {
 	text: string;
@@ -12,8 +12,9 @@ interface RepositoryMap {
 export interface RepositoryMaps {
 	repositorySummary: string;
 	fileSystemTree: RepositoryMap;
-	fileSystemTreeWithSummaries: RepositoryMap;
 	folderSystemTreeWithSummaries: RepositoryMap;
+	fileSystemTreeWithFolderSummaries: RepositoryMap;
+	fileSystemTreeWithFileSummaries: RepositoryMap;
 	languageProjectMap: RepositoryMap;
 }
 
@@ -38,13 +39,15 @@ export async function generateRepositoryMaps(projectInfos: ProjectInfo[]): Promi
 
 	const fileSystemTree = await getFileSystem().getFileSystemTree();
 
-	const fileSystemTreeWithSummaries = await generateFileSystemTreeWithSummaries(summaries, false);
 	const folderSystemTreeWithSummaries = await generateFolderTreeWithSummaries(summaries);
+	const fileSystemTreeWithFolderSummaries = await generateFileSystemTreeWithSummaries(summaries, false);
+	const fileSystemTreeWithFileSummaries = await generateFileSystemTreeWithSummaries(summaries, true);
 
 	return {
 		fileSystemTree: { text: fileSystemTree, tokens: await countTokens(fileSystemTree) },
 		folderSystemTreeWithSummaries: { text: folderSystemTreeWithSummaries, tokens: await countTokens(folderSystemTreeWithSummaries) },
-		fileSystemTreeWithSummaries: { text: fileSystemTreeWithSummaries, tokens: await countTokens(fileSystemTreeWithSummaries) },
+		fileSystemTreeWithFolderSummaries: { text: fileSystemTreeWithFolderSummaries, tokens: await countTokens(fileSystemTreeWithFolderSummaries) },
+		fileSystemTreeWithFileSummaries: { text: fileSystemTreeWithFileSummaries, tokens: await countTokens(fileSystemTreeWithFileSummaries) },
 		repositorySummary: await getTopLevelSummary(),
 		languageProjectMap: { text: languageProjectMap, tokens: await countTokens(languageProjectMap) },
 	};
@@ -75,6 +78,7 @@ async function generateFileSystemTreeWithSummaries(summaries: Map<string, Summar
 
 	for (const [folderPath, files] of Object.entries(treeStructure)) {
 		const folderSummary = summaries.get(folderPath);
+
 		documentation += `${folderPath}/  ${folderSummary ? `  ${folderSummary.short}` : ''}\n`;
 
 		for (const file of files) {

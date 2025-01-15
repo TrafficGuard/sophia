@@ -1,12 +1,19 @@
 import { StreamTextResult } from 'ai';
 import { AgentContext } from '#agent/agentContextTypes';
 import { countTokens } from '#llm/tokens';
-import { FunctionResponse, GenerateFunctionOptions, GenerateJsonOptions, GenerateTextOptions, LLM, LlmMessage } from './llm';
-import { extractJsonResult, extractStringResult, parseFunctionCallsXml } from './responseParsers';
+import { GenerateJsonOptions, GenerateTextOptions, LLM, LlmMessage } from './llm';
+import { extractJsonResult, extractStringResult } from './responseParsers';
 
 export interface SerializedLLM {
 	service: string;
 	model: string;
+}
+
+export type InputCostFunction = (input: string, inputTokens: number, usage?: any) => number;
+export type OutputCostFunction = (output: string, outputTokens: number) => number;
+
+export function perMilTokens(dollarsPerMillionTokens: number): InputCostFunction {
+	return (_, tokens) => (tokens * dollarsPerMillionTokens) / 1_000_000;
 }
 
 export abstract class BaseLLM implements LLM {
@@ -14,11 +21,9 @@ export abstract class BaseLLM implements LLM {
 		protected readonly displayName: string,
 		protected readonly service: string,
 		protected readonly model: string,
-		private maxInputTokens: number,
-		/** Needed for Aider when we only have the text size */
-		public readonly calculateInputCost: (input: string) => number,
-		/** Needed for Aider when we only have the text size */
-		public readonly calculateOutputCost: (output: string) => number,
+		protected maxInputTokens: number,
+		readonly calculateInputCost: InputCostFunction,
+		readonly calculateOutputCost: OutputCostFunction,
 	) {}
 
 	protected _generateText(systemPrompt: string | undefined, userPrompt: string, opts?: GenerateTextOptions): Promise<string> {
@@ -83,14 +88,6 @@ export abstract class BaseLLM implements LLM {
 			return this._generateText(systemPrompt, userPrompt, opts);
 		}
 		return this.generateTextFromMessages(messages, options);
-	}
-
-	async generateFunctionResponse(systemPrompt: string, prompt: string, opts?: GenerateFunctionOptions): Promise<FunctionResponse> {
-		const response = await this._generateText(systemPrompt, prompt, opts);
-		return {
-			textResponse: response,
-			functions: parseFunctionCallsXml(response),
-		};
 	}
 
 	generateTextWithResult(userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
@@ -167,13 +164,6 @@ export abstract class BaseLLM implements LLM {
 
 	getDisplayName(): string {
 		return this.displayName;
-	}
-
-	calculateCost(input: string, output: string): [totalCost: number, inputCost: number, outputCost: number] {
-		const inputCost = this.calculateInputCost(input);
-		const outputCost = this.calculateOutputCost(output);
-		const totalCost = inputCost + outputCost;
-		return [totalCost, inputCost, outputCost];
 	}
 
 	countTokens(text: string): Promise<number> {

@@ -3,7 +3,7 @@ import path from 'path';
 import { createByModelName } from '@microsoft/tiktokenizer';
 import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { logger } from '#o11y/logger';
-import { getRepositoryOverview } from '#swe/documentationBuilder';
+import { getRepositoryOverview } from '#swe/repoIndexDocBuilder';
 import { RepositoryMaps, generateRepositoryMaps } from '#swe/repositoryMap';
 import { ProjectInfo, getProjectInfo } from '../projectDetection';
 
@@ -27,13 +27,13 @@ export async function selectFilesToEdit(requirements: string, projectInfo?: Proj
 	const projectMaps: RepositoryMaps = await generateRepositoryMaps([projectInfo]);
 
 	const tokenizer = await createByModelName('gpt-4o'); // TODO model specific tokenizing
-	const fileSystemTreeTokens = tokenizer.encode(projectMaps.fileSystemTreeWithSummaries.text).length;
+	const fileSystemTreeTokens = tokenizer.encode(projectMaps.fileSystemTreeWithFolderSummaries.text).length;
 	logger.info(`FileSystem tree tokens: ${fileSystemTreeTokens}`);
 
 	if (projectInfo.fileSelection) requirements += `\nAdditional note: ${projectInfo.fileSelection}`;
 
 	const repositoryOverview: string = await getRepositoryOverview();
-	const fileSystemWithSummaries: string = `<project_map>\n${projectMaps.fileSystemTreeWithSummaries.text}\n</project_map>\n`;
+	const fileSystemWithSummaries: string = `<project_map>\n${projectMaps.fileSystemTreeWithFolderSummaries.text}\n</project_map>\n`;
 
 	const prompt = `${repositoryOverview}
 ${fileSystemWithSummaries}
@@ -46,12 +46,13 @@ The selected files will be passed to the AI code agent for impementation, and th
 
 You will select:
 1. The primary files which you anticipate will need to be edited, and their corresponding test files.
-2. The secondary supporting files which contain documentation and type information (interfaces, types, classes, function, consts etc) that will be required to correctly makes the changes. Include any files imported by the primary files. If the requirements reference any files relevant to the changes then include them too.
+2. The secondary supporting files which contain documentation and type information (interfaces, types, classes, function, consts etc) that will be required to correctly makes the changes. This may include any files imported by the primary files. If the requirements reference any files relevant to the changes then include them too.
 
 If there are any instructions related to file selection in the requirements, then those instructions take priority.
 
-Your response MUST ONLY be a JSON object in the format of the following example:
-The file paths MUST exist in the <project_map /> file_contents path attributes.
+Explain your observations and reasoning.
+Then finally your response must end with a JSON object in the format of the following example wrapped in <json> tags:
+The file paths must exist in the <project_map /> file_contents path attributes.
 <example>
 <json>
 {
@@ -71,7 +72,7 @@ The file paths MUST exist in the <project_map /> file_contents path attributes.
 </example>
 </task>
 `;
-	let selectedFiles = (await llms().medium.generateJson(prompt, { id: 'selectFilesToEdit' })) as SelectFilesResponse;
+	let selectedFiles = (await llms().medium.generateTextWithJson(prompt, { id: 'selectFilesToEdit' })) as SelectFilesResponse;
 
 	selectedFiles = removeLockFiles(selectedFiles);
 
@@ -96,7 +97,7 @@ async function secondPass(requirements: string, initialSelection: SelectFilesRes
 
 	const projectMaps: RepositoryMaps = await generateRepositoryMaps([projectInfo]);
 
-	const fileSystemWithSummaries: string = `<project_map>\n${projectMaps.fileSystemTreeWithSummaries.text}\n</project_map>\n`;
+	const fileSystemWithSummaries: string = `<project_map>\n${projectMaps.fileSystemTreeWithFolderSummaries.text}\n</project_map>\n`;
 	const repositoryOverview: string = await getRepositoryOverview();
 
 	const prompt = `${repositoryOverview}
@@ -190,7 +191,7 @@ This file was selected as a candidate file to implement the requirements based o
 Now that you can view the full contents of ths file, reassess if the file does need to be included in the fileset for the requirements.
 We want to ensure we have the minimal required files to reduce costs and focus on the necessary files.
 A file is considered related if it would be modified to implement the requirements, or contains essential details (code, types, configuration, documentation etc) that would be required to known when implementing the requirements.
-
+  
 Output the following:
 
 1. If there are any instructions related to file selection in the requirements, then details how that relates to the file_path and file_contents.

@@ -236,10 +236,9 @@ export class AgentDetailsComponent implements OnInit {
     }
 
     getLlmName(llmId: string): string {
-        if (!llmId) {
-            return 'Unknown';
-        }
-        return this.llmNameMap.get(llmId) || `Unknown LLM (${llmId})`;
+        if (!llmId) return 'Unknown';
+
+        return this.llmNameMap.get(llmId) || llmId;
     }
 
     openFunctionEditModal(): void {
