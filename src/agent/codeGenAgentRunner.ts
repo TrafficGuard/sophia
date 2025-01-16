@@ -26,6 +26,9 @@ const stopSequences = ['</response>'];
 
 export const CODEGEN_AGENT_SPAN = 'CodeGen Agent';
 
+/** Packages that the agent generated code is allowed to use */
+const ALLOWED_PYTHON_IMPORTS = ['json', 're', 'math', 'datetime'];
+
 let pyodide: PyodideInterface;
 
 export async function runCodeGenAgent(agent: AgentContext): Promise<AgentExecution> {
@@ -215,12 +218,10 @@ export async function runCodeGenAgent(agent: AgentContext): Promise<AgentExecuti
 						},
 					});
 					logger.info(`llmPythonCode: ${llmPythonCode}`);
-					const allowedImports = ['json', 're', 'math', 'datetime'];
 					// Add the imports from the allowed packages being used in the script
-					pythonScript = allowedImports
-						.filter((pkg) => llmPythonCode.includes(`${pkg}.`) || pkg === 'json') // always need json for JsProxyEncoder
+					pythonScript = ALLOWED_PYTHON_IMPORTS.filter((pkg) => llmPythonCode.includes(`${pkg}.`) || pkg === 'json') // always need json for JsProxyEncoder
 						.map((pkg) => `import ${pkg}\n`)
-						.join();
+						.join('\n');
 
 					pythonScript += `
 from typing import Any, List, Dict, Tuple, Optional, Union
