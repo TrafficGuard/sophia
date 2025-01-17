@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import path, { join } from 'path';
 import { logger } from '#o11y/logger';
 import { systemDir } from '../appVars';
+import { optimizeProjectStructure } from '#swe/codeEditingAgent';
 
 export interface CliOptions {
 	/** Name of the executed .ts file without the extension */
@@ -68,3 +69,13 @@ export function getLastRunAgentId(scriptName: string): string | undefined {
 	logger.warn(`No agent to resume for ${scriptName} script`);
 	return undefined;
 }
+
+export async function main() {
+	const { initialPrompt } = parseProcessArgs();
+	await optimizeProjectStructure(initialPrompt);
+}
+
+main().then(
+	() => console.log('Optimization complete'),
+	(e) => console.error(e),
+);
