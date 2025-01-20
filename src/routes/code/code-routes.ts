@@ -6,7 +6,7 @@ import { getFileSystem } from '#agent/agentContextLocalStorage';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
-import { defaultGoogleCloudLLMs } from '#llm/services/defaultLlms';
+import { defaultLLMs } from '#llm/services/defaultLlms';
 import { Gemini_1_5_Flash } from '#llm/services/vertexai';
 import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
@@ -62,7 +62,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 			try {
 				const config: RunAgentConfig = {
 					agentName,
-					llms: defaultGoogleCloudLLMs(),
+					llms: defaultLLMs(),
 					functions: [],
 					initialPrompt: requirements,
 					humanInLoop: {
@@ -98,7 +98,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 			try {
 				const config: RunAgentConfig = {
 					agentName: `Query: ${query}`,
-					llms: defaultGoogleCloudLLMs(),
+					llms: defaultLLMs(),
 					functions: [], //FileSystem,
 					initialPrompt: '',
 					humanInLoop: {
@@ -144,7 +144,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 			try {
 				const config: RunAgentConfig = {
 					agentName: `Select Files: ${requirements}`,
-					llms: defaultGoogleCloudLLMs(),
+					llms: defaultLLMs(),
 					functions: [],
 					initialPrompt: '',
 					humanInLoop: {

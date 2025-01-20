@@ -6,17 +6,13 @@ import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { shutdownTrace } from '#fastify/trace-init/trace-init';
 import { SummarizerAgent } from '#functions/text/summarizer';
-import { ClaudeLLMs } from '#llm/services/anthropic';
-import { defaultGoogleCloudLLMs } from '#llm/services/defaultLlms';
-import { initFirestoreApplicationContext } from '../applicationContext';
+import { defaultLLMs } from '#llm/services/defaultLlms';
+import { initApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
 
 async function main() {
-	let agentLlms: AgentLLMs = ClaudeLLMs();
-	if (process.env.GCLOUD_PROJECT) {
-		await initFirestoreApplicationContext();
-		agentLlms = defaultGoogleCloudLLMs();
-	}
+	const agentLlms: AgentLLMs = defaultLLMs();
+	await initApplicationContext();
 
 	const { initialPrompt, resumeAgentId } = parseProcessArgs();
 

@@ -4,20 +4,16 @@ import { provideFeedback, resumeCompleted, resumeError, resumeHil, startAgentAnd
 import { FileSystemRead } from '#functions/storage/FileSystemRead';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
-import { ClaudeLLMs } from '#llm/services/anthropic';
-import { defaultGoogleCloudLLMs } from '#llm/services/defaultLlms';
+import { defaultLLMs } from '#llm/services/defaultLlms';
 import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
-import { appContext, initFirestoreApplicationContext } from '../applicationContext';
+import { appContext, initApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
 
 export async function main() {
-	let llms = ClaudeLLMs();
-	if (process.env.GCLOUD_PROJECT) {
-		await initFirestoreApplicationContext();
-		llms = defaultGoogleCloudLLMs();
-	}
+	const llms = defaultLLMs();
+	await initApplicationContext();
 
 	let functions: Array<any>;
 	functions = [FileSystemRead, SoftwareDeveloperAgent, Perplexity, PublicWeb];

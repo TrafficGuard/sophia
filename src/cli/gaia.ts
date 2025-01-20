@@ -3,20 +3,19 @@ import '#fastify/trace-init/trace-init'; // leave an empty line next so this doe
 import { promises as fs, readFileSync } from 'fs';
 import { AgentLLMs } from '#agent/agentContextTypes';
 import { AGENT_COMPLETED_PARAM_NAME } from '#agent/agentFunctions';
-import { startAgent, startAgentAndWait } from '#agent/agentRunner';
+import { startAgentAndWait } from '#agent/agentRunner';
 import { FileSystemRead } from '#functions/storage/FileSystemRead';
 import { LlmTools } from '#functions/util';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
 import { LlmCall } from '#llm/llmCallService/llmCall';
-import { ClaudeLLMs } from '#llm/services/anthropic';
+import { Claude3_5_Sonnet_Vertex } from '#llm/services/anthropic-vertex';
+import { defaultLLMs } from '#llm/services/defaultLlms';
 import { groqLlama3_3_70B } from '#llm/services/groq';
+import { openAIo1 } from '#llm/services/openai';
 import { Gemini_1_5_Flash } from '#llm/services/vertexai';
 import { logger } from '#o11y/logger';
 import { sleep } from '#utils/async-utils';
-
-import { defaultGoogleCloudLLMs } from '#llm/services/defaultLlms';
-import { openAIo1 } from '#llm/services/openai';
 import { appContext, initFirestoreApplicationContext } from '../applicationContext';
 
 const SYSTEM_PROMPT = `Finish your answer with the following template: FINAL ANSWER: [YOUR FINAL ANSWER]. YOUR FINAL ANSWER should be a number OR as few words as possible OR a comma separated list of numbers and/or strings. If you are asked for a number, don't use comma to write your number neither use units such as $ or percent sign unless specified otherwise. If you are asked for a string, don't use articles, neither abbreviations (e.g. for cities), and write the digits in plain text unless specified otherwise. If you are asked for a comma separated list, apply the above rules depending of whether the element to be put in the list is a number or a string.`;
@@ -135,9 +134,9 @@ async function answerGaiaQuestion(task: GaiaQuestion): Promise<GaiaResult> {
 async function main() {
 	if (process.env.GCLOUD_PROJECT) {
 		await initFirestoreApplicationContext();
-		llms = ClaudeVertexLLMs();
+		llms = defaultLLMs();
 	} else {
-		llms = ClaudeLLMs();
+		llms = defaultLLMs();
 	}
 
 	const args = process.argv.slice(2);

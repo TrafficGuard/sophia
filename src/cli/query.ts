@@ -4,29 +4,14 @@ import { AgentLLMs } from '#agent/agentContextTypes';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { shutdownTrace } from '#fastify/trace-init/trace-init';
-import { Blueberry } from '#llm/multi-agent/blueberry';
-import { ClaudeLLMs } from '#llm/services/anthropic';
-import { cerebrasLlama3_70b } from '#llm/services/cerebras';
-import { deepseekChat } from '#llm/services/deepseek';
-import { GPT4oMini, openAIo1, openAIo1mini } from '#llm/services/openai';
-import { Gemini_1_5_Flash } from '#llm/services/vertexai';
+import { defaultLLMs } from '#llm/services/defaultLlms';
 import { codebaseQuery } from '#swe/discovery/codebaseQuery';
-import { initFirestoreApplicationContext } from '../applicationContext';
-import { defaultGoogleCloudLLMs } from '#llm/services/defaultLlms';
+import { initApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
 
 async function main() {
-	let agentLlms: AgentLLMs = ClaudeLLMs();
-	if (process.env.GCLOUD_PROJECT) {
-		await initFirestoreApplicationContext();
-		agentLlms = ClaudeVertexLLMs();
-	}
-	// agentLlms.easy = Gemini_1_5_Flash();
-	// agentLlms.medium = groqLlama3_1_70B();
-	// agentLlms.medium = deepseekChat();
-	// agentLlms.medium = openAIo1mini();
-	// agentLlms.medium = GPT4oMini();
-	// agentLlms.medium = new Blueberry();
+	const llms: AgentLLMs = defaultLLMs();
+	await initApplicationContext();
 
 	const { initialPrompt, resumeAgentId } = parseProcessArgs();
 
@@ -34,7 +19,7 @@ async function main() {
 
 	const config: RunAgentConfig = {
 		agentName: `Query: ${initialPrompt}`,
-		llms: agentLlms,
+		llms,
 		functions: [], //FileSystem,
 		initialPrompt,
 		resumeAgentId,

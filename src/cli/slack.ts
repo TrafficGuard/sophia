@@ -1,11 +1,9 @@
 import { SlackChatBotService } from '#modules/slack/slackChatBotService';
 import { sleep } from '#utils/async-utils';
-import { initFirestoreApplicationContext } from '../applicationContext';
+import { initApplicationContext } from '../applicationContext';
 
 async function main() {
-	if (process.env.GCLOUD_PROJECT) {
-		await initFirestoreApplicationContext();
-	}
+	await initApplicationContext();
 	const chatbot = new SlackChatBotService();
 	await chatbot.initSlack();
 	await sleep(60000);

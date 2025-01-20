@@ -2,7 +2,7 @@ import { getFileSystem } from '#agent/agentContextLocalStorage';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { GitHub } from '#functions/scm/github';
 import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
-import { defaultGoogleCloudLLMs } from '#llm/services/defaultLlms';
+import { defaultLLMs } from '#llm/services/defaultLlms';
 import { countTokens } from '#llm/tokens';
 import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
@@ -73,7 +73,7 @@ export class SWEBenchAgent {
 		return await runAgentWorkflow(
 			{
 				agentName: `swe-bench ${task.instance_id}`,
-				llms: defaultGoogleCloudLLMs(),
+				llms: defaultLLMs(),
 				humanInLoop: {
 					budget: 2,
 				},

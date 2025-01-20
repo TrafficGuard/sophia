@@ -1,22 +1,15 @@
 import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
 
 import { LlmFunctions } from '#agent/LlmFunctions';
-import { agentContextStorage, createContext, getFileSystem, llms } from '#agent/agentContextLocalStorage';
-import { Jira } from '#functions/jira';
-import { GitLab } from '#functions/scm/gitlab';
-
-import { FileSystemService } from '#functions/storage/fileSystemService';
-import { MultiLLM } from '#llm/multi-llm';
-import { ClaudeLLMs } from '#llm/services/anthropic';
-import { Claude3_5_Haiku_Vertex, Claude3_5_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
-import { GPT4o } from '#llm/services/openai';
-import { Gemini_1_5_Pro } from '#llm/services/vertexai';
-import { appContext } from '../app';
-
-import { writeFileSync } from 'fs';
+import { agentContextStorage, createContext } from '#agent/agentContextLocalStorage';
 import { AgentContext, AgentLLMs } from '#agent/agentContextTypes';
 import { RunAgentConfig } from '#agent/agentRunner';
-import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
+import { FileSystemService } from '#functions/storage/fileSystemService';
+import { MultiLLM } from '#llm/multi-llm';
+import { Claude3_5_Sonnet_Vertex } from '#llm/services/anthropic-vertex';
+import { GPT4o } from '#llm/services/openai';
+import { Gemini_1_5_Pro } from '#llm/services/vertexai';
+import { appContext } from '../applicationContext';
 import { envVarHumanInLoopSettings } from './cliHumanInLoop';
 
 // For running random bits of code

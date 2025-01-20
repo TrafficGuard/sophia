@@ -4,22 +4,16 @@ import { AgentLLMs } from '#agent/agentContextTypes';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { shutdownTrace } from '#fastify/trace-init/trace-init';
-import { ClaudeLLMs } from '#llm/services/anthropic';
-import { Gemini_1_5_Flash } from '#llm/services/vertexai';
-import { buildSummaryDocs } from '#swe/documentationBuilder';
-import { defaultGoogleCloudLLMs } from '#llm/services/defaultLlms';
+import { defaultLLMs } from '#llm/services/defaultLlms';
 import { detectProjectInfo } from '#swe/projectDetection';
+import { buildIndexDocs } from '#swe/repoIndexDocBuilder';
 import { generateRepositoryMaps } from '#swe/repositoryMap';
-import { initFirestoreApplicationContext } from '../applicationContext';
+import { initApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
 
 async function main() {
-	let agentLlms: AgentLLMs = ClaudeLLMs();
-	if (process.env.GCLOUD_PROJECT) {
-		await initFirestoreApplicationContext();
-		agentLlms = ClaudeVertexLLMs();
-	}
-	agentLlms.easy = Gemini_1_5_Flash();
+	const agentLlms: AgentLLMs = defaultLLMs();
+	await initApplicationContext();
 
 	const { initialPrompt, resumeAgentId } = parseProcessArgs();
 
@@ -41,12 +35,11 @@ async function main() {
 	console.log(`languageProjectMap ${maps.languageProjectMap.tokens}`);
 	console.log(`fileSystemTree ${maps.fileSystemTree.tokens}`);
 	console.log(`folderSystemTreeWithSummaries ${maps.folderSystemTreeWithSummaries.tokens}`);
-	console.log(`fileSystemTreeWithSummaries ${maps.fileSystemTreeWithSummaries.tokens}`);
 
 	if (console.log) return;
 
 	const agentId = await runAgentWorkflow(config, async () => {
-		await buildSummaryDocs();
+		await buildIndexDocs();
 	});
 
 	if (agentId) {

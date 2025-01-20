@@ -8,7 +8,7 @@ import { GoogleCloud } from '#functions/cloud/google/google-cloud';
 import { GitLab } from '#functions/scm/gitlab';
 import { LlmTools } from '#functions/util';
 import { Perplexity } from '#functions/web/perplexity';
-import { defaultGoogleCloudLLMs } from '#llm/services/defaultLlms';
+import { defaultLLMs } from '#llm/services/defaultLlms';
 import { logger } from '#o11y/logger';
 import { sleep } from '#utils/async-utils';
 import { appContext } from '../../applicationContext';
@@ -141,7 +141,7 @@ export class SlackChatBotService implements ChatBotService, AgentCompleted {
 					const agentExec = await startAgent({
 						resumeAgentId: `Slack-${threadId}`,
 						initialPrompt: text,
-						llms: defaultGoogleCloudLLMs(),
+						llms: defaultLLMs(),
 						functions: [GitLab, GoogleCloud, Perplexity, LlmTools],
 						agentName: `Slack-${threadId}`,
 						systemPrompt:
