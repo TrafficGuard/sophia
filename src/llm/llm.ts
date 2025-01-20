@@ -1,10 +1,8 @@
 // https://github.com/AgentOps-AI/tokencost/blob/main/tokencost/model_prices.json
 import { CoreMessage, FilePart, ImagePart, StreamTextResult, TextPart } from 'ai';
 
-export interface GenerateTextOptions {
-	type?: 'text' | 'json';
-	/** Identifier used in trace spans, UI etc */
-	id?: string;
+// Should match fields in CallSettings in node_modules/ai/dist/index.d.ts
+export interface GenerateOptions {
 	/**
 	 * Temperature controls the randomness in token selection. Valid values are between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. Defaults to 1
 	 * We generally recommend altering this or top_p but not both.
@@ -16,9 +14,40 @@ export interface GenerateTextOptions {
 	topP?: number;
 
 	/**
-	 * Strings in the output which will stop generation
+	 Only sample from the top K options for each subsequent token.
+
+	 Used to remove "long tail" low probability responses.
+	 Recommended for advanced use cases only. You usually only need to use temperature.
+	 */
+	topK?: number;
+	/**
+	 Presence penalty setting. It affects the likelihood of the model to
+	 repeat information that is already in the prompt.
+
+	 The presence penalty is a number between -1 (increase repetition)
+	 and 1 (maximum penalty, decrease repetition). 0 means no penalty.
+	 */
+	presencePenalty?: number;
+	/**
+	 Frequency penalty setting. It affects the likelihood of the model
+	 to repeatedly use the same words or phrases.
+
+	 The frequency penalty is a number between -1 (increase repetition)
+	 and 1 (maximum penalty, decrease repetition). 0 means no penalty.
+	 */
+	frequencyPenalty?: number;
+	/**
+	 Stop sequences.
+	 If set, the model will stop generating text when one of the stop sequences is generated.
+	 Providers may have limits on the number of stop sequences.
 	 */
 	stopSequences?: string[];
+}
+
+export interface GenerateTextOptions extends GenerateOptions {
+	type?: 'text' | 'json';
+	/** Identifier used in trace spans, UI etc */
+	id?: string;
 }
 
 /**

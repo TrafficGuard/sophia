@@ -1,6 +1,9 @@
 import { TextFieldModule } from '@angular/cdk/text-field';
 import { DatePipe, NgClass } from '@angular/common';
 import { UserService } from 'app/core/user/user.service';
+import { User } from 'app/core/user/user.types';
+import { EMPTY, Observable, catchError, switchMap } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 import {
     AfterViewInit,
     ChangeDetectionStrategy,
@@ -86,6 +89,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
     private _unsubscribeAll: Subject<any> = new Subject<any>();
     llms: LLM[] = null;
     llmId: string;
+    currentUser: User;
     defaultChatLlmId: string;
     sendIcon: string = 'heroicons_outline:paper-airplane'
     sendOnEnter = true;
@@ -96,6 +100,18 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
     generating = false;
     generatingTimer = null;
     readonly clipboardButton = ClipboardButtonComponent;
+
+    private assignUniqueIdsToMessages(messages: ChatMessage[]): void {
+        const existingIds = new Set<string>();
+        messages.forEach((message) => {
+            if (message.id && !existingIds.has(message.id)) {
+                existingIds.add(message.id);
+            } else {
+                message.id = uuidv4();
+                existingIds.add(message.id);
+            }
+        });
+    }
 
     /**
      * For the Markdown component, the syntax highlighting support has the plugins defined
@@ -177,9 +193,11 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
         ]).pipe(
             takeUntil(this._unsubscribeAll)
         ).subscribe(([user, llms, chat]) => {
-            this.defaultChatLlmId = user.defaultChatLlmId;
+            this.currentUser = user;
+            this.defaultChatLlmId = user.chat?.defaultLLM;
             this.llms = llms;
             this.chat = clone(chat) || { id: 'new', messages: [], title: '', updatedAt: Date.now() };
+            this.assignUniqueIdsToMessages(this.chat.messages);
             this.updateLlmSelector();
             this._changeDetectorRef.markForCheck();
         });
@@ -307,18 +325,20 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
      * @param item
      */
     trackByFn(index: number, item: any): any {
-        return item.id || index;
+        return item.id;
     }
 
+    /**
+     * Sends a message in the chat after getting the latest user preferences
+     * Handles both new chat creation and message sending in existing chats
+     */
+    /**
+     * Sends a message in the chat after getting the latest user preferences
+     * Handles both new chat creation and message sending in existing chats
+     */
     sendMessage(): void {
+        // Store message and attachments in component scope so error handler can access them
         let message: string = this.messageInput.nativeElement.value.trim();
-        if (message === '' && this.selectedFiles.length === 0) {
-            return;
-        }
-
-        this.generating = true;
-        this.sendIcon = 'heroicons_outline:stop-circle'
-
         const attachments: Attachment[] = this.selectedFiles.map(file => ({
             type: file.type.startsWith('image/') ? 'image' : 'file',
             filename: file.name,
@@ -326,54 +346,67 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
             data: file,
             mimeType: file.type,
         }));
-        attachments.forEach(a => console.log(a.filename))
 
-        this.chat.messages.push({
-            content: message,
-            isMine: true,
-            attachments: attachments,
-        })
-        const generatingMessage: ChatMessage = {
-            content: '',
-            isMine: false,
-            generating: true
-        }
-        this.chat.messages.push(generatingMessage)
-        // Animate the typing/generating indicator
-        this.generatingTimer = setInterval(() => {
-            generatingMessage.content = generatingMessage.content.length === 3 ? '.' : generatingMessage.content + '.'
-            this._changeDetectorRef.markForCheck();
-        }, 800)
-        // Clear the input
-        this.messageInput.nativeElement.value = '';
-        this.selectedFiles = [];
+        // Get latest user preferences before sending the message
+        this._getUserPreferences().pipe(
+            switchMap(user => {
+                if (message === '' && this.selectedFiles.length === 0) {
+                    return EMPTY;
+                }
 
-        // If this is a new chat, then redirect to the created chat
-        if (!this.chat.id || this.chat.id === 'new') {
-            this._changeDetectorRef.markForCheck();
-            // TODO handle error, set the message back to the messageInput and remove from chat.messages
-            this._chatService.createChat(message, this.llmId, attachments).subscribe(async (chat: Chat) => {
-                clearInterval(this.generatingTimer)
-                this.generating = false;
-                this.router.navigate([`/ui/chat/${chat.id}`]).catch(console.error);
-            });
-            // TODO catch errors
-            return;
-        }
+                this.generating = true;
+                this.sendIcon = 'heroicons_outline:stop-circle'
 
-        this._scrollToBottom();
-        this._chatService.sendMessage(this.chat.id, message, this.llmId, attachments).subscribe({
+                this.chat.messages.push({
+                    id: uuidv4(),
+                    content: message,
+                    isMine: true,
+                    attachments: attachments,
+                });
+
+                const generatingMessage: ChatMessage = {
+                    id: uuidv4(),
+                    content: '',
+                    isMine: false,
+                    generating: true
+                };
+                this.chat.messages.push(generatingMessage);
+
+                // Animate the typing/generating indicator
+                this.generatingTimer = setInterval(() => {
+                    generatingMessage.content = generatingMessage.content.length === 3 ? '.' : generatingMessage.content + '.';
+                    this._changeDetectorRef.markForCheck();
+                }, 800);
+
+                // Clear the input
+                this.messageInput.nativeElement.value = '';
+                this.selectedFiles = [];
+
+                // If this is a new chat, create it with latest user preferences
+                if (!this.chat.id || this.chat.id === 'new') {
+                    this._changeDetectorRef.markForCheck();
+                    return this._chatService.createChat(message, this.llmId, user?.chat, attachments);
+                }
+
+                this._scrollToBottom();
+                return this._chatService.sendMessage(this.chat.id, message, this.llmId, user?.chat, attachments);
+            })
+        ).subscribe({
             next: (chat: Chat) => {
-                console.log(`message sent`)
-                console.log(chat)
+                if (!this.chat.id || this.chat.id === 'new') {
+                    clearInterval(this.generatingTimer);
+                    this.generating = false;
+                    this.router.navigate([`/ui/chat/${chat.id}`]).catch(console.error);
+                    return;
+                }
+
                 this.chat = clone(chat);
-                clearInterval(this.generatingTimer)
+                this.assignUniqueIdsToMessages(this.chat.messages);
+                clearInterval(this.generatingTimer);
                 this.generating = false;
-                this.sendIcon = 'heroicons_outline:paper-airplane'
+                this.sendIcon = 'heroicons_outline:paper-airplane';
                 this._resizeMessageInput();
                 this._scrollToBottom();
-
-                // Mark for check
                 this._changeDetectorRef.markForCheck();
             },
             error: (error) => {
@@ -414,6 +447,33 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
             const chatElement = this._elementRef.nativeElement.querySelector('.conversation-container');
             chatElement.scrollTop = chatElement.scrollHeight;
         });
+    }
+
+    /**
+     * Gets the latest user preferences from the server
+     * @returns Observable of the user data or error
+     */
+    private _getUserPreferences(): Observable<User> {
+        // Show loading state while fetching preferences
+        this.generating = true;
+        
+        return this.userService.get().pipe(
+            catchError(error => {
+                console.error('Error fetching user preferences:', error);
+                this._snackBar.open(
+                    'Unable to load user preferences. Using default settings.',
+                    'Close',
+                    {
+                        duration: 5000,
+                        horizontalPosition: 'center',
+                        verticalPosition: 'bottom',
+                        panelClass: ['warning-snackbar']
+                    }
+                );
+                // Return current user as fallback
+                return this.currentUser ? [this.currentUser] : EMPTY;
+            })
+        );
     }
 
     handleLlmKeydown(event: KeyboardEvent) {
@@ -584,5 +644,5 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
 }
 
 function clone<T>(obj: T): T {
-    return JSON.parse(JSON.stringify(obj));
+    return structuredClone(obj);
 }

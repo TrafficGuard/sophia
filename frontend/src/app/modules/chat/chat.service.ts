@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Attachment, Chat, ChatMessage, LlmMessage, ServerChat } from 'app/modules/chat/chat.types';
+import { Attachment, Chat, ChatMessage, ServerChat } from 'app/modules/chat/chat.types';
 import {
     BehaviorSubject,
     Observable,
@@ -13,6 +13,7 @@ import {
     throwError, catchError,
 } from 'rxjs';
 import { FilePart, ImagePart, TextPart } from './ai.types';
+import {GenerateOptions} from "app/core/user/user.types";
 
 @Injectable({ providedIn: 'root' })
 export class ChatService {
@@ -81,10 +82,11 @@ export class ChatService {
         );
     }
 
-    createChat(message: string, llmId: string, attachments?: Attachment[]): Observable<Chat> {
+    createChat(message: string, llmId: string, options?: GenerateOptions, attachments?: Attachment[]): Observable<Chat> {
         const formData = new FormData();
         formData.append('text', message);
         formData.append('llmId', llmId);
+        if (options) formData.append('options', JSON.stringify(options));
 
         if (attachments && attachments.length > 0) {
             attachments.forEach((attachment, index) => {
@@ -303,10 +305,11 @@ export class ChatService {
      * @param llmId LLM identifier
      * @param attachments
      */
-    sendMessage(chatId: string, message: string, llmId: string, attachments?: Attachment[]): Observable<Chat> {
+    sendMessage(chatId: string, message: string, llmId: string, options?: GenerateOptions, attachments?: Attachment[]): Observable<Chat> {
         const formData = new FormData();
         formData.append('text', message);
         formData.append('llmId', llmId);
+        if (options) formData.append('options', JSON.stringify(options));
 
         if (attachments && attachments.length > 0) {
             attachments.forEach((attachment, index) => {

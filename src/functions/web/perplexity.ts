@@ -35,7 +35,7 @@ export class Perplexity {
 		let response: PerplexityResponse | undefined;
 		try {
 			const perplexity = new OpenAI({
-				apiKey: functionConfig(Perplexity).key ?? envVar('PERPLEXITY_KEY'),
+				apiKey: functionConfig(Perplexity).key || envVar('PERPLEXITY_KEY'),
 				baseURL: 'https://api.perplexity.ai',
 			});
 

@@ -6,68 +6,65 @@
         <button mat-icon-button (click)="drawer.close()">
             <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
         </button>
-        <div class="ml-2 text-lg font-medium">Chat info</div>
+        <div class="ml-2 text-lg font-medium">Chat Settings</div>
     </div>
 
-    <div class="overflow-y-auto">
-        <div class="px-7 py-10">
-            <!-- Media
-            <div class="text-lg font-medium">Media</div>
-            <div class="mt-4 grid grid-cols-4 gap-1">
-                @for (media of chat.contact.attachments.media; track media) {
-                    <img class="h-20 rounded object-cover" [src]="media" />
-                }
+    <div class="overflow-y-auto" [class.opacity-50]="loading">
+        <div class="px-7 py-6">
+            <div class="mt-4 space-y-4">
+                <div class="mb-2 text-lg font-medium">Message Generation Settings</div>
+                
+                <div class="space-y-1">
+                    <div>
+                        <label class="text-secondary font-medium">Temperature</label>
+                        <span class="pl-2 font-bold text-secondary">{{settings.temperature}}</span>
+                        <mat-slider [min]="0" [max]="2" [step]="0.1">
+                            <input matSliderThumb [(ngModel)]="settings.temperature" (change)="onSettingChange()">
+                        </mat-slider>
+                    </div>
+
+                    <div>
+                        <label class="text-secondary font-medium">Top P</label>
+                        <span class="pl-2 font-bold text-secondary">{{settings.topP}}</span>
+                        <mat-slider [min]="0" [max]="1" [step]="0.05">
+                            <input matSliderThumb [(ngModel)]="settings.topP" (change)="onSettingChange()">
+                        </mat-slider>
+                    </div>
+
+                    <div>
+                        <label class="text-secondary font-medium">Top K</label>
+                        <span class="pl-2 font-bold text-secondary">{{settings.topK}}</span>
+                        <mat-slider [min]="1" [max]="60" [step]="1">
+                            <input matSliderThumb [(ngModel)]="settings.topK" (change)="onSettingChange()">
+                        </mat-slider>
+                    </div>
+
+                    <div>
+                        <label class="text-secondary font-medium">Presence Penalty</label>
+                        <span class="pl-2 font-bold text-secondary">{{settings.presencePenalty}}</span>
+                        <mat-slider [min]="0" [max]="2" [step]="0.1">
+                            <input matSliderThumb [(ngModel)]="settings.presencePenalty" (change)="onSettingChange()">
+                        </mat-slider>
+                    </div>
+
+                    <div>
+                        <label class="text-secondary font-medium">Frequency Penalty</label>
+                        <span class="pl-2 font-bold text-secondary">{{settings.frequencyPenalty}}</span>
+                        <mat-slider [min]="0" [max]="2" [step]="0.1">
+                            <input matSliderThumb [(ngModel)]="settings.frequencyPenalty" (change)="onSettingChange()">
+                        </mat-slider>
+                    </div>
+                </div>
             </div>
-            -->
-            <!-- Details
-            <div class="mt-10 space-y-4">
-                <div class="mb-3 text-lg font-medium">Details</div>
-                @if (chat.contact.details.emails.length) {
-                    <div>
-                        <div class="text-secondary font-medium">Email</div>
-                        <div class="">
-                            {{ chat.contact.details.emails[0].email }}
-                        </div>
-                    </div>
-                }
-                @if (chat.contact.details.phoneNumbers.length) {
-                    <div>
-                        <div class="text-secondary font-medium">
-                            Phone number
-                        </div>
-                        <div class="">
-                            {{
-                                chat.contact.details.phoneNumbers[0].phoneNumber
-                            }}
-                        </div>
-                    </div>
-                }
-                @if (chat.contact.details.title) {
-                    <div>
-                        <div class="text-secondary font-medium">Title</div>
-                        <div class="">{{ chat.contact.details.title }}</div>
-                    </div>
-                }
-                @if (chat.contact.details.company) {
-                    <div>
-                        <div class="text-secondary font-medium">Company</div>
-                        <div class="">{{ chat.contact.details.company }}</div>
-                    </div>
-                }
-                @if (chat.contact.details.birthday) {
-                    <div>
-                        <div class="text-secondary font-medium">Birthday</div>
-                        <div class="">{{ chat.contact.details.birthday }}</div>
-                    </div>
-                }
-                @if (chat.contact.details.address) {
-                    <div>
-                        <div class="text-secondary font-medium">Address</div>
-                        <div class="">{{ chat.contact.details.address }}</div>
-                    </div>
-                }
+            
+            <div *ngIf="error" class="mt-4 p-3 bg-red-100 text-red-700 rounded">
+                {{ error }}
             </div>
-            -->
+            
+            <div *ngIf="loading" class="mt-4 flex items-center justify-center">
+                <mat-spinner diameter="24"></mat-spinner>
+                <span class="ml-2">Saving settings...</span>
+            </div>
         </div>
     </div>
 </div>

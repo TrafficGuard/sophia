@@ -5,7 +5,7 @@ import { UserContent } from 'ai';
 import { FastifyRequest } from 'fastify';
 import { Chat, ChatList } from '#chat/chatTypes';
 import { send, sendBadRequest } from '#fastify/index';
-import { FilePartExt, ImagePartExt, LLM, UserContentExt } from '#llm/llm';
+import { FilePartExt, GenerateOptions, ImagePartExt, LLM, UserContentExt } from '#llm/llm';
 import { getLLM } from '#llm/llmFactory';
 import { logger } from '#o11y/logger';
 import { currentUser } from '#user/userService/userContext';
@@ -35,7 +35,7 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
 	);
 
 	fastify.post(`${basePath}/chat/new`, {}, async (req, reply) => {
-		const { llmId, userContent } = await extractMessage(req);
+		const { llmId, userContent, options } = await extractMessage(req);
 
 		let chat: Chat = {
 			id: randomUUID(),
@@ -64,7 +64,7 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
 
 		chat.messages.push({ role: 'user', content: userContent, time: Date.now() }); //, cache: cache ? 'ephemeral' : undefined // remove any previous cache marker
 
-		const generatedMessage = await llm.generateText(chat.messages);
+		const generatedMessage = await llm.generateText(chat.messages, { id: 'chat', ...options });
 		chat.messages.push({ role: 'assistant', content: generatedMessage, llmId: llmId, time: Date.now() });
 
 		if (titlePromise) chat.title = await titlePromise;
@@ -85,7 +85,7 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
 		async (req, reply) => {
 			const { chatId } = req.params;
 
-			const { llmId, userContent } = await extractMessage(req);
+			const { llmId, userContent, options } = await extractMessage(req);
 
 			const chat: Chat = await fastify.chatService.loadChat(chatId);
 
@@ -99,7 +99,7 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
 
 			chat.messages.push({ role: 'user', content: userContent, time: Date.now() });
 
-			const generatedMessage = await llm.generateText(chat.messages);
+			const generatedMessage = await llm.generateText(chat.messages, { id: 'chat', ...options });
 			chat.messages.push({ role: 'assistant', content: generatedMessage, llmId, time: Date.now() });
 
 			await fastify.chatService.saveChat(chat);
@@ -153,11 +153,16 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
  * Extracts the chat message properties and attachments from the request
  * @param req
  */
-async function extractMessage(req: FastifyRequest<any>): Promise<{ llmId: string; userContent: UserContent }> {
+async function extractMessage(req: FastifyRequest<any>): Promise<{
+	llmId: string;
+	userContent: UserContent;
+	options?: GenerateOptions;
+}> {
 	const parts = req.parts();
 
 	let text: string;
 	let llmId: string;
+	let options: GenerateOptions;
 	const attachments: Array<FilePartExt | ImagePartExt> = [];
 
 	for await (const part of parts) {
@@ -187,10 +192,12 @@ async function extractMessage(req: FastifyRequest<any>): Promise<{ llmId: string
 				text = part.value as string;
 			} else if (part.fieldname === 'llmId') {
 				llmId = part.value as string;
+			} else if (part.fieldname === 'options') {
+				options = JSON.parse(part.value as string);
 			}
 		}
 	}
-	return { llmId, userContent: toUserContent(text, attachments) };
+	return { llmId, userContent: toUserContent(text, attachments), options };
 }
 
 /**

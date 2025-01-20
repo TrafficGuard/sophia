@@ -1,5 +1,6 @@
-import { existsSync, readFileSync } from 'node:fs';
+import fs, { existsSync, readFileSync } from 'node:fs';
 import { join } from 'path';
+import { promisify } from 'util';
 import { getFileSystem } from '#agent/agentContextLocalStorage';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
@@ -38,8 +39,9 @@ export class TypescriptTools implements LanguageTools {
 		const fss = getFileSystem();
 		const rootFolder = (await fss.getGitRoot()) ?? fss.getWorkingDirectory();
 		const dtsFolder = join(rootFolder, sophiaDirName, 'dts');
-		const tsConfigExists = await getFileSystem().fileExists('tsconfig.json');
-		if (!tsConfigExists) throw new Error(`tsconfig.json not found in ${getFileSystem().getWorkingDirectory()}`);
+		await promisify(fs.mkdir)(dtsFolder, { recursive: true });
+		const tsConfigExists = await fss.fileExists('tsconfig.json');
+		if (!tsConfigExists) throw new Error(`tsconfig.json not found in ${fss.getWorkingDirectory()}`);
 
 		const { exitCode, stdout, stderr } = await execCommand(`npx tsc -d --declarationDir "./${dtsFolder}" --emitDeclarationOnly`);
 		// Always returns 0 with no output?
@@ -47,14 +49,14 @@ export class TypescriptTools implements LanguageTools {
 
 		const dtsFiles = new Map();
 		// getFileSystem().setWorkingDirectory(dtsFolder)
-		const allFiles: Map<string, string> = await getFileSystem().getFileContentsRecursively(dtsFolder, false);
+		const allFiles: Map<string, string> = await fss.getFileContentsRecursively(dtsFolder, false);
 		// getFileSystem().setWorkingDirectory(process.cwd())
 
 		allFiles.forEach((value, key) => {
 			dtsFiles.set(key.replace('.d.ts', '.ts').replace(dtsFolder, 'src'), value);
 		});
 		logger.info(`${dtsFiles.size} dts files`);
-		return getFileSystem().formatFileContentsAsXml(dtsFiles);
+		return fss.formatFileContentsAsXml(dtsFiles);
 	}
 
 	/**

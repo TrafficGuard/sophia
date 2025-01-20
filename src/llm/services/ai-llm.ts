@@ -70,6 +70,9 @@ export abstract class AiLLM<Provider extends ProviderV1> extends BaseLLM {
 					messages,
 					temperature: opts?.temperature,
 					topP: opts?.topP,
+					topK: opts?.topK,
+					frequencyPenalty: opts?.frequencyPenalty,
+					presencePenalty: opts?.presencePenalty,
 					stopSequences: opts?.stopSequences,
 				});
 

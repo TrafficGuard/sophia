@@ -36,7 +36,7 @@ export interface UserService {
 	 * @param updates
 	 * @param userId The current user if undefined. Admins can edit other users.
 	 */
-	updateUser(updates: Partial<User>, userId?: string): Promise<void>;
+	updateUser(updates: Partial<User>, userId?: string): Promise<User>;
 
 	disableUser(userId: string): Promise<void>;
 

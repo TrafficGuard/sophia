@@ -102,9 +102,11 @@ export class CodeEditingAgent {
 		implementationRequirements += '\nEnsure new code is well commented.';
 
 		const searchPrompt = `${repositoryOverview}${installedPackages}\n<requirement>\n${implementationRequirements}\n</requirement>
-Given the requirements, if there are any changes which require using open source libraries, provide search queries to look up the API usage online.
+Given the requirements, if there are any specific changes which require using open source libraries, and only if it's not clear from existing code or you general knowledge what the API is, then provide search queries to look up the API usage online.
 
-First discuss what 3rd party API usages would be required in the changes, if any. Then taking into account propose queries for online research, which must contain all the required context (e.g. language, library). For example if the requirements were "Update the Bigtable table results to include the table size" and from the repository information we could determine that it is a node.js project, then a suitable query would be "With the Google Cloud Node.js sdk how can I get the size of a Bigtable table?"
+Limit the queries to the minimal amount where you are uncertain of the API. You will have the opportunity to search again if there are compile errors in the code changes.
+
+First discuss what 3rd party API usages would be required in the changes, if any. Then taking into account propose queries for online research, which must contain all the required context (e.g. language, library). For example if the requirements were "Update the Bigtable table results to include the table size" and from the repository information we could determine that it is a node.js project, then a suitable query would be "With the Google Cloud Node.js sdk verion X.Y.Z how can I get the size of a Bigtable table?"
 (If there is no 3rd party API usage that is not already done in the provided files then return an empty array for the searchQueries property)
 
 Then respond in following format:

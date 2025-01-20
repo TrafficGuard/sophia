@@ -68,7 +68,7 @@ export class PerplexityLLM extends BaseLLM {
 		this.costPerCompletionToken = costPerCompletionToken;
 		this.onlineCost = onlineCost;
 		this.openai = new OpenAI({
-			apiKey: functionConfig(Perplexity).key ?? envVar('PERPLEXITY_KEY'),
+			apiKey: functionConfig(Perplexity).key || envVar('PERPLEXITY_KEY'),
 			baseURL: 'https://api.perplexity.ai',
 		});
 	}
@@ -83,29 +83,8 @@ export class PerplexityLLM extends BaseLLM {
 
 	protected generateTextFromMessages(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string> {
 		return withSpan(`generateText ${opts?.id ?? ''}`, async (span) => {
-			// Get system prompt and user prompt for logging
-			const systemMessage = messages.find((m) => m.role === 'system');
-			const lastUserMessage = messages.findLast((message) => message.role === 'user');
-
-			if (systemMessage) span.setAttribute('systemPrompt', systemMessage.content as string);
-			span.setAttributes({
-				userPrompt: lastUserMessage?.content as string,
-				inputChars: messages.reduce((acc, m) => acc + (m.content as string).length, 0),
-				model: this.model,
-				service: this.service,
-			});
-
-			const llmCallSave: Promise<LlmCall> = appContext().llmCallService.saveRequest({
-				userPrompt: lastUserMessage?.content as string,
-				systemPrompt: systemMessage?.content as string,
-				llmId: this.getId(),
-				agentId: agentContext()?.agentId,
-				callStack: this.callStack(agentContext()),
-			});
-			const requestTime = Date.now();
-
 			// Perplexity only support string content, convert TextPart's to string, fail if any FilePart or ImagePart are found
-			const perplexityMessages = messages.map((m) => {
+			const apiMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = messages.map((m) => {
 				let content = '';
 				if (typeof m.content === 'string') content = m.content;
 				else {
@@ -128,10 +107,31 @@ export class PerplexityLLM extends BaseLLM {
 				};
 			});
 
+			// Get system prompt and user prompt for logging
+			const systemMessage = apiMessages.find((m) => m.role === 'system');
+			const lastUserMessage = apiMessages.findLast((message) => message.role === 'user');
+
+			if (systemMessage) span.setAttribute('systemPrompt', systemMessage.content as string);
+			span.setAttributes({
+				userPrompt: lastUserMessage?.content as string,
+				inputChars: apiMessages.reduce((acc, m) => acc + (m.content as string).length, 0),
+				model: this.model,
+				service: this.service,
+			});
+
+			const llmCallSave: Promise<LlmCall> = appContext().llmCallService.saveRequest({
+				userPrompt: lastUserMessage?.content as string,
+				systemPrompt: systemMessage?.content as string,
+				llmId: this.getId(),
+				agentId: agentContext()?.agentId,
+				callStack: this.callStack(agentContext()),
+			});
+			const requestTime = Date.now();
+
 			try {
 				const response = await this.openai.chat.completions.create({
 					model: this.model,
-					messages: perplexityMessages,
+					messages: apiMessages,
 					stream: false,
 				});
 

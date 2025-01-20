@@ -35,7 +35,6 @@ export interface Chat {
     messages?: ChatMessage[];
 }
 
-/** Chat Message UI data type */
 export interface ChatMessage {
     id?: string;
     isMine?: boolean;
@@ -60,8 +59,3 @@ export interface Attachment {
     /** Optional preview URL for thumbnails etc */
     previewUrl?: string;
 }
-
-
-
-
-

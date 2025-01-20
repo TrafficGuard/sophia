@@ -1,4 +1,3 @@
-import { TextFieldModule } from '@angular/cdk/text-field';
 import {
     ChangeDetectionStrategy,
     Component,
@@ -18,8 +17,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import {MatSelectModule} from "@angular/material/select";
-import {CommonModule} from "@angular/common";
+import { MatSelectModule } from "@angular/material/select";
+import { CommonModule } from "@angular/common";
 
 @Component({
     selector: 'settings-account',
@@ -64,7 +63,6 @@ export class SettingsAccountComponent implements OnInit {
             username: new FormControl(''),
             email: new FormControl('', [Validators.required, Validators.email]),
             enabled: new FormControl(false),
-            defaultChatLlmId: new FormControl(''),
             hilBudget: new FormControl(0),
             hilCount: new FormControl(0),
             llmConfig: new FormGroup({
@@ -77,6 +75,9 @@ export class SettingsAccountComponent implements OnInit {
                 deepinfraKey: new FormControl(''),
                 cerebrasKey: new FormControl(''),
                 xaiKey: new FormControl(''),
+            }),
+            chat: new FormGroup({
+                defaultLLM: new FormControl(''),
             }),
             functionConfig: new FormGroup({
                 GitHub: new FormGroup({
@@ -137,7 +138,7 @@ export class SettingsAccountComponent implements OnInit {
         const formData = this.accountForm.getRawValue();
         
         // Validate defaultChatLlmId exists in available LLMs
-        const defaultLlmId = formData.defaultChatLlmId;
+        const defaultLlmId = formData.chat.defaultLLM;
         if (defaultLlmId) {
             const availableLlms = this.$llms.getValue();
             if (!availableLlms.some(llm => llm.id === defaultLlmId)) {

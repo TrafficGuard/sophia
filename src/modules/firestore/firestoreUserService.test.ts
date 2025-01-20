@@ -20,6 +20,11 @@ describe('FirestoreUserService', () => {
 				groqKey: '',
 				togetheraiKey: '',
 			},
+			chat: {
+				enabledLLMs: {},
+				defaultLLM: '',
+				temperature: 1,
+			},
 			functionConfig: {},
 			// gitlabConfig: {
 		};

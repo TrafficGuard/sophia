@@ -18,6 +18,11 @@ describe('InMemoryUserService', () => {
 				groqKey: '',
 				togetheraiKey: '',
 			},
+			chat: {
+				enabledLLMs: {},
+				defaultLLM: '',
+				temperature: 1,
+			},
 			functionConfig: {},
 			createdAt: new Date(),
 			// gitlabConfig: {
@@ -77,6 +82,11 @@ describe('InMemoryUserService', () => {
 					groqKey: '',
 					togetheraiKey: '',
 				},
+				chat: {
+					enabledLLMs: {},
+					defaultLLM: '',
+					temperature: 1,
+				},
 				functionConfig: {},
 				createdAt: new Date(),
 			};
@@ -100,6 +110,11 @@ describe('InMemoryUserService', () => {
 					openaiKey: '',
 					groqKey: '',
 					togetheraiKey: '',
+				},
+				chat: {
+					enabledLLMs: {},
+					defaultLLM: '',
+					temperature: 1,
 				},
 				functionConfig: {},
 				createdAt: new Date(),
@@ -125,6 +140,11 @@ describe('InMemoryUserService', () => {
 					groqKey: '',
 					togetheraiKey: '',
 				},
+				chat: {
+					enabledLLMs: {},
+					defaultLLM: '',
+					temperature: 1,
+				},
 				functionConfig: {},
 				createdAt: new Date(),
 			};
@@ -139,6 +159,11 @@ describe('InMemoryUserService', () => {
 					openaiKey: '',
 					groqKey: '',
 					togetheraiKey: '',
+				},
+				chat: {
+					enabledLLMs: {},
+					defaultLLM: '',
+					temperature: 1,
 				},
 				functionConfig: {},
 				createdAt: new Date(),

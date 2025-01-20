@@ -58,11 +58,11 @@ describe.skip('xmlAgentRunner', () => {
 			hilBudget: 0,
 			hilCount: 0,
 			id: '',
-			// chat: {
-			// 	enabledLLMs: {},
-			// 	defaultLLM: '',
-			// 	temperature: 1,
-			// },
+			chat: {
+				enabledLLMs: {},
+				defaultLLM: '',
+				temperature: 1,
+			},
 			llmConfig: {},
 			functionConfig: {},
 			createdAt: new Date(),

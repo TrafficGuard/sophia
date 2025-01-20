@@ -1,10 +1,9 @@
 import { DocumentSnapshot, Firestore } from '@google-cloud/firestore';
 import * as bcrypt from 'bcrypt';
-import { LlmCall } from '#llm/llmCallService/llmCall';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
 import { User } from '#user/user';
-import { isSingleUser } from '#user/userService/userContext';
+import { currentUser, isSingleUser } from '#user/userService/userContext';
 import { UserService } from '#user/userService/userService';
 import { envVar } from '#utils/env-var';
 
@@ -59,10 +58,32 @@ export class FirestoreUserService implements UserService {
 			throw new Error(`User ${userId} does not exist`);
 		}
 		const data = docSnap.data() as User;
-		return {
+		return this.docToUser(data, userId);
+	}
+
+	docToUser(data: any, id: string): User {
+		const user: User = {
 			...data,
-			id: userId,
+			id,
 		};
+		if (!user.chat) {
+			user.chat = {
+				enabledLLMs: {},
+				defaultLLM: (user as any).defaultChatLlmId, // backward compat
+				temperature: 1,
+				topP: 1,
+				topK: 50,
+				frequencyPenalty: 0,
+				presencePenalty: 0,
+			};
+		}
+		if (!user.chat.enabledLLMs) user.chat.enabledLLMs = {};
+		if (!user.chat.temperature) user.chat.temperature = 1;
+		if (!user.chat.topP) user.chat.topP = 1;
+		if (!user.chat.topK) user.chat.topK = 50;
+		if (!user.chat.frequencyPenalty) user.chat.frequencyPenalty = 0;
+		if (!user.chat.presencePenalty) user.chat.presencePenalty = 0;
+		return user;
 	}
 
 	@span({ email: 0 })
@@ -70,10 +91,7 @@ export class FirestoreUserService implements UserService {
 		const querySnapshot = await this.db.collection('Users').where('email', '==', email).get();
 		const users = querySnapshot.docs.map((doc) => {
 			const data = doc.data();
-			return {
-				...data,
-				id: doc.id,
-			} as User;
+			return this.docToUser(data, doc.id);
 		});
 		if (users.length === 0) return null;
 		if (users.length > 1) throw new Error(`More than one user with email ${email} found`);
@@ -94,11 +112,17 @@ export class FirestoreUserService implements UserService {
 	}
 
 	@span()
-	async updateUser(updates: Partial<User>, userId?: string): Promise<void> {
-		const userDocRef = this.db.doc(`Users/${userId ?? updates.id}`);
+	async updateUser(updates: Partial<User>, userId?: string): Promise<User> {
+		userId ??= currentUser().id;
+		// TODO should do the read/update in a transaction
+		const currentUserData = await this.getUser(userId);
+		const chatUpdates = updates.chat;
+		const updatedUser = { ...currentUserData, ...updates, id: userId };
+		const userDocRef = this.db.doc(`Users/${userId}`);
 		try {
-			await userDocRef.update(updates);
-			if (this.singleUser) this.singleUser = Object.assign(this.singleUser, updates);
+			await userDocRef.update(updatedUser);
+			if (this.singleUser) this.singleUser = updatedUser;
+			return updatedUser;
 		} catch (error) {
 			logger.error(error, 'Error updating user');
 			throw error;
@@ -120,10 +144,7 @@ export class FirestoreUserService implements UserService {
 		const querySnapshot = await this.db.collection('Users').get();
 		return querySnapshot.docs.map((doc) => {
 			const data = doc.data() as User;
-			return {
-				...data,
-				id: doc.id,
-			};
+			return this.docToUser(data, doc.id);
 		});
 	}
 

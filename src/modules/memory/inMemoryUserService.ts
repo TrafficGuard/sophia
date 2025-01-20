@@ -9,6 +9,11 @@ const singleUser: User = {
 	hilBudget: 0,
 	hilCount: 0,
 	llmConfig: {},
+	chat: {
+		enabledLLMs: {},
+		defaultLLM: '',
+		temperature: 1,
+	},
 	id: SINGLE_USER_ID,
 	email: 'user@domain.com',
 	functionConfig: {},
@@ -73,10 +78,11 @@ export class InMemoryUserService implements UserService {
 		return user;
 	}
 
-	async updateUser(updates: Partial<User>, userId?: string): Promise<void> {
+	async updateUser(updates: Partial<User>, userId?: string): Promise<User> {
 		userId ??= SINGLE_USER_ID;
 		const user = await this.getUser(userId);
 		Object.assign(user, updates);
+		return user;
 	}
 
 	async disableUser(userId: string): Promise<void> {
@@ -96,6 +102,11 @@ export class InMemoryUserService implements UserService {
 			hilBudget: user.hilBudget ?? 0,
 			hilCount: user.hilCount ?? 0,
 			llmConfig: user.llmConfig ?? { anthropicKey: '', openaiKey: '', groqKey: '', togetheraiKey: '' },
+			chat: {
+				enabledLLMs: {},
+				defaultLLM: '',
+				temperature: 1,
+			},
 			functionConfig: {},
 			createdAt: user.createdAt ?? new Date(),
 		};

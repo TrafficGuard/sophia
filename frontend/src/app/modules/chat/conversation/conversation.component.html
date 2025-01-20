@@ -40,8 +40,10 @@
                     <button
                         class="ml-auto"
                         mat-icon-button
-                        [matMenuTriggerFor]="conversationHeaderMenu"
+                        (click)="openChatInfo()"
                     >
+                        <mat-icon [svgIcon]="'settings'" ></mat-icon>
+                        <!--
                         <mat-icon [svgIcon]="'heroicons_outline:ellipsis-vertical'"></mat-icon>
                         <mat-menu #conversationHeaderMenu>
                             <button mat-menu-item (click)="openChatInfo()">
@@ -53,6 +55,7 @@
                                 Delete chat
                             </button>
                         </mat-menu>
+                        -->
                     </button>
                 </div>
 
