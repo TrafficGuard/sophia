@@ -12,6 +12,7 @@ import { groqLLMRegistry } from '#llm/services/groq';
 import { mockLLMRegistry } from '#llm/services/mock-llm';
 import { ollamaLLMRegistry } from '#llm/services/ollama';
 import { openAiLLMRegistry } from '#llm/services/openai';
+import { perplexityLLMRegistry } from '#llm/services/perplexity-llm';
 import { togetherLLMRegistry } from '#llm/services/together';
 import { vertexLLMRegistry } from '#llm/services/vertexai';
 import { xaiLLMRegistry } from '#llm/services/xai';
@@ -28,6 +29,7 @@ export const LLM_FACTORY: Record<string, () => LLM> = {
 	...deepseekLLMRegistry(),
 	...deepinfraLLMRegistry(),
 	...cerebrasLLMRegistry(),
+	...perplexityLLMRegistry(),
 	...xaiLLMRegistry(),
 	...ollamaLLMRegistry(),
 	...blueberryLLMRegistry(),
