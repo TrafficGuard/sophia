@@ -15,6 +15,7 @@ import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 import { span } from '#o11y/trace';
 import { CodeReviewConfig, codeReviewToXml } from '#swe/codeReview/codeReviewModel';
+import { getProjectInfo } from '#swe/projectDetection';
 import { functionConfig } from '#user/userService/userContext';
 import { allSettledAndFulFilled } from '#utils/async-utils';
 import { envVar } from '#utils/env-var';
@@ -184,13 +185,23 @@ export class GitLab implements SourceControlManagement {
 		if (!projectPathWithNamespace) throw new Error('Parameter "projectPathWithNamespace" must be truthy');
 		const path = join(systemDir(), 'gitlab', projectPathWithNamespace);
 
-		// If the project already exists pull updates
+		// If the project already exists pull updates from the main/dev branch
 		if (existsSync(path) && existsSync(join(path, '.git'))) {
 			logger.info(`${projectPathWithNamespace} exists at ${path}. Pulling updates`);
-			// If we're resuming an agent which has already created the branch but not pushed
-			// then it won't exist remotely, so this will return a non-zero code
+
+			// If the repo has a projectInfo.json file with a devBranch defined, then switch to that
+			// else switch to the default branch defined in the GitLab project
+			const projectInfo = await getProjectInfo();
+			if (projectInfo.devBranch) {
+				await getFileSystem().vcs.switchToBranch(projectInfo.devBranch);
+			} else {
+				const gitProject = await this.getProject(projectPathWithNamespace);
+				const switchResult = await execCommand(`git switch ${gitProject.defaultBranch}`, { workingDirectory: path });
+				if (switchResult.exitCode === 0) logger.info(`Switched to branch ${gitProject.defaultBranch}`);
+			}
+
 			const result = await execCommand(`git -C ${path} pull`);
-			// checkExecResult(result, `Failed to pull ${path}`);
+			if (result.exitCode !== 0) logger.warn('Failed to pull updates');
 		} else {
 			logger.info(`Cloning project: ${projectPathWithNamespace} to ${path}`);
 			await fs.promises.mkdir(path, { recursive: true });
