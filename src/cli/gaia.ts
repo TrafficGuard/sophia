@@ -10,12 +10,12 @@ import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
 import { LlmCall } from '#llm/llmCallService/llmCall';
 import { ClaudeLLMs } from '#llm/services/anthropic';
-import { Claude3_5_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { groqLlama3_3_70B } from '#llm/services/groq';
 import { Gemini_1_5_Flash } from '#llm/services/vertexai';
 import { logger } from '#o11y/logger';
 import { sleep } from '#utils/async-utils';
 
+import { defaultGoogleCloudLLMs } from '#llm/services/defaultLlms';
 import { openAIo1 } from '#llm/services/openai';
 import { appContext, initFirestoreApplicationContext } from '../applicationContext';
 

@@ -5,7 +5,7 @@ import { FileSystemRead } from '#functions/storage/FileSystemRead';
 import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
 import { ClaudeLLMs } from '#llm/services/anthropic';
-import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
+import { defaultGoogleCloudLLMs } from '#llm/services/defaultLlms';
 import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
@@ -16,7 +16,7 @@ export async function main() {
 	let llms = ClaudeLLMs();
 	if (process.env.GCLOUD_PROJECT) {
 		await initFirestoreApplicationContext();
-		llms = ClaudeVertexLLMs();
+		llms = defaultGoogleCloudLLMs();
 	}
 
 	let functions: Array<any>;

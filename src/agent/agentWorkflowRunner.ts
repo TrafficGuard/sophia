@@ -29,7 +29,7 @@ export async function runAgentWorkflow(config: RunAgentConfig, workflow: (agent:
 			context.state = 'completed';
 			const duration = Date.now() - start;
 
-			logger.info(`Completed. Cost $${context.cost.toFixed(2)}. Time: ${formatMillisDuration(duration)}`);
+			logger.info(`Completed. Cost $${context.cost.toFixed(context.cost > 1 ? 2 : 3)}. Time: ${formatMillisDuration(duration)}`);
 		} catch (e) {
 			logger.error(e);
 			context = agentContext();

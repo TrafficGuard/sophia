@@ -13,13 +13,13 @@ import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
 import { LlmCall } from '#llm/llmCallService/llmCall';
 import { ClaudeLLMs } from '#llm/services/anthropic';
-import { Claude3_5_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { Gemini_1_5_Flash } from '#llm/services/vertexai';
 import { logger } from '#o11y/logger';
+import { defaultGoogleCloudLLMs } from '#llm/services/defaultLlms';
 import { SWEBenchAgent, SWEInstance } from '#swe/SWEBenchAgent';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { sleep } from '#utils/async-utils';
-import { appContext, initFirestoreApplicationContext } from '../applicationContext';
+import { initFirestoreApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
 
 async function main() {
@@ -36,7 +36,7 @@ async function main() {
 	let agentLlms: AgentLLMs = ClaudeLLMs();
 	if (process.env.GCLOUD_PROJECT) {
 		await initFirestoreApplicationContext();
-		agentLlms = ClaudeVertexLLMs();
+		agentLlms = defaultGoogleCloudLLMs();
 	}
 
 	const { initialPrompt, resumeAgentId } = parseProcessArgs();

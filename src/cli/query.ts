@@ -6,13 +6,13 @@ import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { shutdownTrace } from '#fastify/trace-init/trace-init';
 import { Blueberry } from '#llm/multi-agent/blueberry';
 import { ClaudeLLMs } from '#llm/services/anthropic';
-import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { cerebrasLlama3_70b } from '#llm/services/cerebras';
 import { deepseekChat } from '#llm/services/deepseek';
 import { GPT4oMini, openAIo1, openAIo1mini } from '#llm/services/openai';
 import { Gemini_1_5_Flash } from '#llm/services/vertexai';
 import { codebaseQuery } from '#swe/discovery/codebaseQuery';
 import { initFirestoreApplicationContext } from '../applicationContext';
+import { defaultGoogleCloudLLMs } from '#llm/services/defaultLlms';
 import { parseProcessArgs, saveAgentId } from './cli';
 
 async function main() {

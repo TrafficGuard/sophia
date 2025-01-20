@@ -3,7 +3,7 @@ import '#fastify/trace-init/trace-init'; // leave an empty line next so this doe
 import { writeFileSync } from 'node:fs';
 import { agentContextStorage, createContext } from '#agent/agentContextLocalStorage';
 import { PublicWeb } from '#functions/web/web';
-import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
+import { defaultGoogleCloudLLMs } from '#llm/services/defaultLlms';
 
 // npm run scrape <URL> <filename(optional)>
 
@@ -14,7 +14,7 @@ async function url2markdown(url: string) {
 		createContext({
 			initialPrompt: '',
 			agentName: '',
-			llms: ClaudeVertexLLMs(), // Requires Google Cloud and Claude model setup
+			llms: defaultGoogleCloudLLMs(), // Requires Google Cloud and Claude model setup
 			functions: [],
 		}),
 	);

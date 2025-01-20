@@ -1,3 +1,4 @@
+import { LiveFiles } from '#agent/liveFiles';
 import { GoogleCloud } from '#functions/cloud/google/google-cloud';
 import { ImageGen } from '#functions/image';
 import { Jira } from '#functions/jira';
@@ -23,6 +24,7 @@ export function functionRegistry(): Array<new () => any> {
 		FileSystemRead,
 		FileSystemWrite,
 		LocalFileStore,
+		LiveFiles,
 		GitLab,
 		// GitHub, // Error: More than one function classes found implementing SourceControlManagement
 		GoogleCloud,

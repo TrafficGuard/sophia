@@ -7,7 +7,7 @@ import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { shutdownTrace } from '#fastify/trace-init/trace-init';
 import { SummarizerAgent } from '#functions/text/summarizer';
 import { ClaudeLLMs } from '#llm/services/anthropic';
-import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
+import { defaultGoogleCloudLLMs } from '#llm/services/defaultLlms';
 import { initFirestoreApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
 
@@ -15,7 +15,7 @@ async function main() {
 	let agentLlms: AgentLLMs = ClaudeLLMs();
 	if (process.env.GCLOUD_PROJECT) {
 		await initFirestoreApplicationContext();
-		agentLlms = ClaudeVertexLLMs();
+		agentLlms = defaultGoogleCloudLLMs();
 	}
 
 	const { initialPrompt, resumeAgentId } = parseProcessArgs();

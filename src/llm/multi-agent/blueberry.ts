@@ -82,6 +82,10 @@ export class Blueberry extends BaseLLM {
 	llms: LLM[];
 	mediator: LLM;
 
+	/**
+	 *
+	 * @param model LLM model ids to use seperated by the pipe character. The first id will be used as the mediator. The remaining will be used as the initial response/debate generation.
+	 */
 	constructor(model = 'default') {
 		super(
 			'Blueberry',

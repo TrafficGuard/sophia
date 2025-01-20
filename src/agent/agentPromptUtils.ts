@@ -1,4 +1,5 @@
 import { agentContext, getFileSystem } from '#agent/agentContextLocalStorage';
+import { LiveFiles } from '#agent/liveFiles';
 import { FileSystemService } from '#functions/storage/fileSystemService';
 import { FileMetadata, FileStore } from '#functions/storage/filestore';
 import { FunctionCallResult } from '#llm/llm';
@@ -22,7 +23,7 @@ export function buildMemoryPrompt(): string {
  * TODO move the string generation into the tool classes
  */
 export async function buildToolStatePrompt(): Promise<string> {
-	return (await buildFileStorePrompt()) + buildFileSystemPrompt();
+	return (await buildLiveFilesPrompt()) + (await buildFileStorePrompt()) + buildFileSystemPrompt();
 }
 /**
  * @return An XML representation of the FileSystem tool state
@@ -39,7 +40,7 @@ function buildFileSystemPrompt(): string {
 }
 
 /**
- * @returnAn XML representation of the FileStore tool if one exists in the agents functions
+ * @return An XML representation of the FileStore tool if one exists in the agents functions
  */
 async function buildFileStorePrompt(): Promise<string> {
 	const fileStore = agentContext().functions.getFunctionType('filestore') as FileStore;
@@ -49,6 +50,22 @@ async function buildFileStorePrompt(): Promise<string> {
 	return `\n<filestore>
 ${JSON.stringify(files)}
 </filestore>
+`;
+}
+
+/**
+ * @return An XML representation of the Live Files tool if one exists in the agents functions
+ */
+async function buildLiveFilesPrompt(): Promise<string> {
+	const agent = agentContext();
+	if (!agent.functions.getFunctionClassNames().includes(LiveFiles.name)) return '';
+
+	const liveFiles = agentContext().liveFiles;
+	if (!liveFiles?.length) return '';
+
+	return `\n<live_files>
+${await getFileSystem().readFilesAsXml(liveFiles)}
+</live_files>
 `;
 }
 

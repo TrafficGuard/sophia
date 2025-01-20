@@ -12,7 +12,7 @@ import {
 } from '#agent/agentFunctions';
 import { buildFunctionCallHistoryPrompt, buildMemoryPrompt, buildToolStatePrompt, updateFunctionSchemas } from '#agent/agentPromptUtils';
 import { AgentExecution, formatFunctionError, formatFunctionResult } from '#agent/agentRunner';
-import { convertJsonToPythonDeclaration, extractPythonCode } from '#agent/codeGenAgentUtils';
+import { convertJsonToPythonDeclaration, extractPythonCode, removePythonMarkdownWrapper } from '#agent/codeGenAgentUtils';
 import { humanInTheLoop } from '#agent/humanInTheLoop';
 import { getServiceName } from '#fastify/trace-init/trace-init';
 import { FUNC_SEP, FunctionSchema, getAllFunctionSchemas } from '#functionSchema/functions';
@@ -144,7 +144,7 @@ export async function runCodeGenAgent(agent: AgentContext): Promise<AgentExecuti
 						logger.warn(e, 'Error with Codegen agent plan');
 						// One re-try if the generate fails or the code can't be extracted
 						agentPlanResponse = await agentLLM.generateText(systemPromptWithFunctions, initialPrompt, {
-							id: 'Codegen agent plan',
+							id: 'Codegen agent plan retry',
 							stopSequences,
 							temperature: 0.5,
 						});
@@ -154,17 +154,19 @@ export async function runCodeGenAgent(agent: AgentContext): Promise<AgentExecuti
 					agent.state = 'functions';
 					await agentStateService.save(agent);
 
-					// The XML formatted results of the function call(s)
-					const functionResults: string[] = [];
 					let pythonScriptResult: any;
 					let pythonScript = '';
 
 					const functionInstances: Record<string, object> = agent.functions.getFunctionInstanceMap();
-					const schemas: FunctionSchema[] = getAllFunctionSchemas(Object.values(functionInstances));
+					const funcSchemas: FunctionSchema[] = getAllFunctionSchemas(Object.values(functionInstances));
 					const jsGlobals = {};
-					for (const schema of schemas) {
+					for (const schema of funcSchemas) {
 						const [className, method] = schema.name.split(FUNC_SEP);
 						jsGlobals[schema.name] = async (...args) => {
+							// The system prompt instructs the generated code to use positional arguments.
+							// If the generated code mistakenly uses named arguments then there will an arg
+							// which is an object with the property names matching the parameter names. This will cause an error
+
 							// Un-proxy any JsProxy objects. https://pyodide.org/en/stable/usage/type-conversions.html
 							args = args.map((arg) => (typeof arg?.toJs === 'function' ? arg.toJs() : arg));
 
@@ -190,10 +192,9 @@ export async function runCodeGenAgent(agent: AgentContext): Promise<AgentExecuti
 									stdout,
 									// stdoutSummary: outputSummary, TODO
 								});
-								functionResults.push(formatFunctionResult(schema.name, functionResponse));
 								return functionResponse;
 							} catch (e) {
-								functionResults.push(formatFunctionError(schema.name, e));
+								logger.warn(e, 'Error calling function');
 
 								agent.functionCallHistory.push({
 									function_name: schema.name,
@@ -252,10 +253,11 @@ main()`.trim();
 						} catch (e) {
 							// Attempt to fix Syntax/indentation errors and retry
 							// Otherwise let execution errors re-throw.
-							if (e.type === 'IndentationError' || e.type !== 'SyntaxError') {
+							if (e.type === 'IndentationError' || e.type === 'SyntaxError') {
 								// Fix the compile issues in the script
 								const prompt = `${functionsXml}\n<python>\n${pythonScript}</python>\n<error>${e.message}</error>\nPlease adjust/reformat the Python script to fix the issue. Output only the updated code. Do no chat, do not output markdown ticks. Only the updated code.`;
 								pythonScript = await llms().hard.generateText(prompt, { id: 'Fix python script error' });
+								pythonScript = removePythonMarkdownWrapper(pythonScript);
 
 								// Re-try execution of fixed syntax/indentation error
 								const result = await pyodide.runPythonAsync(pythonScript, { globals });
@@ -296,7 +298,7 @@ main()`.trim();
 					agent.invoking = [];
 					const currentFunctionCallHistory = buildFunctionCallHistoryPrompt('results', 10000, currentFunctionHistorySize);
 
-					currentPrompt = `${oldFunctionCallHistory}${buildMemoryPrompt()}${toolStatePrompt}\n${userRequestXml}\n${agentPlanResponse}\n${currentFunctionCallHistory}\n<script-result>${pythonScriptResult}</script-result>\nReview the results of the scripts and make any observations about the output/errors, then proceed with the response.`;
+					currentPrompt = `${oldFunctionCallHistory}\n${currentFunctionCallHistory}${buildMemoryPrompt()}${toolStatePrompt}\n${userRequestXml}\n${agentPlanResponse}\n<script-result>${pythonScriptResult}</script-result>\nReview the results of the script and make any observations about the output/errors, then proceed with the response.`;
 					currentFunctionHistorySize = agent.functionCallHistory.length;
 				} catch (e) {
 					span.setStatus({ code: SpanStatusCode.ERROR, message: e.toString() });

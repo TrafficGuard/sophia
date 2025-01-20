@@ -25,7 +25,7 @@ export function openaiLLmFromModel(model: string): LLM {
 
 export function openAIo1() {
 	return new OpenAI(
-		'OpenAI o1',
+		'OpenAI o1 preview',
 		'o1-preview',
 		(input: string) => (input.length * 15) / 1_000_000,
 		(output: string) => (output.length * 60) / (1_000_000 * 4),

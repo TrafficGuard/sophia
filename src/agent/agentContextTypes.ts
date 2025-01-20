@@ -5,7 +5,7 @@ import { User } from '#user/user';
 
 /**
  * The difficulty of a LLM generative task. Used to select an appropriate model for the cost vs capability.
- * xeasy  LLama 8b
+ * xeasy  LLama 8b/Flash 8b
  * easy   Haiku 3.5/GPT4-mini/Llama 70b/Gemini Flash
  * medium Sonnet 3.5/GPT4-o/Llama 405b
  * hard   Opus 3.5/OpenAI o1
@@ -22,18 +22,18 @@ export interface AgentCompleted {
 }
 
 /**
- * agent - waiting for the agent LLM call(s) to generate control loop update
- * functions - waiting for the planned function call(s) to complete
- * error - the agent control loop has errored
+ * agent - autonomous agent waiting for the agent LLM call(s) to generate control loop update
+ * functions - waiting for function call(s) to complete
+ * error - the agent control loop has errored or force stopped
  * hil - deprecated for humanInLoop_agent and humanInLoop_tool
  * hitl_threshold - If the agent has reached budget or iteration thresholds. At this point the agent is not executing any LLM/function calls.
- * hitl_tool - When a function has request HITL in the function calling part of the control loop
+ * hitl_tool - When a function has request real-time HITL in the function calling part of the control loop
  * hitl_feedback - the agent has requested human feedback for a decision. At this point the agent is not executing any LLM/function calls.
  * hil - deprecated version of hitl_feedback
  * feedback - deprecated version of hitl_feedback
- * child_agents - waiting for child agents to complete
+ * child_agents - stopped waiting for child agents to complete
  * completed - the agent has called the completed function.
- * shutdown - if the agent has been instructed by the system to pause (e.g. for server shutdown)
+ * shutdown - if the agent has stopped after being instructed by the system to pause (e.g. for server shutdown)
  * timeout - for chat agents when there hasn't been a user input for a configured amount of time
  */
 export type AgentRunningState =
@@ -56,7 +56,7 @@ export type AgentRunningState =
  * @returns if the agent has a live execution thread
  */
 export function isExecuting(agent: AgentContext): boolean {
-	return agent.state !== 'completed' && agent.state !== 'feedback' && agent.state !== 'hil' && agent.state !== 'error';
+	return agent.state === 'workflow' || agent.state === 'agent' || agent.state === 'functions' || agent.state === 'hitl_tool';
 }
 
 /**

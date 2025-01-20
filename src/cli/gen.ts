@@ -8,11 +8,11 @@ import { agentContext, agentContextStorage, createContext } from '#agent/agentCo
 import { AgentContext, AgentLLMs } from '#agent/agentContextTypes';
 import { LLM } from '#llm/llm';
 import { ClaudeLLMs } from '#llm/services/anthropic';
-import { Claude3_5_Sonnet_Vertex, ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { GPT4oMini, openAIo1 } from '#llm/services/openai';
 import { currentUser } from '#user/userService/userContext';
 import { initFirestoreApplicationContext } from '../applicationContext';
 import { CliOptions, getLastRunAgentId, parseProcessArgs, saveAgentId } from './cli';
+import { defaultGoogleCloudLLMs } from '#llm/services/defaultLlms';
 
 // Usage:
 // npm run chat
