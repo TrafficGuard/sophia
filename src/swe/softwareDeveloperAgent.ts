@@ -42,10 +42,14 @@ export class SoftwareDeveloperAgent {
 
 		const requirementsSummary = await this.summariseRequirements(requirements);
 
-		const gitProject = scmFullProjectPath
-			? (await scm.getProjects()).find((project) => project.fullPath === scmFullProjectPath)
-			: await this.selectProject(requirementsSummary);
-
+		// Select the Git project. If scmFullProjectPath is provided and matches a project, then skip the LLM search
+		let gitProject: GitProject;
+		let selectProjectRequirements = requirementsSummary;
+		if (scmFullProjectPath) {
+			gitProject = (await scm.getProjects()).find((project) => project.fullPath.toLowerCase() === scmFullProjectPath.toLowerCase());
+			if (!gitProject) selectProjectRequirements += `\nRepo name hint: ${scmFullProjectPath}`;
+		}
+		if (!gitProject) gitProject = await this.selectProject(selectProjectRequirements);
 		logger.info(`Git project ${JSON.stringify(gitProject)}`);
 
 		const repoPath = await scm.cloneProject(gitProject.fullPath, gitProject.defaultBranch);

@@ -9,7 +9,7 @@ export const LIVE_FILES_REMOVE = 'LiveFiles_removeFiles';
  * Functions for the agent to add/remove files which always displays the current file contents in the agent control prompt
  */
 @funcClass(__filename)
-export class LiveFileFunctions {
+export class LiveFiles {
 	/**
 	 * Add files which will always have their current contents displayed in the <live-files> section (increasing LLM token costs)
 	 * @param {string[]} files the files to always include the current contents of in the prompt

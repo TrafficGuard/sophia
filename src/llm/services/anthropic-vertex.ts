@@ -26,6 +26,7 @@ export const ANTHROPIC_VERTEX_SERVICE = 'anthropic-vertex';
 
 export function anthropicVertexLLMRegistry(): Record<string, () => LLM> {
 	return {
+		[`${ANTHROPIC_VERTEX_SERVICE}:claude-3-haiku`]: Claude3_5_Haiku_Vertex,
 		[`${ANTHROPIC_VERTEX_SERVICE}:claude-3-5-haiku`]: Claude3_5_Haiku_Vertex,
 		[`${ANTHROPIC_VERTEX_SERVICE}:claude-3-5-sonnet`]: Claude3_5_Sonnet_Vertex,
 	};

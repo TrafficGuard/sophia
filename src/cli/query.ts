@@ -1,32 +1,18 @@
 import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
 
+import { agentContext, llms } from '#agent/agentContextLocalStorage';
 import { AgentLLMs } from '#agent/agentContextTypes';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { shutdownTrace } from '#fastify/trace-init/trace-init';
-import { Blueberry } from '#llm/multi-agent/blueberry';
-import { ClaudeLLMs } from '#llm/services/anthropic';
-import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
-import { cerebrasLlama3_70b } from '#llm/services/cerebras';
-import { deepseekChat } from '#llm/services/deepseek';
-import { GPT4oMini, openAIo1, openAIo1mini } from '#llm/services/openai';
-import { Gemini_1_5_Flash } from '#llm/services/vertexai';
+import { defaultLLMs } from '#llm/services/defaultLlms';
 import { codebaseQuery } from '#swe/discovery/codebaseQuery';
-import { initFirestoreApplicationContext } from '../applicationContext';
+import { appContext, initApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
 
 async function main() {
-	let agentLlms: AgentLLMs = ClaudeLLMs();
-	if (process.env.GCLOUD_PROJECT) {
-		await initFirestoreApplicationContext();
-		agentLlms = ClaudeVertexLLMs();
-	}
-	// agentLlms.easy = Gemini_1_5_Flash();
-	// agentLlms.medium = groqLlama3_1_70B();
-	// agentLlms.medium = deepseekChat();
-	// agentLlms.medium = openAIo1mini();
-	// agentLlms.medium = GPT4oMini();
-	// agentLlms.medium = new Blueberry();
+	const agentLLMs: AgentLLMs = defaultLLMs();
+	await initApplicationContext();
 
 	const { initialPrompt, resumeAgentId } = parseProcessArgs();
 
@@ -34,7 +20,7 @@ async function main() {
 
 	const config: RunAgentConfig = {
 		agentName: `Query: ${initialPrompt}`,
-		llms: agentLlms,
+		llms: agentLLMs,
 		functions: [], //FileSystem,
 		initialPrompt,
 		resumeAgentId,
@@ -44,6 +30,13 @@ async function main() {
 	};
 
 	const agentId = await runAgentWorkflow(config, async () => {
+		const agent = agentContext();
+		agent.name = `Query: ${await llms().easy.generateText(
+			`<query>\n${initialPrompt}\n</query>\n\nSummarise the query into only a terse few words for a short title (8 words maximum) for the name of the AI agent completing the task. Output the short title only, nothing else.`,
+			{ id: 'Agent name' },
+		)}`;
+		await appContext().agentStateService.save(agent);
+
 		const response = await codebaseQuery(initialPrompt);
 		console.log(response);
 	});

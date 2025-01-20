@@ -192,15 +192,17 @@ Suggested function(s):
 Example_getPage(url: str) -> str:
     """
     Get the contents of a web page
-    url: str The web page URL
+    url: str The web page URL, beginning with https://
     """
+
 Example_processText(text: str, descriptionOfChanges: str) -> str:
     """
     Transforms text given the described changes
-    text: the input text
-    descriptionOfChanges: a description of the changes/processing to apply to the text
+    text: The input text to process
+    descriptionOfChanges: A detailed description of the changes/processing to apply to the text
     Returns the processed text
     """
+
 Example_PublicWeb_getPage is suitable as the URLs are on publicly available documentation and blog pages.
 We can retrieve the two pages, and then create a report by processing the combined contents.
 </next_step_details>
@@ -227,7 +229,7 @@ await Agent_requestFeedback("I have collated a report on the new registration pr
 
 # Response format
 
-Your response must be in the following format:
+Your response must be in the following format (including the <response></response> tags):
 
 <response>
 <expanded_user_request>
@@ -242,8 +244,8 @@ Instructions:
 - Make observations on the current state:
     - Analysing the new function-call-results
     - Considering the Task Execution Phases for Problem-Solving
-    - Applying the Reasoning Techniques
-    - Taking into account the Interpreting User Requests items
+    - List all of the "Reasoning Techniques" and detail which ones are relevant
+    - List all of the "Interpreting User Requests" items and identify which ones are relevant
 - List the reasoning techniques relevant to the user request and the plan tasks to complete next.
 - Rephrase the selected reasoning techniques to be more specific to the next plan tasks.
 -->
@@ -299,6 +301,7 @@ Otherwise return any values to analyse further.
 # Do NOT assume anything about the structure of the results from functions. Return values that require further analysis
 # The script can return a Dict with any values you want to have available to view/process next. You don't need to do everything here.
 # If you do process an object/collection and the result is unexpected (empty or otherwise), then return the original object/collection so it can be inspected in the next step.
+# Always use positional arguments when calling functions
 # Example:
 # Check if the desired content is in memory from a previous step. Result: (None found/Found ...)
 # Get the two lists asked for in the next step details

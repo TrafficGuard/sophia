@@ -130,7 +130,7 @@ Respond only as per the Process Files Response Instructions.
 `;
 	const iterationMessages: LlmMessage[] = [...messages, { role: 'user', content: prompt }];
 
-	return await llms().medium.generateTextWithJson(iterationMessages);
+	return await llms().medium.generateTextWithJson(iterationMessages, { id: 'Select Files iteration' });
 }
 
 async function processedIterativeStepUserPrompt(response: IterationResponse): Promise<LlmMessage> {
@@ -225,7 +225,7 @@ async function selectFilesCore(
 	const maxIterations = 10;
 	let iterationCount = 0;
 
-	const initialResponse: InitialResponse = await llms().medium.generateTextWithJson(messages);
+	const initialResponse: InitialResponse = await llms().medium.generateTextWithJson(messages, { id: 'Select Files initial' });
 	messages.push({ role: 'assistant', content: JSON.stringify(initialResponse) });
 
 	let filesToInspect = initialResponse.inspectFiles || [];
@@ -295,7 +295,7 @@ Respond in the following format (Note only the contents of the result tag will b
 	messages.push({ role: 'user', content: finalPrompt });
 
 	// Perform the additional LLM call to get the answer
-	const answer = await llms().medium.generateTextWithResult(messages);
+	const answer = await llms().medium.generateTextWithResult(messages, { id: 'Select Files query' });
 	return answer.trim();
 }
 

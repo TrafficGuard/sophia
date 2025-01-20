@@ -46,8 +46,8 @@ export class CodeEditingAgent {
 		requirements: string,
 		altOptions: { fileSelection?: string[]; projectInfo?: ProjectInfo; workingDirectory?: string } = {},
 	): Promise<void> {
-		let projectInfo: ProjectInfo;
-		if (!altOptions.projectInfo) {
+		let projectInfo: ProjectInfo = altOptions.projectInfo;
+		if (!projectInfo) {
 			const detected: ProjectInfo[] = await detectProjectInfo();
 			if (detected.length !== 1) throw new Error('projectInfo array must have one item');
 			projectInfo = detected[0];
@@ -73,7 +73,7 @@ export class CodeEditingAgent {
 		logger.info(`git base ${gitBase}`);
 
 		let fileSelection: string[] = altOptions.fileSelection || [];
-		if (!fileSelection) {
+		if (!fileSelection?.length) {
 			// Find the initial set of files required for editing
 			// const filesResponse: SelectFilesResponse = await this.selectFilesToEdit(requirements, projectInfo);
 			// fileSelection = [...filesResponse.primaryFiles.map((selected) => selected.path), ...filesResponse.secondaryFiles.map((selected) => selected.path)];
@@ -327,6 +327,7 @@ Then respond in following format:
 
 		const result = `<compile_output>
 	<command>${projectInfo.compile}</command>
+	<exit-code>${exitCode}</exit-code>
 	<stdout>
 	${stdout}
 	</stdout>

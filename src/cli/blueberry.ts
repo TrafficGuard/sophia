@@ -5,15 +5,14 @@ import { agentContext, agentContextStorage, createContext } from '#agent/agentCo
 import { AgentContext } from '#agent/agentContextTypes';
 import { Blueberry } from '#llm/multi-agent/blueberry';
 import { mockLLMs } from '#llm/services/mock-llm';
-import { initFirestoreApplicationContext } from '../applicationContext';
+import { initApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
 
 // Usage:
 // npm run blueberry
 
 async function main() {
-	if (process.env.GCLOUD_PROJECT) await initFirestoreApplicationContext();
-
+	await initApplicationContext();
 	const { initialPrompt } = parseProcessArgs();
 
 	const context: AgentContext = createContext({

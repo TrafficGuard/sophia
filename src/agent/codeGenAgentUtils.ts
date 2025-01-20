@@ -67,5 +67,18 @@ export function extractPythonCode(llmResponse: string): string {
 
 	if (!matchXml) throw new Error(`Could not find <python-code></python-code> in the response \n${resultText}`);
 
-	return matchXml[1].trim();
+	const xmlContents = matchXml[1].trim();
+	return removePythonMarkdownWrapper(xmlContents);
+}
+
+/**
+ * Sometimes an LLM will wrap the reformatted code in Markdown tags, remove them if there.
+ * @param code
+ */
+export function removePythonMarkdownWrapper(code: string): string {
+	if (code.startsWith('```python') && code.endsWith('```')) {
+		// Remove the markdown lines
+		code = code.slice(9, -3).trim();
+	}
+	return code;
 }

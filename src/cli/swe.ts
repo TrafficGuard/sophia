@@ -1,19 +1,15 @@
 import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
 import { AgentContext, AgentLLMs } from '#agent/agentContextTypes';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
-import { GitLab } from '#functions/scm/gitlab';
 import { FileSystemRead } from '#functions/storage/FileSystemRead';
 import { Perplexity } from '#functions/web/perplexity';
-import { ClaudeLLMs } from '#llm/services/anthropic';
-import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
+import { defaultLLMs } from '#llm/services/defaultLlms';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
-import { initFirestoreApplicationContext } from '../applicationContext';
-import { getLastRunAgentId, parseProcessArgs, saveAgentId } from './cli';
+import { initApplicationContext } from '../applicationContext';
+import { parseProcessArgs, saveAgentId } from './cli';
 
 // Used to test the SoftwareDeveloperAgent
 
@@ -21,11 +17,8 @@ import { getLastRunAgentId, parseProcessArgs, saveAgentId } from './cli';
 // npm run swe
 
 async function main() {
-	let llms: AgentLLMs = ClaudeLLMs();
-	if (process.env.GCLOUD_PROJECT) {
-		await initFirestoreApplicationContext();
-		llms = ClaudeVertexLLMs();
-	}
+	const llms: AgentLLMs = defaultLLMs();
+	await initApplicationContext();
 
 	const { initialPrompt, resumeAgentId } = parseProcessArgs();
 

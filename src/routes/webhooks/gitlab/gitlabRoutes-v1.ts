@@ -6,6 +6,7 @@ import { RunAgentConfig } from '#agent/agentRunner';
 import { send, sendSuccess } from '#fastify/index';
 import { GitLab } from '#functions/scm/gitlab';
 import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
+import { defaultLLMs } from '#llm/services/defaultLlms';
 import { logger } from '#o11y/logger';
 import { envVar } from '#utils/env-var';
 import { appContext } from '../../../applicationContext';
@@ -37,7 +38,7 @@ export async function gitlabRoutesV1(fastify: AppFastifyInstance) {
 
 			const config: RunAgentConfig = {
 				agentName: `MR review - ${event.object_attributes.title}`,
-				llms: ClaudeVertexLLMs(),
+				llms: defaultLLMs(),
 				functions: [],
 				user: await appContext().userService.getUserByEmail(envVar('GITLAB_REVIEW_USER_EMAIL')),
 				initialPrompt: '',

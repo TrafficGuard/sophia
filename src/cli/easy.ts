@@ -7,7 +7,7 @@ import { AgentContext } from '#agent/agentContextTypes';
 import { Blueberry } from '#llm/multi-agent/blueberry';
 import { mockLLMs } from '#llm/services/mock-llm';
 import { Gemini_1_5_Flash } from '#llm/services/vertexai';
-import { initFirestoreApplicationContext } from '../applicationContext';
+import { initApplicationContext, initFirestoreApplicationContext } from '../applicationContext';
 import { parseProcessArgs } from './cli';
 
 // See https://arxiv.org/html/2405.19616v1 https://github.com/autogenai/easy-problems-that-llms-get-wrong
@@ -15,7 +15,7 @@ import { parseProcessArgs } from './cli';
 // npm run easy
 
 async function main() {
-	if (process.env.GCLOUD_PROJECT) await initFirestoreApplicationContext();
+	await initApplicationContext();
 
 	const context: AgentContext = createContext({
 		initialPrompt: '',

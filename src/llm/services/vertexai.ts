@@ -48,7 +48,7 @@ export function Gemini_1_5_Pro() {
 	);
 }
 
-export function Gemini_1_5_Experimental() {
+export function Gemini_Experimental() {
 	return new VertexLLM(
 		'Gemini experimental',
 		'gemini-experimental',

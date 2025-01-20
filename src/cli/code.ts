@@ -5,18 +5,14 @@ import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { shutdownTrace } from '#fastify/trace-init/trace-init';
 import { GitLab } from '#functions/scm/gitlab';
-import { ClaudeLLMs } from '#llm/services/anthropic';
-import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
+import { defaultLLMs } from '#llm/services/defaultLlms';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
-import { initFirestoreApplicationContext } from '../applicationContext';
+import { initApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
 
 async function main() {
-	let agentLlms: AgentLLMs = ClaudeLLMs();
-	if (process.env.GCLOUD_PROJECT) {
-		await initFirestoreApplicationContext();
-		agentLlms = ClaudeVertexLLMs();
-	}
+	const agentLlms: AgentLLMs = defaultLLMs();
+	await initApplicationContext();
 
 	const { initialPrompt, resumeAgentId } = parseProcessArgs();
 
