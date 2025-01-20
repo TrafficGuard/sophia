@@ -1,16 +1,17 @@
 import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
 
+import { agentContext, llms } from '#agent/agentContextLocalStorage';
 import { AgentLLMs } from '#agent/agentContextTypes';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { shutdownTrace } from '#fastify/trace-init/trace-init';
 import { defaultLLMs } from '#llm/services/defaultLlms';
 import { codebaseQuery } from '#swe/discovery/codebaseQuery';
-import { initApplicationContext } from '../applicationContext';
+import { appContext, initApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
 
 async function main() {
-	const llms: AgentLLMs = defaultLLMs();
+	const agentLLMs: AgentLLMs = defaultLLMs();
 	await initApplicationContext();
 
 	const { initialPrompt, resumeAgentId } = parseProcessArgs();
@@ -19,7 +20,7 @@ async function main() {
 
 	const config: RunAgentConfig = {
 		agentName: `Query: ${initialPrompt}`,
-		llms,
+		llms: agentLLMs,
 		functions: [], //FileSystem,
 		initialPrompt,
 		resumeAgentId,
@@ -29,6 +30,13 @@ async function main() {
 	};
 
 	const agentId = await runAgentWorkflow(config, async () => {
+		const agent = agentContext();
+		agent.name = `Query: ${await llms().easy.generateText(
+			`<query>\n${initialPrompt}\n</query>\n\nSummarise the query into only a terse few words for a short title (8 words maximum) for the name of the AI agent completing the task. Output the short title only, nothing else.`,
+			{ id: 'Agent name' },
+		)}`;
+		await appContext().agentStateService.save(agent);
+
 		const response = await codebaseQuery(initialPrompt);
 		console.log(response);
 	});
