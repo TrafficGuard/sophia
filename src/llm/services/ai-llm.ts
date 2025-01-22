@@ -115,7 +115,7 @@ export abstract class AiLLM<Provider extends ProviderV1> extends BaseLLM {
 		});
 	}
 
-	async streamText(llmMessages: LlmMessage[], onChunk: ({ string }) => void, opts?: GenerateTextOptions): Promise<StreamTextResult<any>> {
+	async streamText(llmMessages: LlmMessage[], onChunk: ({ string }) => void, opts?: GenerateTextOptions): Promise<StreamTextResult<any, any>> {
 		return withActiveSpan(`streamText ${opts?.id ?? ''}`, async (span) => {
 			const messages: CoreMessage[] = llmMessages.map((msg) => {
 				if (msg.cache === 'ephemeral') {

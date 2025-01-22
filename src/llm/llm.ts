@@ -183,7 +183,7 @@ export interface LLM {
 	 * @param onChunk streaming chunk callback
 	 * @param opts
 	 */
-	streamText(messages: LlmMessage[], onChunk: ({ string }) => void, opts?: GenerateTextOptions): Promise<StreamTextResult<any>>;
+	streamText(messages: LlmMessage[], onChunk: ({ string }) => void, opts?: GenerateTextOptions): Promise<StreamTextResult<any, any>>;
 
 	/**
 	 * The service provider of the LLM (OpenAI, Google, TogetherAI etc)
