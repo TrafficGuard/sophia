@@ -26,7 +26,7 @@ export function deepSeekV3(): LLM {
 export function deepSeekR1(): LLM {
 	return new DeepSeekLLM(
 		'DeepSeek R1',
-		'deepseek-r1',
+		'deepseek-reasoner',
 		64000,
 		(input: string) => (input.length * 0.55) / (1_000_000 * 3.5),
 		(output: string) => (output.length * 2.19) / (1_000_000 * 3.5),

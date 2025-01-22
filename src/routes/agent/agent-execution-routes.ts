@@ -2,6 +2,7 @@ import { Type } from '@sinclair/typebox';
 import { LlmFunctions } from '#agent/LlmFunctions';
 import { AgentContext } from '#agent/agentContextTypes';
 import { cancelAgent, provideFeedback, resumeCompleted, resumeError, resumeHil } from '#agent/agentRunner';
+import { serializeContext } from '#agent/agentSerialization';
 import { forceStopAgent } from '#agent/forceStopAgent';
 import { runXmlAgent } from '#agent/xmlAgentRunner';
 import { send, sendBadRequest } from '#fastify/index';
@@ -46,9 +47,15 @@ export async function agentExecutionRoutes(fastify: AppFastifyInstance) {
 		async (req, reply) => {
 			const { agentId, feedback, executionId } = req.body;
 
-			await provideFeedback(agentId, executionId, feedback);
-
-			send(reply, 200);
+			try {
+				await provideFeedback(agentId, executionId, feedback);
+				const updatedAgent = await fastify.agentStateService.load(agentId);
+				if (!updatedAgent) return sendBadRequest(reply, 'Agent not found');
+				send(reply, 200, serializeContext(updatedAgent));
+			} catch (error) {
+				logger.error('Error providing feedback:', error);
+				sendBadRequest(reply, 'Error providing feedback');
+			}
 		},
 	);
 
@@ -68,8 +75,9 @@ export async function agentExecutionRoutes(fastify: AppFastifyInstance) {
 			const { agentId, executionId, feedback } = req.body;
 
 			await resumeError(agentId, executionId, feedback);
-
-			send(reply, 200);
+			const updatedAgent = await fastify.agentStateService.load(agentId);
+			if (!updatedAgent) return sendBadRequest(reply, 'Agent not found');
+			send(reply, 200, serializeContext(updatedAgent));
 		},
 	);
 
@@ -89,8 +97,9 @@ export async function agentExecutionRoutes(fastify: AppFastifyInstance) {
 			const { agentId, executionId, feedback } = req.body;
 
 			await resumeHil(agentId, executionId, feedback);
-
-			send(reply, 200);
+			const updatedAgent = await fastify.agentStateService.load(agentId);
+			if (!updatedAgent) return sendBadRequest(reply, 'Agent not found');
+			send(reply, 200, serializeContext(updatedAgent));
 		},
 	);
 
@@ -110,7 +119,9 @@ export async function agentExecutionRoutes(fastify: AppFastifyInstance) {
 			const { agentId, executionId, reason } = req.body;
 
 			await cancelAgent(agentId, executionId, reason);
-			send(reply, 200);
+			const updatedAgent = await fastify.agentStateService.load(agentId);
+			if (!updatedAgent) return sendBadRequest(reply, 'Agent not found');
+			send(reply, 200, serializeContext(updatedAgent));
 		},
 	);
 
@@ -131,7 +142,9 @@ export async function agentExecutionRoutes(fastify: AppFastifyInstance) {
 
 			try {
 				await resumeCompleted(agentId, executionId, instructions);
-				send(reply, 200);
+				const updatedAgent = await fastify.agentStateService.load(agentId);
+				if (!updatedAgent) return sendBadRequest(reply, 'Agent not found');
+				send(reply, 200, serializeContext(updatedAgent));
 			} catch (error) {
 				logger.error(error, 'Error resuming completed agent');
 				sendBadRequest(reply, 'Error resuming completed agent');
@@ -155,9 +168,7 @@ export async function agentExecutionRoutes(fastify: AppFastifyInstance) {
 
 			try {
 				const agent = await fastify.agentStateService.load(agentId);
-				if (!agent) {
-					throw new Error('Agent not found');
-				}
+				if (!agent) throw new Error('Agent not found');
 
 				agent.functions = new LlmFunctions();
 				for (const functionName of functions) {
@@ -170,7 +181,8 @@ export async function agentExecutionRoutes(fastify: AppFastifyInstance) {
 				}
 
 				await fastify.agentStateService.save(agent);
-				send(reply, 200, { message: 'Agent functions updated successfully' });
+				const updatedAgent = await fastify.agentStateService.load(agentId);
+				send(reply, 200, serializeContext(updatedAgent));
 			} catch (error) {
 				logger.error('Error updating agent functions:', error);
 				sendBadRequest(reply, 'Error updating agent functions');

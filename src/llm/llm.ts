@@ -1,5 +1,5 @@
 // https://github.com/AgentOps-AI/tokencost/blob/main/tokencost/model_prices.json
-import { CoreMessage, FilePart, ImagePart, StreamTextResult, TextPart } from 'ai';
+import { CoreMessage, FilePart, ImagePart, StreamTextResult, TextPart, UserContent } from 'ai';
 
 // Should match fields in CallSettings in node_modules/ai/dist/index.d.ts
 export interface GenerateOptions {
@@ -122,6 +122,10 @@ export type LlmMessage = CoreMessage & {
 	time?: number;
 };
 
+export function userContentText(userContent: UserContent | any): string {
+	return typeof userContent === 'string' ? userContent : userContent.find((content) => content.type === 'text')?.text;
+}
+
 export function system(text: string, cache = false): LlmMessage {
 	return {
 		role: 'system',
@@ -154,7 +158,7 @@ export interface LLM {
 	/** Generates text from a LLM */
 	generateText(userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
 	generateText(systemPrompt: string, userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
-	generateText(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string>;
+	generateText(messages: LlmMessage[] | ReadonlyArray<LlmMessage>, opts?: GenerateTextOptions): Promise<string>;
 
 	/**
 	 * Generates a response that ends with a JSON object wrapped in either <json></json> tags or Markdown triple ticks.
@@ -163,19 +167,19 @@ export interface LLM {
 	 */
 	generateTextWithJson<T>(userPrompt: string, opts?: GenerateJsonOptions): Promise<T>;
 	generateTextWithJson<T>(systemPrompt: string, userPrompt: string, opts?: GenerateJsonOptions): Promise<T>;
-	generateTextWithJson<T>(messages: LlmMessage[], opts?: GenerateJsonOptions): Promise<T>;
+	generateTextWithJson<T>(messages: LlmMessage[] | ReadonlyArray<LlmMessage>, opts?: GenerateJsonOptions): Promise<T>;
 
 	/** Generates a response which only returns a JSON object. */
 	generateJson<T>(userPrompt: string, opts?: GenerateJsonOptions): Promise<T>;
 	generateJson<T>(systemPrompt: string, userPrompt: string, opts?: GenerateJsonOptions): Promise<T>;
-	generateJson<T>(messages: LlmMessage[], opts?: GenerateJsonOptions): Promise<T>;
+	generateJson<T>(messages: LlmMessage[] | ReadonlyArray<LlmMessage>, opts?: GenerateJsonOptions): Promise<T>;
 	/**
 	 * Generates a response that is expected to have a <result></result> element, and returns the text inside it.
 	 * This useful when you want to LLM to output discovery, reasoning, etc. to improve the answer, and only want the final result returned.
 	 */
 	generateTextWithResult(prompt: string, opts?: GenerateTextOptions): Promise<string>;
 	generateTextWithResult(systemPrompt: string, prompt: string, opts?: GenerateTextOptions): Promise<string>;
-	generateTextWithResult(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string>;
+	generateTextWithResult(messages: LlmMessage[] | ReadonlyArray<LlmMessage>, opts?: GenerateTextOptions): Promise<string>;
 
 	/**
 	 * Streams text from the LLM
@@ -183,7 +187,11 @@ export interface LLM {
 	 * @param onChunk streaming chunk callback
 	 * @param opts
 	 */
-	streamText(messages: LlmMessage[], onChunk: ({ string }) => void, opts?: GenerateTextOptions): Promise<StreamTextResult<any, any>>;
+	streamText(
+		messages: LlmMessage[] | ReadonlyArray<LlmMessage>,
+		onChunk: ({ string }) => void,
+		opts?: GenerateTextOptions,
+	): Promise<StreamTextResult<any, any>>;
 
 	/**
 	 * The service provider of the LLM (OpenAI, Google, TogetherAI etc)

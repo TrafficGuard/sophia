@@ -20,7 +20,7 @@ export abstract class BaseLLM implements LLM {
 	constructor(
 		protected readonly displayName: string,
 		protected readonly service: string,
-		protected readonly model: string,
+		protected model: string,
 		protected maxInputTokens: number,
 		readonly calculateInputCost: InputCostFunction,
 		readonly calculateOutputCost: OutputCostFunction,

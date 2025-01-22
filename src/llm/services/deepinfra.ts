@@ -58,8 +58,8 @@ export function deepinfraQwen2_5_Coder32B(): LLM {
 		'Qwen2.5-Coder-32B-Instruct (deepinfra)',
 		'Qwen/Qwen2.5-Coder-32B-Instruct',
 		32_768,
-		(input: string) => (input.length * 0.08) / 1_000_000 / 4,
-		(output: string) => (output.length * 0.18) / 1_000_000 / 4,
+		(input: string) => (input.length * 0.07) / 1_000_000 / 4,
+		(output: string) => (output.length * 0.16) / 1_000_000 / 4,
 	);
 }
 
