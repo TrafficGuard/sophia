@@ -44,19 +44,27 @@
     <div class="flex flex-auto overflow-hidden">
         <div class="flex flex-auto flex-col overflow-hidden sm:mb-18 sm:overflow-y-auto">
             @if (agents$ | async; as agents) {
-                @if (agents.length > 0) {
-                    <div class="grid">
-                        <!-- Header -->
-                        <div class="inventory-grid text-secondary sticky top-0 z-10 grid gap-4 bg-gray-50 px-6 py-4 text-md font-semibold shadow dark:bg-black dark:bg-opacity-5 md:px-8">
-                            <div class="w-10"></div>
-                            <div>Name</div>
-                            <div>State</div>
-                            <div class="hidden lg:block">Type</div>
-                            <div>User Prompt</div>
-                            <div class="hidden md:block">Error/Output</div>
-                            <div class="hidden lg:block">Cost</div>
-                        </div>
 
+                <div class="grid">
+                    <!-- Header -->
+                    <div class="inventory-grid text-secondary sticky top-0 z-10 grid gap-4 bg-gray-50 px-6 py-4 text-md font-semibold shadow dark:bg-black dark:bg-opacity-5 md:px-8">
+                        <div class="w-10"></div>
+                        <div>Name</div>
+                        <div>State</div>
+                        <div class="hidden lg:block">Type</div>
+                        <div>User Prompt</div>
+                        <div class="hidden md:block">Error/Output</div>
+                        <div class="hidden lg:block">Cost</div>
+                    </div>
+
+                    @if (agents === null) {
+                        <div class="inventory-grid grid items-center gap-4 border-b px-6 py-2 md:px-8">
+                            <div class="col-span-full text-center">
+                                Loading...
+                            </div>
+                        </div>
+                    }
+                    @else if (agents.length > 0) {
                         <!-- Rows -->
                         @for (agent of agents; track trackByFn($index, agent)) {
                             <div class="inventory-grid grid items-center gap-4 border-b px-6 py-2 hover:bg-gray-50 md:px-8">
@@ -96,35 +104,35 @@
                                     ${{ agent.cost | number: '1.2-2' }}
                                 </div>
                             </div>
-                        }
-                    </div>
-                    <!--
-                    <mat-paginator
-                            class="z-10 border-b bg-gray-50 dark:bg-transparent sm:absolute sm:inset-x-0 sm:bottom-0 sm:border-b-0 sm:border-t"
-                            [ngClass]="{ 'pointer-events-none': isLoading }"
-                            [length]="pagination.length"
-                            [pageIndex]="pagination.page"
-                            [pageSize]="pagination.size"
-                            [pageSizeOptions]="[5, 10, 25, 100]"
-                            [showFirstLastButtons]="true"
-                    ></mat-paginator>
-                    -->
-                } @else {
-                    <div class="border-t p-8 text-center text-3xl font-medium tracking-tight sm:p-16">
-                        <div class="mb-1">There are no agents!</div>
 
-                        <button
-                                class="ml-4"
-                                mat-flat-button
-                                [color]="'primary'"
-                                [routerLink]="['/ui/agents/new']"
-                        >
-                            <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
-                            <span class="ml-2 mr-1">Add</span>
-                        </button>
+                            <!--
+                            <mat-paginator
+                                    class="z-10 border-b bg-gray-50 dark:bg-transparent sm:absolute sm:inset-x-0 sm:bottom-0 sm:border-b-0 sm:border-t"
+                                    [ngClass]="{ 'pointer-events-none': isLoading }"
+                                    [length]="pagination.length"
+                                    [pageIndex]="pagination.page"
+                                    [pageSize]="pagination.size"
+                                    [pageSizeOptions]="[5, 10, 25, 100]"
+                                    [showFirstLastButtons]="true"
+                            ></mat-paginator>
+                            -->
+                        }} @else {
+                        <div class="border-t p-8 text-center text-3xl font-medium tracking-tight sm:p-16">
+                            <div class="mb-1">There are no agents!</div>
 
-                    </div>
-                }
+                            <button
+                                    class="ml-4"
+                                    mat-flat-button
+                                    [color]="'primary'"
+                                    [routerLink]="['/ui/agents/new']"
+                            >
+                                <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                                <span class="ml-2 mr-1">Add</span>
+                            </button>
+
+                        </div>
+                    }
+                </div>
             }
         </div>
     </div>

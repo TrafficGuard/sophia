@@ -62,16 +62,16 @@ describe('ChatInfoComponent', () => {
         const sliders = await loader.getAllHarnesses(MatSliderHarness);
         
         // Verify initial values match mock user settings
-        expect(await sliders[0].getValue()).toBe(0.7); // temperature
-        expect(await sliders[1].getValue()).toBe(0.9); // topP
-        expect(await sliders[2].getValue()).toBe(0.5); // presencePenalty
-        expect(await sliders[3].getValue()).toBe(0.5); // frequencyPenalty
+        expect(await (await sliders[0].getEndThumb()).getValue()).toBe(0.7); // temperature
+        expect(await (await sliders[1].getEndThumb()).getValue()).toBe(0.9); // topP
+        expect(await (await sliders[2].getEndThumb()).getValue()).toBe(0.5); // presencePenalty
+        expect(await (await sliders[3].getEndThumb()).getValue()).toBe(0.5); // frequencyPenalty
     });
 
     it('should update settings when sliders change', async () => {
         // Get temperature slider and change its value
         const temperatureSlider = await loader.getHarness(MatSliderHarness);
-        await temperatureSlider.setValue(1.5);
+        await (await temperatureSlider.getEndThumb()).setValue(1.5);
         
         // Verify component state was updated
         expect(component.settings.temperature).toBe(1.5);
