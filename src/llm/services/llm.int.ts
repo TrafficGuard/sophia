@@ -5,7 +5,7 @@ import { Claude3_5_Haiku, Claude3_5_Sonnet } from '#llm/services/anthropic';
 import { Claude3_5_Haiku_Vertex, Claude3_5_Sonnet_Vertex } from '#llm/services/anthropic-vertex';
 import { cerebrasLlama3_8b } from '#llm/services/cerebras';
 import { deepinfraQwQ_32B, deepinfraQwen2_5_Coder32B } from '#llm/services/deepinfra';
-import { deepseekChat } from '#llm/services/deepseek';
+import { deepSeekV3 } from '#llm/services/deepseek';
 import { fireworksLlama3_70B } from '#llm/services/fireworks';
 import { groqLlama3_3_70B } from '#llm/services/groq';
 import { Ollama_Phi3 } from '#llm/services/ollama';
@@ -128,7 +128,7 @@ describe('LLMs', () => {
 	});
 
 	describe('Deepseek', () => {
-		const llm = deepseekChat();
+		const llm = deepSeekV3();
 
 		it('should generateText', async () => {
 			const response = await llm.generateText(SKY_PROMPT, { temperature: 0 });

@@ -8,7 +8,7 @@ import { func, funcClass } from '#functionSchema/functionDecorators';
 import { LLM } from '#llm/llm';
 import { Claude3_5_Sonnet } from '#llm/services/anthropic';
 import { Claude3_5_Sonnet_Vertex } from '#llm/services/anthropic-vertex';
-import { deepseekChat } from '#llm/services/deepseek';
+import { deepSeekV3 } from '#llm/services/deepseek';
 import { GPT4o } from '#llm/services/openai';
 import { logger } from '#o11y/logger';
 import { getActiveSpan } from '#o11y/trace';
@@ -61,7 +61,7 @@ export class AiderCodeEditor {
 			modelArg = '--model deepseek/deepseek-chat';
 			env = { DEEPSEEK_API_KEY: deepSeekKey };
 			span.setAttribute('model', 'deepseek');
-			llm = deepseekChat();
+			llm = deepSeekV3();
 		} else if (openaiKey) {
 			// default to gpt4o
 			modelArg = '';

@@ -38,15 +38,17 @@ export class CodeEditingAgent {
 	/**
 	 * Runs a workflow which finds, edits and creates the required files to implement the requirements, and committing changes to version control.
 	 * It also compiles, formats, lints, and runs tests where applicable.
-	 * @param requirements The detailed requirements to implement, including supporting documentation and code samples. Do not refer to details in memory etc, you must provide the actual details.
+	 * @param requirements
+	 * @param fileSelection {string[]} the files which the code editing agent will have access to. Only provide if a comprehensive analysis has been done, otherwise omit or provide null for a sub-agent to perform the file selection.
 	 * altOptions are for programmatic use and not exposed to the autonomous agents.
 	 */
 	@func()
 	async runCodeEditWorkflow(
 		requirements: string,
-		altOptions: { fileSelection?: string[]; projectInfo?: ProjectInfo; workingDirectory?: string } = {},
+		fileSelection?: string[] | null,
+		altOptions?: { projectInfo?: ProjectInfo; workingDirectory?: string },
 	): Promise<void> {
-		let projectInfo: ProjectInfo = altOptions.projectInfo;
+		let projectInfo: ProjectInfo = altOptions?.projectInfo;
 		if (!projectInfo) {
 			const detected: ProjectInfo[] = await detectProjectInfo();
 			if (detected.length !== 1) throw new Error('projectInfo array must have one item');
@@ -56,7 +58,7 @@ export class CodeEditingAgent {
 
 		const fs: FileSystemService = getFileSystem();
 
-		if (altOptions.workingDirectory) fs.setWorkingDirectory(altOptions.workingDirectory);
+		if (altOptions?.workingDirectory) fs.setWorkingDirectory(altOptions.workingDirectory);
 
 		fs.setWorkingDirectory(projectInfo.baseDir);
 
@@ -72,7 +74,6 @@ export class CodeEditingAgent {
 		const gitBase = !projectInfo.devBranch || projectInfo.devBranch === currentBranch ? headCommit : projectInfo.devBranch;
 		logger.info(`git base ${gitBase}`);
 
-		let fileSelection: string[] = altOptions.fileSelection || [];
 		if (!fileSelection?.length) {
 			// Find the initial set of files required for editing
 			// const filesResponse: SelectFilesResponse = await this.selectFilesToEdit(requirements, projectInfo);

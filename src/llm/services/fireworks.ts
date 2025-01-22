@@ -70,3 +70,13 @@ export function fireworksDeepSeek(): LLM {
 		(output: string) => (output.length * 0.9) / 1_000_000 / 4,
 	);
 }
+
+export function fireworksDeepSeekR1(): LLM {
+	return new Fireworks(
+		'DeepSeek R1 (Fireworks)',
+		'accounts/fireworks/models/deepseek-r1',
+		131_072,
+		(input: string) => (input.length * 8) / 1_000_000 / 4,
+		(output: string) => (output.length * 8) / 1_000_000 / 4,
+	);
+}
