@@ -58,8 +58,7 @@ export async function chatRoutes(fastify: AppFastifyInstance) {
 
 		const text = typeof userContent === 'string' ? userContent : userContent.find((content) => content.type === 'text')?.text;
 		const titlePromise: Promise<string> | undefined = llm.generateText(
-			'The following message is the first message in a new chat conversation. Your task is to create a short title for the conversation. Respond only with the title, nothing else',
-			text,
+			`<message>\n${text}\n</message>\n\n\nThe above message is the first message in a new chat conversation. Your task is to create a short title in a few words for the conversation. Respond only with the title, nothing else.`,
 		);
 
 		chat.messages.push({ role: 'user', content: userContent, time: Date.now() }); //, cache: cache ? 'ephemeral' : undefined // remove any previous cache marker
