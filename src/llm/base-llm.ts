@@ -175,7 +175,7 @@ export abstract class BaseLLM implements LLM {
 		throw new Error('Not implemented');
 	}
 
-	async streamText(llmMessages: LlmMessage[], onChunk: ({ string }) => void, opts?: GenerateTextOptions): Promise<StreamTextResult<any>> {
+	async streamText(llmMessages: LlmMessage[], onChunk: ({ string }) => void, opts?: GenerateTextOptions): Promise<StreamTextResult<any, any>> {
 		throw new Error('Not implemented');
 	}
 
