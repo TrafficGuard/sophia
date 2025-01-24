@@ -5,12 +5,11 @@ import { Type } from '@sinclair/typebox';
 import { getFileSystem } from '#agent/agentContextLocalStorage';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
-import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { defaultLLMs } from '#llm/services/defaultLlms';
 import { Gemini_1_5_Flash } from '#llm/services/vertexai';
 import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
-import { codebaseQuery } from '#swe/discovery/codebaseQuery';
+import { queryWorkflow } from '#swe/discovery/selectFilesAgent';
 import { SelectFilesResponse, selectFilesToEdit } from '#swe/discovery/selectFilesToEdit';
 import { sophiaDirName, systemDir } from '../../appVars';
 import { AppFastifyInstance } from '../../server';
@@ -118,7 +117,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 					getFileSystem().setWorkingDirectory(workingDirectory);
 					logger.info(`Working directory is ${getFileSystem().getWorkingDirectory()}`);
 
-					response = await codebaseQuery(query);
+					response = await queryWorkflow(query);
 				});
 
 				reply.send({ response });

@@ -8,6 +8,11 @@ interface FileSelection {
 	files: string[];
 }
 
+/**
+ * Old ad-hoc query with fixed two passes over the filesystem tree/files
+ * @deprecated use queryWorkflow instead
+ * @param query
+ */
 export async function codebaseQuery(query: string): Promise<string> {
 	const initialFileSelection = await firstPass(query);
 	const refinedFileSelection = await secondPass(query, initialFileSelection);
