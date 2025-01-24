@@ -9,7 +9,7 @@ export const DEEPSEEK_SERVICE = 'deepseek';
 export function deepseekLLMRegistry(): Record<string, () => LLM> {
 	return {
 		[`${DEEPSEEK_SERVICE}:deepseek-chat`]: deepSeekV3,
-		[`${DEEPSEEK_SERVICE}:deepseek-r1`]: deepSeekR1,
+		[`${DEEPSEEK_SERVICE}:deepseek-reasoner`]: deepSeekR1,
 	};
 }
 
