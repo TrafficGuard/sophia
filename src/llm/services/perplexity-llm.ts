@@ -22,15 +22,15 @@ llama-3.1-sonar-huge-128k-online	$5	                       $5
 
 export function perplexityLLMRegistry(): Record<string, () => LLM> {
 	return {
-		[`${PERPLEXITY_SERVICE}:llama-3.1-sonar-large-128k-online`]: perplexityLargeLLM,
-		[`${PERPLEXITY_SERVICE}:llama-3.1-sonar-huge-128k-online`]: perplexityHugeLLM,
+		[`${PERPLEXITY_SERVICE}:sonar`]: perplexityLLM,
+		[`${PERPLEXITY_SERVICE}:sonar-pro`]: perplexityProLLM,
 	};
 }
 
-export function perplexityLargeLLM(): LLM {
+export function perplexityLLM(): LLM {
 	return new PerplexityLLM(
-		'Perplexity Large',
-		'llama-3.1-sonar-large-128k-online',
+		'Perplexity',
+		'sonar',
 		128000, // maxTokens
 		0.000001, // costPerPromptToken ($1 per million tokens)
 		0.000001, // costPerCompletionToken
@@ -38,10 +38,10 @@ export function perplexityLargeLLM(): LLM {
 	);
 }
 
-export function perplexityHugeLLM(): LLM {
+export function perplexityProLLM(): LLM {
 	return new PerplexityLLM(
-		'Perplexity Huge',
-		'llama-3.1-sonar-huge-128k-online',
+		'Perplexity Pro',
+		'sonar-pro',
 		128000, // maxTokens
 		0.000005, // costPerPromptToken ($5 per million tokens)
 		0.000005, // costPerCompletionToken
