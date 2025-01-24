@@ -1,10 +1,12 @@
 import { BaseLLM } from '#llm/base-llm';
 import { GenerateTextOptions, LLM, LlmMessage, userContentText } from '#llm/llm';
 import { getLLM } from '#llm/llmFactory';
+import { DeepSeekR1_Together_Fireworks } from '#llm/multi-agent/deepSeekR1_Fallbacks';
 import { Claude3_5_Sonnet_Vertex } from '#llm/services/anthropic-vertex';
 import { deepSeekR1, deepSeekV3 } from '#llm/services/deepseek';
 import { fireworksDeepSeek, fireworksDeepSeekR1 } from '#llm/services/fireworks';
 import { openAIo1 } from '#llm/services/openai';
+import { togetherDeepSeekR1 } from '#llm/services/together';
 import { Gemini_2_0_Flash_Thinking } from '#llm/services/vertexai';
 import { logger } from '#o11y/logger';
 
@@ -12,12 +14,40 @@ import { logger } from '#o11y/logger';
 
 export function MoA_reasoningLLMRegistry(): Record<string, () => LLM> {
 	return {
-		'MoA:R1x3': () => new ReasonerDebateLLM('R1', deepSeekV3, [deepSeekR1, deepSeekR1, deepSeekR1], 'MoA R1x3'),
-		'MoA:R1x3-Fireworks': () =>
-			new ReasonerDebateLLM('R1-Fireworks', fireworksDeepSeek, [fireworksDeepSeekR1, fireworksDeepSeekR1, fireworksDeepSeekR1], 'MoA R1x3 Fireworks'),
-		'MoA:Sonnet-R1,o1,Gemini': () =>
-			new ReasonerDebateLLM('R1,o1,Gemini', Claude3_5_Sonnet_Vertex, [deepSeekR1, openAIo1, Gemini_2_0_Flash_Thinking], 'MoA:R1,o1,Gemini'),
+		'MoA:R1x3': () => new ReasonerDebateLLM('R1x3', deepSeekV3, [deepSeekR1, deepSeekR1, deepSeekR1], 'MoA R1x3'),
+		'MoA:R1x3-Together-Fireworks': Together_R1x3_Together_Fireworks,
+		'MoA:R1x3-Together': () => Together_R1x3(),
+		'MoA:Sonnet_R1,o1,Gemini_Together': TogetherMoA_Claude_Sonnet_R1x2_o1,
+		'MoA:Sonnet-Claude-R1,o1,Gemini': () =>
+			new ReasonerDebateLLM(
+				'Sonnet-Claude-R1,o1,Gemini',
+				Claude3_5_Sonnet_Vertex,
+				[togetherDeepSeekR1, openAIo1, Gemini_2_0_Flash_Thinking],
+				'MoA:R1,o1,Gemini',
+			),
 	};
+}
+
+export function Together_R1x3_Together_Fireworks(): LLM {
+	return new ReasonerDebateLLM(
+		'R1x3-Together-Fireworks',
+		DeepSeekR1_Together_Fireworks,
+		[DeepSeekR1_Together_Fireworks, DeepSeekR1_Together_Fireworks, DeepSeekR1_Together_Fireworks],
+		'MoA R1x3 (Together, Fireworks)',
+	);
+}
+
+export function TogetherMoA_Claude_Sonnet_R1x2_o1(): LLM {
+	return new ReasonerDebateLLM(
+		'Sonnet_R1,o1,Gemini_Together',
+		Claude3_5_Sonnet_Vertex,
+		[DeepSeekR1_Together_Fireworks, openAIo1, DeepSeekR1_Together_Fireworks],
+		'MoA:Claude-R1,o1,Gemini (Together, Fireworks)',
+	);
+}
+
+export function Together_R1x3(): LLM {
+	return new ReasonerDebateLLM('R1x3-Together', togetherDeepSeekR1, [togetherDeepSeekR1, togetherDeepSeekR1, togetherDeepSeekR1], 'MoA R1x3 Together');
 }
 
 /**
@@ -45,8 +75,12 @@ export class ReasonerDebateLLM extends BaseLLM {
 			() => 0,
 		);
 		if (providedMediator) this.mediator = providedMediator();
-		if (providedDebateLLMs) this.llms = providedDebateLLMs.map((factory) => factory());
+		if (providedDebateLLMs) {
+			this.llms = providedDebateLLMs.map((factory) => factory());
+			// this.model = this.llms.map((llm) => llm.)
+		}
 		if (modelIds?.includes('|')) {
+			this.model = modelIds;
 			try {
 				const parts = modelIds.split('|');
 				if (parts.length > 1) {
@@ -75,8 +109,8 @@ export class ReasonerDebateLLM extends BaseLLM {
 	protected async generateTextFromMessages(llmMessages: LlmMessage[], opts?: GenerateTextOptions): Promise<string> {
 		const readOnlyMessages = llmMessages as ReadonlyArray<Readonly<LlmMessage>>;
 		logger.info('Initial response...');
-		console.log(llmMessages);
 		const initialResponses: string[] = await this.generateInitialResponses(readOnlyMessages, opts);
+		logger.info('Debating...');
 		const debatedResponses = await this.multiAgentDebate(readOnlyMessages, initialResponses, opts);
 		logger.info('Mediating response...');
 		return this.mergeBestResponses(readOnlyMessages, debatedResponses);
@@ -90,7 +124,7 @@ export class ReasonerDebateLLM extends BaseLLM {
 		llmMessages: ReadonlyArray<Readonly<LlmMessage>>,
 		responses: string[],
 		opts?: GenerateTextOptions,
-		rounds = 2,
+		rounds = 0,
 	): Promise<string[]> {
 		let debatedResponses = responses;
 		const userMessage = userContentText(llmMessages[llmMessages.length - 1].content);
@@ -130,6 +164,8 @@ Answer directly to the original user message and ensure any relevant response fo
         `;
 		const mergedMessages: LlmMessage[] = [...llmMessages];
 		mergedMessages[mergedMessages.length - 1] = { role: 'user', content: mergePrompt };
-		return await this.mediator.generateText(mergedMessages, { temperature: 0.7 });
+		const generation = this.mediator.generateText(mergedMessages, { temperature: 0.7 });
+		logger.info('Merging best response...');
+		return await generation;
 	}
 }
