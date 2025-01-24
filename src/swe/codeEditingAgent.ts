@@ -411,9 +411,9 @@ Then respond in following format:
 
 	@cacheRetry()
 	async extractFilenames(summary: string): Promise<string[]> {
-		const filenames = await getFileSystem().listFilesRecursively();
+		const filenames = await getFileSystem().getFileSystemTree();
 		const prompt = buildPrompt({
-			information: `<project_files>\n${filenames.join('\n')}\n</project_files>`,
+			information: `<project_files>\n${filenames}\n</project_files>`,
 			requirements: summary,
 			action:
 				'You will respond ONLY in JSON. From the requirements quietly consider which the files may be required to complete the task. You MUST output your answer ONLY as JSON in the format of this example:\n<example>\n{\n files: ["file1", "file2", "file3"]\n}\n</example>',
