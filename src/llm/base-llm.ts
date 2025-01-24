@@ -2,7 +2,7 @@ import { StreamTextResult } from 'ai';
 import { AgentContext } from '#agent/agentContextTypes';
 import { countTokens } from '#llm/tokens';
 import { GenerateJsonOptions, GenerateTextOptions, LLM, LlmMessage } from './llm';
-import { extractJsonResult, extractStringResult } from './responseParsers';
+import { extractJsonResult, extractTag } from './responseParsers';
 
 export interface SerializedLLM {
 	service: string;
@@ -100,7 +100,7 @@ export abstract class BaseLLM implements LLM {
 	): Promise<string> {
 		const { messages, options } = this.parseGenerateTextParameters(userOrSystemOrMessages, userOrOpts, opts);
 		const response = await this.generateText(messages, options);
-		return extractStringResult(response);
+		return extractTag(response, 'result');
 	}
 
 	generateTextWithJson(userPrompt: string, opts?: GenerateTextOptions): Promise<string>;
