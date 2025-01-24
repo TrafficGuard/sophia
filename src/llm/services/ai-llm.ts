@@ -77,6 +77,7 @@ export abstract class AiLLM<Provider extends ProviderV1> extends BaseLLM {
 					frequencyPenalty: opts?.frequencyPenalty,
 					presencePenalty: opts?.presencePenalty,
 					stopSequences: opts?.stopSequences,
+					maxRetries: opts?.maxRetries,
 				});
 
 				const responseText = result.text;

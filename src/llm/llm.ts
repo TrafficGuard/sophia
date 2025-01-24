@@ -42,6 +42,8 @@ export interface GenerateOptions {
 	 Providers may have limits on the number of stop sequences.
 	 */
 	stopSequences?: string[];
+
+	maxRetries?: number;
 }
 
 export interface GenerateTextOptions extends GenerateOptions {
