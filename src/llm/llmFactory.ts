@@ -1,6 +1,7 @@
 import { AgentLLMs } from '#agent/agentContextTypes';
 import { LLM } from '#llm/llm';
 import { blueberryLLMRegistry } from '#llm/multi-agent/blueberry';
+import { deepSeekFallbackRegistry } from '#llm/multi-agent/deepSeekR1_Fallbacks';
 import { MoA_reasoningLLMRegistry } from '#llm/multi-agent/reasoning-debate';
 import { MultiLLM } from '#llm/multi-llm';
 import { anthropicLLMRegistry } from '#llm/services/anthropic';
@@ -33,6 +34,7 @@ export const LLM_FACTORY: Record<string, () => LLM> = {
 	...perplexityLLMRegistry(),
 	...xaiLLMRegistry(),
 	...ollamaLLMRegistry(),
+	...deepSeekFallbackRegistry(),
 	...blueberryLLMRegistry(),
 	...MoA_reasoningLLMRegistry(),
 	...mockLLMRegistry(),
