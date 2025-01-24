@@ -71,7 +71,7 @@ export function Gemini_1_5_Flash() {
 // export function Gemini_1_5_Flash_8B() {
 // 	return new VertexLLM(
 // 		'Gemini 1.5 Flash 8B',
-// 		'gemini-1.5-flash-8b',
+// 		'gemini-1.5-flash-8b', // gemini-1.5-flash-8b, alias that points to gemini-1.5-flash-8b-001
 // 		1_000_000,
 // 		(input: string) => (input.length * 0.000125) / 1000,
 // 		(output: string) => (output.length * 0.000375) / 1000,
@@ -91,7 +91,7 @@ export function Gemini_2_0_Flash() {
 export function Gemini_2_0_Flash_Thinking() {
 	return new VertexLLM(
 		'Gemini 2.0 Flash Thinking Experimental',
-		'gemini-2.0-flash-thinking-exp-1219',
+		'gemini-2.0-flash-thinking-exp-1219', // gemini-2.0-flash-thinking-exp-01-21
 		1_000_000,
 		(input: string) => (input.length * 0.000125) / 1000,
 		(output: string) => (output.length * 0.000375) / 1000,

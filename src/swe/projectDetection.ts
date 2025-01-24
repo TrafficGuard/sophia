@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import path, { join } from 'path';
 import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { logger } from '#o11y/logger';
@@ -87,12 +87,12 @@ export async function detectProjectInfo(requirements?: string): Promise<ProjectI
 		if (info !== null) return info;
 	}
 	logger.info('Detecting project info...');
-	const files: string[] = await fileSystem.listFilesRecursively('./');
+	const tree = await fileSystem.getFileSystemTree();
 
 	const prompt = `<task_requirements>
 ${requirements ? `<context>\n${requirements}\n</context>\n` : ''}
 <task_input>
-${files.join('\n')}
+${tree}
 </task_input>
 You task it to detect key information (language/runtime and build/test commands) for a software project from the names of the files contained within it${
 		requirements ? ' and the <context>' : ''
