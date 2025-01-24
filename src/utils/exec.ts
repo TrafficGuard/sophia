@@ -1,5 +1,5 @@
-import { ExecException, SpawnOptionsWithoutStdio, exec, spawn } from 'child_process';
-import { existsSync } from 'fs';
+import { ExecException, ExecSyncOptions, SpawnOptionsWithoutStdio, exec, execSync, spawn } from 'child_process';
+import { existsSync, readFileSync } from 'fs';
 import { ExecOptions } from 'node:child_process';
 import os from 'os';
 import path from 'path';
@@ -23,6 +23,58 @@ export function checkExecResult(result: ExecResults, message: string) {
 	}
 }
 
+function getAvailableShell(): string {
+	const possibleShells = ['/bin/zsh', '/usr/bin/zsh', '/bin/bash', '/usr/bin/bash', '/bin/sh', '/usr/bin/sh'];
+	for (const shellPath of possibleShells) {
+		if (existsSync(shellPath)) {
+			return shellPath;
+		}
+	}
+	if (process.env.SHELL && existsSync(process.env.SHELL)) {
+		return process.env.SHELL;
+	}
+	throw new Error('No suitable shell found for executing commands.');
+}
+
+export function execCmdSync(command: string, cwd = getFileSystem().getWorkingDirectory()): ExecResults {
+	const home = process.env.HOME;
+
+	if (command.startsWith('~') && home) command = home + command.substring(1);
+	try {
+		const shell = getAvailableShell();
+		logger.info(`execCmdSync ${command}\ncwd: ${cwd}\nshell: ${shell}`);
+
+		const options: ExecSyncOptions = {
+			cwd,
+			shell,
+			encoding: 'utf8',
+			env: { ...process.env, PATH: `${process.env.PATH}:/bin:/usr/bin` },
+		};
+
+		let stdout = execSync(command, options);
+		if (typeof stdout !== 'string') stdout = stdout.toString();
+
+		logger.info(stdout);
+
+		return {
+			cmd: command,
+			stdout,
+			stderr: '',
+			error: null,
+			cwd,
+		};
+	} catch (error) {
+		logger.error('Error executing command:', error);
+		return {
+			cmd: command,
+			stdout: error.stdout?.toString() || '',
+			stderr: error.stderr?.toString() || '',
+			error,
+			cwd,
+		};
+	}
+}
+
 export interface ExecResults {
 	cmd: string;
 	stdout: string;
@@ -36,12 +88,12 @@ export interface ExecResults {
  * @param cwd current working directory
  * @returns
  */
-export async function execCmd(command: string, cwd = ''): Promise<ExecResults> {
+export async function execCmd(command: string, cwd = getFileSystem().getWorkingDirectory()): Promise<ExecResults> {
 	return withSpan('execCmd', async (span) => {
 		const home = process.env.HOME;
 		logger.info(`execCmd ${home ? command.replace(home, '~') : command} ${cwd}`);
-		// Need the right shell so git commands work (by having the SSH keys)
-		const shell = os.platform() === 'darwin' ? '/bin/zsh' : '/bin/bash';
+		// Use the available shell
+		const shell = getAvailableShell();
 		const result = await new Promise<ExecResults>((resolve, reject) => {
 			exec(command, { cwd, shell }, (error, stdout, stderr) => {
 				resolve({
@@ -99,7 +151,7 @@ export interface ExecCmdOptions {
 
 export async function execCommand(command: string, opts?: ExecCmdOptions): Promise<ExecResult> {
 	return withSpan('execCommand', async (span) => {
-		const shell = os.platform() === 'darwin' ? '/bin/zsh' : '/bin/bash';
+		const shell = getAvailableShell();
 
 		const env = opts?.envVars ? { ...process.env, ...opts.envVars } : process.env;
 		const options: ExecOptions = { cwd: opts?.workingDirectory ?? getFileSystem().getWorkingDirectory(), shell, env };
@@ -140,7 +192,7 @@ export async function execCommand(command: string, opts?: ExecCmdOptions): Promi
 
 export async function spawnCommand(command: string, workingDirectory?: string): Promise<ExecResult> {
 	return withSpan('spawnCommand', async (span) => {
-		const shell = os.platform() === 'darwin' ? '/bin/zsh' : '/bin/bash';
+		const shell = getAvailableShell();
 		const cwd = workingDirectory ?? getFileSystem().getWorkingDirectory();
 		const options: SpawnOptionsWithoutStdio = { cwd, shell, env: process.env };
 		try {
