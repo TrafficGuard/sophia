@@ -605,20 +605,22 @@ export class FileSystemService {
 		return tree;
 	}
 
+	/**
+	 * Gets the version control service (Git) repository root folder, if the current working directory is in a Git repo, else null.
+	 */
 	getVcsRoot(): string | null {
 		// First, check if workingDirectory is under any known Git roots
+		if (gitRoots.has(this.workingDirectory)) return this.workingDirectory;
+
 		for (const gitRoot of gitRoots) {
-			const relative = path.relative(gitRoot, this.workingDirectory);
-			if (!relative.startsWith('..') && !path.isAbsolute(relative)) {
-				// workingDirectory is a subdirectory of gitRoot
-				return gitRoot;
-			}
+			if (this.workingDirectory.startsWith(gitRoot)) return gitRoot;
 		}
 
 		// If not found in cache, execute Git command
 		try {
 			// Use execCmdSync to get the Git root directory synchronously
-			const result = execCmdSync('git rev-parse --show-toplevel');
+			// Need to pass the workingDirectory to avoid recursion with the default workingDirectory arg
+			const result = execCmdSync('git rev-parse --show-toplevel', this.workingDirectory);
 
 			if (result.error) {
 				logger.error(result.error);
