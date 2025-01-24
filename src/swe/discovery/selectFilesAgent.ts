@@ -68,6 +68,7 @@ Your response must finish in the following format:
 <keep-ignore-thinking>
 </keep-ignore-thinking>
 <select-files-thinking>
+	<!-- what referenced files would need to be included for the task. You are working in an established codebase, so you should use existing files/design where possible etc -->
 </select-files-thinking>
 <requirements-solution-thinking>
 </requirements-solution-thinking>
@@ -119,7 +120,7 @@ Your response must end with a JSON object wrapped in <json> tags in the followin
 	];
 }
 
-async function generateFileSelectionProcessingResponse(messages: LlmMessage[], pendingFiles: string[]): Promise<IterationResponse> {
+async function generateFileSelectionProcessingResponse(messages: LlmMessage[], pendingFiles: string[], iteration: number): Promise<IterationResponse> {
 	const prompt = `
 ${(await readFileContents(pendingFiles)).contents}
 
@@ -130,7 +131,7 @@ Respond only as per the Process Files Response Instructions.
 `;
 	const iterationMessages: LlmMessage[] = [...messages, { role: 'user', content: prompt }];
 
-	return await llms().medium.generateTextWithJson(iterationMessages, { id: 'Select Files iteration' });
+	return await llms().medium.generateTextWithJson(iterationMessages, { id: `Select Files iteration ${iteration}` });
 }
 
 async function processedIterativeStepUserPrompt(response: IterationResponse): Promise<LlmMessage> {
@@ -237,7 +238,7 @@ async function selectFilesCore(
 		iterationCount++;
 		if (iterationCount > maxIterations) throw new Error('Maximum interaction iterations reached.');
 
-		const response: IterationResponse = await generateFileSelectionProcessingResponse(messages, filesToInspect);
+		const response: IterationResponse = await generateFileSelectionProcessingResponse(messages, filesToInspect, iterationCount);
 		logger.info(response);
 		for (const ignored of response.ignoreFiles ?? []) ignoredFiles.add(ignored);
 		for (const kept of response.keepFiles ?? []) keptFiles.add(kept);
