@@ -78,7 +78,7 @@ export class FirestoreUserService implements UserService {
 			};
 		}
 		if (!user.chat.enabledLLMs) user.chat.enabledLLMs = {};
-		if (!user.chat.temperature) user.chat.temperature = 1;
+		if (!user.chat.temperature) user.chat.temperature = 0.7;
 		if (!user.chat.topP) user.chat.topP = 1;
 		if (!user.chat.topK) user.chat.topK = 50;
 		if (!user.chat.frequencyPenalty) user.chat.frequencyPenalty = 0;
