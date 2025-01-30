@@ -35,6 +35,10 @@ RUN mkdir .sophia
 # Generate the function schemas
 RUN npm run functionSchemas
 
+# Needed to avoid the error "fatal: detected dubious ownership in repository at '/home/sophia'" when running git commands
+# as the application files are owned by the root user so an agent (which runs as the sophia user) can't modify them.
+RUN git config --global --add safe.directory /home/sophia
+
 ENV NODE_ENV=production
 ENV PORT=8080
 EXPOSE 8080
