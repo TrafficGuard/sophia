@@ -50,11 +50,11 @@ export async function gitlabRoutesV1(fastify: AppFastifyInstance) {
 
 			agentContextStorage.run(context, () => {
 				new GitLab()
-					.reviewMergeRequest(event.project.id, event.object_attributes.id)
+					.reviewMergeRequest(event.project.id, event.object_attributes.iid)
 					.then(() => {
 						logger.debug(`Competed review of merge request ${mergeRequestId}`);
 					})
-					.catch((error) => logger.error(error, `Error reviewing merge request ${mergeRequestId}`));
+					.catch((error) => logger.error(error, `Error reviewing merge request ${mergeRequestId}. Message: ${error.message}`));
 			});
 
 			send(reply, 200);
