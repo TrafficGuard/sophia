@@ -79,6 +79,10 @@ export class GitLab implements SourceControlManagement {
 	private config(): GitLabConfig {
 		if (!this._config) {
 			const config = functionConfig(GitLab);
+			if (!config.token && !envVar('GITLAB_TOKEN')) logger.warn('No GitLab token configured on the user or environment');
+			const token = config.token as string | undefined;
+			if (token?.length > 4) logger.info(`GitLab token ends with ${token.substring(token.length - 4, token.length - 1)}`);
+			// config.token
 			this._config = {
 				host: config.host || envVar('GITLAB_HOST'),
 				token: config.token || envVar('GITLAB_TOKEN'),

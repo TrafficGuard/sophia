@@ -36,11 +36,14 @@ export async function gitlabRoutesV1(fastify: AppFastifyInstance) {
 
 			if (event.object_attributes.draft) sendSuccess(reply);
 
+			const runAsUser = await appContext().userService.getUserByEmail(envVar('GITLAB_REVIEW_USER_EMAIL'));
+			if (!runAsUser) throw new Error(`Could not find user from env var GITLAB_REVIEW_USER_EMAIL with value ${envVar('GITLAB_REVIEW_USER_EMAIL')}`);
+
 			const config: RunAgentConfig = {
 				agentName: `MR review - ${event.object_attributes.title}`,
 				llms: defaultLLMs(),
 				functions: [],
-				user: await appContext().userService.getUserByEmail(envVar('GITLAB_REVIEW_USER_EMAIL')),
+				user: runAsUser,
 				initialPrompt: '',
 				humanInLoop: envVarHumanInLoopSettings(),
 			};
