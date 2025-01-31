@@ -31,10 +31,10 @@ export function perplexityLLM(): LLM {
 	return new PerplexityLLM(
 		'Perplexity',
 		'sonar',
-		128000, // maxTokens
+		127_000, // maxTokens
 		0.000001, // costPerPromptToken ($1 per million tokens)
 		0.000001, // costPerCompletionToken
-		0.005, // onlineCost ($5 per 1000 requests)
+		0.005, // 1 search ($5 per 1000 requests)
 	);
 }
 
@@ -42,10 +42,21 @@ export function perplexityProLLM(): LLM {
 	return new PerplexityLLM(
 		'Perplexity Pro',
 		'sonar-pro',
-		128000, // maxTokens
+		200_000, // maxTokens
 		0.000005, // costPerPromptToken ($5 per million tokens)
 		0.000005, // costPerCompletionToken
-		0.005, // onlineCost ($5 per 1000 requests)
+		0.015, // 3 searches ($5 per 1000 requests)
+	);
+}
+
+export function perplexityReasoningLLM(): LLM {
+	return new PerplexityLLM(
+		'Perplexity Reasoning',
+		'sonar-reasoning',
+		127_000, // maxTokens
+		0.000001, // costPerPromptToken ($1 per million tokens)
+		0.000005, // costPerCompletionToken
+		0.005, // 1 search ($5 per 1000 requests)
 	);
 }
 

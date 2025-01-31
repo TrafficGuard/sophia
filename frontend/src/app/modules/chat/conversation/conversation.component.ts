@@ -495,6 +495,15 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewInit {
             this.llmSelect.open();
             this.llmSelect.focus();
         }
+        if (event.key === 'a' && event.ctrlKey) {
+            this.fileInput.nativeElement.click();
+        }
+        if (event.key === 'e' && event.ctrlKey) {
+            this.toggleSendOnEnter();
+        }
+        if (event.key === 'i' && event.ctrlKey) {
+            this.drawerOpened = !this.drawerOpened
+        }
     }
 
     toggleSendOnEnter(): void {

@@ -2,9 +2,9 @@ import path from 'path';
 import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { LLM, LlmMessage } from '#llm/llm';
 import { logger } from '#o11y/logger';
+import { getRepositoryOverview } from '#swe/index/repoIndexDocBuilder';
+import { RepositoryMaps, generateRepositoryMaps } from '#swe/index/repositoryMap';
 import { ProjectInfo, detectProjectInfo } from '#swe/projectDetection';
-import { getRepositoryOverview } from '#swe/repoIndexDocBuilder';
-import { RepositoryMaps, generateRepositoryMaps } from '#swe/repositoryMap';
 
 /*
 Agent which iteratively loads files to find the file set required for a task/query.

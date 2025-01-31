@@ -2,6 +2,14 @@
 
 ## Agent categories
 
+We follow a similar naming convention described in [Building Effective Agents](https://www.anthropic.com/research/building-effective-agents) by Anthropic.
+
+> "Agent" can be defined in several ways. Some customers define agents as fully autonomous systems that operate independently over extended periods, using various tools to accomplish complex tasks. Others use the term to describe more prescriptive implementations that follow predefined workflows. At Anthropic, we categorize all these variations as agentic systems, but draw an important architectural distinction between workflows and agents:
+>
+> Workflows are systems where LLMs and tools are orchestrated through predefined code paths.
+> 
+> Agents, on the other hand, are systems where LLMs dynamically direct their own processes and tool usage, maintaining control over how they accomplish tasks.
+
 ### 1. Autonomous agents
 
 Sophia comes with two autonomous agent types (XML and CodeGen), which applying reasoning to break down
@@ -9,17 +17,17 @@ a user request into a plan to be completed by the available function calls.
 
 The Slack chatbot uses an autonomous agent to provide a response to a user.
 
-Function calls may be to API integrations or create sub-agents.
+Functions may call to API integrations or create sub-agents.
 
 ### 2. Workflow agents
 
 Workflow agents have the control flow logic defined in code, and the results of the LLM calls
-may determine the conditional control flow through the workflow.  This includes the Software Developer/Code Editing agents.
+may determine the conditional control flow through the workflow.  This includes the Software Developer/Code Editing workflow agents.
 
 ## Agent context
 
 The codebase makes use of `AsyncLocalStorage`, which is similar to `ThreadLocal` in Java and `threading.local()` in Python,
-to provide easy lookup of agent state, current user, tool configuration, and default LLMs.
+to provide easy lookup of agent state, current user, tool configuration, and default LLMs for both autonomous agents and workflow agents.
 
 This requires the agent code to run within a AsyncLocalStorage context.
 ```typescript

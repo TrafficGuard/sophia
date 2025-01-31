@@ -6,7 +6,7 @@ import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { errorToString } from '#utils/errors';
-import { sophiaDirName } from '../appVars';
+import { sophiaDirName } from '../../appVars';
 
 /**
  * This module builds summary documentation for a project/repository, to assist with searching in the repository.

@@ -29,3 +29,25 @@ echo Initialising Angular project
 cd frontend
 npm install
 cd ..
+
+# CLI setup -------------
+
+# Setup for bash
+if [ -f ~/.bashrc ]; then
+    if ! grep -q "SOPHIA_HOME" ~/.bashrc; then
+        echo "\n# Sophia CLI environment" >> ~/.bashrc
+        echo "export SOPHIA_HOME=$(pwd)" >> ~/.bashrc
+        echo "export PATH=\$SOPHIA_HOME/bin/path:\$PATH" >> ~/.bashrc
+    fi
+fi
+
+# Setup for zsh
+if [ -f ~/.zshrc ]; then
+    if ! grep -q "SOPHIA_HOME" ~/.zshrc; then
+        echo "\n# Sophia CLI environment" >> ~/.zshrc
+        echo "export SOPHIA_HOME=$(pwd)" >> ~/.zshrc
+        echo "export PATH=\$SOPHIA_HOME/bin/path:\$PATH" >> ~/.zshrc
+    fi
+fi
+
+echo "done"

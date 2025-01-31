@@ -5,9 +5,9 @@ import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { shutdownTrace } from '#fastify/trace-init/trace-init';
 import { defaultLLMs } from '#llm/services/defaultLlms';
+import { buildIndexDocs } from '#swe/index/repoIndexDocBuilder';
+import { generateRepositoryMaps } from '#swe/index/repositoryMap';
 import { detectProjectInfo } from '#swe/projectDetection';
-import { buildIndexDocs } from '#swe/repoIndexDocBuilder';
-import { generateRepositoryMaps } from '#swe/repositoryMap';
 import { initApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
 

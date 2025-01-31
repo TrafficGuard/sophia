@@ -5,6 +5,8 @@ There are two main ways to interact with the system:
 
 ## Running the server & UI
 
+Run the following commands from the sophia git repo root directory.
+
 ### Local install
 In one terminal run
 ```bash
@@ -22,16 +24,39 @@ Run `docker compose up`
 
 The UI will be available at [http://localhost:4200](http://localhost:4200)
 
-## CLI scripts
+## CLI commands
 
-To run the CLI scripts when using the Docker container, run the script `./bin/container` to open a bash shell inside the Sophia development container.
+## Running in Docker
 
+To run the CLI scripts when using the Docker container, run the script `./bin/container` from the repo root to first open a bash shell inside the Sophia development container.
+
+### Running outside the repository
+
+To run Sophia agents/workflows via the CLI script described below, in a folder outside the sophia repository, the script at `bin/path/ss` allows you to invoke the Sophia package.json scripts from any directory.
+
+The `bin/configure` script will update your shell configuration files to include it in your PATH.
+
+Either run the `bin/configure` script from the Sophia repository root or copy and run the required section from the script. This will add to your .bashrc and .zshrc files (if they exist) the output of:
+
+```bash
+export SOPHIA_HOME=$(pwd)
+export PATH=$SOPHIA_HOME/bin/path:$PATH
+```
+
+Then from any folder you can run commands like:
+
+`ss query what test frameworks does this repository use`
+
+Where *query* is the Sophia package.json script. For all the examples in the CLI scripts section above you can replace `npm run` with `ss`
+
+
+### CLI scripts
 
 There are a number of convenience scripts in the package.json for running agents and other scripts such as benchmarks, where the entrypoint file matches `/src/cli/<script-name>.ts`
 
 ### agent
 
-`npm run agent` will run the autonomous agent configured in `src/cli/agent.ts`
+`npm run agent` or `ss agent` will run the autonomous agent configured in `src/cli/agent.ts`. Note that the agent will have the functions available configured in the `agent.ts` file.
 
 If no arguments are supplied the user prompt will be read from `src/cli/agent-in`
 
@@ -44,7 +69,7 @@ npm run agent research the latest news about large language models and write a r
 
 ### code
 
-`npm run code` runs the CodeEditingAgent configured in `src/cli/code.ts`
+`npm run code` or `ss code` runs the [CodeEditingAgent](/software-engineer/) configured in `src/cli/code.ts`
 
 Without arguments the prompt is read from `src/cli/code-in` otherwise it uses the provided arguments for the prompt.
 
@@ -54,12 +79,22 @@ This is a useful for editing the sophia codebase. You could run a command like:
 npm run code In the anthropic vertex class update the pricing for claude 3.5 sonnet to be 3 dollars per million input tokens and 15 dollars per million output tokens
 ```
 
-When editing other local repositories you will need to provide the initial arg `-fs=<path>` to set the agent's virtual filesystem working 
-directory to the repository you want to edit.
+When editing other repositories you will need use the `ss` command to run the agent with its virtual filesystem working 
+directory set to the current shell directory.
+
+### index
+
+`npm run index` or `ss index`
+
+This runs the agent which indexes a repository, and stores the summary index docs under `.sophia/docs`
+
+### slack
+
+`npm run slack` or `ss slack` starts the Slack chatbot. The chatbot will have the functions available defined in `src/modules/slack/slackChatBotService.ts`
 
 ### swe
 
-`npm run swe` runs the SoftwareDeveloperAgent configured in `src/cli/swe.ts`
+`npm run swe` or `ss swe` runs the SoftwareDeveloperAgent configured in `src/cli/swe.ts`
 
 Without arguments the prompt is read from `src/cli/swe-in` otherwise it uses the provided arguments for the prompt.
 
@@ -69,7 +104,7 @@ This agent can be used for process automation and handling requests within the l
 
 ### gen
 
-`npm run gen` runs the script at `src/cli/gen.ts`
+`npm run gen` or `ss gen` runs the script at `src/cli/gen.ts`
 
 This simply generates text from a prompt. As with the other scripts you can provide arguments for a quick prompt. 
 Otherwise, prepare the prompt in `src/cli/gen-in` and don't provide any other arguments.
@@ -90,7 +125,7 @@ Make sure the directory you save the files to is in the .gitignore.
 
 ### scrape
 
-`npm run scrape <url>` runs the PublicWeb.getWebPage function which uses a headless browser to scrape a web page, and then converts
+`npm run scrape <url>` or `ss scrape <url>` runs the PublicWeb.getWebPage function which uses a headless browser to scrape a web page, and then converts
 it to a slim format by using the `@mozilla/readability` module to first extract the main contents of the page, and then the `turndown`
 package to convert the HTML to Markdown, further reducing the token count.
 
@@ -98,10 +133,8 @@ By default, it writes the output to `scrape.md`. Alternatively you can provide a
 
 ### query
 
-`npm run query <question>` runs the codebase query agent at *src/swe/discovery/codebaseQuery.ts* which can answer ad hoc
+`npm run query <question>` or `ss query <question>` runs the codebase query agent at *src/swe/discovery/fileSelectionAgent.ts* which can answer ad hoc
 questions about a codebase/folder contents.
-
-
 
 ## Development
 
@@ -115,25 +148,6 @@ npm run emulators
 npm run test
 ```
 
-
-
-
-## CLI usage optimizations
-
-### Helper CLI script
-
-To run Sophia agents in other folders and repositories, the script at `bin/path/ss` allows you to invoke the Sophia package.json scripts from any directory.
-
-To use this you in your shell config files (e.g. ~/.bashrc, ~/.zshrc)
-
-- Set the `SOPHIA_HOME` variable to the path of the Sophia repository.
-- Add `$SOPHIA_HOME/bin/path` to the `PATH` variable.
-
-Then from any folder you can run commands like:
-
-`ss query what test frameworks does this repository use`
-
-Where *query* is the Sophia package.json script. For all the examples in the CLI scripts section above you can replace `npm run` with `ss`
 
 ### Speech-to-text
 

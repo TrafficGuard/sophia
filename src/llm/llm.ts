@@ -4,7 +4,7 @@ import { CoreMessage, FilePart, ImagePart, StreamTextResult, TextPart, UserConte
 // Should match fields in CallSettings in node_modules/ai/dist/index.d.ts
 export interface GenerateOptions {
 	/**
-	 * Temperature controls the randomness in token selection. Valid values are between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. Defaults to 1
+	 * Temperature controls the randomness in token selection. Valid values are between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
 	 * We generally recommend altering this or top_p but not both.
 	 */
 	temperature?: number;
@@ -56,11 +56,6 @@ export interface GenerateTextOptions extends GenerateOptions {
  * Options when generating text expecting JSON
  */
 export type GenerateJsonOptions = Omit<GenerateTextOptions, 'type'>;
-
-/**
- * Options when generating text expecting function calls
- */
-export type GenerateFunctionOptions = Omit<GenerateTextOptions, 'type'>;
 
 /*
 Types from the 'ai' package:
@@ -175,6 +170,7 @@ export interface LLM {
 	generateJson<T>(userPrompt: string, opts?: GenerateJsonOptions): Promise<T>;
 	generateJson<T>(systemPrompt: string, userPrompt: string, opts?: GenerateJsonOptions): Promise<T>;
 	generateJson<T>(messages: LlmMessage[] | ReadonlyArray<LlmMessage>, opts?: GenerateJsonOptions): Promise<T>;
+
 	/**
 	 * Generates a response that is expected to have a <result></result> element, and returns the text inside it.
 	 * This useful when you want to LLM to output discovery, reasoning, etc. to improve the answer, and only want the final result returned.

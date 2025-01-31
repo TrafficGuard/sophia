@@ -1,5 +1,6 @@
 import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
 
+import { writeFileSync } from 'fs';
 import { agentContext, llms } from '#agent/agentContextLocalStorage';
 import { AgentLLMs } from '#agent/agentContextTypes';
 import { RunAgentConfig } from '#agent/agentRunner';
@@ -38,7 +39,11 @@ async function main() {
 		await appContext().agentStateService.save(agent);
 
 		const response = await queryWorkflow(initialPrompt);
+
 		console.log(response);
+
+		writeFileSync('src/cli/gen-out', response);
+		console.log('Wrote output to src/cli/query-out');
 	});
 
 	if (agentId) {
