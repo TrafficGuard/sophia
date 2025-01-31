@@ -3,13 +3,14 @@ export interface LLMServicesConfig {
 	vertexRegion?: string;
 
 	anthropicKey?: string;
-	openaiKey?: string;
-	groqKey?: string;
-	togetheraiKey?: string;
-	deepseekKey?: string;
-	fireworksKey?: string;
 	cerebrasKey?: string;
 	deepinfraKey?: string;
+	deepseekKey?: string;
+	fireworksKey?: string;
+	groqKey?: string;
+	nebiusKey?: string;
+	openaiKey?: string;
+	togetheraiKey?: string;
 	xaiKey?: string;
 }
 

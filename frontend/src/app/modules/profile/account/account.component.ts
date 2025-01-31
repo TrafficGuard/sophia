@@ -75,6 +75,7 @@ export class SettingsAccountComponent implements OnInit {
                 deepinfraKey: new FormControl(''),
                 cerebrasKey: new FormControl(''),
                 xaiKey: new FormControl(''),
+                nebiusKey: new FormControl(''),
             }),
             chat: new FormGroup({
                 defaultLLM: new FormControl(''),
