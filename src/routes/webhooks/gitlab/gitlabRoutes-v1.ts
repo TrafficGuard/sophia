@@ -48,7 +48,7 @@ export async function gitlabRoutesV1(fastify: AppFastifyInstance) {
 				humanInLoop: envVarHumanInLoopSettings(),
 			};
 			const context: AgentContext = createContext(config);
-			const mergeRequestId = `${event.project.id}, ${event.object_attributes.id}, ${event.object_attributes.title}`;
+			const mergeRequestId = `project:${event.project.name}, miid:${event.object_attributes.iid}, MR:"${event.object_attributes.title}"`;
 			logger.info(`Agent ${context.agentId} reviewing merge request ${mergeRequestId}`);
 
 			agentContextStorage.run(context, () => {
@@ -57,7 +57,7 @@ export async function gitlabRoutesV1(fastify: AppFastifyInstance) {
 					.then(() => {
 						logger.debug(`Competed review of merge request ${mergeRequestId}`);
 					})
-					.catch((error) => logger.error(error, `Error reviewing merge request ${mergeRequestId}. Message: ${error.message}`));
+					.catch((error) => logger.error(error, `Error reviewing merge request ${mergeRequestId}. Message: ${error.message} [error]`));
 			});
 
 			send(reply, 200);
