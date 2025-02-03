@@ -79,7 +79,7 @@ export const appRoutes: Route[] = [
             {path: 'chat', loadChildren: () => import('app/modules/chat/chat.routes')},
             {path: 'agents', loadChildren: () => import('app/modules/agents/agent.routes')},
             {path: 'code-reviews', loadChildren: () => import('app/modules/code-review/code-review.routes')},
-            {path: 'actions', loadChildren: () => import('app/modules/actions/actions.routes')},
+            {path: 'workflows', loadChildren: () => import('app/modules/workflows/workflows.routes')},
         ]
     }
 ];

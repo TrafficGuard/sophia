@@ -1,9 +1,9 @@
 import { Routes } from '@angular/router';
-import {ActionsComponent} from "./actions.component";
+import {WorkflowsComponent} from "./workflows.component";
 
 export default [
     {
         path: '',
-        component: ActionsComponent,
+        component: WorkflowsComponent,
     },
 ] as Routes;

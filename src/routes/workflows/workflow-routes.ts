@@ -33,11 +33,11 @@ function findRepositories(dir: string): string[] {
 	return repos;
 }
 
-export async function codeRoutes(fastify: AppFastifyInstance) {
+export async function workflowRoutes(fastify: AppFastifyInstance) {
 	// /get
 	// See https://docs.gitlab.com/ee/user/project/integrations/webhook_events.html#merge-request-events
 	fastify.post(
-		'/api/code/edit',
+		'/api/workflows/edit',
 		{
 			schema: {
 				body: Type.Object({
@@ -83,7 +83,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 	);
 
 	fastify.post(
-		'/api/code/query',
+		'/api/workflows/query',
 		{
 			schema: {
 				body: Type.Object({
@@ -129,7 +129,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 	);
 
 	fastify.post(
-		'/api/code/select-files',
+		'/api/workflows/select-files',
 		{
 			schema: {
 				body: Type.Object({
@@ -170,7 +170,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 		},
 	);
 
-	fastify.get('/api/code/repositories', async (request, reply) => {
+	fastify.get('/api/workflows/repositories', async (request, reply) => {
 		try {
 			const workingDirectory = process.cwd();
 			const gitlabRepos = findRepositories(path.join(systemDir(), 'gitlab'));
