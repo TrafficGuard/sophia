@@ -98,6 +98,10 @@ export class ReasonerDebateLLM extends BaseLLM {
 		}
 	}
 
+	isConfigured(): boolean {
+		return this.mediator.isConfigured() && this.llms.findIndex((llm) => !llm.isConfigured()) === -1;
+	}
+
 	getModel(): string {
 		return `${this.mediator.getId()}|${this.llms.map((llm) => llm.getId()).join('|')}`;
 	}

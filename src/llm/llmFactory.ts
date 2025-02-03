@@ -1,6 +1,7 @@
 import { AgentLLMs } from '#agent/agentContextTypes';
 import { LLM } from '#llm/llm';
 import { blueberryLLMRegistry } from '#llm/multi-agent/blueberry';
+import { CePO_LLMRegistry } from '#llm/multi-agent/cepo';
 import { deepSeekFallbackRegistry } from '#llm/multi-agent/deepSeekR1_Fallbacks';
 import { MoA_reasoningLLMRegistry } from '#llm/multi-agent/reasoning-debate';
 import { MultiLLM } from '#llm/multi-llm';
@@ -12,6 +13,7 @@ import { deepseekLLMRegistry } from '#llm/services/deepseek';
 import { fireworksLLMRegistry } from '#llm/services/fireworks';
 import { groqLLMRegistry } from '#llm/services/groq';
 import { mockLLMRegistry } from '#llm/services/mock-llm';
+import { nebiusLLMRegistry } from '#llm/services/nebius';
 import { ollamaLLMRegistry } from '#llm/services/ollama';
 import { openAiLLMRegistry } from '#llm/services/openai';
 import { perplexityLLMRegistry } from '#llm/services/perplexity-llm';
@@ -33,10 +35,12 @@ export const LLM_FACTORY: Record<string, () => LLM> = {
 	...cerebrasLLMRegistry(),
 	...perplexityLLMRegistry(),
 	...xaiLLMRegistry(),
+	...nebiusLLMRegistry(),
 	...ollamaLLMRegistry(),
 	...deepSeekFallbackRegistry(),
 	...blueberryLLMRegistry(),
 	...MoA_reasoningLLMRegistry(),
+	...CePO_LLMRegistry(),
 	...mockLLMRegistry(),
 };
 

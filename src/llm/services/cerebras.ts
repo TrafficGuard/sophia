@@ -1,5 +1,6 @@
 import { createCerebras } from '@ai-sdk/cerebras';
 import { OpenAIProvider } from '@ai-sdk/openai';
+import { InputCostFunction, OutputCostFunction, perMilTokens } from '#llm/base-llm';
 import { currentUser } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
 import { LLM } from '../llm';
@@ -15,42 +16,18 @@ export function cerebrasLLMRegistry(): Record<string, () => LLM> {
 }
 
 export function cerebrasLlama3_8b(): LLM {
-	return new CerebrasLLM(
-		'Llama 3.1 8b (Cerebras)',
-		'llama3.1-8b',
-		8_192,
-		(input: string) => 0, //(input.length * 0.05) / (1_000_000 * 4),
-		(output: string) => 0, //(output.length * 0.08) / (1_000_000 * 4),
-		0,
-		0,
-	);
+	return new CerebrasLLM('Llama 3.1 8b (Cerebras)', 'llama3.1-8b', 8_192, perMilTokens(0.1), perMilTokens(0.1));
 }
 
 export function cerebrasLlama3_3_70b(): LLM {
-	return new CerebrasLLM(
-		'Llama 3.3 70b (Cerebras)',
-		'llama-3.3-70b',
-		8_192,
-		(input: string) => 0, //(input.length * 0.05) / (1_000_000 * 4),
-		(output: string) => 0, //(output.length * 0.08) / (1_000_000 * 4),
-		0.6,
-		0.6,
-	);
+	return new CerebrasLLM('Llama 3.3 70b (Cerebras)', 'llama-3.3-70b', 8_192, perMilTokens(0.85), perMilTokens(1.2));
 }
 
 /**
  * https://inference-docs.cerebras.ai/introduction
  */
 export class CerebrasLLM extends AiLLM<OpenAIProvider> {
-	constructor(
-		displayName: string,
-		model: string,
-		maxInputTokens: number,
-		calculateInputCost: (input: string) => number,
-		calculateOutputCost: (output: string) => number,
-		private costPerMillionInputTokens: number,
-		private costPerMillionOutputTokens: number,
-	) {
+	constructor(displayName: string, model: string, maxInputTokens: number, calculateInputCost: InputCostFunction, calculateOutputCost: OutputCostFunction) {
 		super(displayName, CEREBRAS_SERVICE, model, maxInputTokens, calculateInputCost, calculateOutputCost);
 	}
 

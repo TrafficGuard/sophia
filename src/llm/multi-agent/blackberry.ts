@@ -80,6 +80,10 @@ export class Blackberry extends BaseLLM {
 		);
 	}
 
+	isConfigured(): boolean {
+		return this.mediator.isConfigured() && this.llms.findIndex((llm) => !llm.isConfigured()) === -1;
+	}
+
 	async _generateText(systemPrompt: string | undefined, userPrompt: string, opts?: GenerateTextOptions): Promise<string> {
 		if (systemPrompt) {
 			logger.error('system prompt not available for Blueberry');

@@ -26,6 +26,10 @@ export class FastestLlama3_70B extends BaseLLM {
 		this.maxInputTokens = Math.max(...this.providers.map((p) => p.getMaxInputTokens()));
 	}
 
+	isConfigured(): boolean {
+		return this.providers.findIndex((llm) => !llm.isConfigured()) === -1;
+	}
+
 	protected supportsGenerateTextFromMessages(): boolean {
 		return true;
 	}

@@ -38,6 +38,10 @@ export class DeepSeekR1_Fallbacks extends BaseLLM {
 		return true;
 	}
 
+	isConfigured(): boolean {
+		return this.together.isConfigured() && this.fireworks.isConfigured();
+	}
+
 	async generateTextFromMessages(messages: LlmMessage[], opts?: GenerateTextOptions): Promise<string> {
 		try {
 			return await this.together.generateText(messages, { ...opts, maxRetries: 0 });

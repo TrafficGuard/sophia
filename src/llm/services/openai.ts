@@ -1,6 +1,6 @@
 import { OpenAIProvider, createOpenAI } from '@ai-sdk/openai';
+import { InputCostFunction, OutputCostFunction } from '#llm/base-llm';
 import { AiLLM } from '#llm/services/ai-llm';
-import { logger } from '#o11y/logger';
 import { currentUser } from '#user/userService/userContext';
 import { GenerateTextOptions, LLM, LlmMessage } from '../llm';
 
@@ -27,8 +27,8 @@ export function openAIo1() {
 	return new OpenAI(
 		'OpenAI o1 preview',
 		'o1-preview',
-		(input: string) => (input.length * 15) / 1_000_000,
-		(output: string) => (output.length * 60) / (1_000_000 * 4),
+		(input: string, inputTokens) => (inputTokens * 15) / 1_000_000,
+		(output: string, outputTokens) => (outputTokens * 60) / 1_000_000,
 	);
 }
 
@@ -36,8 +36,8 @@ export function openAIo1mini() {
 	return new OpenAI(
 		'OpenAI o1-mini',
 		'o1-mini',
-		(input: string) => (input.length * 3) / 1_000_000,
-		(output: string) => (output.length * 12) / (1_000_000 * 4),
+		(input: string, inputTokens) => (inputTokens * 3) / 1_000_000,
+		(output: string, outputTokens) => (outputTokens * 12) / 1_000_000,
 	);
 }
 
@@ -45,8 +45,8 @@ export function GPT4o() {
 	return new OpenAI(
 		'GPT4o',
 		'gpt-4o',
-		(input: string) => (input.length * 2.5) / 1_000_000,
-		(output: string) => (output.length * 10) / (1_000_000 * 4),
+		(input: string, inputTokens) => (inputTokens * 2.5) / 1_000_000,
+		(output: string, outputTokens) => (outputTokens * 10) / 1_000_000,
 	);
 }
 
@@ -54,13 +54,13 @@ export function GPT4oMini() {
 	return new OpenAI(
 		'GPT4o mini',
 		'gpt-4o-mini',
-		(input: string) => (input.length * 0.15) / (1_000_000 * 4),
-		(output: string) => (output.length * 0.6) / (1_000_000 * 4),
+		(input: string, inputTokens, metadata) => (inputTokens * 0.15) / 1_000_000,
+		(input: string, outputTokens) => (outputTokens * 0.6) / 1_000_000,
 	);
 }
 
 export class OpenAI extends AiLLM<OpenAIProvider> {
-	constructor(displayName: string, model: string, calculateInputCost: (input: string) => number, calculateOutputCost: (output: string) => number) {
+	constructor(displayName: string, model: string, calculateInputCost: InputCostFunction, calculateOutputCost: OutputCostFunction) {
 		super(displayName, OPENAI_SERVICE, model, 128_000, calculateInputCost, calculateOutputCost);
 	}
 

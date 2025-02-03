@@ -1,4 +1,5 @@
 import { GroqProvider, createGroq } from '@ai-sdk/groq';
+import { InputCostFunction, OutputCostFunction, perMilTokens } from '#llm/base-llm';
 import { AiLLM } from '#llm/services/ai-llm';
 import { currentUser } from '#user/userService/userContext';
 import { LLM } from '../llm';
@@ -16,26 +17,14 @@ export function groqLLMRegistry(): Record<string, () => LLM> {
 // https://console.groq.com/docs/models
 
 export function groqLlama3_3_70B(): LLM {
-	return new GroqLLM(
-		'Llama3.3 70b (Groq)',
-		'llama-3.3-70b-versatile',
-		131_072,
-		(input: string) => (input.length * 0.59) / (1_000_000 * 4),
-		(output: string) => (output.length * 0.79) / (1_000_000 * 4),
-	);
+	return new GroqLLM('Llama3.3 70b (Groq)', 'llama-3.3-70b-versatile', 131_072, perMilTokens(0.59), perMilTokens(0.79));
 }
 
 /**
  * https://wow.groq.com/
  */
 export class GroqLLM extends AiLLM<GroqProvider> {
-	constructor(
-		displayName: string,
-		model: string,
-		maxTokens: number,
-		calculateInputCost: (input: string) => number,
-		calculateOutputCost: (output: string) => number,
-	) {
+	constructor(displayName: string, model: string, maxTokens: number, calculateInputCost: InputCostFunction, calculateOutputCost: OutputCostFunction) {
 		super(displayName, GROQ_SERVICE, model, maxTokens, calculateInputCost, calculateOutputCost);
 	}
 

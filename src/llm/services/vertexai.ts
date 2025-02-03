@@ -2,6 +2,7 @@ import { GoogleVertexProvider, createVertex } from '@ai-sdk/google-vertex';
 import { HarmBlockThreshold, HarmCategory, SafetySetting } from '@google-cloud/vertexai';
 import axios from 'axios';
 import { AgentLLMs } from '#agent/agentContextTypes';
+import { InputCostFunction, OutputCostFunction } from '#llm/base-llm';
 import { AiLLM } from '#llm/services/ai-llm';
 import { currentUser } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
@@ -112,13 +113,7 @@ export function Vertex_Llama3_405b() {
  * Vertex AI models - Gemini
  */
 class VertexLLM extends AiLLM<GoogleVertexProvider> {
-	constructor(
-		displayName: string,
-		model: string,
-		maxInputToken: number,
-		calculateInputCost: (input: string) => number,
-		calculateOutputCost: (output: string) => number,
-	) {
+	constructor(displayName: string, model: string, maxInputToken: number, calculateInputCost: InputCostFunction, calculateOutputCost: OutputCostFunction) {
 		super(displayName, VERTEX_SERVICE, model, maxInputToken, calculateInputCost, calculateOutputCost);
 	}
 

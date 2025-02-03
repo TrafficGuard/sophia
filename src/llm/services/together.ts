@@ -1,5 +1,6 @@
 import { TogetherAIProvider, createTogetherAI } from '@ai-sdk/togetherai';
 import { LanguageModelV1 } from 'ai';
+import { InputCostFunction, OutputCostFunction, perMilTokens } from '#llm/base-llm';
 import { AiLLM } from '#llm/services/ai-llm';
 import { currentUser } from '#user/userService/userContext';
 import { LLM } from '../llm';
@@ -14,23 +15,11 @@ export function togetherLLMRegistry(): Record<string, () => LLM> {
 }
 
 export function togetherLlama3_70B(): LLM {
-	return new TogetherLLM(
-		'Llama3 70b (Together)',
-		'meta-llama/Llama-3-70b-chat-hf',
-		8000,
-		(input: string) => (input.length * 0.9) / 1_000_000 / 4,
-		(output: string) => (output.length * 0.9) / 1_000_000 / 4,
-	);
+	return new TogetherLLM('Llama3 70b (Together)', 'meta-llama/Llama-3-70b-chat-hf', 8000, perMilTokens(0.9), perMilTokens(0.9));
 }
 
 export function togetherDeepSeekR1(): LLM {
-	return new TogetherLLM(
-		'DeepSeek R1 (Together)',
-		'deepseek-ai/DeepSeek-R1',
-		64000,
-		(input: string) => (input.length * 8) / 1_000_000 / 4,
-		(output: string) => (output.length * 8) / 1_000_000 / 4,
-	);
+	return new TogetherLLM('DeepSeek R1 (Together)', 'deepseek-ai/DeepSeek-R1', 64000, perMilTokens(8), perMilTokens(8));
 }
 
 type TogetherAIProviderV1 = TogetherAIProvider & {
@@ -40,13 +29,7 @@ type TogetherAIProviderV1 = TogetherAIProvider & {
  * Together AI models
  */
 export class TogetherLLM extends AiLLM<TogetherAIProviderV1> {
-	constructor(
-		displayName: string,
-		model: string,
-		maxTokens: number,
-		inputCostPerToken: (input: string) => number,
-		outputCostPerToken: (output: string) => number,
-	) {
+	constructor(displayName: string, model: string, maxTokens: number, inputCostPerToken: InputCostFunction, outputCostPerToken: OutputCostFunction) {
 		super(displayName, TOGETHER_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
 	}
 

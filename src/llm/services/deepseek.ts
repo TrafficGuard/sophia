@@ -1,4 +1,5 @@
 import { DeepSeekProvider, createDeepSeek } from '@ai-sdk/deepseek';
+import { InputCostFunction, OutputCostFunction, perMilTokens } from '#llm/base-llm';
 import { currentUser } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
 import { LLM } from '../llm';
@@ -14,23 +15,11 @@ export function deepseekLLMRegistry(): Record<string, () => LLM> {
 }
 
 export function deepSeekV3(): LLM {
-	return new DeepSeekLLM(
-		'DeepSeek v3',
-		'deepseek-chat',
-		64000,
-		(input: string) => (input.length * 0.14) / (1_000_000 * 3.5),
-		(output: string) => (output.length * 0.28) / (1_000_000 * 3.5),
-	);
+	return new DeepSeekLLM('DeepSeek v3', 'deepseek-chat', 64000, perMilTokens(0.14), perMilTokens(0.28));
 }
 
 export function deepSeekR1(): LLM {
-	return new DeepSeekLLM(
-		'DeepSeek R1',
-		'deepseek-reasoner',
-		64000,
-		(input: string) => (input.length * 0.55) / (1_000_000 * 3.5),
-		(output: string) => (output.length * 2.19) / (1_000_000 * 3.5),
-	);
+	return new DeepSeekLLM('DeepSeek R1', 'deepseek-reasoner', 64000, perMilTokens(0.55), perMilTokens(2.19));
 }
 
 /**
@@ -38,13 +27,7 @@ export function deepSeekR1(): LLM {
  * @see https://platform.deepseek.com/api-docs/api/create-chat-completion
  */
 export class DeepSeekLLM extends AiLLM<DeepSeekProvider> {
-	constructor(
-		displayName: string,
-		model: string,
-		maxTokens: number,
-		inputCostPerToken: (input: string) => number,
-		outputCostPerToken: (output: string) => number,
-	) {
+	constructor(displayName: string, model: string, maxTokens: number, inputCostPerToken: InputCostFunction, outputCostPerToken: OutputCostFunction) {
 		super(displayName, DEEPSEEK_SERVICE, model, maxTokens, inputCostPerToken, outputCostPerToken);
 	}
 
