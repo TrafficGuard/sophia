@@ -1,6 +1,6 @@
 import { OpenAIProvider, createOpenAI } from '@ai-sdk/openai';
+import { InputCostFunction, OutputCostFunction, perMilTokens } from '#llm/base-llm';
 import { AiLLM } from '#llm/services/ai-llm';
-import { logger } from '#o11y/logger';
 import { currentUser } from '#user/userService/userContext';
 import { GenerateTextOptions, LLM, LlmMessage } from '../llm';
 
@@ -8,59 +8,52 @@ export const OPENAI_SERVICE = 'openai';
 
 export function openAiLLMRegistry(): Record<string, () => LLM> {
 	return {
-		'openai:gpt-4o': () => openaiLLmFromModel('gpt-4o'),
-		'openai:gpt-4o-mini': () => openaiLLmFromModel('gpt-4o-mini'),
-		'openai:o1-preview': () => openaiLLmFromModel('o1-preview'),
-		'openai:o1-mini': () => openaiLLmFromModel('o1-mini'),
+		'openai:gpt-4o': () => GPT4o(),
+		'openai:gpt-4o-mini': () => GPT4oMini(),
+		'openai:o1-preview': () => openAIo1Preview(),
+		'openai:o1': () => openAIo1(),
+		'openai:o1-mini': () => openAIo1mini(),
+		'openai:o3-mini': () => openAIo3mini(),
 	};
 }
 
-export function openaiLLmFromModel(model: string): LLM {
-	if (model.startsWith('gpt-4o-mini')) return GPT4oMini();
-	if (model.startsWith('gpt-4o')) return GPT4o();
-	if (model.startsWith('o1-preview')) return openAIo1();
-	if (model.startsWith('o1-mini')) return openAIo1mini();
-	throw new Error(`Unsupported ${OPENAI_SERVICE} model: ${model}`);
+export function openAIo1() {
+	return new OpenAI('OpenAI o1', 'o1', inputCost(15), perMilTokens(60));
 }
 
-export function openAIo1() {
-	return new OpenAI(
-		'OpenAI o1 preview',
-		'o1-preview',
-		(input: string) => (input.length * 15) / 1_000_000,
-		(output: string) => (output.length * 60) / (1_000_000 * 4),
-	);
+export function openAIo1Preview() {
+	return new OpenAI('OpenAI o1 preview', 'o1-preview', inputCost(15), perMilTokens(60));
 }
 
 export function openAIo1mini() {
-	return new OpenAI(
-		'OpenAI o1-mini',
-		'o1-mini',
-		(input: string) => (input.length * 3) / 1_000_000,
-		(output: string) => (output.length * 12) / (1_000_000 * 4),
-	);
+	return new OpenAI('OpenAI o1-mini', 'o1-mini', inputCost(3), perMilTokens(12));
+}
+
+export function openAIo3mini() {
+	return new OpenAI('OpenAI o3-mini', 'o3-mini', inputCost(1.1), perMilTokens(4.4));
 }
 
 export function GPT4o() {
-	return new OpenAI(
-		'GPT4o',
-		'gpt-4o',
-		(input: string) => (input.length * 2.5) / 1_000_000,
-		(output: string) => (output.length * 10) / (1_000_000 * 4),
-	);
+	return new OpenAI('GPT4o', 'gpt-4o', inputCost(2.5), perMilTokens(10));
 }
 
 export function GPT4oMini() {
-	return new OpenAI(
-		'GPT4o mini',
-		'gpt-4o-mini',
-		(input: string) => (input.length * 0.15) / (1_000_000 * 4),
-		(output: string) => (output.length * 0.6) / (1_000_000 * 4),
-	);
+	return new OpenAI('GPT4o mini', 'gpt-4o-mini', inputCost(0.15), perMilTokens(0.6));
+}
+
+// https://sdk.vercel.ai/providers/ai-sdk-providers/openai#prompt-caching
+function inputCost(dollarsPerMillionTokens: number): InputCostFunction {
+	return (input: string, tokens: number, experimental_providerMetadata: any) => {
+		const cachedPromptTokens = experimental_providerMetadata?.openai?.cachedPromptTokens;
+		if (cachedPromptTokens) {
+			return ((tokens - cachedPromptTokens) * dollarsPerMillionTokens) / 1_000_000 + (cachedPromptTokens * dollarsPerMillionTokens) / 2 / 1_000_000;
+		}
+		return (tokens * dollarsPerMillionTokens) / 1_000_000;
+	};
 }
 
 export class OpenAI extends AiLLM<OpenAIProvider> {
-	constructor(displayName: string, model: string, calculateInputCost: (input: string) => number, calculateOutputCost: (output: string) => number) {
+	constructor(displayName: string, model: string, calculateInputCost: InputCostFunction, calculateOutputCost: OutputCostFunction) {
 		super(displayName, OPENAI_SERVICE, model, 128_000, calculateInputCost, calculateOutputCost);
 	}
 
@@ -69,11 +62,9 @@ export class OpenAI extends AiLLM<OpenAIProvider> {
 	}
 
 	provider(): OpenAIProvider {
-		if (!this.aiProvider) {
-			this.aiProvider = createOpenAI({
-				apiKey: this.apiKey(),
-			});
-		}
+		this.aiProvider ??= createOpenAI({
+			apiKey: this.apiKey(),
+		});
 		return this.aiProvider;
 	}
 

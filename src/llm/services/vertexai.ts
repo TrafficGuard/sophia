@@ -2,6 +2,7 @@ import { GoogleVertexProvider, createVertex } from '@ai-sdk/google-vertex';
 import { HarmBlockThreshold, HarmCategory, SafetySetting } from '@google-cloud/vertexai';
 import axios from 'axios';
 import { AgentLLMs } from '#agent/agentContextTypes';
+import { InputCostFunction, OutputCostFunction } from '#llm/base-llm';
 import { AiLLM } from '#llm/services/ai-llm';
 import { currentUser } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
@@ -71,7 +72,7 @@ export function Gemini_1_5_Flash() {
 // export function Gemini_1_5_Flash_8B() {
 // 	return new VertexLLM(
 // 		'Gemini 1.5 Flash 8B',
-// 		'gemini-1.5-flash-8b',
+// 		'gemini-1.5-flash-8b', // gemini-1.5-flash-8b, alias that points to gemini-1.5-flash-8b-001
 // 		1_000_000,
 // 		(input: string) => (input.length * 0.000125) / 1000,
 // 		(output: string) => (output.length * 0.000375) / 1000,
@@ -91,7 +92,7 @@ export function Gemini_2_0_Flash() {
 export function Gemini_2_0_Flash_Thinking() {
 	return new VertexLLM(
 		'Gemini 2.0 Flash Thinking Experimental',
-		'gemini-2.0-flash-thinking-exp-1219',
+		'gemini-2.0-flash-thinking-exp-1219', // gemini-2.0-flash-thinking-exp-01-21
 		1_000_000,
 		(input: string) => (input.length * 0.000125) / 1000,
 		(output: string) => (output.length * 0.000375) / 1000,
@@ -112,13 +113,7 @@ export function Vertex_Llama3_405b() {
  * Vertex AI models - Gemini
  */
 class VertexLLM extends AiLLM<GoogleVertexProvider> {
-	constructor(
-		displayName: string,
-		model: string,
-		maxInputToken: number,
-		calculateInputCost: (input: string) => number,
-		calculateOutputCost: (output: string) => number,
-	) {
+	constructor(displayName: string, model: string, maxInputToken: number, calculateInputCost: InputCostFunction, calculateOutputCost: OutputCostFunction) {
 		super(displayName, VERTEX_SERVICE, model, maxInputToken, calculateInputCost, calculateOutputCost);
 	}
 

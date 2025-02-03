@@ -4,62 +4,35 @@
   <img src="https://public.trafficguard.ai/sophia/banner.png" alt="Sophia banner"/>
 </p>
 <p align="center">
-  <em><b>The open TypeScript platform for AI agents and LLM based workflows</b></em><br/>
+  <em><b><span style="font-size: x-large">The open TypeScript platform for AI agents, workflows & chat</span></b></em><br/>
   <small>The Ancient Greek word <em><b>sophía (σοφία)</b></em> variously translates to "clever, skillful, intelligent, wise"</small>
 </p>
 
-Sophia is a full-featured platform for developing and running agents, LLM based workflows and chatbots.
+Sophia is a full-featured platform for developing and running autonomous agents, LLM based workflows, Slack chatbots, AI chat and more.
 
 Included are capable software engineering agents, which have assisted building the platform.
 
-## Key features
+## High level features
 
 - [Advanced Autonomous agents](https://sophia.dev/autonomous-agents)
+    - Faster/cheaper actions by generated function calling code (with sandboxed execution)
+    - Complex tasks supported with memory, function call history, live files, file store etc.
+    - Cost management with configurable Human-in-the-loop settings and cost tracking
+    - Persistent state management. Restart from completion/error/human-in-loop
 - [Software developer agents](https://sophia.dev/software-engineer/)
+    - Local repository editing
+    - Ticket-to-pull request workflow
+    - Repository indexing and ad-hoc query agents
+    - Leverages [Aider](https://aider.chat/) for diff editing
 - [Pull request code review agent](https://sophia.dev/code-review/)
 - [AI chat interface](https://sophia.dev/chat/)
 - [Slack chatbot](https://sophia.dev/chatbot/)
-- Supports many LLM services - OpenAI, Anthropic (native & Vertex), Gemini, Groq, Fireworks, Together.ai, DeepSeek, Ollama, Cerebras, X.ai
+- Supports many LLM services - OpenAI, Anthropic (native & Vertex), Gemini, Groq, Fireworks, Together.ai, DeepSeek, Ollama, Cerebras, X.ai and more.
+- Simple LLM interface wrapping the [Vercel ai](https://sdk.vercel.ai/) package to add tracing and cost tracking.
 - Multi-agent [extend-reasoning implementations](https://github.com/TrafficGuard/sophia/tree/main/src/llm/multi-agent) of the LLM interface
-- Configurable Human-in-the-loop settings
 - Functional callable tools (Filesystem, Jira, Slack, Perplexity, Google Cloud, Gitlab, GitHub etc)
-- CLI and Web UI interface
-- Run locally or deployed on the cloud with multi-user/SSO
 - OpenTelemetry based observability
 - Leverages the extensive Python AI ecosystem through executing Python scripts/packages
-
-## Autonomous agents
-
-- Reasoning/planning inspired from Google's [Self-Discover](https://arxiv.org/abs/2402.03620) and other papers
-- Memory and function call history for complex workflows
-- Iterative planning with hierarchical task decomposition
-- Sandboxed execution of generated code for multi-step function calling and logic
-- LLM function schemas auto-generated from source code
-- Human-in-the-loop for budget control, agent initiated questions and error handling
-
-Full details at the [Autonomous agent docs](https://sophia.dev/autonomous-agents)
-
-## Software developer agents
-
-- Code Editing Agent for local repositories
-    - Auto-detection of project initialization, compile, test and lint
-    - Task file selection agent selects the relevant files
-    - Design agent creates the implementation plan.
-    - Code editing loop with compile, lint, test, fix (editing delegates to [Aider](https://aider.chat/))
-      - Compile error analyser can search online, add additional files and packages
-    - Final review of the changes with an additional code editing loop if required.
-- Software Engineer Agent (For ticket to Pull Request workflow):
-    - Find the appropriate repository from GitLab/GitHub
-    - Clone and create branch
-    - Call the Code Editing Agent
-    - Create merge request
-- Code Review agent:
-    - Configurable code review guidelines
-    - Posts comments on GitLab merge requests at the appropriate line with suggested changes
-- Repository ad hoc query agent
-- Codebase awareness - optional index creation used by the task file selection agent
-
-Full details at the [Software developer agents](https://sophia.dev/software-engineer/) docs.
 
 ## Flexible run/deploy options
 

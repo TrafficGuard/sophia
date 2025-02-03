@@ -40,13 +40,15 @@ export interface GitLabConfig {
 /**
  * AI review of a git diff
  */
-type DiffReview = {
+interface DiffReview {
 	mrDiff: MergeRequestDiffSchema;
 	/** The code being reviewed from the diff */
 	code: string;
 	/** Code review comments */
 	comments: Array<{ comment: string; lineNumber: number }>;
-};
+	/** The code review configuration */
+	reviewConfig: CodeReviewConfig;
+}
 
 // Note that the type returned from getProjects is mapped to GitProject
 export type GitLabProject = Pick<
@@ -79,6 +81,7 @@ export class GitLab implements SourceControlManagement {
 	private config(): GitLabConfig {
 		if (!this._config) {
 			const config = functionConfig(GitLab);
+			if (!config.token && !envVar('GITLAB_TOKEN')) logger.error('No GitLab token configured on the user or environment');
 			this._config = {
 				host: config.host || envVar('GITLAB_HOST'),
 				token: config.token || envVar('GITLAB_TOKEN'),
@@ -89,12 +92,10 @@ export class GitLab implements SourceControlManagement {
 	}
 
 	private api(): any {
-		if (!this._gitlab) {
-			this._gitlab = new GitlabApi({
-				host: `https://${this.config().host}`,
-				token: this.config().token,
-			});
-		}
+		this._gitlab ??= new GitlabApi({
+			host: `https://${this.config().host}`,
+			token: this.config().token,
+		});
 		return this._gitlab;
 	}
 
@@ -304,13 +305,13 @@ export class GitLab implements SourceControlManagement {
 				if (!codeReview.enabled) continue;
 
 				if (codeReview.projectPaths.length && !micromatch.isMatch(projectPath, codeReview.projectPaths)) {
-					logger.info(`Project path globs ${codeReview.projectPaths} dont match ${projectPath}`);
+					logger.debug(`Project path globs ${codeReview.projectPaths} dont match ${projectPath}`);
 					continue;
 				}
 
 				const hasMatchingExtension = codeReview.fileExtensions?.include.some((extension) => diff.new_path.endsWith(extension));
 				const hasRequiredText = codeReview.requires?.text.some((text) => diff.diff.includes(text));
-				logger.info(`hasMatchingExtension: ${hasMatchingExtension}. hasRequiredText: ${hasRequiredText}`);
+
 				if (hasMatchingExtension && hasRequiredText) {
 					codeReviews.push(this.reviewDiff(diff, codeReview));
 				}
@@ -326,7 +327,7 @@ export class GitLab implements SourceControlManagement {
 
 		for (const diffReview of diffReviews) {
 			for (const comment of diffReview.comments) {
-				logger.debug(comment, 'Review comment');
+				logger.debug(comment, `Adding review comment to ${diffReview.mrDiff.new_path} for "${diffReview.reviewConfig.title}" [comment, lineNumber]`);
 				const position: MergeRequestDiscussionNotePositionOptions = {
 					baseSha: mergeRequest.diff_refs.base_sha,
 					headSha: mergeRequest.diff_refs.head_sha,
@@ -387,7 +388,7 @@ ${currentCode}
 Instructions:
 1. Based on the provided code review guidelines, analyze the code changes from a diff and identify any potential violations.
 2. Consider the overall context and purpose of the code when identifying violations.
-3. Comments with a number at the start of lines indicate line numbers. Use these numbers to help determine the starting lineNumber for the review comment.
+3. Comments with a number at the start of lines indicate line numbers. Use these numbers to help determine the starting lineNumber for the review comment. The comment should be on the line after the offending code.
 4. Provide the review comments in the following JSON format. If no review violations are found return an empty array for violations.
 
 {
@@ -405,7 +406,7 @@ Response only in JSON format. Do not wrap the JSON in any tags.
 			violations: Array<{ lineNumber: number; comment: string }>;
 		};
 
-		return { code: currentCode, comments: reviewComments.violations, mrDiff };
+		return { code: currentCode, comments: reviewComments.violations, mrDiff, reviewConfig: codeReview };
 	}
 
 	@func()

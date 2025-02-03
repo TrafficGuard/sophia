@@ -1,5 +1,12 @@
 # Autonomous AI Agents
 
+- Reasoning/planning inspired from Google's [Self-Discover](https://arxiv.org/abs/2402.03620) and other papers
+- Memory and function call history for complex workflows
+- Iterative planning with hierarchical task decomposition
+- Sandboxed execution of generated code for multi-step function calling and logic
+- LLM function schemas auto-generated from source code
+- Human-in-the-loop for budget control, agent initiated questions and error handling
+
 Sophia provides two autonomous agents which work to complete the request via a control loop which iteratively (re-)plans and calls the functions available to the agent.
 
 At a high level they share the same internal state, agent memory, human-in-the loop, functional calling history etc. 

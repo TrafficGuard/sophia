@@ -1,6 +1,6 @@
-import { access, existsSync, lstat, mkdir, readFile, readdir, stat, writeFileSync } from 'node:fs';
+import { access, existsSync, lstat, mkdir, readFile, readFileSync, readdir, readdirSync, stat, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import path, { join } from 'path';
+import path, { join, relative } from 'path';
 import { promisify } from 'util';
 // import { glob } from 'glob-gitignore';
 import ignore, { Ignore } from 'ignore';
@@ -12,7 +12,7 @@ import { VersionControlSystem } from '#functions/scm/versionControlSystem';
 import { LlmTools } from '#functions/util';
 import { logger } from '#o11y/logger';
 import { getActiveSpan, span } from '#o11y/trace';
-import { execCmd, spawnCommand } from '#utils/exec';
+import { execCmd, execCmdSync, spawnCommand } from '#utils/exec';
 import { CDATA_END, CDATA_START, needsCDATA } from '#utils/xml-utils';
 import { SOPHIA_FS } from '../../appVars';
 
@@ -29,6 +29,10 @@ const fs = {
 // const globAsync = promisify(glob);
 
 type FileFilter = (filename: string) => boolean;
+
+// Cache paths to Git repositories and .gitignore files
+const gitRoots = new Set<string>();
+const gitIgnorePaths = new Set<string>();
 
 /**
  * Interface to the file system based for an Agent which maintains the state of the working directory.
@@ -57,11 +61,11 @@ export class FileSystemService {
 	constructor(public basePath?: string) {
 		this.basePath ??= process.cwd();
 
-		const args = process.argv; //.slice(2); // Remove the first two elements (node and script path)
+		const args = process.argv;
 		const fsArg = args.find((arg) => arg.startsWith('--fs='));
 		const fsEnvVar = process.env[SOPHIA_FS];
 		if (fsArg) {
-			const fsPath = fsArg.slice(5); // Extract the value after '-fs='
+			const fsPath = fsArg.slice(5);
 			if (existsSync(fsPath)) {
 				this.basePath = fsPath;
 				logger.info(`Setting basePath to ${fsPath}`);
@@ -78,10 +82,8 @@ export class FileSystemService {
 		this.workingDirectory = this.basePath;
 
 		this.log = logger.child({ FileSystem: this.basePath });
-		// We will want to re-visit this, the .git folder can be in a parent directory
-		if (existsSync(path.join(this.basePath, '.git'))) {
-			this.vcs = new Git(this);
-		}
+
+		if (this.getVcsRoot()) this.vcs = new Git(this);
 	}
 
 	toJSON() {
@@ -116,20 +118,22 @@ export class FileSystemService {
 		if (dir.startsWith('/')) {
 			if (existsSync(dir)) {
 				this.workingDirectory = dir;
-				this.log.info(`workingDirectory is now ${this.workingDirectory}`);
-				return;
+			} else {
+				// try it as a relative path
+				relativeDir = dir.substring(1);
 			}
-			// try it as a relative path
-			relativeDir = dir.substring(1);
 		}
 		const relativePath = path.join(this.getWorkingDirectory(), relativeDir);
 		if (existsSync(relativePath)) {
 			this.workingDirectory = relativePath;
-			this.log.info(`workingDirectory is now ${this.workingDirectory}`);
-			return;
+		} else {
+			throw new Error(`New working directory ${dir} does not exist (current working directory ${this.workingDirectory}`);
 		}
 
-		throw new Error(`New working directory ${dir} does not exist (current working directory ${this.workingDirectory}`);
+		// After setting the working directory, update the vcs (version control system) property
+		logger.info(`setWorkingDirectory ${this.workingDirectory}`);
+		const vcsRoot = this.getVcsRoot();
+		this.vcs = vcsRoot ? new Git(this) : null;
 	}
 
 	/**
@@ -238,11 +242,12 @@ export class FileSystemService {
 		this.log.debug(`listFilesRecursively cwd: ${this.workingDirectory}`);
 
 		const startPath = path.isAbsolute(dirPath) ? dirPath : path.join(this.getWorkingDirectory(), dirPath);
-		// TODO check isnt going higher than this.basePath
+		// TODO check isn't going higher than this.basePath
 
-		const ig = useGitIgnore ? await this.loadGitignoreRules(startPath) : ignore();
+		const gitRoot = useGitIgnore ? this.getVcsRoot() : null;
+		const ig: Ignore = useGitIgnore ? await this.loadGitignoreRules(startPath, gitRoot) : ignore();
 
-		const files: string[] = await this.listFilesRecurse(this.workingDirectory, startPath, ig, useGitIgnore);
+		const files: string[] = await this.listFilesRecurse(this.workingDirectory, startPath, ig, useGitIgnore, gitRoot);
 		return files.map((file) => path.relative(this.workingDirectory, file));
 	}
 
@@ -250,12 +255,13 @@ export class FileSystemService {
 		rootPath: string,
 		dirPath: string,
 		parentIg: Ignore,
-		useGitIgnore = true,
+		useGitIgnore: boolean,
+		gitRoot: string | null,
 		filter: (file: string) => boolean = (name) => true,
 	): Promise<string[]> {
 		const files: string[] = [];
 
-		const ig = useGitIgnore ? await this.loadGitignoreRules(dirPath) : ignore();
+		const ig = useGitIgnore ? await this.loadGitignoreRules(dirPath, gitRoot) : ignore();
 		const mergedIg = ignore().add(parentIg).add(ig);
 
 		const dirents = await fs.readdir(dirPath, { withFileTypes: true });
@@ -263,7 +269,7 @@ export class FileSystemService {
 			const relativePath = path.relative(rootPath, path.join(dirPath, dirent.name));
 			if (dirent.isDirectory()) {
 				if (!useGitIgnore || (!mergedIg.ignores(relativePath) && !mergedIg.ignores(`${relativePath}/`))) {
-					files.push(...(await this.listFilesRecurse(rootPath, path.join(dirPath, dirent.name), mergedIg, useGitIgnore, filter)));
+					files.push(...(await this.listFilesRecurse(rootPath, path.join(dirPath, dirent.name), mergedIg, useGitIgnore, gitRoot, filter)));
 				}
 			} else {
 				if (!useGitIgnore || !mergedIg.ignores(relativePath)) {
@@ -427,22 +433,39 @@ export class FileSystemService {
 		await this.writeFile(filePath, updatedContent);
 	}
 
-	async loadGitignoreRules(startPath: string): Promise<Ignore> {
+	async loadGitignoreRules(startPath: string, gitRoot: string | null): Promise<Ignore> {
 		const ig = ignore();
 		let currentPath = startPath;
 
-		while (currentPath.startsWith(this.basePath)) {
+		// Continue until git root or filesystem root
+		while (true) {
 			const gitIgnorePath = path.join(currentPath, '.gitignore');
-			if (existsSync(gitIgnorePath)) {
-				const lines = await fs.readFile(gitIgnorePath, 'utf8').then((data) =>
-					data
-						.split('\n')
-						.map((line) => line.trim())
-						.filter((line) => line.length && !line.startsWith('#')),
-				);
+			const knownGitIgnore = gitIgnorePaths.has(gitIgnorePath);
+			if (knownGitIgnore || existsSync(gitIgnorePath)) {
+				const lines = (await fs.readFile(gitIgnorePath, 'utf8'))
+					.split('\n')
+					.map((line) => line.trim())
+					.filter((line) => line.length && !line.startsWith('#'));
 				ig.add(lines);
+
+				if (!knownGitIgnore) gitIgnorePaths.add(gitIgnorePath);
 			}
-			currentPath = path.dirname(currentPath);
+
+			// Check if we've reached the git root directory
+			if (gitRoot && currentPath === gitRoot) {
+				break;
+			}
+
+			// Determine the parent directory
+			const parentPath = path.dirname(currentPath);
+
+			// If we've reached the filesystem root, stop
+			if (parentPath === currentPath) {
+				break;
+			}
+
+			// Move to the parent directory for the next iteration
+			currentPath = parentPath;
 		}
 
 		ig.add('.git');
@@ -480,7 +503,9 @@ export class FileSystemService {
 	async getAllFoldersRecursively(dir = './'): Promise<string[]> {
 		const workingDir = this.getWorkingDirectory();
 		const startPath = path.join(workingDir, dir);
-		const ig = await this.loadGitignoreRules(startPath);
+
+		const gitRoot = this.getVcsRoot();
+		const ig = await this.loadGitignoreRules(startPath, gitRoot);
 
 		const folders: string[] = [];
 
@@ -580,19 +605,33 @@ export class FileSystemService {
 		return tree;
 	}
 
-	async getGitRoot(): Promise<string | null> {
+	/**
+	 * Gets the version control service (Git) repository root folder, if the current working directory is in a Git repo, else null.
+	 */
+	getVcsRoot(): string | null {
+		// First, check if workingDirectory is under any known Git roots
+		if (gitRoots.has(this.workingDirectory)) return this.workingDirectory;
+
+		for (const gitRoot of gitRoots) {
+			if (this.workingDirectory.startsWith(gitRoot)) return gitRoot;
+		}
+
+		// If not found in cache, execute Git command
 		try {
-			// Use git rev-parse to get the root directory
-			const result = await execCmd('git rev-parse --show-toplevel');
+			// Use execCmdSync to get the Git root directory synchronously
+			// Need to pass the workingDirectory to avoid recursion with the default workingDirectory arg
+			const result = execCmdSync('git rev-parse --show-toplevel', this.workingDirectory);
 
-			// If command succeeds, return the trimmed stdout (git root path)
-			if (!result.error) {
-				return result.stdout.trim();
+			if (result.error) {
+				logger.error(result.error);
+				return null;
 			}
-
-			// If git command fails, return null
-			return null;
-		} catch {
+			const gitRoot = result.stdout.trim();
+			// Store the new Git root in the cache
+			gitRoots.add(gitRoot);
+			return gitRoot;
+		} catch (e) {
+			logger.error(e, 'Error checking if in a Git repo');
 			// Any unexpected errors also result in null
 			return null;
 		}

@@ -18,6 +18,7 @@ import { ChatService } from 'app/modules/chat/chat.service';
 import { Chat } from 'app/modules/chat/chat.types';
 import { Subject, takeUntil } from 'rxjs';
 import { FuseConfirmationService } from '@fuse/services/confirmation';
+import {MatSnackBar} from "@angular/material/snack-bar";
 
 @Component({
     selector: 'chat-chats',
@@ -49,6 +50,7 @@ export class ChatsComponent implements OnInit, OnDestroy {
      */
     constructor(
         private _chatService: ChatService,
+        private snackBar: MatSnackBar,
         private _changeDetectorRef: ChangeDetectorRef,
         private confirmationService: FuseConfirmationService,
     ) {}
@@ -61,7 +63,17 @@ export class ChatsComponent implements OnInit, OnDestroy {
      * On init
      */
     ngOnInit(): void {
-        // Chats
+        // Load chats if not already loaded
+        this._chatService.getChats()
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe({
+                error: (error) => {
+                    this.snackBar.open('Error loading chats')
+                    console.error('Failed to load chats:', error);
+                }
+            });
+
+        // Subscribe to chats updates
         this._chatService.chats$
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((chats: Chat[]) => {

@@ -7,13 +7,13 @@ import { agentExecutionRoutes } from './routes/agent/agent-execution-routes';
 import { agentStartRoute } from './routes/agent/agent-start-route';
 import { authRoutes } from './routes/auth/auth-routes';
 import { chatRoutes } from './routes/chat/chat-routes';
-import { codeRoutes } from './routes/code/code-routes';
 import { llmCallRoutes } from './routes/llms/llm-call-routes';
 import { llmRoutes } from './routes/llms/llm-routes';
 import { profileRoute } from './routes/profile/profile-route';
 import { codeReviewRoutes } from './routes/scm/codeReviewRoutes';
 import { gitlabRoutesV1 } from './routes/webhooks/gitlab/gitlabRoutes-v1';
 import { jiraRoutes } from './routes/webhooks/jira/jira-routes';
+import { workflowRoutes } from './routes/workflows/workflow-routes';
 
 export interface AppFastifyInstance extends TypeBoxFastifyInstance, ApplicationContext {}
 
@@ -39,7 +39,7 @@ export async function initServer(): Promise<void> {
 				llmCallRoutes,
 				codeReviewRoutes,
 				chatRoutes,
-				codeRoutes,
+				workflowRoutes,
 				jiraRoutes,
 				// Add your routes below this line
 			],

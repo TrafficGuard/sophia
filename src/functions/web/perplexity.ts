@@ -41,7 +41,7 @@ export class Perplexity {
 
 			// Valid model ids are at https://docs.perplexity.ai/guides/model-cards
 			response = await perplexity.chat.completions.create({
-				model: 'llama-3.1-sonar-large-128k-online',
+				model: 'sonar-pro',
 				max_tokens: 4096,
 				messages: [{ role: 'user', content: researchQuery }],
 				stream: false,

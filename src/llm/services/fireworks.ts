@@ -1,4 +1,5 @@
 import { OpenAIProvider, createOpenAI } from '@ai-sdk/openai';
+import { InputCostFunction, OutputCostFunction, perMilTokens } from '#llm/base-llm';
 import { AiLLM } from '#llm/services/ai-llm';
 import { currentUser } from '#user/userService/userContext';
 import { LLM } from '../llm';
@@ -6,13 +7,7 @@ import { LLM } from '../llm';
 export const FIREWORKS_SERVICE = 'fireworks';
 
 export class Fireworks extends AiLLM<OpenAIProvider> {
-	constructor(
-		displayName: string,
-		model: string,
-		maxTokens: number,
-		calculateInputCost: (input: string) => number,
-		calculateOutputCost: (output: string) => number,
-	) {
+	constructor(displayName: string, model: string, maxTokens: number, calculateInputCost: InputCostFunction, calculateOutputCost: OutputCostFunction) {
 		super(displayName, FIREWORKS_SERVICE, model, maxTokens, calculateInputCost, calculateOutputCost);
 	}
 
@@ -42,41 +37,17 @@ export function fireworksLLMRegistry(): Record<string, () => LLM> {
 }
 
 export function fireworksLlama3_70B(): LLM {
-	return new Fireworks(
-		'LLama3 70b-i (Fireworks)',
-		'accounts/fireworks/models/llama-v3p1-70b-instruct',
-		131_072,
-		(input: string) => (input.length * 0.9) / 1_000_000 / 4,
-		(output: string) => (output.length * 0.9) / 1_000_000 / 4,
-	);
+	return new Fireworks('LLama3 70b-i (Fireworks)', 'accounts/fireworks/models/llama-v3p1-70b-instruct', 131_072, perMilTokens(0.9), perMilTokens(0.9));
 }
 
 export function fireworksLlama3_405B(): LLM {
-	return new Fireworks(
-		'LLama3 405b-i (Fireworks)',
-		'accounts/fireworks/models/llama-v3p1-405b-instruct',
-		131_072,
-		(input: string) => (input.length * 3) / 1_000_000 / 4,
-		(output: string) => (output.length * 3) / 1_000_000 / 4,
-	);
+	return new Fireworks('LLama3 405b-i (Fireworks)', 'accounts/fireworks/models/llama-v3p1-405b-instruct', 131_072, perMilTokens(3), perMilTokens(3));
 }
 
 export function fireworksDeepSeek(): LLM {
-	return new Fireworks(
-		'DeepSeek 3 (Fireworks)',
-		'accounts/fireworks/models/deepseek-v3',
-		131_072,
-		(input: string) => (input.length * 0.9) / 1_000_000 / 4,
-		(output: string) => (output.length * 0.9) / 1_000_000 / 4,
-	);
+	return new Fireworks('DeepSeek 3 (Fireworks)', 'accounts/fireworks/models/deepseek-v3', 131_072, perMilTokens(0.9), perMilTokens(0.9));
 }
 
 export function fireworksDeepSeekR1(): LLM {
-	return new Fireworks(
-		'DeepSeek R1 (Fireworks)',
-		'accounts/fireworks/models/deepseek-r1',
-		131_072,
-		(input: string) => (input.length * 8) / 1_000_000 / 4,
-		(output: string) => (output.length * 8) / 1_000_000 / 4,
-	);
+	return new Fireworks('DeepSeek R1 (Fireworks)', 'accounts/fireworks/models/deepseek-r1', 131_072, perMilTokens(8), perMilTokens(8));
 }

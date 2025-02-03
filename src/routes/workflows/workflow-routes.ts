@@ -5,12 +5,11 @@ import { Type } from '@sinclair/typebox';
 import { getFileSystem } from '#agent/agentContextLocalStorage';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
-import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { defaultLLMs } from '#llm/services/defaultLlms';
 import { Gemini_1_5_Flash } from '#llm/services/vertexai';
 import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
-import { codebaseQuery } from '#swe/discovery/codebaseQuery';
+import { queryWorkflow } from '#swe/discovery/selectFilesAgent';
 import { SelectFilesResponse, selectFilesToEdit } from '#swe/discovery/selectFilesToEdit';
 import { sophiaDirName, systemDir } from '../../appVars';
 import { AppFastifyInstance } from '../../server';
@@ -34,11 +33,11 @@ function findRepositories(dir: string): string[] {
 	return repos;
 }
 
-export async function codeRoutes(fastify: AppFastifyInstance) {
+export async function workflowRoutes(fastify: AppFastifyInstance) {
 	// /get
 	// See https://docs.gitlab.com/ee/user/project/integrations/webhook_events.html#merge-request-events
 	fastify.post(
-		'/api/code/edit',
+		'/api/workflows/edit',
 		{
 			schema: {
 				body: Type.Object({
@@ -84,7 +83,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 	);
 
 	fastify.post(
-		'/api/code/query',
+		'/api/workflows/query',
 		{
 			schema: {
 				body: Type.Object({
@@ -118,7 +117,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 					getFileSystem().setWorkingDirectory(workingDirectory);
 					logger.info(`Working directory is ${getFileSystem().getWorkingDirectory()}`);
 
-					response = await codebaseQuery(query);
+					response = await queryWorkflow(query);
 				});
 
 				reply.send({ response });
@@ -130,7 +129,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 	);
 
 	fastify.post(
-		'/api/code/select-files',
+		'/api/workflows/select-files',
 		{
 			schema: {
 				body: Type.Object({
@@ -171,7 +170,7 @@ export async function codeRoutes(fastify: AppFastifyInstance) {
 		},
 	);
 
-	fastify.get('/api/code/repositories', async (request, reply) => {
+	fastify.get('/api/workflows/repositories', async (request, reply) => {
 		try {
 			const workingDirectory = process.cwd();
 			const gitlabRepos = findRepositories(path.join(systemDir(), 'gitlab'));

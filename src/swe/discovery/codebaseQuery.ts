@@ -1,13 +1,18 @@
 import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { logger } from '#o11y/logger';
+import { getTopLevelSummary } from '#swe/index/repoIndexDocBuilder';
+import { RepositoryMaps, generateRepositoryMaps } from '#swe/index/repositoryMap';
 import { ProjectInfo, getProjectInfo } from '#swe/projectDetection';
-import { getTopLevelSummary } from '#swe/repoIndexDocBuilder';
-import { RepositoryMaps, generateRepositoryMaps } from '#swe/repositoryMap';
 
 interface FileSelection {
 	files: string[];
 }
 
+/**
+ * Old ad-hoc query with fixed two passes over the filesystem tree/files
+ * @deprecated use queryWorkflow instead
+ * @param query
+ */
 export async function codebaseQuery(query: string): Promise<string> {
 	const initialFileSelection = await firstPass(query);
 	const refinedFileSelection = await secondPass(query, initialFileSelection);

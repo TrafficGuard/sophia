@@ -1,10 +1,10 @@
 import path from 'path';
 import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
-import { LlmMessage } from '#llm/llm';
+import { LLM, LlmMessage } from '#llm/llm';
 import { logger } from '#o11y/logger';
-import { ProjectInfo, detectProjectInfo, getProjectInfo } from '#swe/projectDetection';
-import { getRepositoryOverview } from '#swe/repoIndexDocBuilder';
-import { RepositoryMaps, generateRepositoryMaps } from '#swe/repositoryMap';
+import { getRepositoryOverview } from '#swe/index/repoIndexDocBuilder';
+import { RepositoryMaps, generateRepositoryMaps } from '#swe/index/repositoryMap';
+import { ProjectInfo, detectProjectInfo } from '#swe/projectDetection';
 
 /*
 Agent which iteratively loads files to find the file set required for a task/query.
@@ -68,6 +68,7 @@ Your response must finish in the following format:
 <keep-ignore-thinking>
 </keep-ignore-thinking>
 <select-files-thinking>
+	<!-- what referenced files would need to be included for the task. You are working in an established codebase, so you should use existing files/design where possible etc -->
 </select-files-thinking>
 <requirements-solution-thinking>
 </requirements-solution-thinking>
@@ -119,7 +120,12 @@ Your response must end with a JSON object wrapped in <json> tags in the followin
 	];
 }
 
-async function generateFileSelectionProcessingResponse(messages: LlmMessage[], pendingFiles: string[]): Promise<IterationResponse> {
+async function generateFileSelectionProcessingResponse(
+	messages: LlmMessage[],
+	pendingFiles: string[],
+	iteration: number,
+	llm: LLM,
+): Promise<IterationResponse> {
 	const prompt = `
 ${(await readFileContents(pendingFiles)).contents}
 
@@ -130,9 +136,13 @@ Respond only as per the Process Files Response Instructions.
 `;
 	const iterationMessages: LlmMessage[] = [...messages, { role: 'user', content: prompt }];
 
-	return await llms().medium.generateTextWithJson(iterationMessages, { id: 'Select Files iteration' });
+	return await llm.generateTextWithJson(iterationMessages, { id: `Select Files iteration ${iteration}` });
 }
 
+/**
+ * Generates the user message that we will add to the conversation, which includes the file contents the LLM wishes to inspect
+ * @param response
+ */
 async function processedIterativeStepUserPrompt(response: IterationResponse): Promise<LlmMessage> {
 	const ignored = response.ignoreFiles?.map((s) => s.path) ?? [];
 	const kept = response.keepFiles?.map((s) => s.path) ?? [];
@@ -225,7 +235,9 @@ async function selectFilesCore(
 	const maxIterations = 10;
 	let iterationCount = 0;
 
-	const initialResponse: InitialResponse = await llms().medium.generateTextWithJson(messages, { id: 'Select Files initial' });
+	let llm = llms().medium;
+
+	const initialResponse: InitialResponse = await llm.generateTextWithJson(messages, { id: 'Select Files initial' });
 	messages.push({ role: 'assistant', content: JSON.stringify(initialResponse) });
 
 	let filesToInspect = initialResponse.inspectFiles || [];
@@ -233,16 +245,18 @@ async function selectFilesCore(
 	const keptFiles = new Set<{ path: string; reason: string }>();
 	const ignoredFiles = new Set<{ path: string; reason: string }>();
 
-	while (filesToInspect.length > 0) {
+	while (true) {
 		iterationCount++;
 		if (iterationCount > maxIterations) throw new Error('Maximum interaction iterations reached.');
 
-		const response: IterationResponse = await generateFileSelectionProcessingResponse(messages, filesToInspect);
+		const response: IterationResponse = await generateFileSelectionProcessingResponse(messages, filesToInspect, iterationCount, llm);
 		logger.info(response);
 		for (const ignored of response.ignoreFiles ?? []) ignoredFiles.add(ignored);
 		for (const kept of response.keepFiles ?? []) keptFiles.add(kept);
 
+		// Create the user message with the additional file contents to inspect
 		messages.push(await processedIterativeStepUserPrompt(response));
+
 		// Don't cache the final result as it would only potentially be used once when generating a query answer
 		const cache = filesToInspect.length ? 'ephemeral' : undefined;
 		messages.push({
@@ -254,13 +268,23 @@ async function selectFilesCore(
 		// Max of 4 cache tags with Anthropic. Clear the first one after the cached system prompt
 		const cachedMessages = messages.filter((msg) => msg.cache === 'ephemeral');
 		if (cachedMessages.length > 4) {
-			logger.info('Removing cache tag');
 			cachedMessages[1].cache = undefined;
 		}
 
 		filesToInspect = response.inspectFiles;
 
-		// TODO if keepFiles and ignoreFiles doesnt have all of the files in filesToInspect, then
+		// We start the file selection process with the medium agent for speed/cost.
+		// Once the medium LLM has completed, then we switch to the hard LLM as a review,
+		// which may continue inspecting files until it is satisfied.
+		if (!filesToInspect || filesToInspect.length === 0) {
+			if (llm === llms().medium) {
+				llm = llms().hard;
+			} else {
+				break;
+			}
+		}
+
+		// TODO if keepFiles and ignoreFiles doesnt have all of the files in filesToInspect, then get the LLM to try again
 		// filesToInspect = filesToInspect.filter((path) => !keptFiles.has(path) && !ignoredFiles.has(path));
 	}
 

@@ -19,12 +19,14 @@ import {GenerateOptions} from "app/core/user/user.types";
 export class ChatService {
     private _chat: BehaviorSubject<Chat> = new BehaviorSubject(null);
     private _chats: BehaviorSubject<Chat[]> = new BehaviorSubject(null);
+    /** Flag indicating whether chats have been loaded from the server */
+    private _chatsLoaded: boolean = false;
 
     /**
      * Constructor
      */
     constructor(private _httpClient: HttpClient) {
-        this.getChats();
+        // Chats will be loaded on-demand via getChats()
     }
 
     private base64ToBlob(base64: string, mimeType: string): Blob {
@@ -71,13 +73,26 @@ export class ChatService {
     // -----------------------------------------------------------------------------------------------------
 
     /**
-     * Get chats
+     * Get chats - returns cached data if available, otherwise fetches from server
+     * @returns Observable of Chat array
      */
     getChats(): Observable<any> {
+        // Return cached chats if already loaded
+        if (this._chatsLoaded && this._chats.value) {
+            return of(this._chats.value);
+        }
+
+        // Otherwise fetch from server
         return this._httpClient.get<Chat[]>('/api/chats').pipe(
             tap((response: Chat[]) => {
-                response = (response as any).data.chats
+                response = (response as any).data.chats;
                 this._chats.next(response);
+                this._chatsLoaded = true;
+            }),
+            catchError((error) => {
+                // Reset loaded flag on error to prevent caching failed state
+                this._chatsLoaded = false;
+                return throwError(() => error);
             })
         );
     }
@@ -109,7 +124,7 @@ export class ChatService {
             tap(() => {
                 const currentChats = this._chats.value || [];
                 this._chats.next(currentChats.filter(chat => chat.id !== chatId));
-                if (this._chat.getValue().id === chatId) {
+                if (this._chat.getValue()?.id === chatId) {
                     this._chat.next(null);
                 }
             })

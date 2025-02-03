@@ -31,11 +31,11 @@ export const defaultNavigation: FuseNavigationItem[] = [
         link: '/ui/agents/new',
     },
     {
-        id: 'actions',
-        title: 'Actions',
+        id: 'workflows',
+        title: 'Workflows',
         type: 'basic',
         icon: 'heroicons_outline:server-stack',
-        link: '/ui/actions',
+        link: '/ui/workflows',
     },
     {
         id: 'codereviews',

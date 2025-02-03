@@ -1,4 +1,5 @@
 import { OpenAIProvider, createOpenAI } from '@ai-sdk/openai';
+import { InputCostFunction, OutputCostFunction, perMilTokens } from '#llm/base-llm';
 import { AiLLM } from '#llm/services/ai-llm';
 import { currentUser } from '#user/userService/userContext';
 import { LLM } from '../llm';
@@ -6,13 +7,7 @@ import { LLM } from '../llm';
 export const XAI_SERVICE = 'xai';
 
 export class XAI extends AiLLM<OpenAIProvider> {
-	constructor(
-		displayName: string,
-		model: string,
-		maxTokens: number,
-		calculateInputCost: (input: string) => number,
-		calculateOutputCost: (output: string) => number,
-	) {
+	constructor(displayName: string, model: string, maxTokens: number, calculateInputCost: InputCostFunction, calculateOutputCost: OutputCostFunction) {
 		super(displayName, XAI_SERVICE, model, maxTokens, calculateInputCost, calculateOutputCost);
 	}
 
@@ -38,11 +33,5 @@ export function xaiLLMRegistry(): Record<string, () => LLM> {
 }
 
 export function xai_GrokBeta(): LLM {
-	return new XAI(
-		'Grok beta',
-		'grok-beta',
-		131_072,
-		(input: string) => (input.length * 0.9) / 1_000_000 / 4,
-		(output: string) => (output.length * 0.9) / 1_000_000 / 4,
-	);
+	return new XAI('Grok beta', 'grok-beta', 131_072, perMilTokens(0.9), perMilTokens(0.9));
 }

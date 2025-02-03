@@ -16,6 +16,8 @@ import { ChatBotService } from '../../chatBot/chatBotService';
 
 let slackApp: App<StringIndexed> | undefined;
 
+const CHATBOT_FUNCTIONS: Array<new () => any> = [GitLab, GoogleCloud, Perplexity, LlmTools];
+
 /**
  * Slack implementation of ChatBotService
  * Only one Slack workspace can be configured in the application as the Slack App is shared between all instances of this class.
@@ -142,7 +144,7 @@ export class SlackChatBotService implements ChatBotService, AgentCompleted {
 						resumeAgentId: `Slack-${threadId}`,
 						initialPrompt: text,
 						llms: defaultLLMs(),
-						functions: [GitLab, GoogleCloud, Perplexity, LlmTools],
+						functions: CHATBOT_FUNCTIONS,
 						agentName: `Slack-${threadId}`,
 						systemPrompt:
 							'You are an AI support agent called Sophia.  You are responding to support requests on the company Slack account. Respond in a helpful, concise manner. If you encounter an error responding to the request do not provide details of the error to the user, only respond with "Sorry, I\'m having difficulties providing a response to your request"',

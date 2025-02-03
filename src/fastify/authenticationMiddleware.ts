@@ -6,6 +6,8 @@ import { ROUTES } from '../../shared/routes';
 import { appContext } from '../applicationContext';
 import { getPayloadUserId } from './jwt';
 
+const WEBHOOKS_BASE_PATH = '/api/webhooks/';
+
 // Middleware function
 export function singleUserMiddleware(req: FastifyRequest, _res: any, next: () => void): void {
 	const user = appContext().userService.getSingleUser();
@@ -17,7 +19,7 @@ export function singleUserMiddleware(req: FastifyRequest, _res: any, next: () =>
 
 export function jwtAuthMiddleware(req: FastifyRequest, reply: FastifyReply, done: () => void): void {
 	// Skip auth for public endpoints
-	if (req.raw.url.startsWith('/webhooks/') || req.raw.url === DEFAULT_HEALTHCHECK || req.raw.url.startsWith(ROUTES.AUTH_ROUTE_PREFIX)) {
+	if (req.raw.url.startsWith(WEBHOOKS_BASE_PATH) || req.raw.url === DEFAULT_HEALTHCHECK || req.raw.url.startsWith(ROUTES.AUTH_ROUTE_PREFIX)) {
 		done();
 		return;
 	}
@@ -51,12 +53,12 @@ export function jwtAuthMiddleware(req: FastifyRequest, reply: FastifyReply, done
 
 export function googleIapMiddleware(req: FastifyRequest, reply: FastifyReply, next: () => void) {
 	// It would be nicer if the health-check was earlier in the chain. Maybe when nextauthjs integration is done.
-	if (req.raw.url.startsWith('/webhooks/') || req.raw.url === DEFAULT_HEALTHCHECK) {
+	if (req.raw.url.startsWith(WEBHOOKS_BASE_PATH) || req.raw.url === DEFAULT_HEALTHCHECK) {
 		next();
 		return;
 	}
 	let email = req.headers['x-goog-authenticated-user-email'];
-	if (!email) throw new Error('x-goog-authenticated-user-email header not found');
+	if (!email) throw new Error(`x-goog-authenticated-user-email header not found requesting ${req.raw.url}`);
 	if (Array.isArray(email)) email = email[0];
 	// TODO validate the JWT https://cloud.google.com/iap/docs/signed-headers-howto#securing_iap_headers
 

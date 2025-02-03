@@ -106,17 +106,18 @@ export function extractJsonResult(rawText: string): any {
 }
 
 /**
- * Extracts the text within <result></result> tags
+ * Extracts the text within <tagName></tagName> tags
  * @param response response from the LLM
+ * @param tagName the name of the XML tag to extract the contents of
  */
-export function extractStringResult(response: string): any {
-	const index = response.lastIndexOf('<result>');
-	if (index < 0) throw new Error('Could not find <result> in response');
+export function extractTag(response: string, tagName: string): any {
+	const index = response.lastIndexOf(`<${tagName}>`);
+	if (index < 0) throw new Error(`Could not find <${tagName}> in response`);
 	const resultText = response.slice(index);
-	const regexXml = /<result>(.*)<\/result>/is;
+	const regexXml = new RegExp(`<${tagName}>(.*)<\/${tagName}>`, 'is');
 	const matchXml = regexXml.exec(resultText);
 
-	if (!matchXml) throw new Error(`Could not find <result></result> in the response \n${resultText}`);
+	if (!matchXml) throw new Error(`Could not find <${tagName}></${tagName}> in the response \n${resultText}`);
 
 	return matchXml[1].trim();
 }

@@ -3,8 +3,8 @@ import path from 'path';
 import { createByModelName } from '@microsoft/tiktokenizer';
 import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { logger } from '#o11y/logger';
-import { getRepositoryOverview } from '#swe/repoIndexDocBuilder';
-import { RepositoryMaps, generateRepositoryMaps } from '#swe/repositoryMap';
+import { getRepositoryOverview } from '#swe/index/repoIndexDocBuilder';
+import { RepositoryMaps, generateRepositoryMaps } from '#swe/index/repositoryMap';
 import { ProjectInfo, getProjectInfo } from '../projectDetection';
 
 export interface SelectFilesResponse {

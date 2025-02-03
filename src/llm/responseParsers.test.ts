@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import { extractJsonResult, extractStringResult, parseFunctionCallsXml } from './responseParsers';
+import { extractJsonResult, extractTag, parseFunctionCallsXml } from './responseParsers';
 
 describe('responseParsers', () => {
 	describe('extractJsonResult', () => {
@@ -60,12 +60,12 @@ describe('responseParsers', () => {
 		});
 	});
 
-	describe('extractStringResult', () => {
+	describe('extractTagResult', () => {
 		it('Should extract contents in <result></result> tag', async () => {
 			const result = `<result>
 							Some result
 							</result>`;
-			const object = extractStringResult(result);
+			const object = extractTag(result, 'result');
 			expect(object).to.deep.equal('Some result');
 		});
 	});

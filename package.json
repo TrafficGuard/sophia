@@ -1,6 +1,6 @@
 {
   "name": "@trafficguard/sophia",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "AI agent & LLM app platform",
   "private": true,
   "type": "commonjs",
@@ -13,7 +13,7 @@
     "gen": "     node --env-file=variables/local.env -r ts-node/register  src/cli/gen.ts",
     "agent": "   node --env-file=variables/local.env -r ts-node/register src/cli/agent.ts",
     "blueberry": "node --env-file=variables/local.env -r ts-node/register src/cli/blueberry.ts",
-    "docs": "    node --env-file=variables/local.env -r ts-node/register src/cli/docs.ts",
+    "index": "    node --env-file=variables/local.env -r ts-node/register src/cli/index.ts",
     "easy": "    node --env-file=variables/local.env -r ts-node/register src/cli/easy.ts",
     "gaia": "    node --env-file=variables/local.env -r ts-node/register src/cli/gaia.ts",
     "py": "      node --env-file=variables/local.env -r ts-node/register src/cli/py.ts",

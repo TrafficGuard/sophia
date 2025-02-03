@@ -36,25 +36,28 @@ export async function gitlabRoutesV1(fastify: AppFastifyInstance) {
 
 			if (event.object_attributes.draft) sendSuccess(reply);
 
+			const runAsUser = await appContext().userService.getUserByEmail(envVar('GITLAB_REVIEW_USER_EMAIL'));
+			if (!runAsUser) throw new Error(`Could not find user from env var GITLAB_REVIEW_USER_EMAIL with value ${envVar('GITLAB_REVIEW_USER_EMAIL')}`);
+
 			const config: RunAgentConfig = {
 				agentName: `MR review - ${event.object_attributes.title}`,
 				llms: defaultLLMs(),
 				functions: [],
-				user: await appContext().userService.getUserByEmail(envVar('GITLAB_REVIEW_USER_EMAIL')),
+				user: runAsUser,
 				initialPrompt: '',
 				humanInLoop: envVarHumanInLoopSettings(),
 			};
 			const context: AgentContext = createContext(config);
-			const mergeRequestId = `${event.project.id}, ${event.object_attributes.id}, ${event.object_attributes.title}`;
+			const mergeRequestId = `project:${event.project.name}, miid:${event.object_attributes.iid}, MR:"${event.object_attributes.title}"`;
 			logger.info(`Agent ${context.agentId} reviewing merge request ${mergeRequestId}`);
 
 			agentContextStorage.run(context, () => {
 				new GitLab()
-					.reviewMergeRequest(event.project.id, event.object_attributes.id)
+					.reviewMergeRequest(event.project.id, event.object_attributes.iid)
 					.then(() => {
 						logger.debug(`Competed review of merge request ${mergeRequestId}`);
 					})
-					.catch((error) => logger.error(error, `Error reviewing merge request ${mergeRequestId}`));
+					.catch((error) => logger.error(error, `Error reviewing merge request ${mergeRequestId}. Message: ${error.message} [error]`));
 			});
 
 			send(reply, 200);

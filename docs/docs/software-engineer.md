@@ -1,6 +1,6 @@
 # AI Coding Agents
 
-The Sophia software/coding agents build upon the project [Aider](https://aider.chat/), providing additional layers around it for more autonomous use cases.
+The Sophia software/coding agents build upon the project [Aider](https://aider.chat/), providing additional agents around it for quality and automation.
 
 ## Code Editing Agent
 

@@ -6,7 +6,7 @@ import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { errorToString } from '#utils/errors';
-import { sophiaDirName } from '../appVars';
+import { sophiaDirName } from '../../appVars';
 
 /**
  * This module builds summary documentation for a project/repository, to assist with searching in the repository.
@@ -569,7 +569,7 @@ export async function loadBuildDocsSummaries(createIfNotExits = false): Promise<
 
 	const fss = getFileSystem();
 	// If in a git repo use the repo root to store the summary index files
-	const repoFolder = (await fss.getGitRoot()) ?? fss.getWorkingDirectory();
+	const repoFolder = (await fss.getVcsRoot()) ?? fss.getWorkingDirectory();
 
 	const docsDir = join(repoFolder, sophiaDirName, 'docs');
 	logger.info(`Load summaries from ${docsDir}`);

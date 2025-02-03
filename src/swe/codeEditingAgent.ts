@@ -7,7 +7,7 @@ import { span } from '#o11y/trace';
 import { CompileErrorAnalysis, CompileErrorAnalysisDetails, analyzeCompileErrors } from '#swe/analyzeCompileErrors';
 import { SelectedFile, selectFilesAgent } from '#swe/discovery/selectFilesAgent';
 import { includeAlternativeAiToolFiles } from '#swe/includeAlternativeAiToolFiles';
-import { getRepositoryOverview, getTopLevelSummary } from '#swe/repoIndexDocBuilder';
+import { getRepositoryOverview, getTopLevelSummary } from '#swe/index/repoIndexDocBuilder';
 import { reviewChanges } from '#swe/reviewChanges';
 import { supportingInformation } from '#swe/supportingInformation';
 import { execCommand, runShellCommand } from '#utils/exec';
@@ -411,9 +411,9 @@ Then respond in following format:
 
 	@cacheRetry()
 	async extractFilenames(summary: string): Promise<string[]> {
-		const filenames = await getFileSystem().listFilesRecursively();
+		const filenames = await getFileSystem().getFileSystemTree();
 		const prompt = buildPrompt({
-			information: `<project_files>\n${filenames.join('\n')}\n</project_files>`,
+			information: `<project_files>\n${filenames}\n</project_files>`,
 			requirements: summary,
 			action:
 				'You will respond ONLY in JSON. From the requirements quietly consider which the files may be required to complete the task. You MUST output your answer ONLY as JSON in the format of this example:\n<example>\n{\n files: ["file1", "file2", "file3"]\n}\n</example>',

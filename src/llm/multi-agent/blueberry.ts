@@ -15,7 +15,7 @@ import { withActiveSpan } from '#o11y/trace';
 
 export function blueberryLLMRegistry(): Record<string, () => LLM> {
 	return {
-		'blueberry:': () => new Blueberry(),
+		'MoA blueberry:': () => new Blueberry(),
 	};
 }
 
@@ -88,7 +88,7 @@ export class Blueberry extends BaseLLM {
 	 */
 	constructor(model = 'default') {
 		super(
-			'Blueberry',
+			'MoA',
 			'blueberry',
 			model,
 			200_000,
@@ -130,16 +130,16 @@ export class Blueberry extends BaseLLM {
 		}
 		logger.info('Initial response...');
 		const initialResponses = await this.generateInitialResponses(userPrompt, MIND_OVER_DATA_SYS_PROMPT, opts);
-		const debatedResponses = await this.multiAgentDebate(initialResponses, MIND_OVER_DATA_SYS_PROMPT, opts);
+		const debatedResponses = await this.multiAgentDebate(userPrompt, initialResponses, MIND_OVER_DATA_SYS_PROMPT, opts);
 		logger.info('Mediating response...');
 		return this.mergeBestResponses(userPrompt, debatedResponses);
 	}
 
-	private async generateInitialResponses(userPrompt: string, systemPrompt?: string, opts?: GenerateTextOptions): Promise<string[]> {
+	private async generateInitialResponses(userPrompt: string, systemPrompt: string, opts?: GenerateTextOptions): Promise<string[]> {
 		return Promise.all(this.llms.map((llm) => llm.generateText(systemPrompt, userPrompt, { ...opts, temperature: 1 })));
 	}
 
-	private async multiAgentDebate(responses: string[], systemPromptSrc?: string, opts?: GenerateTextOptions, rounds = 4): Promise<string[]> {
+	private async multiAgentDebate(userPrompt: string, responses: string[], systemPromptSrc: string, opts?: GenerateTextOptions, rounds = 4): Promise<string[]> {
 		let debatedResponses = responses;
 
 		for (let round = 1; round < rounds; round++) {
@@ -148,7 +148,7 @@ export class Blueberry extends BaseLLM {
 				this.llms.map((llm, index) => {
 					const leftNeighborIndex = (index - 1 + this.llms.length) % this.llms.length;
 					const rightNeighborIndex = (index + 1) % this.llms.length;
-					const newUserPrompt = `${responses[index]}\n\nBelow are responses from two other agents:\n<response-1>\n${responses[leftNeighborIndex]}\n</response-1>\n\n<response-2>\n${responses[rightNeighborIndex]}\n</response-2>\n\nUse the insights from all the responses to refine and update your answer in the same format.`;
+					const newUserPrompt = `<question>\n${userPrompt}\n</question>\n\n${responses[index]}\n\nBelow are responses from two other agents:\n<response-1>\n${responses[leftNeighborIndex]}\n</response-1>\n\n<response-2>\n${responses[rightNeighborIndex]}\n</response-2>\n\nUse the insights from all the responses to refine and update your answer in the same format.`;
 					return llm.generateText(systemPromptSrc, newUserPrompt, opts);
 				}),
 			);

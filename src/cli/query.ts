@@ -1,12 +1,13 @@
 import '#fastify/trace-init/trace-init'; // leave an empty line next so this doesn't get sorted from the first line
 
+import { writeFileSync } from 'fs';
 import { agentContext, llms } from '#agent/agentContextLocalStorage';
 import { AgentLLMs } from '#agent/agentContextTypes';
 import { RunAgentConfig } from '#agent/agentRunner';
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { shutdownTrace } from '#fastify/trace-init/trace-init';
 import { defaultLLMs } from '#llm/services/defaultLlms';
-import { codebaseQuery } from '#swe/discovery/codebaseQuery';
+import { queryWorkflow } from '#swe/discovery/selectFilesAgent';
 import { appContext, initApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
 
@@ -37,8 +38,12 @@ async function main() {
 		)}`;
 		await appContext().agentStateService.save(agent);
 
-		const response = await codebaseQuery(initialPrompt);
+		const response = await queryWorkflow(initialPrompt);
+
 		console.log(response);
+
+		writeFileSync('src/cli/gen-out', response);
+		console.log('Wrote output to src/cli/query-out');
 	});
 
 	if (agentId) {

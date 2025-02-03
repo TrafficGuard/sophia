@@ -48,6 +48,9 @@ export abstract class AiLLM<Provider extends ProviderV1> extends BaseLLM {
 		return withActiveSpan(`generateTextFromMessages ${opts?.id ?? ''}`, async (span) => {
 			const messages: CoreMessage[] = this.processMessages(llmMessages);
 
+			// Gemini Flash 2.0 thinking max is about 42
+			if (opts?.topK > 40) opts.topK = 40;
+
 			const prompt = messages.map((m) => m.content).join('\n');
 			span.setAttributes({
 				inputChars: prompt.length,
@@ -74,6 +77,7 @@ export abstract class AiLLM<Provider extends ProviderV1> extends BaseLLM {
 					frequencyPenalty: opts?.frequencyPenalty,
 					presencePenalty: opts?.presencePenalty,
 					stopSequences: opts?.stopSequences,
+					maxRetries: opts?.maxRetries,
 				});
 
 				const responseText = result.text;

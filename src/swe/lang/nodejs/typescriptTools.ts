@@ -37,7 +37,7 @@ export class TypescriptTools implements LanguageTools {
 		// Note that the project needs to be in a compilable state otherwise this will fail
 		logger.info('Generating TypeScript project map');
 		const fss = getFileSystem();
-		const rootFolder = (await fss.getGitRoot()) ?? fss.getWorkingDirectory();
+		const rootFolder = (await fss.getVcsRoot()) ?? fss.getWorkingDirectory();
 		const dtsFolder = join(rootFolder, sophiaDirName, 'dts');
 		await promisify(fs.mkdir)(dtsFolder, { recursive: true });
 		const tsConfigExists = await fss.fileExists('tsconfig.json');

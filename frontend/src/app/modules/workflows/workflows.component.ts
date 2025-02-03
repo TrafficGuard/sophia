@@ -8,14 +8,14 @@ import { MatSelectModule } from "@angular/material/select";
 import { MatCardModule } from "@angular/material/card";
 import { MatProgressBarModule } from "@angular/material/progress-bar";
 import { MatInputModule } from '@angular/material/input';
-import { ActionsService } from "./actions.service";
+import { WorkflowsService } from "./workflows.service";
 import {MatIconModule} from "@angular/material/icon";
 import {MatButtonModule} from "@angular/material/button";
 
 @Component({
   selector: 'app-code',
-  templateUrl: './actions.component.html',
-  styleUrls: ['./actions.component.scss'],
+  templateUrl: './workflows.component.html',
+  styleUrls: ['./workflows.component.scss'],
   standalone: true,
   imports: [
     CommonModule,
@@ -29,13 +29,13 @@ import {MatButtonModule} from "@angular/material/button";
     MatButtonModule,
   ]
 })
-export class ActionsComponent implements OnInit {
+export class WorkflowsComponent implements OnInit {
   codeForm!: FormGroup;
   result: string = '';
   isLoading = false;
   repositories: string[] = [];
 
-  constructor(private fb: FormBuilder, private actionsService: ActionsService) {}
+  constructor(private fb: FormBuilder, private workflowsService: WorkflowsService) {}
 
   ngOnInit() {
     this.codeForm = this.fb.group({
@@ -44,7 +44,7 @@ export class ActionsComponent implements OnInit {
       input: ['', Validators.required],
     });
 
-    this.actionsService.getRepositories().subscribe({
+    this.workflowsService.getRepositories().subscribe({
       next: (repos: string[]) => {
         this.repositories = repos;
         if (repos.length > 0) {
@@ -59,8 +59,8 @@ export class ActionsComponent implements OnInit {
   }
 
   getInputLabel(): string {
-    const operationType = this.codeForm.get('operationType')?.value;
-    switch (operationType) {
+    const workflowType = this.codeForm.get('workflowType')?.value;
+    switch (workflowType) {
       case 'code':
         return 'Requirements';
       case 'query':
@@ -92,13 +92,13 @@ export class ActionsComponent implements OnInit {
 
     switch (operationType) {
       case 'code':
-        operation = this.actionsService.runCodeEditWorkflow(workingDirectory, input);
+        operation = this.workflowsService.runCodeEditWorkflow(workingDirectory, input);
         break;
       case 'query':
-        operation = this.actionsService.runCodebaseQuery(workingDirectory, input);
+        operation = this.workflowsService.runCodebaseQuery(workingDirectory, input);
         break;
       case 'selectFiles':
-        operation = this.actionsService.selectFilesToEdit(workingDirectory, input);
+        operation = this.workflowsService.selectFilesToEdit(workingDirectory, input);
         break;
       default:
         this.result = 'Error: Invalid operation type';

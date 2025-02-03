@@ -19,5 +19,15 @@ script=$1
 shift # Shift the arguments so $@ contains the remaining args
 
 CWD=$(pwd)
+
+# Load NVM
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+set -x
 # Run the npm script with any additional arguments and the filesystem arg
-(cd "$SOPHIA_HOME" && npm run "$script" -- --fs="${CWD}" "$@")
+(
+  cd "$SOPHIA_HOME"
+  nvm use
+  npm run "$script" -- --fs="${CWD}" "$@"
+)
