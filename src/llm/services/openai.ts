@@ -18,27 +18,38 @@ export function openAiLLMRegistry(): Record<string, () => LLM> {
 }
 
 export function openAIo1() {
-	return new OpenAI('OpenAI o1', 'o1', (input: string, inputTokens) => (inputTokens * 15) / 1_000_000, perMilTokens(60));
+	return new OpenAI('OpenAI o1', 'o1', inputCost(15), perMilTokens(60));
 }
 
 export function openAIo1Preview() {
-	return new OpenAI('OpenAI o1 preview', 'o1-preview', (input: string, inputTokens) => (inputTokens * 15) / 1_000_000, perMilTokens(60));
+	return new OpenAI('OpenAI o1 preview', 'o1-preview', inputCost(15), perMilTokens(60));
 }
 
 export function openAIo1mini() {
-	return new OpenAI('OpenAI o1-mini', 'o1-mini', (input: string, inputTokens) => (inputTokens * 3) / 1_000_000, perMilTokens(12));
+	return new OpenAI('OpenAI o1-mini', 'o1-mini', inputCost(3), perMilTokens(12));
 }
 
 export function openAIo3mini() {
-	return new OpenAI('OpenAI o3-mini', 'o3-mini', (input: string, inputTokens) => (inputTokens * 1.1) / 1_000_000, perMilTokens(4.4));
+	return new OpenAI('OpenAI o3-mini', 'o3-mini', inputCost(1.1), perMilTokens(4.4));
 }
 
 export function GPT4o() {
-	return new OpenAI('GPT4o', 'gpt-4o', (input: string, inputTokens) => (inputTokens * 2.5) / 1_000_000, perMilTokens(10));
+	return new OpenAI('GPT4o', 'gpt-4o', inputCost(2.5), perMilTokens(10));
 }
 
 export function GPT4oMini() {
-	return new OpenAI('GPT4o mini', 'gpt-4o-mini', (input: string, inputTokens, metadata) => (inputTokens * 0.15) / 1_000_000, perMilTokens(0.6));
+	return new OpenAI('GPT4o mini', 'gpt-4o-mini', inputCost(0.15), perMilTokens(0.6));
+}
+
+// https://sdk.vercel.ai/providers/ai-sdk-providers/openai#prompt-caching
+function inputCost(dollarsPerMillionTokens: number): InputCostFunction {
+	return (input: string, tokens: number, experimental_providerMetadata: any) => {
+		const cachedPromptTokens = experimental_providerMetadata?.openai?.cachedPromptTokens;
+		if (cachedPromptTokens) {
+			return ((tokens - cachedPromptTokens) * dollarsPerMillionTokens) / 1_000_000 + (cachedPromptTokens * dollarsPerMillionTokens) / 2 / 1_000_000;
+		}
+		return (tokens * dollarsPerMillionTokens) / 1_000_000;
+	};
 }
 
 export class OpenAI extends AiLLM<OpenAIProvider> {
