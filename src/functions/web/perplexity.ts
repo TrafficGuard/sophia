@@ -41,16 +41,13 @@ export class Perplexity {
 
 			// Valid model ids are at https://docs.perplexity.ai/guides/model-cards
 			response = await perplexity.chat.completions.create({
-				model: 'sonar-pro',
-				max_tokens: 4096,
+				model: 'sonar-reasoning-pro',
 				messages: [{ role: 'user', content: researchQuery }],
 				stream: false,
 			});
 			const content = response.choices[0].message?.content;
 
-			if (!content) {
-				throw new Error('Perplexity API returned empty content');
-			}
+			if (!content) throw new Error('Perplexity API returned empty content');
 
 			// Cost calculation based on Perplexity API pricing (as of the last update)
 			// Source: https://docs.perplexity.ai/docs/pricing
@@ -59,9 +56,9 @@ export class Perplexity {
 				const completionTokens = response.usage.completion_tokens;
 				const totalTokens = response.usage.total_tokens;
 
-				const costPerPromptToken = 0.000001; // $1 per million tokens
-				const costPerCompletionToken = 0.000001; // $1 per million tokens
-				const onlineCost = 0.005; // $5 per 1000 requests
+				const costPerPromptToken = 0.000002; // $1 per million tokens
+				const costPerCompletionToken = 0.000008; // $1 per million tokens
+				const onlineCost = 0.015; // $5 per 1000 requests. 3 requests
 
 				const cost = Number((promptTokens * costPerPromptToken + completionTokens * costPerCompletionToken + onlineCost).toFixed(6));
 				addCost(cost);
@@ -72,7 +69,7 @@ export class Perplexity {
 			if (saveToMemory) {
 				const summary = await llms().easy.generateText(
 					`<query>${researchQuery}</query>\nGenerate a summarised version of the research key in one short sentence at most, with only alphanumeric with underscores for spaces. Answer concisely with only the summary.`,
-					{ id: 'summarisePerplexityQuery' },
+					{ id: 'Summarise Perplexity search' },
 				);
 				const key = `Perplexity-${summary}`;
 				agentContext().memory[key] = content;

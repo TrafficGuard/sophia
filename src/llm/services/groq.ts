@@ -9,6 +9,7 @@ export const GROQ_SERVICE = 'groq';
 export function groqLLMRegistry(): Record<string, () => LLM> {
 	return {
 		'groq:llama-3.3-70b-versatile': groqLlama3_3_70B,
+		'groq:deepseek-r1-distill-llama-70b': groqLlama3_3_70B_R1_Distill,
 	};
 }
 
@@ -18,6 +19,10 @@ export function groqLLMRegistry(): Record<string, () => LLM> {
 
 export function groqLlama3_3_70B(): LLM {
 	return new GroqLLM('Llama3.3 70b (Groq)', 'llama-3.3-70b-versatile', 131_072, perMilTokens(0.59), perMilTokens(0.79));
+}
+
+export function groqLlama3_3_70B_R1_Distill(): LLM {
+	return new GroqLLM('Llama3.3 70b R1 Distill (Groq)', 'deepseek-r1-distill-llama-70b', 1280_000, perMilTokens(0.59), perMilTokens(0.79));
 }
 
 /**

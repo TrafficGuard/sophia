@@ -15,15 +15,17 @@ export const PERPLEXITY_SERVICE = 'perplexity';
 
 /*
 https://docs.perplexity.ai/guides/pricing
-Model	                            Price per 1000 requests	   Price per 1M tokens
-llama-3.1-sonar-large-128k-online	$5	                       $1
-llama-3.1-sonar-huge-128k-online	$5	                       $5
+Model	Input Tokens (Per Million Tokens)	Output Tokens (Per Million Tokens)	Price per 1000 searches
+sonar-reasoning-pro	$2	$8	$5
+sonar-reasoning	$1	$5	$5
+sonar-pro	$3	$15	$5
+sonar	$1	$1	$5
 */
 
 export function perplexityLLMRegistry(): Record<string, () => LLM> {
 	return {
 		[`${PERPLEXITY_SERVICE}:sonar`]: perplexityLLM,
-		[`${PERPLEXITY_SERVICE}:sonar-pro`]: perplexityProLLM,
+		[`${PERPLEXITY_SERVICE}:sonar-reasoning-pro`]: perplexityReasoningProLLM,
 	};
 }
 
@@ -38,24 +40,13 @@ export function perplexityLLM(): LLM {
 	);
 }
 
-export function perplexityProLLM(): LLM {
+export function perplexityReasoningProLLM(): LLM {
 	return new PerplexityLLM(
-		'Perplexity Pro',
-		'sonar-pro',
-		200_000, // maxTokens
-		0.000005, // costPerPromptToken ($5 per million tokens)
-		0.000005, // costPerCompletionToken
-		0.015, // 3 searches ($5 per 1000 requests)
-	);
-}
-
-export function perplexityReasoningLLM(): LLM {
-	return new PerplexityLLM(
-		'Perplexity Reasoning',
-		'sonar-reasoning',
+		'Perplexity Reasoning Pro',
+		'sonar-reasoning-pro',
 		127_000, // maxTokens
-		0.000001, // costPerPromptToken ($1 per million tokens)
-		0.000005, // costPerCompletionToken
+		0.000002, // costPerPromptToken ($1 per million tokens)
+		0.000008, // costPerCompletionToken
 		0.005, // 1 search ($5 per 1000 requests)
 	);
 }
