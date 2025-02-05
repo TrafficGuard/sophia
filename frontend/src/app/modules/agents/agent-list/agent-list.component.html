@@ -1,6 +1,6 @@
 <div class="bg-card flex min-w-0 flex-auto flex-col dark:bg-transparent sm:absolute sm:inset-0 sm:overflow-hidden">
     <!-- Header -->
-    <div class="relative flex flex-0 flex-col border-b px-6 py-6 sm:flex-row sm:items-center sm:justify-between md:px-8">
+    <div class="relative flex flex-0 flex-col border-b px-6 py-3 sm:flex-row sm:items-center sm:justify-between md:px-8">
         <!-- Loader -->
         @if (isLoading) {
             <div class="absolute inset-x-0 bottom-0">
@@ -47,7 +47,7 @@
 
                 <div class="grid">
                     <!-- Header -->
-                    <div class="inventory-grid text-secondary sticky top-0 z-10 grid gap-4 bg-gray-50 px-6 py-4 text-md font-semibold shadow dark:bg-black dark:bg-opacity-5 md:px-8">
+                    <div class="inventory-grid text-secondary sticky top-0 z-10 grid gap-4 bg-gray-50 px-2 py-2 text-md font-semibold shadow dark:bg-black dark:bg-opacity-5 md:px-4">
                         <div class="w-10"></div>
                         <div>Name</div>
                         <div>State</div>
@@ -58,7 +58,7 @@
                     </div>
 
                     @if (agents === null) {
-                        <div class="inventory-grid grid items-center gap-4 border-b px-6 py-2 md:px-8">
+                        <div class="inventory-grid grid items-center gap-4 border-b px-2 py-2 md:px-4">
                             <div class="col-span-full text-center">
                                 Loading...
                             </div>
@@ -67,7 +67,7 @@
                     @else if (agents.length > 0) {
                         <!-- Rows -->
                         @for (agent of agents; track trackByFn($index, agent)) {
-                            <div class="inventory-grid grid items-center gap-4 border-b px-6 py-2 hover:bg-gray-50 md:px-8">
+                            <div class="inventory-grid grid items-center gap-4 border-b px-2 hover:bg-gray-50 md:px-4">
                                 <div class="w-10">
                                     <mat-checkbox
                                             (click)="$event.stopPropagation()"

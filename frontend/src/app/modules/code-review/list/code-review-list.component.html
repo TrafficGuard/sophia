@@ -1,10 +1,6 @@
-<div
-        class="bg-card flex min-w-0 flex-auto flex-col dark:bg-transparent sm:absolute sm:inset-0 sm:overflow-hidden"
->
+<div class="bg-card flex min-w-0 flex-auto flex-col dark:bg-transparent sm:absolute sm:inset-0 sm:overflow-hidden">
     <!-- Header -->
-    <div
-            class="relative flex flex-0 flex-col border-b px-6 py-6 sm:flex-row sm:items-center sm:justify-between md:px-8"
-    >
+    <div class="relative flex flex-0 flex-col border-b px-6 py-3 sm:flex-row sm:items-center sm:justify-between md:px-8">
         @if (isLoading) {
             <div class="absolute inset-x-0 bottom-0">
                 <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
