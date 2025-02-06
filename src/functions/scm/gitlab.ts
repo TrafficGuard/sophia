@@ -296,8 +296,9 @@ export class GitLab implements SourceControlManagement {
 			projectPath = gitlabProjectId;
 		}
 
-		logger.info(`Reviewing ${projectPath}`);
+		logger.info(`Reviewing "${mergeRequest.title}" at ${mergeRequest.web_url}`);
 
+		const matchedCodeReviews: Array<{ title: string; file: string; line: number }> = [];
 		// Find the code review configurations which are relevant for each diff
 		const codeReviews: Promise<DiffReview>[] = [];
 		for (const diff of diffs) {
@@ -313,6 +314,7 @@ export class GitLab implements SourceControlManagement {
 				const hasRequiredText = codeReview.requires?.text.some((text) => diff.diff.includes(text));
 
 				if (hasMatchingExtension && hasRequiredText) {
+					matchedCodeReviews.push({ title: codeReview.title, file: diff.new_path, line: getStartingLineNumber(diff.diff) });
 					codeReviews.push(this.reviewDiff(diff, codeReview));
 				}
 			}
@@ -320,6 +322,8 @@ export class GitLab implements SourceControlManagement {
 
 		if (!codeReviews.length) {
 			logger.info('No code review configurations matched the diffs');
+		} else {
+			logger.info({ codeReviews: matchedCodeReviews }, `Found ${codeReviews.length} code reviews to apply to diffs [codeReviews]`);
 		}
 
 		let diffReviews: DiffReview[] = await allSettledAndFulFilled(codeReviews);
@@ -327,7 +331,7 @@ export class GitLab implements SourceControlManagement {
 
 		for (const diffReview of diffReviews) {
 			for (const comment of diffReview.comments) {
-				logger.debug(comment, `Adding review comment to ${diffReview.mrDiff.new_path} for "${diffReview.reviewConfig.title}" [comment, lineNumber]`);
+				logger.info(comment, `Adding review comment to ${diffReview.mrDiff.new_path} for "${diffReview.reviewConfig.title}" [comment, lineNumber]`);
 				const position: MergeRequestDiscussionNotePositionOptions = {
 					baseSha: mergeRequest.diff_refs.base_sha,
 					headSha: mergeRequest.diff_refs.head_sha,
