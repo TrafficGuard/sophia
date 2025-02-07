@@ -1,11 +1,9 @@
 import { Type } from '@sinclair/typebox';
 import { FastifyReply } from 'fastify';
-import { agentContextStorage, createContext } from '#agent/agentContextLocalStorage';
-import { AgentContext } from '#agent/agentContextTypes';
 import { RunAgentConfig } from '#agent/agentRunner';
+import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { send, sendSuccess } from '#fastify/index';
 import { GitLab } from '#functions/scm/gitlab';
-import { ClaudeVertexLLMs } from '#llm/services/anthropic-vertex';
 import { defaultLLMs } from '#llm/services/defaultLlms';
 import { logger } from '#o11y/logger';
 import { envVar } from '#utils/env-var';
@@ -47,12 +45,12 @@ export async function gitlabRoutesV1(fastify: AppFastifyInstance) {
 				initialPrompt: '',
 				humanInLoop: envVarHumanInLoopSettings(),
 			};
-			const context: AgentContext = createContext(config);
-			const mergeRequestId = `project:${event.project.name}, miid:${event.object_attributes.iid}, MR:"${event.object_attributes.title}"`;
-			logger.info(`Agent ${context.agentId} reviewing merge request ${mergeRequestId}`);
 
-			agentContextStorage.run(context, () => {
-				new GitLab()
+			const mergeRequestId = `project:${event.project.name}, miid:${event.object_attributes.iid}, MR:"${event.object_attributes.title}"`;
+
+			await runAgentWorkflow(config, async (context) => {
+				logger.info(`Agent ${context.agentId} reviewing merge request ${mergeRequestId}`);
+				return new GitLab()
 					.reviewMergeRequest(event.project.id, event.object_attributes.iid)
 					.then(() => {
 						logger.debug(`Competed review of merge request ${mergeRequestId}`);
