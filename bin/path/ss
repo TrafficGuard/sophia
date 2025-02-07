@@ -24,7 +24,6 @@ CWD=$(pwd)
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-set -x
 # Run the npm script with any additional arguments and the filesystem arg
 (
   cd "$SOPHIA_HOME"

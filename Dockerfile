@@ -3,13 +3,13 @@ FROM python:3.11
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN pip install aider-chat
-
 #COPY .nvmrc .
 # $(cat .nvmrc)
 RUN curl -sL https://deb.nodesource.com/setup_20.x -o nodesource_setup.sh
 RUN chmod +x ./nodesource_setup.sh && ./nodesource_setup.sh
 RUN apt install -y nodejs
+
+RUN pip install aider-chat
 
 ENV user=sophia
 ENV homedir=/home/sophia/
