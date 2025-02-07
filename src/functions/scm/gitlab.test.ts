@@ -1,6 +1,8 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { GitLab, getStartingLineNumber } from './gitlab';
+import { CodeReviewConfig } from '#swe/codeReview/codeReviewModel';
+import { MergeRequestDiffSchema } from '@gitbeaker/rest';
 
 describe('GitLab', () => {
 	describe('diff', () => {
@@ -11,7 +13,205 @@ describe('GitLab', () => {
 	});
 
 	describe('applyCodeReview', () => {
+		it('should return false when code review is disabled', () => {
+			const codeReview = {
+				enabled: false,
+				projectPaths: [],
+				fileExtensions: { include: [] },
+				requires: { text: [] },
+			} as CodeReviewConfig;
 
+			const diff = {
+				new_path: 'src/app/file.ts',
+				diff: 'Some diff content',
+			} as MergeRequestDiffSchema;
+
+			const projectPath = 'some/project/path';
+
+			const gitLab = new GitLab();
+			const result = gitLab.applyCodeReview(codeReview, diff, projectPath);
+			expect(result).to.be.false;
+		});
+
+		it('should return false when project path does not match', () => {
+			const codeReview = {
+				enabled: true,
+				projectPaths: ['allowed/project/*'],
+				fileExtensions: { include: ['.ts'] },
+				requires: { text: [] },
+			} as CodeReviewConfig;
+
+			const diff = {
+				new_path: 'src/app/file.ts',
+				diff: 'Some diff content',
+			} as MergeRequestDiffSchema;
+
+			const projectPath = 'some/other/project';
+
+			const gitLab = new GitLab();
+			const result = gitLab.applyCodeReview(codeReview, diff, projectPath);
+			expect(result).to.be.false;
+		});
+
+		it('should return false when file extension does not match', () => {
+			const codeReview = {
+				enabled: true,
+				projectPaths: [],
+				fileExtensions: { include: ['.js'] },
+				requires: { text: [] },
+			} as CodeReviewConfig;
+
+			const diff = {
+				new_path: 'src/app/file.ts',
+				diff: 'Some diff content',
+			} as MergeRequestDiffSchema;
+
+			const projectPath = 'some/project/path';
+
+			const gitLab = new GitLab();
+			const result = gitLab.applyCodeReview(codeReview, diff, projectPath);
+			expect(result).to.be.false;
+		});
+
+		it('should return false when required text is not present in diff', () => {
+			const codeReview = {
+				enabled: true,
+				projectPaths: [],
+				fileExtensions: { include: ['.ts'] },
+				requires: { text: ['specificKeyword'] },
+			} as CodeReviewConfig;
+
+			const diff = {
+				new_path: 'src/app/file.ts',
+				diff: 'Some diff content without the keyword',
+			} as MergeRequestDiffSchema;
+
+			const projectPath = 'some/project/path';
+
+			const gitLab = new GitLab();
+			const result = gitLab.applyCodeReview(codeReview, diff, projectPath);
+			expect(result).to.be.false;
+		});
+
+		it('should return true when all conditions are met', () => {
+			const codeReview = {
+				enabled: true,
+				projectPaths: ['some/project/*'],
+				fileExtensions: { include: ['.ts'] },
+				requires: { text: ['specificKeyword'] },
+			} as CodeReviewConfig;
+
+			const diff = {
+				new_path: 'src/app/file.ts',
+				diff: 'This diff includes the specificKeyword needed',
+			} as MergeRequestDiffSchema;
+
+			const projectPath = 'some/project/path';
+
+			const gitLab = new GitLab();
+			const result = gitLab.applyCodeReview(codeReview, diff, projectPath);
+			expect(result).to.be.true;
+		});
+
+		it('should not exclude projects when projectPaths is empty', () => {
+			const codeReview = {
+				enabled: true,
+				projectPaths: [],
+				fileExtensions: { include: ['.ts'] },
+				requires: { text: ['keyword'] },
+			} as CodeReviewConfig;
+
+			const diff = {
+				new_path: 'src/app/file.ts',
+				diff: 'Contains keyword',
+			} as MergeRequestDiffSchema;
+
+			const projectPath = 'any/project/path';
+
+			const gitLab = new GitLab();
+			const result = gitLab.applyCodeReview(codeReview, diff, projectPath);
+			expect(result).to.be.true;
+		});
+
+		it('should return false when fileExtensions.include is empty', () => {
+			const codeReview = {
+				enabled: true,
+				projectPaths: [],
+				fileExtensions: { include: [] },
+				requires: { text: ['keyword'] },
+			} as CodeReviewConfig;
+
+			const diff = {
+				new_path: 'src/app/file.ts',
+				diff: 'Contains keyword',
+			} as MergeRequestDiffSchema;
+
+			const projectPath = 'some/project/path';
+
+			const gitLab = new GitLab();
+			const result = gitLab.applyCodeReview(codeReview, diff, projectPath);
+			expect(result).to.be.false;
+		});
+
+		it('should return false when requires.text is empty', () => {
+			const codeReview = {
+				enabled: true,
+				projectPaths: [],
+				fileExtensions: { include: ['.ts'] },
+				requires: { text: [] },
+			} as CodeReviewConfig;
+
+			const diff = {
+				new_path: 'src/app/file.ts',
+				diff: 'Some diff content',
+			} as MergeRequestDiffSchema;
+
+			const projectPath = 'some/project/path';
+
+			const gitLab = new GitLab();
+			const result = gitLab.applyCodeReview(codeReview, diff, projectPath);
+			expect(result).to.be.false;
+		});
+
+		it('should return true when file extension matches one of multiple', () => {
+			const codeReview = {
+				enabled: true,
+				projectPaths: [],
+				fileExtensions: { include: ['.js', '.ts'] },
+				requires: { text: ['keyword'] },
+			} as CodeReviewConfig;
+
+			const diff = {
+				new_path: 'src/app/file.js',
+				diff: 'Contains keyword',
+			} as MergeRequestDiffSchema;
+
+			const projectPath = 'some/project/path';
+
+			const gitLab = new GitLab();
+			const result = gitLab.applyCodeReview(codeReview, diff, projectPath);
+			expect(result).to.be.true;
+		});
+
+		it('should return true when diff contains any of the required texts', () => {
+			const codeReview = {
+				enabled: true,
+				projectPaths: [],
+				fileExtensions: { include: ['.ts'] },
+				requires: { text: ['firstKeyword', 'secondKeyword'] },
+			} as CodeReviewConfig;
+
+			const diff = {
+				new_path: 'src/app/file.ts',
+				diff: 'This diff includes secondKeyword',
+			} as MergeRequestDiffSchema;
+
+			const projectPath = 'some/project/path';
+
+			const gitLab = new GitLab();
+			const result = gitLab.applyCodeReview(codeReview, diff, projectPath);
+			expect(result).to.be.true;
+		});
 	})
 
 	// describe('getJobLogs', () => {
