@@ -160,7 +160,7 @@ function extractSessionCost(text: string): number {
 
 export function getPythonPath() {
 	// Read the Sophia .python-version file
-	const pythonVersionFile = path.join(process.cwd(), '.python-version');
+	const pythonVersionFile = path.join(process.env.SOPHIA_HOME || process.cwd(), '.python-version');
 	const pythonVersion = fs.readFileSync(pythonVersionFile, 'utf8').trim();
 	// Use pyenv to find the path of the specified Python version
 	return `${execSync(`pyenv prefix ${pythonVersion}`, { encoding: 'utf8' }).trim()}/bin/python`;
