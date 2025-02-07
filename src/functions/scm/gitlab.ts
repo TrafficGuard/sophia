@@ -336,9 +336,10 @@ export class GitLab implements SourceControlManagement {
 				try {
 					await this.api().MergeRequestDiscussions.create(gitlabProjectId, mergeRequestIId, comment.comment, { position });
 				} catch (e) {
+					const message = e.cause?.description || e.message;
 					logger.warn(
 						{ error: e, comment, errorKey: 'GitLab create code review discussion' },
-						`Error creating code review comment for "${diffReview.reviewConfig.title}" to ${diffReview.mrDiff.new_path} [error, comment]`,
+						`Error creating code review comment for "${diffReview.reviewConfig.title}" to ${diffReview.mrDiff.new_path}. ${message} [error, comment]`,
 					);
 				}
 			}
