@@ -1,8 +1,8 @@
+import { MergeRequestDiffSchema } from '@gitbeaker/rest';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { GitLab, getStartingLineNumber } from './gitlab';
 import { CodeReviewConfig } from '#swe/codeReview/codeReviewModel';
-import { MergeRequestDiffSchema } from '@gitbeaker/rest';
+import { GitLab, getStartingLineNumber } from './gitlab';
 
 describe('GitLab', () => {
 	describe('diff', () => {
@@ -17,8 +17,8 @@ describe('GitLab', () => {
 			const codeReview = {
 				enabled: false,
 				projectPaths: [],
-				fileExtensions: { include: [] },
-				requires: { text: [] },
+				fileExtensions: { include: ['*.ts'] },
+				requires: { text: ['content'] },
 			} as CodeReviewConfig;
 
 			const diff = {
@@ -38,7 +38,7 @@ describe('GitLab', () => {
 				enabled: true,
 				projectPaths: ['allowed/project/*'],
 				fileExtensions: { include: ['.ts'] },
-				requires: { text: [] },
+				requires: { text: ['content'] },
 			} as CodeReviewConfig;
 
 			const diff = {
@@ -58,7 +58,7 @@ describe('GitLab', () => {
 				enabled: true,
 				projectPaths: [],
 				fileExtensions: { include: ['.js'] },
-				requires: { text: [] },
+				requires: { text: ['content'] },
 			} as CodeReviewConfig;
 
 			const diff = {
@@ -134,6 +134,7 @@ describe('GitLab', () => {
 		});
 
 		it('should return false when fileExtensions.include is empty', () => {
+			// Note: This should not be a valid configuration
 			const codeReview = {
 				enabled: true,
 				projectPaths: [],
@@ -154,6 +155,7 @@ describe('GitLab', () => {
 		});
 
 		it('should return false when requires.text is empty', () => {
+			// Note: This should not be a valid configuration
 			const codeReview = {
 				enabled: true,
 				projectPaths: [],
@@ -212,7 +214,7 @@ describe('GitLab', () => {
 			const result = gitLab.applyCodeReview(codeReview, diff, projectPath);
 			expect(result).to.be.true;
 		});
-	})
+	});
 
 	// describe('getJobLogs', () => {
 	// 	let gitLab: GitLab;
