@@ -10,6 +10,10 @@ describe('GitLab', () => {
 		});
 	});
 
+	describe('applyCodeReview', () => {
+
+	})
+
 	// describe('getJobLogs', () => {
 	// 	let gitLab: GitLab;
 	// 	let apiStub: sinon.SinonStubbedInstance<Gitlab>;
