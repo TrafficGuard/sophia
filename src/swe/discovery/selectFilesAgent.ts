@@ -105,12 +105,11 @@ For this initial file selection step respond in the following format:
 <select-files-thinking>
 </select-files-thinking>
 <json>
-</json>
-
-Your response must end with a JSON object wrapped in <json> tags in the following format:
-<json>
 {
-  "inspectFiles": ["dir/file1", "dir1/dir2/file2"]
+  "inspectFiles": [
+  	"dir/file1", 
+	"dir1/dir2/file2"
+  ]
 }
 </json>
 `;
@@ -132,7 +131,20 @@ ${(await readFileContents(pendingFiles)).contents}
 The files that must be included in either the keepFiles or ignoreFiles properties are:
 ${pendingFiles.join('\n')}
 
-Respond only as per the Process Files Response Instructions.
+Respond only as per the Process Files Response Instructions. The final part of the response should be a JSON object in the following format:
+<json>
+{
+  keepFiles:[
+    {"path": "dir/file1", "reason": "..."}
+  ]
+  ignoreFiles:[
+    {"path": "dir/file1", "reason": "..."}
+  ],
+  inspectFiles: [
+    "dir1/dir2/file2"
+  ]
+}
+</json>
 `;
 	const iterationMessages: LlmMessage[] = [...messages, { role: 'user', content: prompt }];
 
@@ -245,6 +257,8 @@ async function selectFilesCore(
 	const keptFiles = new Set<{ path: string; reason: string }>();
 	const ignoredFiles = new Set<{ path: string; reason: string }>();
 
+	let usingHardLLM = false;
+
 	while (true) {
 		iterationCount++;
 		if (iterationCount > maxIterations) throw new Error('Maximum interaction iterations reached.');
@@ -277,8 +291,10 @@ async function selectFilesCore(
 		// Once the medium LLM has completed, then we switch to the hard LLM as a review,
 		// which may continue inspecting files until it is satisfied.
 		if (!filesToInspect || filesToInspect.length === 0) {
-			if (llm === llms().medium) {
+			// Use the hard LLM to review the final selection. Check on a variable and not on llms().medium === llm().hard in case they are the ame.
+			if (!usingHardLLM) {
 				llm = llms().hard;
+				usingHardLLM = true;
 			} else {
 				break;
 			}
