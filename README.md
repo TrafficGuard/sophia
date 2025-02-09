@@ -3,8 +3,8 @@
   <img src="https://public.trafficguard.ai/typedai/banner.png" alt="TypedAI banner"/>
 </p>
 <p align="center">
-  <em>The open TypeScript platform for autonomous AI agents and LLM based workflows </em><br/>
-  <small>The Ancient Greek word <em><b>sophía (σοφία)</b></em> variously translates to "clever, skillful, intelligent, wise"</small>
+  <em >The TypeScript-first AI platform for developers</em><br/>
+  <small>Autonomous AI agents and LLM based workflows</small>
 </p>
 
 ## Documentation site
@@ -221,4 +221,4 @@ export class Jira {
 
 ## Contributing
 
-We warmly welcome contributions to the project through [issues](https://github.com/TrafficGuard/nous/issues), [pull requests](https://github.com/TrafficGuard/nous/pulls)  or [discussions](https://github.com/TrafficGuard/nous/discussions)
+We warmly welcome contributions to the project through [issues](https://github.com/TrafficGuard/typedai/issues), [pull requests](https://github.com/TrafficGuard/typedai/pulls)  or [discussions](https://github.com/TrafficGuard/typedai/discussions)

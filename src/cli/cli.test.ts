@@ -7,7 +7,7 @@ import { parseUserCliArgs, saveAgentId } from './cli';
 describe('parseProcessArgs', () => {
 	beforeEach(() => {
 		if (existsSync(`${systemDir()}/cli/test.lastRun`)) unlinkSync(`${systemDir()}/cli/test.lastRun`);
-		// if (existsSync('.nous/cli/test')) unlinkSync('.nous/cli/test');
+		// if (existsSync('.typedai/cli/test')) unlinkSync('.typedai/cli/test');
 	});
 
 	it('should parse -r flag correctly and set resumeAgentId if the state file exists', () => {

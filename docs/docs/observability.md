@@ -40,7 +40,7 @@ The `TRACE_AUTO_INSTRUMENT` variable enables the trace instrumentation from the 
 
 
 ## Sample trace
-![Sample trace in Google Cloud](https://public.trafficguard.ai/nous/trace.png){ align=left }
+![Sample trace in Google Cloud](https://public.trafficguard.ai/typedai/trace.png){ align=left }
 
 ## Tracing code
 

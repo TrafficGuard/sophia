@@ -4,7 +4,7 @@ The TypedAI software/coding agents build upon the project [Aider](https://aider.
 
 ## Code Editing Agent
 
-The [Code Editor Agent](https://github.com/TrafficGuard/nous/blob/main/src/swe/codeEditingAgent.ts) is used for editing local repositories. It was the 'bootstrap' agent to help accelerate the development of this platform.
+The [Code Editor Agent](https://github.com/TrafficGuard/typedai/blob/main/src/swe/codeEditingAgent.ts) is used for editing local repositories. It was the 'bootstrap' agent to help accelerate the development of this platform.
 
 ### Workflow
 
@@ -48,7 +48,7 @@ For example, the TypeScript `generateProjectMap` implementation runs `tsc` with 
 
 ## Software Developer Agent
 
-The [Software Developer Agent](https://github.com/TrafficGuard/nous/blob/main/src/swe/softwareDeveloperAgent.ts) is designed to automate tasks in environments with multiple repositories, making it suitable for enterprise environments. 
+The [Software Developer Agent](https://github.com/TrafficGuard/typedai/blob/main/src/swe/softwareDeveloperAgent.ts) is designed to automate tasks in environments with multiple repositories, making it suitable for enterprise environments. 
 
 ### Workflow
 

@@ -1,12 +1,14 @@
 #
-<a id="banner"></a>
-<p align="center">
-  <img src="https://public.trafficguard.ai/typedai/banner.png" alt="TypedAI banner"/>
+<link rel="stylesheet" href="index.css"/>
+<p align="center" style="margin-top: 0">
+  <img src="https://public.trafficguard.ai/typedai/banner.png" style="height: 100px" alt="TypedAI banner"/>
 </p>
-<p align="center">
-  <em><b><span style="font-size: x-large">The open TypeScript platform for AI agents, workflows & chat</span></b></em><br/>
-  <small>The Ancient Greek word <em><b>sophía (σοφία)</b></em> variously translates to "clever, skillful, intelligent, wise"</small>
-</p>
+<div align="center" style="margin-top: 0">
+  <em style="font-size: x-large">The TypeScript-first AI platform for developers</em><br/>
+<!--
+  <small>Autonomous AI agents and LLM based workflows</small>
+-->
+</div>
 
 TypedAI is a full-featured platform for developing and running autonomous agents, LLM based workflows, Slack chatbots, AI chat and more.
 
@@ -186,4 +188,4 @@ export class Jira {
 
 ## Contributing 
 
-We warmly welcome contributions to the project through [issues](https://github.com/TrafficGuard/nous/issues), [pull requests](https://github.com/TrafficGuard/nous/pulls)  or [discussions](https://github.com/TrafficGuard/nous/discussions)
+We warmly welcome contributions to the project through [issues](https://github.com/TrafficGuard/typedai/issues), [pull requests](https://github.com/TrafficGuard/typedai/pulls)  or [discussions](https://github.com/TrafficGuard/typedai/discussions)

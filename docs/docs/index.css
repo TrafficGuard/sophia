@@ -1,0 +1,11 @@
+#_1 {
+    display: none
+}
+.md-content__inner.md-typeset {
+    padding-top: 0;
+}
+
+/* The CSS include is wrapped in a <p>. Looks it up as the sibling of the h1 with id #1*/
+#_1 + * {
+    margin-top: 0;
+}

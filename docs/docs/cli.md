@@ -154,5 +154,5 @@ npm run test
 Speech-to-text is useful writing longer prompts with additional details to guide the agents.
 
 On Mac's you can enable Dictation for quick-access speech-to-text
-![List agents](https://public.trafficguard.ai/nous/dictation.png)
+![List agents](https://public.trafficguard.ai/typedai/dictation.png)
 

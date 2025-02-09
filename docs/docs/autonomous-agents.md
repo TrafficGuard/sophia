@@ -57,4 +57,4 @@ When the budget control or control loop iteration thresholds have been reached, 
 
 More configuration will be provided soon.
 
-![Agent feedback request](https://public.trafficguard.ai/nous/feedback.png){ align=left }
+![Agent feedback request](https://public.trafficguard.ai/typedai/feedback.png){ align=left }
