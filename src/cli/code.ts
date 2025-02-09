@@ -7,6 +7,7 @@ import { shutdownTrace } from '#fastify/trace-init/trace-init';
 import { GitLab } from '#functions/scm/gitlab';
 import { defaultLLMs } from '#llm/services/defaultLlms';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
+import { beep } from '#utils/beep';
 import { initApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
 
@@ -39,6 +40,7 @@ async function main() {
 		saveAgentId('code', agentId);
 	}
 
+	await beep();
 	await shutdownTrace();
 }
 

@@ -8,6 +8,8 @@ export interface CliOptions {
 	scriptName: string;
 	initialPrompt: string;
 	resumeAgentId: string | undefined;
+	/** Optional array of function class names to use */
+	functionClasses?: string[];
 }
 
 export function parseProcessArgs(): CliOptions {
@@ -18,10 +20,17 @@ export function parseProcessArgs(): CliOptions {
 }
 
 /**
- *
- * @param scriptName
- * @param scriptArgs copy of the script arguments
+ * Parse function class names from -f=FunctionClass,... command line argument
  */
+function parseFunctionArgument(args: string[]): string[] | undefined {
+	const toolArg = args.find((arg) => arg.startsWith('-f='));
+	if (!toolArg) return undefined;
+	return toolArg
+		.substring(3)
+		.split(',')
+		.map((s) => s.trim());
+}
+
 export function parseUserCliArgs(scriptName: string, scriptArgs: string[]): CliOptions {
 	// strip out filesystem arg if it exists
 	const fsArgIndex = scriptArgs.findIndex((arg) => arg.startsWith('--fs='));
@@ -38,11 +47,17 @@ export function parseUserCliArgs(scriptName: string, scriptArgs: string[]): CliO
 			break;
 		}
 	}
-	let initialPrompt = scriptArgs.slice(i).join(' ');
 
+	// Extract function classes before processing prompt
+	const functionClasses = parseFunctionArgument(scriptArgs);
+	// Remove the function argument from args if present
+	const promptArgs = scriptArgs.filter((arg) => !arg.startsWith('-t=') && !arg.startsWith('-f='));
+	let initialPrompt = promptArgs.slice(i).join(' ');
+
+	logger.debug({ functionClasses }, 'Parsed function classes');
 	logger.info(initialPrompt);
 
-	// If not prompt provided then load from file
+	// If no prompt provided then load from file
 	if (!initialPrompt.trim()) {
 		if (existsSync(`src/cli/${scriptName}-in`)) initialPrompt = readFileSync(`src/cli/${scriptName}-in`, 'utf-8');
 	}
@@ -51,7 +66,7 @@ export function parseUserCliArgs(scriptName: string, scriptArgs: string[]): CliO
 
 	const resumeAgentId = resumeLastRun ? getLastRunAgentId(scriptName) : undefined;
 
-	return { scriptName, resumeAgentId, initialPrompt };
+	return { scriptName, resumeAgentId, initialPrompt, functionClasses };
 }
 
 export function saveAgentId(scriptName: string, agentId: string): void {

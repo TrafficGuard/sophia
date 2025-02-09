@@ -332,6 +332,7 @@ export class FileSystemService {
 	 * @returns {Promise<Map<string, string>>} the contents of the files in a Map object keyed by the file path
 	 */
 	async readFiles(filePaths: string[]): Promise<Map<string, string>> {
+		// If all entries are a single character, then likely a string converted to an array of characters
 		const mapResult = new Map<string, string>();
 		for (const relativeFilePath of filePaths) {
 			const filePath = path.join(this.getWorkingDirectory(), relativeFilePath);
@@ -339,7 +340,7 @@ export class FileSystemService {
 				const contents = await fs.readFile(filePath, 'utf8');
 				mapResult.set(path.relative(this.getWorkingDirectory(), filePath), contents);
 			} catch (e) {
-				this.log.warn(`Error reading ${filePath} (${relativeFilePath}) ${e.message}`);
+				this.log.warn(`readFiles Error reading ${filePath} (${relativeFilePath}) ${e.message}`);
 			}
 		}
 		return mapResult;
