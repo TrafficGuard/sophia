@@ -11,10 +11,10 @@ RUN apt install -y nodejs
 
 RUN pip install aider-chat
 
-ENV user=sophia
-ENV homedir=/home/sophia/
+ENV user=typedai
+ENV homedir=/home/typedai/
 
-RUN useradd --create-home -g users sophia
+RUN useradd --create-home -g users typedai
 WORKDIR $homedir
 
 RUN mkdir ".husky"
@@ -26,18 +26,18 @@ RUN npm ci
 COPY . .
 
 # Download the tiktokenizer model, which is written to node_modules/@microsoft/tiktokenizer/model,
-# as the root user, as the sophia user can't write to node_modules
+# as the root user, as the typedai user can't write to node_modules
 RUN npm run initTiktokenizer
 
 USER $user
 
-RUN mkdir .sophia
+RUN mkdir .typedai
 # Generate the function schemas
 RUN npm run functionSchemas
 
-# Needed to avoid the error "fatal: detected dubious ownership in repository at '/home/sophia'" when running git commands
-# as the application files are owned by the root user so an agent (which runs as the sophia user) can't modify them.
-RUN git config --global --add safe.directory /home/sophia
+# Needed to avoid the error "fatal: detected dubious ownership in repository at '/home/typedai'" when running git commands
+# as the application files are owned by the root user so an agent (which runs as the typedai user) can't modify them.
+RUN git config --global --add safe.directory /home/typedai
 
 ENV NODE_ENV=production
 ENV PORT=8080

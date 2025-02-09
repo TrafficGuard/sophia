@@ -14,7 +14,7 @@ import { logger } from '#o11y/logger';
 import { getActiveSpan, span } from '#o11y/trace';
 import { execCmd, execCmdSync, spawnCommand } from '#utils/exec';
 import { CDATA_END, CDATA_START, needsCDATA } from '#utils/xml-utils';
-import { SOPHIA_FS } from '../../appVars';
+import { TYPEDAI_FS } from '../../appVars';
 
 const fs = {
 	readFile: promisify(readFile),
@@ -39,7 +39,7 @@ const gitIgnorePaths = new Set<string>();
  *
  * Provides functions for LLMs to access the file system. Tools should generally use the functions as
  * - They are automatically included in OpenTelemetry tracing
- * - They use the working directory, so Sophia can perform its actions outside the process running directory.
+ * - They use the working directory, so TypedAI can perform its actions outside the process running directory.
  *
  * The FileSystem is constructed with the basePath property which is like a virtual root.
  * Then the workingDirectory property is relative to the basePath.
@@ -63,7 +63,7 @@ export class FileSystemService {
 
 		const args = process.argv;
 		const fsArg = args.find((arg) => arg.startsWith('--fs='));
-		const fsEnvVar = process.env[SOPHIA_FS];
+		const fsEnvVar = process.env[TYPEDAI_FS];
 		if (fsArg) {
 			const fsPath = fsArg.slice(5);
 			if (existsSync(fsPath)) {
@@ -76,7 +76,7 @@ export class FileSystemService {
 			if (existsSync(fsEnvVar)) {
 				this.basePath = fsEnvVar;
 			} else {
-				throw new Error(`Invalid ${SOPHIA_FS} env var. ${fsEnvVar} does not exist`);
+				throw new Error(`Invalid ${TYPEDAI_FS} env var. ${fsEnvVar} does not exist`);
 			}
 		}
 		this.workingDirectory = this.basePath;

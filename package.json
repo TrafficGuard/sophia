@@ -1,5 +1,5 @@
 {
-  "name": "@trafficguard/sophia",
+  "name": "@trafficguard/typedai",
   "version": "0.7.0",
   "description": "AI agent & LLM app platform",
   "private": true,

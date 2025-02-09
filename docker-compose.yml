@@ -1,7 +1,7 @@
 # docker compose up --build
 services:
   node:
-    container_name: sophia-dev # name should match the filter in the ./bin/container script
+    container_name: typedai-dev # name should match the filter in the ./bin/container script
     restart: always
     ports:
       - 4200:4200
@@ -10,11 +10,11 @@ services:
       context: ./
       dockerfile: Dockerfile.dev
     volumes:
-      - ~/.config/gcloud:/home/sophia/.config/gcloud # Comment out if not using Google Cloud
+      - ~/.config/gcloud:/home/typedai/.config/gcloud # Comment out if not using Google Cloud
       # Mount project files but exclude node_modules
-      - ./:/home/sophia/:delegated
-      - /home/sophia/node_modules
-      - /home/sophia/frontend/node_modules
+      - ./:/home/typedai/:delegated
+      - /home/typedai/node_modules
+      - /home/typedai/frontend/node_modules
 #    environment:
 #      GIT_DISCOVERY_ACROSS_FILESYSTEM: 1
 #      - var=value

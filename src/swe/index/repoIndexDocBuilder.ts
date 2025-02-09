@@ -6,12 +6,12 @@ import { getFileSystem, llms } from '#agent/agentContextLocalStorage';
 import { logger } from '#o11y/logger';
 import { withActiveSpan } from '#o11y/trace';
 import { errorToString } from '#utils/errors';
-import { sophiaDirName } from '../../appVars';
+import { typedaiDirName } from '../../appVars';
 
 /**
  * This module builds summary documentation for a project/repository, to assist with searching in the repository.
  * This should generally be run in the root folder of a project/repository.
- * The documentation summaries are saved in a parallel directory structure under the.sophia/docs folder
+ * The documentation summaries are saved in a parallel directory structure under the.typedai/docs folder
  *
  * The documentation is generated bottom-up, and takes into account the parent folder summaries available upto the repository root.
  * Given initially there isn't any folder level summaries, two passes are initially required.
@@ -35,7 +35,7 @@ const BATCH_SIZE = 10;
 /**
  * This auto-generates summary documentation for a project/repository, to assist with searching in the repository.
  * This should generally be run in the root folder of a project/repository.
- * The documentation summaries are saved in a parallel directory structure under the .sophia/docs folder
+ * The documentation summaries are saved in a parallel directory structure under the .typedai/docs folder
  */
 export async function buildIndexDocs(): Promise<void> {
 	logger.info('Building index docs');
@@ -285,7 +285,7 @@ function getSummaryFileName(filePath: string): string {
 	const relativeFilePath = path.relative(getFileSystem().getWorkingDirectory(), filePath);
 	const fileName = basename(relativeFilePath);
 	const dirPath = dirname(relativeFilePath);
-	return join(sophiaDirName, 'docs', dirPath, `${fileName}.json`);
+	return join(typedaiDirName, 'docs', dirPath, `${fileName}.json`);
 }
 
 // -----------------------------------------------------------------------------
@@ -316,7 +316,7 @@ async function buildFolderSummary(folderPath: string): Promise<void> {
 		folderSummary.path = relativeFolderPath;
 
 		const folderName = basename(folderPath);
-		const summaryPath = join(sophiaDirName, 'docs', relativeFolderPath, `_${folderName}.json`);
+		const summaryPath = join(typedaiDirName, 'docs', relativeFolderPath, `_${folderName}.json`);
 		await fs.mkdir(dirname(summaryPath), { recursive: true });
 		await fs.writeFile(summaryPath, JSON.stringify(folderSummary, null, 2));
 		logger.info(`Generated summary for folder ${relativeFolderPath}`);
@@ -361,7 +361,7 @@ async function getSubFolderSummaries(folder: string): Promise<Summary[]> {
 	for (const subFolder of subFolders) {
 		const folderName = subFolder.split('/').pop();
 		const relativeSubFolder = path.relative(fileSystem.getWorkingDirectory(), path.join(folder, subFolder));
-		const summaryPath = join('.sophia', 'docs', relativeSubFolder, `_${folderName}.json`);
+		const summaryPath = join('.typedai', 'docs', relativeSubFolder, `_${folderName}.json`);
 		logger.info(`Folder summary path ${summaryPath}`);
 		try {
 			const summaryContent = await fs.readFile(summaryPath, 'utf-8');
@@ -468,7 +468,7 @@ async function getAllFolderSummaries(rootDir: string): Promise<Summary[]> {
 
 	for (const folder of folders) {
 		const folderName = folder.split('/').pop();
-		const summaryPath = join(rootDir, '.sophia', 'docs', folder, `_${folderName}.json`);
+		const summaryPath = join(rootDir, '.typedai', 'docs', folder, `_${folderName}.json`);
 		try {
 			const summaryContent = await fs.readFile(summaryPath, 'utf-8');
 			summaries.push(JSON.parse(summaryContent));
@@ -509,13 +509,13 @@ Include folder path names and file paths where applicable to help readers naviga
 }
 
 async function saveTopLevelSummary(rootDir: string, summary: string): Promise<void> {
-	const summaryPath = join(sophiaDirName, 'docs', '_summary');
+	const summaryPath = join(typedaiDirName, 'docs', '_summary');
 	await fs.writeFile(summaryPath, JSON.stringify(summary, null, 2));
 }
 
 export async function getTopLevelSummary(): Promise<string> {
 	try {
-		return (await fs.readFile(join(sophiaDirName, 'docs', '_summary'))).toString();
+		return (await fs.readFile(join(typedaiDirName, 'docs', '_summary'))).toString();
 	} catch (e) {
 		return '';
 	}
@@ -533,7 +533,7 @@ async function getParentSummaries(folderPath: string): Promise<Summary[]> {
 
 	while (currentPath !== '.') {
 		const folderName = basename(currentPath);
-		const summaryPath = join(sophiaDirName, 'docs', currentPath, `_${folderName}.json`);
+		const summaryPath = join(typedaiDirName, 'docs', currentPath, `_${folderName}.json`);
 		try {
 			const summaryContent = await fs.readFile(summaryPath, 'utf-8');
 			parentSummaries.unshift(JSON.parse(summaryContent));
@@ -571,7 +571,7 @@ export async function loadBuildDocsSummaries(createIfNotExits = false): Promise<
 	// If in a git repo use the repo root to store the summary index files
 	const repoFolder = (await fss.getVcsRoot()) ?? fss.getWorkingDirectory();
 
-	const docsDir = join(repoFolder, sophiaDirName, 'docs');
+	const docsDir = join(repoFolder, typedaiDirName, 'docs');
 	logger.info(`Load summaries from ${docsDir}`);
 
 	try {

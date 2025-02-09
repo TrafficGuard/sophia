@@ -4,7 +4,7 @@ import { func, funcClass } from '#functionSchema/functionDecorators';
 /**
  * Provides functions for LLMs to access the file system. Tools should generally use the functions as
  * - They are automatically included in OpenTelemetry tracing
- * - They use the working directory, so Sophia can perform its actions outside the process running directory.
+ * - They use the working directory, so TypedAI can perform its actions outside the process running directory.
  *
  * The FileSystem is constructed with the basePath property which is like a virtual root.
  * Then the workingDirectory property is relative to the basePath.

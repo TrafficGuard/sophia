@@ -1,6 +1,6 @@
 # AI Code reviews
 
-Sophia has support for AI code reviews of GitLab merge requests. Adding GitHub support is a good candidate for using the Code Editor agent to assist with!
+TypedAI has support for AI code reviews of GitLab merge requests. Adding GitHub support is a good candidate for using the Code Editor agent to assist with!
 
 AI code reviews are useful for guidelines where a lint rule doesn't exist yet, or it can't easily be codified.
 
@@ -15,14 +15,14 @@ Each configuration has three filters to determine if a review will be done on a 
 
 Lines numbers are added to the diffs as comments every 10 lines and in blank lines to assist the AI in providing the correct line number in the merge request diff to add the comment.
 
-![Code review config](https://public.trafficguard.ai/sophia/code-reviews.png)
+![Code review config](https://public.trafficguard.ai/typedai/code-reviews.png)
 
 # GitLab Configuration
 
 You will need to create a webhook in GitLab for the group(s)/project(s) you want to have the AI reviews enabled on.
 
-In `Settings -> Webhooks` configure a webhook to your Sophia deployment with the *Merge request events* checked.
+In `Settings -> Webhooks` configure a webhook to your TypedAI deployment with the *Merge request events* checked.
 
-![Gitlab webhook](https://public.trafficguard.ai/sophia/gitlab-webhook1.png)
+![Gitlab webhook](https://public.trafficguard.ai/typedai/gitlab-webhook1.png)
 
-![Gitlab webhook](https://public.trafficguard.ai/sophia/gitlab-webhook2.png)
+![Gitlab webhook](https://public.trafficguard.ai/typedai/gitlab-webhook2.png)

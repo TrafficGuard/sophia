@@ -34,19 +34,19 @@ cd ..
 
 # Setup for bash
 if [ -f ~/.bashrc ]; then
-    if ! grep -q "SOPHIA_HOME" ~/.bashrc; then
-        echo "\n# Sophia CLI environment" >> ~/.bashrc
-        echo "export SOPHIA_HOME=$(pwd)" >> ~/.bashrc
-        echo "export PATH=\$SOPHIA_HOME/bin/path:\$PATH" >> ~/.bashrc
+    if ! grep -q "TYPEDAI_HOME" ~/.bashrc; then
+        echo "\n# TypedAI CLI environment" >> ~/.bashrc
+        echo "export TYPEDAI_HOME=$(pwd)" >> ~/.bashrc
+        echo "export PATH=\$TYPEDAI_HOME/bin/path:\$PATH" >> ~/.bashrc
     fi
 fi
 
 # Setup for zsh
 if [ -f ~/.zshrc ]; then
-    if ! grep -q "SOPHIA_HOME" ~/.zshrc; then
-        echo "\n# Sophia CLI environment" >> ~/.zshrc
-        echo "export SOPHIA_HOME=$(pwd)" >> ~/.zshrc
-        echo "export PATH=\$SOPHIA_HOME/bin/path:\$PATH" >> ~/.zshrc
+    if ! grep -q "TYPEDAI_HOME" ~/.zshrc; then
+        echo "\n# TypedAI CLI environment" >> ~/.zshrc
+        echo "export TYPEDAI_HOME=$(pwd)" >> ~/.zshrc
+        echo "export PATH=\$TYPEDAI_HOME/bin/path:\$PATH" >> ~/.zshrc
     fi
 fi
 

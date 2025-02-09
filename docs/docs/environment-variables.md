@@ -30,7 +30,7 @@ This document provides comprehensive details about the environment variables uti
 - **Description**: The base URL for the user interface.
 - **Default Value**: `http://localhost:4200/`
 
-**SOPHIA_FS**
+**TYPEDAI_FS**
 
 - **Description**: The base path for the FileSystem interface/tool. Useful for editing code in other local repositories. Alternatively use the -fs= arg.
 - **Default Value**: (Not set - defaults to `process.cwd()`)
@@ -78,7 +78,7 @@ This document provides comprehensive details about the environment variables uti
 **TRACE_SERVICE_NAME**
 
 - **Description**: The name of the service for tracing purposes.
-- **Default Value**: `sophia`
+- **Default Value**: `typedai`
 
 **TRACE_AUTO_INSTRUMENT**
 

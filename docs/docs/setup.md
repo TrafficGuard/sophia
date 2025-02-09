@@ -1,9 +1,9 @@
 # Setup
 
 ```bash
-git clone https://github.com/TrafficGuard/sophia.git
+git clone https://github.com/TrafficGuard/typedai.git
 # Copy the default configuration file
-cd sophia/variables
+cd typedai/variables
 cp local.env.example local.env
 ```
 
@@ -11,10 +11,10 @@ cp local.env.example local.env
 
 ### Base configuration
 
-The `variables/local.env` file contains the configuration when running Sophia using the `npm run start:local` command.
+The `variables/local.env` file contains the configuration when running TypedAI using the `npm run start:local` command.
 
-By default, Sophia runs in `single_user` authentication mode. A user profile will be created the first time the application is run.
-Update the `SINGLE_USER_EMAIL` variable with your email before running Sophia for the first time.
+By default, TypedAI runs in `single_user` authentication mode. A user profile will be created the first time the application is run.
+Update the `SINGLE_USER_EMAIL` variable with your email before running TypedAI for the first time.
 
 The LLM service API keys and integration configurations can be set on your profile in the web UI, or alternatively in the `variables/local.env` file. Values in the user profile take preferences over the environment configuration values.
 
@@ -62,7 +62,7 @@ As Claude is only available in [select regions](https://cloud.google.com/vertex-
 If you want to get running ASAP then:
 
 - In `variables/local.env` update `DATABASE` to `memory` and update `TRACE_AGENT_ENABLED` to `false`
-- In `docker-compose.yml` comment out the line `~/.config/gcloud:/home/sophia/.config/gcloud`
+- In `docker-compose.yml` comment out the line `~/.config/gcloud:/home/typedai/.config/gcloud`
 
 ### Additional configuration
 
@@ -84,7 +84,7 @@ Install:
 - [ripgrep](https://github.com/BurntSushi/ripgrep?tab=readme-ov-file#installation)
 - [gcloud](https://cloud.google.com/sdk/docs/install)
 
-From the Sophia repository root run `source ./bin/configure`
+From the TypedAI repository root run `source ./bin/configure`
 
 The configure script will:
 

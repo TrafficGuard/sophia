@@ -47,6 +47,6 @@ export async function initServer(): Promise<void> {
 			requestDecorators: {},
 		});
 	} catch (err: any) {
-		logger.fatal(err, 'Could not start Sophia');
+		logger.fatal(err, 'Could not start TypedAI');
 	}
 }

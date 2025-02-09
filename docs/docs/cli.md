@@ -5,7 +5,7 @@ There are two main ways to interact with the system:
 
 ## Running the server & UI
 
-Run the following commands from the sophia git repo root directory.
+Run the following commands from the typedai git repo root directory.
 
 ### Local install
 In one terminal run
@@ -28,26 +28,26 @@ The UI will be available at [http://localhost:4200](http://localhost:4200)
 
 ## Running in Docker
 
-To run the CLI scripts when using the Docker container, run the script `./bin/container` from the repo root to first open a bash shell inside the Sophia development container.
+To run the CLI scripts when using the Docker container, run the script `./bin/container` from the repo root to first open a bash shell inside the TypedAI development container.
 
 ### Running outside the repository
 
-To run Sophia agents/workflows via the CLI script described below, in a folder outside the sophia repository, the script at `bin/path/ss` allows you to invoke the Sophia package.json scripts from any directory.
+To run TypedAI agents/workflows via the CLI script described below, in a folder outside the typedai repository, the script at `bin/path/ss` allows you to invoke the TypedAI package.json scripts from any directory.
 
 The `bin/configure` script will update your shell configuration files to include it in your PATH.
 
-Either run the `bin/configure` script from the Sophia repository root or copy and run the required section from the script. This will add to your .bashrc and .zshrc files (if they exist) the output of:
+Either run the `bin/configure` script from the TypedAI repository root or copy and run the required section from the script. This will add to your .bashrc and .zshrc files (if they exist) the output of:
 
 ```bash
-export SOPHIA_HOME=$(pwd)
-export PATH=$SOPHIA_HOME/bin/path:$PATH
+export TYPEDAI_HOME=$(pwd)
+export PATH=$TYPEDAI_HOME/bin/path:$PATH
 ```
 
 Then from any folder you can run commands like:
 
 `ss query what test frameworks does this repository use`
 
-Where *query* is the Sophia package.json script. For all the examples in the CLI scripts section above you can replace `npm run` with `ss`
+Where *query* is the TypedAI package.json script. For all the examples in the CLI scripts section above you can replace `npm run` with `ss`
 
 
 ### CLI scripts
@@ -73,7 +73,7 @@ npm run agent research the latest news about large language models and write a r
 
 Without arguments the prompt is read from `src/cli/code-in` otherwise it uses the provided arguments for the prompt.
 
-This is a useful for editing the sophia codebase. You could run a command like:
+This is a useful for editing the typedai codebase. You could run a command like:
 
 ```bash
 npm run code In the anthropic vertex class update the pricing for claude 3.5 sonnet to be 3 dollars per million input tokens and 15 dollars per million output tokens
@@ -86,7 +86,7 @@ directory set to the current shell directory.
 
 `npm run index` or `ss index`
 
-This runs the agent which indexes a repository, and stores the summary index docs under `.sophia/docs`
+This runs the agent which indexes a repository, and stores the summary index docs under `.typedai/docs`
 
 ### slack
 

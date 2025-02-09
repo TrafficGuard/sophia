@@ -11,9 +11,9 @@ RUN apt install -y nodejs
 
 RUN pip install aider-chat
 
-ENV user=sophia
-ENV homedir=/home/sophia/
-RUN useradd --create-home -g users sophia
+ENV user=typedai
+ENV homedir=/home/typedai/
+RUN useradd --create-home -g users typedai
 
 WORKDIR $homedir
 

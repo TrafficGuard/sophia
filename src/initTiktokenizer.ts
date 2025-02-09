@@ -1,6 +1,6 @@
 import { countTokens } from '#llm/tokens';
 
-// node_modules is read-only for the sophia user in prod, so download in the docker build
+// node_modules is read-only for the typedai user in prod, so download in the docker build
 countTokens('hi')
 	.catch((err) => {
 		console.error('Failed to download tiktoken model');

@@ -1,6 +1,6 @@
 # AI Coding Agents
 
-The Sophia software/coding agents build upon the project [Aider](https://aider.chat/), providing additional agents around it for quality and automation.
+The TypedAI software/coding agents build upon the project [Aider](https://aider.chat/), providing additional agents around it for quality and automation.
 
 ## Code Editing Agent
 
@@ -22,11 +22,11 @@ The [Code Editor Agent](https://github.com/TrafficGuard/nous/blob/main/src/swe/c
 
 ### FileSystem
 
-The agent context has a FileSystem, which defaults to the Sophia project directory. If you want to use the code editing agent
+The agent context has a FileSystem, which defaults to the TypedAI project directory. If you want to use the code editing agent
 on another local repo then the options are:
 
 - Use the `ss` script described in the [CLI](cli.md) documentation.
-- Set the SOPHIA_FS environment variable to the repository path before running a command to start an agent.
+- Set the TYPEDAI_FS environment variable to the repository path before running a command to start an agent.
 - In a custom agent/workflow set the `RunAgentConfig.fileSystemPath` property on a new agent.
 
 ### Project Info
@@ -39,7 +39,7 @@ If the agent makes a mistake in the detection then manually edit the projectInfo
 
 ### Language Tools
  
-Sophia aims to be a flexible platform, and one example is the language specific tooling. The project detection also detects which language a project uses.
+TypedAI aims to be a flexible platform, and one example is the language specific tooling. The project detection also detects which language a project uses.
 
 The initial `LanguageTools` interface has the `generateProjectMap`, `getInstalledPackages` and `installPackage` methods.
 

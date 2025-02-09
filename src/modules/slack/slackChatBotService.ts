@@ -147,7 +147,7 @@ export class SlackChatBotService implements ChatBotService, AgentCompleted {
 						functions: CHATBOT_FUNCTIONS,
 						agentName: `Slack-${threadId}`,
 						systemPrompt:
-							'You are an AI support agent called Sophia.  You are responding to support requests on the company Slack account. Respond in a helpful, concise manner. If you encounter an error responding to the request do not provide details of the error to the user, only respond with "Sorry, I\'m having difficulties providing a response to your request"',
+							'You are an AI support agent called TypedAI.  You are responding to support requests on the company Slack account. Respond in a helpful, concise manner. If you encounter an error responding to the request do not provide details of the error to the user, only respond with "Sorry, I\'m having difficulties providing a response to your request"',
 						metadata: { channel: event.channel },
 						completedHandler: this,
 					});

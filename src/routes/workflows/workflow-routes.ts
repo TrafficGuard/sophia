@@ -11,7 +11,7 @@ import { logger } from '#o11y/logger';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
 import { queryWorkflow } from '#swe/discovery/selectFilesAgent';
 import { SelectFilesResponse, selectFilesToEdit } from '#swe/discovery/selectFilesToEdit';
-import { sophiaDirName, systemDir } from '../../appVars';
+import { systemDir, typedaiDirName } from '../../appVars';
 import { AppFastifyInstance } from '../../server';
 
 function findRepositories(dir: string): string[] {
@@ -110,7 +110,7 @@ export async function workflowRoutes(fastify: AppFastifyInstance) {
 					// In the UI we strip out the systemDir
 					logger.info(`systemDir ${systemDir()}`);
 					logger.info(`workinDir ${workingDirectory}`);
-					if (join(workingDirectory, sophiaDirName) !== systemDir()) {
+					if (join(workingDirectory, typedaiDirName) !== systemDir()) {
 						workingDirectory = join(systemDir(), workingDirectory);
 					}
 					logger.info(`Setting working directory to ${workingDirectory}`);

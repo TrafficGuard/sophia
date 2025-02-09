@@ -1,6 +1,6 @@
 # LLMs
 
-Sophia provides a simple LLM interface which wraps the Vercel [ai npm package](https://sdk.vercel.ai/) to
+TypedAI provides a simple LLM interface which wraps the Vercel [ai npm package](https://sdk.vercel.ai/) to
 
 - Provide simple overloads to `generateText` with a single user message and optionally a system prompt
 - Add OpenTelemetry tracing
@@ -17,10 +17,10 @@ New LLM services need to be registered in `lmFactory.ts`
 
 ## Source links
 
-[LLM interface](https://github.com/TrafficGuard/sophia/blob/main/src/llm/llm.ts)
+[LLM interface](https://github.com/TrafficGuard/typedai/blob/main/src/llm/llm.ts)
 
-[BaseLLM class](https://github.com/TrafficGuard/sophia/blob/main/src/llm/base-llm.ts)
+[BaseLLM class](https://github.com/TrafficGuard/typedai/blob/main/src/llm/base-llm.ts)
 
-[AiLLM class](https://github.com/TrafficGuard/sophia/blob/main/llm/services/ai-llm.ts)
+[AiLLM class](https://github.com/TrafficGuard/typedai/blob/main/llm/services/ai-llm.ts)
 
-[LLM service implementations](https://github.com/TrafficGuard/sophia/tree/main/src/llm/services)
+[LLM service implementations](https://github.com/TrafficGuard/typedai/tree/main/src/llm/services)
