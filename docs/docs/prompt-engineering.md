@@ -20,6 +20,13 @@ Making explicit in the prompts what we do unconsciously.
 
 
 
+Get the LLM to ask Clarifying Questions
+(See https://arxiv.org/html/2405.19616v1 #9.4)
+
+Recommend Other Adversarial Examples
+What other similar versions of popular problems might you overfit on and therefore cause it to answer incorrectly or essentially over analyse?
+
+
 A prompt when the task is coding TypeScript might include
 
 > Consider sub-types, union types, generics, type narrowing, utility types,

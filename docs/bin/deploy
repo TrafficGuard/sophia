@@ -1,0 +1,1 @@
+./bin/build && cd site && gsutil -m cp -r . gs://$DOCS_BUCKET/

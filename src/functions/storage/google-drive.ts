@@ -1,22 +1,52 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import { homedir } from 'node:os';
+import * as path from 'node:path';
 import { OAuth2Client } from 'google-auth-library';
 import { drive_v3, google } from 'googleapis';
 import { func, funcClass } from '#functionSchema/functionDecorators';
+import { currentUser } from '#user/userService/userContext';
+import { envVar } from '#utils/env-var';
+
+const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
 
 /**
  * AI generated. Not tested at all.
  */
 @funcClass(__filename)
 export class GoogleDrive {
-	private readonly driveClient: drive_v3.Drive;
+	private driveClient: drive_v3.Drive;
+
+	private async api(): Promise<drive_v3.Drive> {
+		// const key = require('./path/to/service-account.json');
+		// const jwtClient = new google.auth.JWT({
+		// 	email: key.client_email,
+		// 	key: key.private_key,
+		// 	scopes: ['https://www.googleapis.com/auth/drive'],
+		// 	subject: 'user@domain.com'  // Email of the user to impersonate
+		// });
+
+		const auth = new google.auth.GoogleAuth({
+			// keyFile: 'path/to/service-account.json',  // Path to your service account key file
+			scopes: ['https://www.googleapis.com/auth/drive'],
+			projectId: envVar('GCLOUD_PROJECT'),
+			clientOptions: {
+				subject: currentUser().email, // Email of the user to impersonate
+			},
+		});
+
+		this.driveClient ??= google.drive({
+			version: 'v3',
+			auth: auth,
+		});
+		return this.driveClient;
+	}
 
 	/**
 	 * Lists the files
 	 */
 	@func()
 	public async list(): Promise<drive_v3.Schema$File[]> {
-		const res = await this.driveClient.files.list({
+		const res = await (await this.api()).files.list({
 			pageSize: 10,
 			fields: 'nextPageToken, files(id, name)',
 		});

@@ -8,14 +8,14 @@ import { groqLlama3_3_70B } from '../services/groq';
 /**
  * LLM implementation for Llama 3.3 70b that prioritizes speed and falls back to other providers.
  */
-export class FastestLlama3_70B extends BaseLLM {
+export class MultiLlama3_70B extends BaseLLM {
 	private readonly providers: LLM[];
 
 	constructor() {
 		super(
-			'Llama3.3-70b (Fastest)',
+			'Llama3.3-70b (Fast)',
 			'multi',
-			'fastest-llama3-70b',
+			'fast-llama3-70b',
 			0, // Initialized later
 			() => 0,
 			() => 0,
