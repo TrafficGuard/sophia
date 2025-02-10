@@ -2,7 +2,7 @@ site_name: TypedAI
 site_url: https://typedai.dev/
 theme:
   name: material
-  logo: assets/s.png
+  logo: assets/tai.png
   palette:
     primary: black
   icon:
