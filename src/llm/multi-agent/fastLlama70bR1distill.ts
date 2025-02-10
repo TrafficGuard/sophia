@@ -1,27 +1,28 @@
+import { MultiLlama3_70B } from '#llm/multi-agent/fastLlama70b';
 import { cerebrasLlama3_3_70b } from '#llm/services/cerebras';
 import { logger } from '#o11y/logger';
 import { BaseLLM } from '../base-llm';
 import { GenerateTextOptions, LLM, LlmMessage } from '../llm';
 import { fireworksLlama3_70B } from '../services/fireworks';
-import { groqLlama3_3_70B } from '../services/groq';
+import { groqLlama3_3_70B, groqLlama3_3_70B_R1_Distill } from '../services/groq';
 
 /**
- * LLM implementation for Llama 3.3 70b that prioritizes speed and falls back to other providers.
+ * LLM implementation for Llama 3.3 70b DeepSeek R1 distill that prioritizes speed and falls back to other providers.
  */
-export class MultiLlama3_70B extends BaseLLM {
+export class MultiLlama3_70B_R1_Distill extends BaseLLM {
 	private readonly providers: LLM[];
 
 	constructor() {
 		super(
-			'Llama3.3-70b (Fast)',
+			'Llama3.3-70b R1 Distill (Fast)',
 			'multi',
-			'fast-llama3-70b',
+			'fast-llama3-70b-r1-distill',
 			0, // Initialized later
 			() => 0,
 			() => 0,
 		);
 		// Define the providers and their priorities. Lower number = higher priority
-		this.providers = [cerebrasLlama3_3_70b(), groqLlama3_3_70B(), fireworksLlama3_70B()];
+		this.providers = [groqLlama3_3_70B_R1_Distill(), groqLlama3_3_70B_R1_Distill(), fireworksLlama3_70B()];
 
 		this.maxInputTokens = Math.max(...this.providers.map((p) => p.getMaxInputTokens()));
 	}

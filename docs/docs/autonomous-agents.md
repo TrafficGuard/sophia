@@ -7,7 +7,7 @@
 - LLM function schemas auto-generated from source code
 - Human-in-the-loop for budget control, agent initiated questions and error handling
 
-Sophia provides two autonomous agents which work to complete the request via a control loop which iteratively (re-)plans and calls the functions available to the agent.
+TypedAI provides two autonomous agents which work to complete the request via a control loop which iteratively (re-)plans and calls the functions available to the agent.
 
 At a high level they share the same internal state, agent memory, human-in-the loop, functional calling history etc. 
 
@@ -57,4 +57,4 @@ When the budget control or control loop iteration thresholds have been reached, 
 
 More configuration will be provided soon.
 
-![Agent feedback request](https://public.trafficguard.ai/nous/feedback.png){ align=left }
+![Agent feedback request](https://public.trafficguard.ai/typedai/feedback.png){ align=left }

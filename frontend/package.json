@@ -1,7 +1,7 @@
 {
-  "name": "@sophia/ui",
-  "version": "0.6.0",
-  "description": "Sophia AI platform",
+  "name": "@typedai/ui",
+  "version": "0.7.0",
+  "description": "TypedAI platform",
   "author": "https://themeforest.net/user/srcn, Daniel Campagnoli, TrafficGuard Pty Ltd, and contributors",
   "license": "https://themeforest.net/licenses/standard",
   "private": true,

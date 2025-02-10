@@ -12,6 +12,8 @@ import { Perplexity } from '#functions/web/perplexity';
 import { PublicWeb } from '#functions/web/web';
 import { Slack } from '#modules/slack/slack';
 import { CodeEditingAgent } from '#swe/codeEditingAgent';
+import { NpmPackages } from '#swe/lang/nodejs/npmPackages';
+import { TypescriptTools } from '#swe/lang/nodejs/typescriptTools';
 import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
 
 /**
@@ -35,6 +37,8 @@ export function functionRegistry(): Array<new () => any> {
 		LlmTools,
 		ImageGen,
 		PublicWeb,
+		NpmPackages,
+		TypescriptTools,
 		// Add your own classes below this line
 	];
 }

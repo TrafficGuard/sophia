@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Shortcut to running `npm run <script> <arg>` from the Sophia installation
+# Shortcut to running `npm run <script> <arg>` from the TypedAI installation
 # Usage: `ss <script> <args>`
 
-if [ -z "$SOPHIA_HOME" ]; then
-  echo "Error: SOPHIA_HOME is not set."
+if [ -z "$TYPEDAI_HOME" ]; then
+  echo "Error: TYPEDAI_HOME is not set."
   exit 1
 fi
 
@@ -24,10 +24,9 @@ CWD=$(pwd)
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-set -x
 # Run the npm script with any additional arguments and the filesystem arg
 (
-  cd "$SOPHIA_HOME"
+  cd "$TYPEDAI_HOME"
   nvm use
   npm run "$script" -- --fs="${CWD}" "$@"
 )

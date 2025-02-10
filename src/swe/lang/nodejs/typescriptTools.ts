@@ -5,7 +5,7 @@ import { getFileSystem } from '#agent/agentContextLocalStorage';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { logger } from '#o11y/logger';
 import { ExecResult, execCommand, failOnError, runShellCommand } from '#utils/exec';
-import { sophiaDirName } from '../../../appVars';
+import { typedaiDirName } from '../../../appVars';
 import { LanguageTools } from '../languageTools';
 
 // https://typescript.tv/errors/
@@ -38,7 +38,7 @@ export class TypescriptTools implements LanguageTools {
 		logger.info('Generating TypeScript project map');
 		const fss = getFileSystem();
 		const rootFolder = (await fss.getVcsRoot()) ?? fss.getWorkingDirectory();
-		const dtsFolder = join(rootFolder, sophiaDirName, 'dts');
+		const dtsFolder = join(rootFolder, typedaiDirName, 'dts');
 		await promisify(fs.mkdir)(dtsFolder, { recursive: true });
 		const tsConfigExists = await fss.fileExists('tsconfig.json');
 		if (!tsConfigExists) throw new Error(`tsconfig.json not found in ${fss.getWorkingDirectory()}`);

@@ -85,7 +85,12 @@ export async function detectProjectInfo(requirements?: string): Promise<ProjectI
 		// TODO check projectInfo matches the format we expect
 		const info = parseProjectInfo(projectInfoJson);
 		if (info !== null) return info;
+	} else if (await fileSystem.fileExists(join(fileSystem.getVcsRoot(), 'projectInfo.json'))) {
+		throw new Error(
+			'TODO handle if we are in a directory inside a repository. Look for the projectInfo.json in the repo root folder and see if any entry exists for the current folder or above ',
+		);
 	}
+
 	logger.info('Detecting project info...');
 	const tree = await fileSystem.getFileSystemTree();
 

@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { agentContext, getFileSystem } from '#agent/agentContextLocalStorage';
 import { func, funcClass } from '#functionSchema/functionDecorators';
 import { PublicWeb } from '#functions/web/web';
@@ -9,8 +10,53 @@ export interface NpmPackageInfo {
 	gitHubUrl: string;
 }
 
+interface NpmOrgPackageInfo {
+	name: string;
+	version: string;
+	description: string;
+	links: {
+		npm: string;
+		homepage?: string;
+		repository?: string;
+		bugs?: string;
+	};
+}
+
+interface SearchResponse {
+	objects: Array<{
+		package: NpmOrgPackageInfo;
+	}>;
+	total: number;
+	time: string;
+}
+
 @funcClass(__filename)
 export class NpmPackages {
+	/**
+	 * Gets the latest version of a NPM package from registry.npmjs.org
+	 * @param packageName the NPM package name
+	 */
+	@func()
+	async getLatestNpmPackageVersion(packageName: string): Promise<string | null> {
+		try {
+			const response = await axios.get<SearchResponse>(`https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(packageName)}&size=3`);
+
+			const packages = response.data.objects;
+
+			// Find the exact match for the package name
+			const exactMatch = packages.find((obj) => obj.package.name.toLowerCase() === packageName.toLowerCase());
+
+			return exactMatch?.package.version ?? null;
+		} catch (error) {
+			if (axios.isAxiosError(error)) {
+				console.error('Error fetching package info:', error.message);
+			} else {
+				console.error('Unexpected error:', error);
+			}
+			return null;
+		}
+	}
+
 	/**
 	 * @param npmPackageName
 	 */

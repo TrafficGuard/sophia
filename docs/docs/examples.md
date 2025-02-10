@@ -16,7 +16,7 @@ The following are the prompts used to create the function-edit-modal component t
 <!-- -->
 > can you update the function-edit-modal component to remain the same height when the filter input filters down the list of displayed functions to select
 
-![Edit functions](https://public.trafficguard.ai/sophia/edit-functions.png)
+![Edit functions](https://public.trafficguard.ai/typedai/edit-functions.png)
 
 ## Adding LLM integration tests tests
 

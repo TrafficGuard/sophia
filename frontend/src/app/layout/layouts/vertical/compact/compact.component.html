@@ -15,7 +15,8 @@
         <!-- Logo -->
         <div class="mb-4 mt-3 flex h-20 items-center justify-center">
             <!--<img class="w-10" src="images/logo/logo.svg" alt="Logo image" />-->
-            <img class="w-10" src="images/logo/s.png" alt="Sophia"/>
+            <img class="flex w-10 dark:hidden" src="images/logo/tai.png" alt="TypedAI"/>
+            <img class="hidden w-10 dark:flex" src="images/logo/tai-dark.png" alt="TypedAI"/>
         </div>
     </ng-container>
 </fuse-vertical-navigation>
@@ -24,7 +25,7 @@
 <div class="flex w-full min-w-0 flex-auto flex-col">
     <!-- Header -->
     <div
-        class="bg-card relative z-49 flex h-16 w-full flex-0 items-center px-4 shadow dark:border-b dark:bg-transparent dark:shadow-none md:px-6 print:hidden"
+        class="bg-card relative z-49 flex h-12 w-full flex-0 items-center px-4 shadow dark:border-b dark:bg-transparent dark:shadow-none md:px-6 print:hidden"
     >
         <!-- Navigation toggle button -->
         <button mat-icon-button (click)="toggleNavigation('mainNavigation')">

@@ -24,7 +24,7 @@ Any TypeScript file which is used as an application entry point should being wit
 Tracing is implemented with OpenTelemetry. The environment variables which configure tracing are:
 ```
 TRACE_AGENT_ENABLED=true
-TRACE_SERVICE_NAME=sophia
+TRACE_SERVICE_NAME=typedai
 TRACE_AUTO_INSTRUMENT=true
 TRACE_SAMPLE_RATE=1
 ```
@@ -40,7 +40,7 @@ The `TRACE_AUTO_INSTRUMENT` variable enables the trace instrumentation from the 
 
 
 ## Sample trace
-![Sample trace in Google Cloud](https://public.trafficguard.ai/nous/trace.png){ align=left }
+![Sample trace in Google Cloud](https://public.trafficguard.ai/typedai/trace.png){ align=left }
 
 ## Tracing code
 

@@ -28,7 +28,7 @@
 <div class="flex w-full min-w-0 flex-auto flex-col">
     <!-- Header -->
     <div
-        class="bg-card relative z-49 flex h-16 w-full flex-0 items-center px-4 shadow dark:border-b dark:bg-transparent dark:shadow-none sm:h-20 md:px-6 print:hidden"
+        class="bg-card relative z-49 flex h-16 w-full flex-0 items-center px-4 shadow dark:border-b dark:bg-transparent dark:shadow-none sm:h-14 md:px-6 print:hidden"
     >
         @if (!isScreenSmall) {
             <!-- Logo -->
@@ -46,7 +46,8 @@
                 </div>
                 <img class="flex w-8 lg:hidden" src="images/logo/logo.svg" />
                 -->
-                <img class="flex w-8" src="images/logo/s.png" alt="Sophia"/>
+                <img class="flex w-8 dark:hidden" src="images/logo/tai.png" alt="TypedAI"/>
+                <img class="hidden w-8 dark:flex" src="images/logo/tai-dark.png" alt="TypedAI"/>
             </div>
             <!-- Horizontal navigation -->
             <fuse-horizontal-navigation

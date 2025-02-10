@@ -11,11 +11,9 @@
             #drawer
         >
             <!-- Header -->
-            <div class="m-8 mr-6 flex items-center justify-between sm:my-10">
+            <div class="m-8 mr-6 flex items-center justify-between sm:my-8">
                 <!-- Title -->
-                <div
-                    class="text-3xl font-medium leading-none tracking-tight"
-                >
+                <div class="text-3xl font-medium leading-none tracking-tight">
                     Settings
                 </div>
                 <!-- Close button -->
@@ -73,7 +71,7 @@
         <!-- Drawer content -->
         <mat-drawer-content class="flex flex-col">
             <!-- Main -->
-            <div class="flex-auto px-6 pb-12 pt-9 md:p-8 md:pb-12 lg:p-12">
+            <div class="flex-auto px-6 pb-10 pt-9 md:p-8 md:pb-10 lg:p-10 lg:pt-4">
                 <!-- Panel header -->
                 <div class="flex items-center">
                     <!-- Drawer toggle -->
@@ -87,16 +85,17 @@
                         ></mat-icon>
                     </button>
 
-                    <!-- Panel title -->
+                    <!-- Panel title
                     <div
                         class="ml-2 text-3xl font-bold leading-none tracking-tight lg:ml-0"
                     >
                         {{ getPanelInfo(selectedPanel).title }}
                     </div>
+                    -->
                 </div>
 
                 <!-- Load settings panel -->
-                <div class="mt-8">
+                <div class="mt-6">
                     @switch (selectedPanel) {
                         <!-- Account -->
                         @case ('account') {

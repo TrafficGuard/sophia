@@ -1,6 +1,6 @@
 # AI Chat
 
-Sophia provides a chat interface like chatgpt.com or claude.ai.
+TypedAI provides a chat interface like chatgpt.com or claude.ai.
 
 ## LLM selection
 
@@ -26,4 +26,4 @@ in the new and previous messages, otherwise an error will occur.
 
 ## Screenshots
 
-![Chats](https://public.trafficguard.ai/sophia/chat.png)
+![Chats](https://public.trafficguard.ai/typedai/chat.png)

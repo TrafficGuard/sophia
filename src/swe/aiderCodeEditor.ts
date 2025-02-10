@@ -74,7 +74,7 @@ export class AiderCodeEditor {
 			);
 		}
 
-		// Use the Sophia system directory, not the FileSystem working directory
+		// Use the TypedAI system directory, not the FileSystem working directory
 		// as we want all the 'system' files in one place.
 		const agentId = agentContext()?.agentId ?? 'NONE';
 		const llmHistoryFolder = join(systemDir(), 'aider/llm-history');
@@ -95,7 +95,7 @@ export class AiderCodeEditor {
 
 		// Due to limitations in the provider APIs, caching statistics and costs are not available when streaming responses.
 		// --map-tokens=2048
-		// Use the Python from the Sophia .python-version as it will have aider installed
+		// Use the Python from the TypedAI .python-version as it will have aider installed
 		const fileToEditArg = filesToEdit.map((file) => `"${file}"`).join(' ');
 		logger.info(fileToEditArg);
 		const cmd = `${getPythonPath()} -m aider --no-check-update --cache-prompts ${commitArgs} --no-stream --yes ${modelArg} --llm-history-file="${llmHistoryFile}" --message-file=${messageFilePath} ${fileToEditArg}`;
@@ -159,8 +159,8 @@ function extractSessionCost(text: string): number {
 }
 
 export function getPythonPath() {
-	// Read the Sophia .python-version file
-	const pythonVersionFile = path.join(process.cwd(), '.python-version');
+	// Read the TypedAI .python-version file
+	const pythonVersionFile = path.join(process.env.TYPEDAI_HOME || process.cwd(), '.python-version');
 	const pythonVersion = fs.readFileSync(pythonVersionFile, 'utf8').trim();
 	// Use pyenv to find the path of the specified Python version
 	return `${execSync(`pyenv prefix ${pythonVersion}`, { encoding: 'utf8' }).trim()}/bin/python`;

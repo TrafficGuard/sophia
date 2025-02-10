@@ -1,3 +1,5 @@
+import { writeFileSync } from 'fs';
+import { join } from 'path';
 import axios, { AxiosInstance } from 'axios';
 import { llms } from '#agent/agentContextLocalStorage';
 import { func, funcClass } from '#functionSchema/functionDecorators';
@@ -5,6 +7,7 @@ import { getJiraIssueType } from '#functions/jiraIssueType';
 import { logger } from '#o11y/logger';
 import { functionConfig } from '#user/userService/userContext';
 import { envVar } from '#utils/env-var';
+import { systemDir } from '../appVars';
 import { cacheRetry } from '../cache/cacheRetry';
 
 export interface JiraConfig {
@@ -52,8 +55,8 @@ export class Jira {
 			// console.log(response.data.fields.summary);
 			// console.log('comments ============');
 			// console.log(response.data.fields.comment.comments);
-			// console.log('attachments ============');
-			// console.log(response.data.fields.attachment);
+			console.log('attachments ============');
+			console.log(response.data.fields.attachment);
 			// /rest/api/3/attachment/content/{id}
 
 			// for (const attachment of response.data.fields.attachment) {
@@ -63,7 +66,7 @@ export class Jira {
 			// 	try {
 			// 		const attachmentResponse = await this.axios().get(attachment.content, { responseType: 'arraybuffer' });
 			// 		const buffer = Buffer.from(attachmentResponse.data, 'binary');
-			// 		writeFileSync('image.png', buffer);
+			// 		writeFileSync(join(systemDir()), buffer);
 			// 	} catch (e) {
 			// 		logger.info(`Error getting attachment: ${e}`);
 			// 	}

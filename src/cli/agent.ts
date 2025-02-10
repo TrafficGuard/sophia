@@ -2,27 +2,28 @@ import '#fastify/trace-init/trace-init'; // leave an empty line next so this doe
 
 import { provideFeedback, resumeCompleted, resumeError, resumeHil, startAgentAndWait } from '#agent/agentRunner';
 import { FileSystemRead } from '#functions/storage/FileSystemRead';
-import { Perplexity } from '#functions/web/perplexity';
-import { PublicWeb } from '#functions/web/web';
 import { defaultLLMs } from '#llm/services/defaultLlms';
 import { logger } from '#o11y/logger';
-import { CodeEditingAgent } from '#swe/codeEditingAgent';
-import { SoftwareDeveloperAgent } from '#swe/softwareDeveloperAgent';
 import { appContext, initApplicationContext } from '../applicationContext';
 import { parseProcessArgs, saveAgentId } from './cli';
+import { resolveFunctionClasses } from './functionResolver';
 
 export async function main() {
 	const llms = defaultLLMs();
 	await initApplicationContext();
 
-	let functions: Array<any>;
-	functions = [FileSystemRead, SoftwareDeveloperAgent, Perplexity, PublicWeb];
-	functions = [CodeEditingAgent, Perplexity];
-	functions = [FileSystemRead];
-
-	const { initialPrompt, resumeAgentId } = parseProcessArgs();
+	const { initialPrompt, resumeAgentId, functionClasses } = parseProcessArgs();
 
 	console.log(`Prompt: ${initialPrompt}`);
+
+	let functions: Array<new () => any>;
+	if (functionClasses?.length) {
+		functions = await resolveFunctionClasses(functionClasses);
+	} else {
+		// Default to FileSystemRead if no functions specified
+		functions = [FileSystemRead];
+	}
+	logger.info(`Available tools ${functions.map((f) => f.name).join(', ')}`);
 
 	if (resumeAgentId) {
 		const agent = await appContext().agentStateService.load(resumeAgentId);

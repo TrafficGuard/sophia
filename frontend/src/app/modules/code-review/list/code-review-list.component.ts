@@ -13,7 +13,7 @@ import { MatToolbarModule } from "@angular/material/toolbar";
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import {MatProgressBar} from "@angular/material/progress-bar";
+import { MatProgressBar } from "@angular/material/progress-bar";
 
 @Component({
   selector: 'app-code-review-list',

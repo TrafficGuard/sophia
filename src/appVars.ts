@@ -1,8 +1,8 @@
-export const sophiaDirName = '.sophia';
+export const typedaiDirName = '.typedai';
 
-export const SOPHIA_FS = 'SOPHIA_FS';
+export const TYPEDAI_FS = 'TYPEDAI_FS';
 
 export function systemDir() {
-	// When deploying Sophia on a VM with a non-boot persistent disk for storage, then set SOPHIA_SYS_DIR
-	return `${process.env.SOPHIA_SYS_DIR || process.cwd()}/${sophiaDirName}`;
+	// When deploying TypedAI on a VM with a non-boot persistent disk for storage, then set TYPEDAI_SYS_DIR
+	return `${process.env.TYPEDAI_SYS_DIR || process.cwd()}/${typedaiDirName}`;
 }

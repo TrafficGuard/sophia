@@ -1,6 +1,6 @@
 /* eslint-disable semi */
 import { Span, SpanContext, Tracer } from '@opentelemetry/api';
-import opentelemetry from '@opentelemetry/api';
+import { trace } from '@opentelemetry/api';
 import { AsyncLocalStorage } from 'async_hooks';
 import { AgentContext } from '#agent/agentContextTypes';
 import { logger } from '#o11y/logger';
@@ -57,8 +57,8 @@ export function startSpan(spanName: string): Span {
 	return tracer?.startSpan(spanName) ?? <Span>(<unknown>dummyTracer.startSpan());
 }
 
-export function getActiveSpan(): Span | null {
-	return opentelemetry.trace.getActiveSpan();
+export function getActiveSpan(): Span | undefined {
+	return trace.getActiveSpan();
 }
 
 /**
@@ -81,7 +81,7 @@ export async function withActiveSpan<T>(spanName: string, func: (span: Span) => 
 	};
 
 	if (!tracer) return await functionWithCallStack(fakeSpan);
-	return await tracer.withActiveSpan(spanName, functionWithCallStack);
+	return tracer.withActiveSpan(spanName, functionWithCallStack);
 }
 
 /**
@@ -100,18 +100,45 @@ type SpanAttributeExtractor = number | ((...args: any) => string);
 type SpanAttributeExtractors = Record<string, SpanAttributeExtractor>;
 
 /**
- * Decorator for creating an active span around a function, which can add the function arguments as
- * attributes to the span. The decorator argument object has the keys as the attribute names
- * and the values as either 1) the function args array index 2) a function which takes the args array as its one argument
- * e.g.
- * @spanWithArgAttributes({ bar: 0, baz: (args) => args[1].toSpanAttributeValue() })
- * public foo(bar: string, baz: ComplexType) {}
+ * Decorator that creates an OpenTelemetry span around a class method for tracing.
  *
+ * @description
+ * This decorator wraps the decorated method in a trace span, allowing automatic capture
+ * of method execution data and custom attributes. It supports both synchronous and
+ * asynchronous methods.
  *
- * @param attributeExtractors
- * @returns
+ * @param attributeExtractors - An object defining span attributes to collect:
+ *   - Keys represent attribute names in the span
+ *   - Values can be either:
+ *     - A number indicating the argument index to extract from
+ *     - A function that receives all method arguments and returns the attribute value
+ *
+ * @param returns - Controls capturing of method return value:
+ *   - If true: stores raw return value in 'return' attribute
+ *   - If function: transforms return value before storing
+ *   - If false/undefined: return value is not captured
+ *
+ * @example
+ * ```typescript
+ * class UserService {
+ *   @span({
+ *     userId: 0,                                    // Capture first argument as 'userId'
+ *     payloadSize: (_, payload) => payload.length,  // Compute custom attribute. Takes the args array spread as parameters
+ *     timestamp: () => Date.now()                   // Static attribute
+ *   }, (user) => user.id)                           // Transform the awaited return value
+ *   async processUser(userId: string, payload: Buffer): Promise<User> {
+ *     // Method implementation
+ *   }
+ * }
+ * ```
+ *
+ * @typeParam T - Type of the decorated method
+ * @returns A decorator function that wraps the original method with tracing
  */
-export function span(attributeExtractors: SpanAttributeExtractors = {}) {
+export function span<T extends (...args: any[]) => any>(
+	attributeExtractors: Record<string, number | ((...args: Parameters<T>) => any)> = {},
+	returns?: boolean | ((result: Awaited<ReturnType<T>>) => any),
+) {
 	// NOTE this has been copied to func() in functionDecorators.ts and modified
 	// Any changes should be kept in sync
 	return function spanDecorator(originalMethod: any, context: ClassMethodDecoratorContext): any {

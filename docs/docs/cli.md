@@ -5,7 +5,7 @@ There are two main ways to interact with the system:
 
 ## Running the server & UI
 
-Run the following commands from the sophia git repo root directory.
+Run the following commands from the typedai git repo root directory.
 
 ### Local install
 In one terminal run
@@ -28,26 +28,26 @@ The UI will be available at [http://localhost:4200](http://localhost:4200)
 
 ## Running in Docker
 
-To run the CLI scripts when using the Docker container, run the script `./bin/container` from the repo root to first open a bash shell inside the Sophia development container.
+To run the CLI scripts when using the Docker container, run the script `./bin/container` from the repo root to first open a bash shell inside the TypedAI development container.
 
 ### Running outside the repository
 
-To run Sophia agents/workflows via the CLI script described below, in a folder outside the sophia repository, the script at `bin/path/ss` allows you to invoke the Sophia package.json scripts from any directory.
+To run TypedAI agents/workflows via the CLI script described below, in a folder outside the typedai repository, the script at `bin/path/ss` allows you to invoke the TypedAI package.json scripts from any directory.
 
 The `bin/configure` script will update your shell configuration files to include it in your PATH.
 
-Either run the `bin/configure` script from the Sophia repository root or copy and run the required section from the script. This will add to your .bashrc and .zshrc files (if they exist) the output of:
+Either run the `bin/configure` script from the TypedAI repository root or copy and run the required section from the script. This will add to your .bashrc and .zshrc files (if they exist) the output of:
 
 ```bash
-export SOPHIA_HOME=$(pwd)
-export PATH=$SOPHIA_HOME/bin/path:$PATH
+export TYPEDAI_HOME=$(pwd)
+export PATH=$TYPEDAI_HOME/bin/path:$PATH
 ```
 
 Then from any folder you can run commands like:
 
 `ss query what test frameworks does this repository use`
 
-Where *query* is the Sophia package.json script. For all the examples in the CLI scripts section above you can replace `npm run` with `ss`
+Where *query* is the TypedAI package.json script. For all the examples in the CLI scripts section above you can replace `npm run` with `ai`
 
 
 ### CLI scripts
@@ -56,7 +56,7 @@ There are a number of convenience scripts in the package.json for running agents
 
 ### agent
 
-`npm run agent` or `ss agent` will run the autonomous agent configured in `src/cli/agent.ts`. Note that the agent will have the functions available configured in the `agent.ts` file.
+`npm run agent` or `ai agent` will run the autonomous agent configured in `src/cli/agent.ts`. Note that the agent will have the functions available configured in the `agent.ts` file.
 
 If no arguments are supplied the user prompt will be read from `src/cli/agent-in`
 
@@ -69,11 +69,11 @@ npm run agent research the latest news about large language models and write a r
 
 ### code
 
-`npm run code` or `ss code` runs the [CodeEditingAgent](/software-engineer/) configured in `src/cli/code.ts`
+`npm run code` or `ai code` runs the [CodeEditingAgent](/software-engineer/) configured in `src/cli/code.ts`
 
 Without arguments the prompt is read from `src/cli/code-in` otherwise it uses the provided arguments for the prompt.
 
-This is a useful for editing the sophia codebase. You could run a command like:
+This is a useful for editing the typedai codebase. You could run a command like:
 
 ```bash
 npm run code In the anthropic vertex class update the pricing for claude 3.5 sonnet to be 3 dollars per million input tokens and 15 dollars per million output tokens
@@ -84,17 +84,17 @@ directory set to the current shell directory.
 
 ### index
 
-`npm run index` or `ss index`
+`npm run index` or `ai index`
 
-This runs the agent which indexes a repository, and stores the summary index docs under `.sophia/docs`
+This runs the agent which indexes a repository, and stores the summary index docs under `.typedai/docs`
 
 ### slack
 
-`npm run slack` or `ss slack` starts the Slack chatbot. The chatbot will have the functions available defined in `src/modules/slack/slackChatBotService.ts`
+`npm run slack` or `ai slack` starts the Slack chatbot. The chatbot will have the functions available defined in `src/modules/slack/slackChatBotService.ts`
 
 ### swe
 
-`npm run swe` or `ss swe` runs the SoftwareDeveloperAgent configured in `src/cli/swe.ts`
+`npm run swe` or `ai swe` runs the SoftwareDeveloperAgent configured in `src/cli/swe.ts`
 
 Without arguments the prompt is read from `src/cli/swe-in` otherwise it uses the provided arguments for the prompt.
 
@@ -104,7 +104,7 @@ This agent can be used for process automation and handling requests within the l
 
 ### gen
 
-`npm run gen` or `ss gen` runs the script at `src/cli/gen.ts`
+`npm run gen` or `ai gen` runs the script at `src/cli/gen.ts`
 
 This simply generates text from a prompt. As with the other scripts you can provide arguments for a quick prompt. 
 Otherwise, prepare the prompt in `src/cli/gen-in` and don't provide any other arguments.
@@ -125,7 +125,7 @@ Make sure the directory you save the files to is in the .gitignore.
 
 ### scrape
 
-`npm run scrape <url>` or `ss scrape <url>` runs the PublicWeb.getWebPage function which uses a headless browser to scrape a web page, and then converts
+`npm run scrape <url>` or `ai scrape <url>` runs the PublicWeb.getWebPage function which uses a headless browser to scrape a web page, and then converts
 it to a slim format by using the `@mozilla/readability` module to first extract the main contents of the page, and then the `turndown`
 package to convert the HTML to Markdown, further reducing the token count.
 
@@ -133,7 +133,7 @@ By default, it writes the output to `scrape.md`. Alternatively you can provide a
 
 ### query
 
-`npm run query <question>` or `ss query <question>` runs the codebase query agent at *src/swe/discovery/fileSelectionAgent.ts* which can answer ad hoc
+`npm run query <question>` or `ai query <question>` runs the codebase query agent at *src/swe/discovery/fileSelectionAgent.ts* which can answer ad hoc
 questions about a codebase/folder contents.
 
 ## Development
@@ -154,5 +154,5 @@ npm run test
 Speech-to-text is useful writing longer prompts with additional details to guide the agents.
 
 On Mac's you can enable Dictation for quick-access speech-to-text
-![List agents](https://public.trafficguard.ai/nous/dictation.png)
+![List agents](https://public.trafficguard.ai/typedai/dictation.png)
 

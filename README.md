@@ -1,36 +1,36 @@
 <a id="banner"></a>
 <p align="center">
-  <img src="https://public.trafficguard.ai/sophia/banner.png" alt="Sophia banner"/>
+  <img src="https://public.trafficguard.ai/typedai/banner.png" alt="TypedAI banner"/>
 </p>
 <p align="center">
-  <em>The open TypeScript platform for autonomous AI agents and LLM based workflows </em><br/>
-  <small>The Ancient Greek word <em><b>sophía (σοφία)</b></em> variously translates to "clever, skillful, intelligent, wise"</small>
+  <em >The TypeScript-first AI platform for developers</em><br/>
+  <small>Autonomous AI agents and LLM based workflows</small>
 </p>
 
 ## Documentation site
-[Home](https://sophia.dev/) |  [Setup](https://sophia.dev/setup/) | [Observability](https://sophia.dev/observability/) | [Function calling](https://sophia.dev/functions/) | 
-[Autonomous AI Agent](https://sophia.dev/autonomous-agents/) | [AI Software Engineer](https://sophia.dev/software-engineer/) | [AI Code reviews](https://sophia.dev/code-review/) |
-[Tools/Integrations](https://sophia.dev/integrations/) | [Roadmap](https://sophia.dev/roadmap/)
+[Home](https://typedai.dev/) |  [Setup](https://typedai.dev/setup/) | [Observability](https://typedai.dev/observability/) | [Function calling](https://typedai.dev/functions/) | 
+[Autonomous AI Agent](https://typedai.dev/autonomous-agents/) | [AI Software Engineer](https://typedai.dev/software-engineer/) | [AI Code reviews](https://typedai.dev/code-review/) |
+[Tools/Integrations](https://typedai.dev/integrations/) | [Roadmap](https://typedai.dev/roadmap/)
 
 ---
 
 [Features](#key-features) | [UI Examples](#ui-examples) | [Code examples](#code-examples) | [Contributing](#contributing)
 
-Sophia is a full-featured platform for developing and running agents, LLM based workflows and chatbots.
+TypedAI is a full-featured platform for developing and running agents, LLM based workflows and chatbots.
 
 Included are capable software engineering agents, which have assisted building the platform.
 
 ## Key features
 
-- [Advanced Autonomous agents](https://sophia.dev/autonomous-agents)
-- [Software developer agents](https://sophia.dev/software-engineer/)
-- [Pull request code review agent](https://sophia.dev/code-review/)
-- [AI chat interface](https://sophia.dev/chat/)
-- [Slack chatbot](https://sophia.dev/chatbot/)
+- [Advanced Autonomous agents](https://typedai.dev/autonomous-agents)
+- [Software developer agents](https://typedai.dev/software-engineer/)
+- [Pull request code review agent](https://typedai.dev/code-review/)
+- [AI chat interface](https://typedai.dev/chat/)
+- [Slack chatbot](https://typedai.dev/chatbot/)
 - Supports many LLM services - OpenAI, Anthropic (native & Vertex), Gemini, Groq, Fireworks, Together.ai, DeepSeek, Ollama, Cerebras, X.ai
-- Multi-agent [extend-reasoning implementations](https://github.com/TrafficGuard/sophia/tree/main/src/llm/multi-agent) of the LLM interface
+- Multi-agent [extend-reasoning implementations](https://github.com/TrafficGuard/typedai/tree/main/src/llm/multi-agent) of the LLM interface
 - Configurable Human-in-the-loop settings
-- [Functional callable tools/integrations](https://sophia.dev/integrations/) (Filesystem, Jira, Slack, Perplexity, Google Cloud, Gitlab, GitHub etc)
+- [Functional callable tools/integrations](https://typedai.dev/integrations/) (Filesystem, Jira, Slack, Perplexity, Google Cloud, Gitlab, GitHub etc)
 - CLI and Web UI interface
 - Run locally or deployed on the cloud with multi-user/SSO
 - OpenTelemetry based observability
@@ -45,7 +45,7 @@ Included are capable software engineering agents, which have assisted building t
 - LLM function schemas auto-generated from source code
 - Human-in-the-loop for budget control, agent initiated questions and error handling
 
-More details at the [Autonomous agent docs](https://sophia.dev/autonomous-agents)
+More details at the [Autonomous agent docs](https://typedai.dev/autonomous-agents)
 
 ## Software developer agents
 
@@ -67,7 +67,7 @@ More details at the [Autonomous agent docs](https://sophia.dev/autonomous-agents
 - Repository ad hoc query agent
 - Codebase awareness - optional index creation used by the task file selection agent
 
-More details at the [Software developer agents](https://sophia.dev/software-engineer/) docs.
+More details at the [Software developer agents](https://typedai.dev/software-engineer/) docs.
 
 ## Flexible run/deploy options
 
@@ -82,52 +82,52 @@ More details at the [Software developer agents](https://sophia.dev/software-engi
 
 ### List agents
 
-![List agents](https://public.trafficguard.ai/sophia/agent-list.png)
+![List agents](https://public.trafficguard.ai/typedai/agent-list.png)
 
 ### New Agent
 
-![New Agent UI](https://public.trafficguard.ai/sophia/agent-new.png)
+![New Agent UI](https://public.trafficguard.ai/typedai/agent-new.png)
 
 ### Agent error handling
 
-![Feedback requested](https://public.trafficguard.ai/sophia/agent-feedback.png)
+![Feedback requested](https://public.trafficguard.ai/typedai/agent-feedback.png)
 
 ### Agent LLM calls
 
-![Agent LLM calls](https://public.trafficguard.ai/sophia/agent-llm-calls.png)
+![Agent LLM calls](https://public.trafficguard.ai/typedai/agent-llm-calls.png)
 
 ### Sample trace (Google Cloud)
 
-![Sample trace in Google Cloud](https://public.trafficguard.ai/sophia/trace.png)
+![Sample trace in Google Cloud](https://public.trafficguard.ai/typedai/trace.png)
 
 ### Human in the loop notification
 
-<img src="https://public.trafficguard.ai/sophia/feedback.png" width="702">
+<img src="https://public.trafficguard.ai/typedai/feedback.png" width="702">
 
 ### Code review configuration
 
-![Code review configuration](https://public.trafficguard.ai/sophia/code-reviews.png)
+![Code review configuration](https://public.trafficguard.ai/typedai/code-reviews.png)
 
 ### AI Chat
 
-![AI chat](https://public.trafficguard.ai/sophia/chat.png)
+![AI chat](https://public.trafficguard.ai/typedai/chat.png)
 
 ### User profile
 
-![Profile](https://public.trafficguard.ai/sophia/profile1.png)
-![Profile](https://public.trafficguard.ai/sophia/profile2.png)
+![Profile](https://public.trafficguard.ai/typedai/profile1.png)
+![Profile](https://public.trafficguard.ai/typedai/profile2.png)
 
 Default values can also be set from environment variables.
 
 ## Code Examples
 
-### Sophia vs LangChain
+### TypedAI vs LangChain
 
-Sophia doesn't use LangChain, for [many reasons](https://www.octomind.dev/blog/why-we-no-longer-use-langchain-for-building-our-ai-agents) that [you](https://www.google.com/search?q=langchain+site%3Anews.ycombinator.com) can [read](https://www.reddit.com/r/LangChain/comments/1gmfyi2/why_are_people_hating_langchain_so_much/) [online](https://www.google.com/search?q=langchain+sucks+site%3Areddit.com)
+TypedAI doesn't use LangChain, for [many reasons](https://www.octomind.dev/blog/why-we-no-longer-use-langchain-for-building-our-ai-agents) that [you](https://www.google.com/search?q=langchain+site%3Anews.ycombinator.com) can [read](https://www.reddit.com/r/LangChain/comments/1gmfyi2/why_are_people_hating_langchain_so_much/) [online](https://www.google.com/search?q=langchain+sucks+site%3Areddit.com)
 
-The scope of the Sophia platform covers functionality found in LangChain and LangSmith.
+The scope of the TypedAI platform covers functionality found in LangChain and LangSmith.
 
-Let's compare the LangChain document example for Multiple Chains to the equivalent Sophia implementation.
+Let's compare the LangChain document example for Multiple Chains to the equivalent TypedAI implementation.
 
 #### LangChain
 ```typescript
@@ -165,7 +165,7 @@ const result = await combinedChain.invoke({
 console.log(result);
 ```
 
-#### Sophia
+#### TypedAI
 ```typescript
 import { runAgentWorkflow } from '#agent/agentWorkflowRunner';
 import { anthropicLLMs } from '#llms/anthropic'
@@ -181,7 +181,7 @@ runAgentWorkflow({ llms: anthropicLLMs() }, async () => {
 });
 ```
 
-The Sophia code also has the advantage of static typing with the prompt arguments, enabling you to refactor with ease.
+The TypedAI code also has the advantage of static typing with the prompt arguments, enabling you to refactor with ease.
 Using simple control flow allows easy debugging with breakpoints/logging.
 
 To run a fully autonomous agent:
@@ -221,4 +221,4 @@ export class Jira {
 
 ## Contributing
 
-We warmly welcome contributions to the project through [issues](https://github.com/TrafficGuard/nous/issues), [pull requests](https://github.com/TrafficGuard/nous/pulls)  or [discussions](https://github.com/TrafficGuard/nous/discussions)
+We warmly welcome contributions to the project through [issues](https://github.com/TrafficGuard/typedai/issues), [pull requests](https://github.com/TrafficGuard/typedai/pulls)  or [discussions](https://github.com/TrafficGuard/typedai/discussions)

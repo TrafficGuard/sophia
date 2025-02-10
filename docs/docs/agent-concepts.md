@@ -12,7 +12,7 @@ We follow a similar naming convention described in [Building Effective Agents](h
 
 ### 1. Autonomous agents
 
-Sophia comes with two autonomous agent types (XML and CodeGen), which applying reasoning to break down
+TypedAI comes with two autonomous agent types (XML and CodeGen), which applying reasoning to break down
 a user request into a plan to be completed by the available function calls.
 
 The Slack chatbot uses an autonomous agent to provide a response to a user.

@@ -9,7 +9,7 @@
             <div class="text-3xl">Profile</div>
         </div>
 
-        <div class="mt-8 grid w-full gap-6 sm:grid-cols-2">
+        <div class="mt-8 grid w-full gap-6 sm:grid-cols-2 pb-2">
             <!--
             <div class="sm:col-span-1">
                 <mat-form-field class="w-full">
@@ -64,13 +64,13 @@
         </div>
 
         <!-- Divider -->
-        <div class="my-8 border-t"></div>
+        <div class="my-4 border-t"></div>
 
         <!-- Section -->
         <div class="w-full">
             <div class="text-3xl">LLM API Keys</div>
         </div>
-        <div [formGroupName]="'llmConfig'" class="mt-8 grid w-full gap-6 sm:grid-cols-2">
+        <div [formGroupName]="'llmConfig'" class="mt-8 grid w-full gap-4 sm:grid-cols-2">
             <!-- Anthropic -->
             <div class="sm:col-span-1">
                 <mat-form-field class="w-full">
@@ -144,7 +144,7 @@
         </div>
 
         <!-- Divider -->
-        <div class="my-10 border-t"></div>
+        <div class="my-4 border-t"></div>
 
         <!-- Section -->
         <div class="w-full">
@@ -152,7 +152,7 @@
         </div>
         <div [formGroupName]="'functionConfig'" class="mt-8">
             <!-- GitHub Configuration -->
-            <div [formGroupName]="'GitHub'" class="mb-8">
+            <div [formGroupName]="'GitHub'" class="mb-4">
                 <div class="text-2xl pb-2">GitHub</div>
                 <mat-form-field class="w-full">
                     <mat-label>Token</mat-label>
@@ -160,7 +160,7 @@
                 </mat-form-field>
             </div>
             <!-- GitLab Configuration -->
-            <div [formGroupName]="'GitLab'" class="mb-8">
+            <div [formGroupName]="'GitLab'" class="mb-4">
                 <div class="text-2xl pb-2">GitLab</div>
                 <div class="grid gap-6 sm:grid-cols-3">
                     <!-- Host -->
@@ -187,7 +187,7 @@
                 </div>
             </div>
             <!-- Jira Configuration -->
-            <div [formGroupName]="'Jira'" class="mb-8">
+            <div [formGroupName]="'Jira'" class="mb-4">
                 <div class="text-2xl pb-2">Jira</div>
                 <div class="grid gap-6 sm:grid-cols-3">
                     <!-- Base URL -->
@@ -214,7 +214,7 @@
                 </div>
             </div>
             <!-- Slack Configuration -->
-            <div [formGroupName]="'Slack'" class="mb-8">
+            <div [formGroupName]="'Slack'" class="mb-4">
                 <div class="text-2xl pb-2">Slack</div>
                 <div class="grid gap-6 sm:grid-cols-3">
                     <!-- Token -->
@@ -241,7 +241,7 @@
                 </div>
             </div>
             <!-- Perplexity Configuration -->
-            <div [formGroupName]="'Perplexity'" class="mb-8">
+            <div [formGroupName]="'Perplexity'" class="mb-4">
                 <div class="text-2xl pb-2">Perplexity</div>
                 <mat-form-field class="w-full">
                     <mat-label>Key</mat-label>
@@ -251,7 +251,7 @@
         </div>
 
         <!-- Divider -->
-        <div class="mb-10 mt-11 border-t"></div>
+        <div class="mb-6 mt-11 border-t"></div>
 
         <!-- Actions -->
         <div class="flex items-center justify-end">

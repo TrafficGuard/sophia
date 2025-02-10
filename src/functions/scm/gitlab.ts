@@ -296,38 +296,34 @@ export class GitLab implements SourceControlManagement {
 			projectPath = gitlabProjectId;
 		}
 
-		logger.info(`Reviewing ${projectPath}`);
+		logger.info(`Reviewing "${mergeRequest.title}" at ${mergeRequest.web_url}`);
+
+		const codeReviewsToDo: Array<{ config: CodeReviewConfig; diff: MergeRequestDiffSchema }> = [];
 
 		// Find the code review configurations which are relevant for each diff
-		const codeReviews: Promise<DiffReview>[] = [];
 		for (const diff of diffs) {
 			for (const codeReview of codeReviewConfigs) {
-				if (!codeReview.enabled) continue;
-
-				if (codeReview.projectPaths.length && !micromatch.isMatch(projectPath, codeReview.projectPaths)) {
-					logger.debug(`Project path globs ${codeReview.projectPaths} dont match ${projectPath}`);
-					continue;
-				}
-
-				const hasMatchingExtension = codeReview.fileExtensions?.include.some((extension) => diff.new_path.endsWith(extension));
-				const hasRequiredText = codeReview.requires?.text.some((text) => diff.diff.includes(text));
-
-				if (hasMatchingExtension && hasRequiredText) {
-					codeReviews.push(this.reviewDiff(diff, codeReview));
-				}
+				if (this.applyCodeReview(codeReview, diff, projectPath)) codeReviewsToDo.push({ config: codeReview, diff: diff });
 			}
 		}
 
-		if (!codeReviews.length) {
+		if (!codeReviewsToDo.length) {
 			logger.info('No code review configurations matched the diffs');
+			return [];
 		}
 
-		let diffReviews: DiffReview[] = await allSettledAndFulFilled(codeReviews);
-		diffReviews = diffReviews.filter((diffReview) => diffReview !== null);
+		const codeReviewSummaries = codeReviewsToDo.map((codeReview) => {
+			return { title: codeReview.config.title, file: codeReview.diff.new_path, line: getStartingLineNumber(codeReview.diff.diff) };
+		});
+		logger.info({ codeReviews: codeReviewSummaries }, `Found ${codeReviewsToDo.length} code reviews to apply to diffs [codeReviews]`);
 
-		for (const diffReview of diffReviews) {
+		const codeReviewActions: Promise<DiffReview>[] = codeReviewsToDo.map((todo) => this.reviewDiff(todo.diff, todo.config));
+		let codeReviewResults: DiffReview[] = await allSettledAndFulFilled(codeReviewActions);
+		codeReviewResults = codeReviewResults.filter((diffReview) => diffReview !== null);
+
+		for (const diffReview of codeReviewResults) {
 			for (const comment of diffReview.comments) {
-				logger.debug(comment, `Adding review comment to ${diffReview.mrDiff.new_path} for "${diffReview.reviewConfig.title}" [comment, lineNumber]`);
+				logger.info(comment, `Adding review comment to ${diffReview.mrDiff.new_path} for "${diffReview.reviewConfig.title}" [comment, lineNumber]`);
 				const position: MergeRequestDiscussionNotePositionOptions = {
 					baseSha: mergeRequest.diff_refs.base_sha,
 					headSha: mergeRequest.diff_refs.head_sha,
@@ -337,10 +333,38 @@ export class GitLab implements SourceControlManagement {
 					newLine: comment.lineNumber.toString(),
 				};
 
-				await this.api().MergeRequestDiscussions.create(gitlabProjectId, mergeRequestIId, comment.comment, { position });
+				try {
+					await this.api().MergeRequestDiscussions.create(gitlabProjectId, mergeRequestIId, comment.comment, { position });
+				} catch (e) {
+					const message = e.cause?.description || e.message;
+					logger.warn(
+						{ error: e, comment, errorKey: 'GitLab create code review discussion' },
+						`Error creating code review comment for "${diffReview.reviewConfig.title}" to ${diffReview.mrDiff.new_path}. ${message} [error, comment]`,
+					);
+				}
 			}
 		}
 		return diffs;
+	}
+
+	/**
+	 * Determine if a particular code review configuration is valid to perform on a diff
+	 * @param codeReview
+	 * @param diff
+	 * @param projectPath
+	 */
+	applyCodeReview(codeReview: CodeReviewConfig, diff: MergeRequestDiffSchema, projectPath: string): boolean {
+		if (!codeReview.enabled) return false;
+
+		if (codeReview.projectPaths.length && !micromatch.isMatch(projectPath, codeReview.projectPaths)) {
+			logger.debug(`Project path globs ${codeReview.projectPaths} dont match ${projectPath}`);
+			return false;
+		}
+
+		const hasMatchingExtension = codeReview.fileExtensions?.include.some((extension) => diff.new_path.endsWith(extension));
+		const hasRequiredText = codeReview.requires?.text.some((text) => diff.diff.includes(text));
+
+		return hasMatchingExtension && hasRequiredText;
 	}
 
 	/**
@@ -392,6 +416,7 @@ Instructions:
 4. Provide the review comments in the following JSON format. If no review violations are found return an empty array for violations.
 
 {
+  "thinking": "(thinking and observations about the code and code review config)"
   "violations": [
     {
       "lineNumber": number,
@@ -402,9 +427,15 @@ Instructions:
 
 Response only in JSON format. Do not wrap the JSON in any tags.
 `;
-		const reviewComments = (await llms().medium.generateJson(prompt, { id: 'reviewDiff', temperature: 0.5 })) as {
+		// TODO force JSON schema
+		const reviewComments = (await llms().medium.generateJson(prompt, { id: 'Diff code review', temperature: 0.5 })) as {
 			violations: Array<{ lineNumber: number; comment: string }>;
 		};
+
+		if (Array.isArray(!reviewComments?.violations)) {
+			logger.warn({ response: reviewComments }, 'Invalid code review [response]');
+			return null;
+		}
 
 		return { code: currentCode, comments: reviewComments.violations, mrDiff, reviewConfig: codeReview };
 	}

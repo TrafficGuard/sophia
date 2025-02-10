@@ -1,3 +1,4 @@
+/*
 import * as path from 'path';
 import { Chroma } from '@langchain/community/vectorstores/chroma';
 import { Document } from '@langchain/core/documents';
@@ -137,3 +138,4 @@ async function generateContext(filePath: string, functionName: string, functionC
 export async function initializeCodebaseVectorStore() {
 	await generateContextualEmbeddings();
 }
+*/

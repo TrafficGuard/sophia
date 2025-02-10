@@ -1,8 +1,8 @@
-site_name: SOPHIA | AI
-site_url: https://sophia.dev/
+site_name: TypedAI
+site_url: https://typedai.dev/
 theme:
   name: material
-  logo: assets/s.png
+  logo: assets/tai.png
   palette:
     primary: black
   icon:
@@ -30,8 +30,8 @@ markdown_extensions:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
-repo_url: https://github.com/trafficguard/sophia
-repo_name: trafficguard/sophia
+repo_url: https://github.com/trafficguard/typedai
+repo_name: trafficguard/typedai
 
 nav:
   - index.md
